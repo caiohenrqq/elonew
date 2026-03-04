@@ -1,0 +1,124 @@
+name: elonew-dev
+
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: elonew
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - elonew_postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d elonew']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ../../..
+      dockerfile: infrastructure/docker/dev/Dockerfile.dev
+    user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
+    restart: unless-stopped
+    working_dir: /workspace
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - ../../../apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@database:5432/elonew
+      PNPM_HOME: /pnpm
+      PNPM_STORE_DIR: /pnpm/store
+      CHOKIDAR_USEPOLLING: 'true'
+      CHOKIDAR_INTERVAL: '300'
+      WATCHPACK_POLLING: 'true'
+      TSC_WATCHFILE: UsePolling
+    ports:
+      - '3000:3000'
+    volumes:
+      - ../../../:/workspace
+      - elonew_node_modules_root_dev:/workspace/node_modules
+      - elonew_node_modules_api_dev:/workspace/apps/api/node_modules
+      - elonew_pnpm_store_dev:/pnpm/store
+    command:
+      [
+        'sh',
+        '-lc',
+        'pnpm --filter api run start:dev',
+      ]
+
+  web:
+    build:
+      context: ../../..
+      dockerfile: infrastructure/docker/dev/Dockerfile.dev
+    user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
+    restart: unless-stopped
+    working_dir: /workspace
+    depends_on:
+      api:
+        condition: service_started
+    env_file:
+      - ../../../apps/web/.env
+    environment:
+      PNPM_HOME: /pnpm
+      PNPM_STORE_DIR: /pnpm/store
+      NEXT_TELEMETRY_DISABLED: '1'
+      CHOKIDAR_USEPOLLING: 'true'
+      CHOKIDAR_INTERVAL: '300'
+      WATCHPACK_POLLING: 'true'
+    ports:
+      - '3001:3001'
+    volumes:
+      - ../../../:/workspace
+      - elonew_node_modules_root_dev:/workspace/node_modules
+      - elonew_node_modules_web_dev:/workspace/apps/web/node_modules
+      - elonew_pnpm_store_dev:/pnpm/store
+    command:
+      [
+        'sh',
+        '-lc',
+        'pnpm --filter web run dev --hostname 0.0.0.0 --port 3001',
+      ]
+
+  workers:
+    build:
+      context: ../../..
+      dockerfile: infrastructure/docker/dev/Dockerfile.dev
+    user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
+    restart: unless-stopped
+    working_dir: /workspace
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - ../../../apps/workers/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@database:5432/elonew
+      PNPM_HOME: /pnpm
+      PNPM_STORE_DIR: /pnpm/store
+      CHOKIDAR_USEPOLLING: 'true'
+      CHOKIDAR_INTERVAL: '300'
+    volumes:
+      - ../../../:/workspace
+      - elonew_node_modules_root_dev:/workspace/node_modules
+      - elonew_node_modules_workers_dev:/workspace/apps/workers/node_modules
+      - elonew_pnpm_store_dev:/pnpm/store
+    command:
+      [
+        'sh',
+        '-lc',
+        'pnpm --filter @apps/workers run dev',
+      ]
+
+volumes:
+  elonew_postgres_dev_data:
+  elonew_pnpm_store_dev:
+  elonew_node_modules_root_dev:
+  elonew_node_modules_api_dev:
+  elonew_node_modules_web_dev:
+  elonew_node_modules_workers_dev:

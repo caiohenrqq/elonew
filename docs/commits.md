@@ -21,6 +21,15 @@ This project follows Conventional Commits `v1.0.0` as the baseline:
 - Use `!` before `:` for breaking changes (or use `BREAKING CHANGE:` footer).
 - Keep one logical change per commit when possible.
 
+## Subject wording rule
+
+- When possible, prefer `&` instead of `and` when joining the final item in commit subjects.
+- Example: use `add dev/prod docker layout & workspace scripts` instead of `add dev/prod docker layout and workspace scripts`.
+- For multiple separated items, apply `&` only to the last join.
+
+Example:
+- `add dev/prod docker layout, add xyz, add abc & workspace scripts`
+
 ## Allowed types
 
 - `feat`: new feature

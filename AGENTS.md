@@ -29,6 +29,7 @@ When documentation is needed, always use the official latest documentation.
 ## Code style rule for AI agents
 - Use indentation equivalent to 4 spaces (2 tabs).
 - Do not add code comments unless strictly necessary (for example, temporary placeholders).
+- YAML files must use spaces for indentation (never tabs).
 
 Official docs to use:
 - NestJS: https://docs.nestjs.com/

@@ -3,10 +3,27 @@
 	"private": true,
 	"packageManager": "pnpm@10.30.2",
 	"scripts": {
+		"api": "pnpm --filter api",
+		"web": "pnpm --filter web",
+		"workers": "pnpm --filter @apps/workers",
 		"dev": "pnpm -r --parallel dev",
-		"build": "pnpm -r build",
+		"start:dev:api": "pnpm api start:dev",
+		"start:dev:web": "pnpm web dev",
+		"start:dev:workers": "pnpm workers dev",
+		"build": "pnpm api build && pnpm web build",
 		"lint": "pnpm -r lint",
-		"test": "pnpm -r test"
+		"biome:check:api": "pnpm api biome:check",
+		"biome:check:web": "pnpm web biome:check",
+		"biome:check:workers": "pnpm workers biome:check",
+		"biome:check:all": "pnpm biome:check:api && pnpm biome:check:web && pnpm biome:check:workers",
+		"biome:fix:api": "pnpm api biome:fix",
+		"biome:fix:web": "pnpm web biome:fix",
+		"biome:fix:workers": "pnpm workers biome:fix",
+		"biome:fix:all": "pnpm biome:fix:api && pnpm biome:fix:web && pnpm biome:fix:workers",
+		"docker:dev:up": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d",
+		"docker:dev:build": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml build",
+		"docker:dev:down": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down",
+		"docker:dev:logs": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml logs -f"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.5"

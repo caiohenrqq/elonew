@@ -4,7 +4,9 @@
 	"version": "0.0.0",
 	"scripts": {
 		"dev": "tsx watch src/main.ts",
-		"start": "tsx src/main.ts"
+		"start": "tsx src/main.ts",
+		"biome:check": "biome check .",
+		"biome:fix": "biome check --write ."
 	},
 	"devDependencies": {
 		"tsx": "latest",
