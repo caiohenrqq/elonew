@@ -1,0 +1,13 @@
+{
+	"name": "@apps/workers",
+	"private": true,
+	"version": "0.0.0",
+	"scripts": {
+		"dev": "tsx watch src/main.ts",
+		"start": "tsx src/main.ts"
+	},
+	"devDependencies": {
+		"tsx": "latest",
+		"typescript": "latest"
+	}
+}

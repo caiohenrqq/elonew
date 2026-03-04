@@ -1,0 +1,14 @@
+{
+	"name": "elonew",
+	"private": true,
+	"packageManager": "pnpm@10.30.2",
+	"scripts": {
+		"dev": "pnpm -r --parallel dev",
+		"build": "pnpm -r build",
+		"lint": "pnpm -r lint",
+		"test": "pnpm -r test"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.5"
+	}
+}
