@@ -67,8 +67,8 @@
 			"ts"
 		],
 		"moduleNameMapper": {
-			"^@app/(.*)$": "<rootDir>/$1",
-			"^@modules/(.*)$": "<rootDir>/modules/$1",
+			"^@app/(.*)$": "<rootDir>/src/$1",
+			"^@modules/(.*)$": "<rootDir>/src/modules/$1",
 			"^@shared/(.*)$": "<rootDir>/../../packages/shared/src/$1",
 			"^@database/(.*)$": "<rootDir>/../../packages/database/src/$1",
 			"^@config/(.*)$": "<rootDir>/../../packages/config/src/$1",
@@ -77,8 +77,8 @@
 			"^@testing/(.*)$": "<rootDir>/../../packages/testing/src/$1",
 			"^@integrations/(.*)$": "<rootDir>/../../packages/integrations/src/$1"
 		},
-		"rootDir": "src",
-		"testRegex": ".*\\.spec\\.ts$",
+		"rootDir": ".",
+		"testRegex": "(src/.*\\.spec\\.ts$|test/integration/.*\\.integration\\.spec\\.ts$)",
 		"transform": {
 			"^.+\\.(t|j)s$": "ts-jest"
 		},
