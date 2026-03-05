@@ -22,5 +22,6 @@ import { Module } from '@nestjs/common';
 		AcceptOrderUseCase,
 		CancelOrderUseCase,
 	],
+	exports: [ORDER_REPOSITORY_KEY],
 })
 export class OrdersModule {}
