@@ -11,6 +11,7 @@
 		"start:dev:web": "pnpm web dev",
 		"start:dev:workers": "pnpm workers dev",
 		"build": "pnpm api build && pnpm web build",
+		"test:api": "pnpm api test",
 		"lint": "pnpm -r lint",
 		"biome:check:api": "pnpm api biome:check",
 		"biome:check:web": "pnpm web biome:check",
@@ -23,7 +24,8 @@
 		"docker:dev:up": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d",
 		"docker:dev:build": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml build",
 		"docker:dev:down": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down",
-		"docker:dev:logs": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml logs -f"
+		"docker:dev:logs": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml logs -f",
+		"docker:dev:reset": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down -v && docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d --build"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.5"

@@ -42,9 +42,6 @@ services:
       - '3000:3000'
     volumes:
       - ../../../:/workspace
-      - elonew_node_modules_root_dev:/workspace/node_modules
-      - elonew_node_modules_api_dev:/workspace/apps/api/node_modules
-      - elonew_pnpm_store_dev:/pnpm/store
     command:
       [
         'sh',
@@ -75,9 +72,6 @@ services:
       - '3001:3001'
     volumes:
       - ../../../:/workspace
-      - elonew_node_modules_root_dev:/workspace/node_modules
-      - elonew_node_modules_web_dev:/workspace/apps/web/node_modules
-      - elonew_pnpm_store_dev:/pnpm/store
     command:
       [
         'sh',
@@ -105,9 +99,6 @@ services:
       CHOKIDAR_INTERVAL: '300'
     volumes:
       - ../../../:/workspace
-      - elonew_node_modules_root_dev:/workspace/node_modules
-      - elonew_node_modules_workers_dev:/workspace/apps/workers/node_modules
-      - elonew_pnpm_store_dev:/pnpm/store
     command:
       [
         'sh',
@@ -117,8 +108,3 @@ services:
 
 volumes:
   elonew_postgres_dev_data:
-  elonew_pnpm_store_dev:
-  elonew_node_modules_root_dev:
-  elonew_node_modules_api_dev:
-  elonew_node_modules_web_dev:
-  elonew_node_modules_workers_dev:
