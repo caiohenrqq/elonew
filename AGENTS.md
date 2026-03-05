@@ -67,3 +67,6 @@ Official docs to use:
 - Added initial `payments` module with full feature-slice structure (domain, ports, use-cases, in-memory adapters, controller) and TDD coverage for 70% booster share plus hold/release lifecycle constraints.
 - Enhanced payments TDD coverage with idempotent confirm/release behavior to safely handle retried operations without invalid transition errors.
 - Added payment webhook idempotency support via processed-event port/use-case and endpoint coverage to ignore duplicated event IDs safely.
+- Refactored orders error handling to typed domain/application errors with controller `instanceof` mapping and expanded TDD coverage for HTTP exception mapping.
+- Standardized API integration test location under `apps/api/test/integration/<module_name>/*.integration.spec.ts` and documented test conventions (unitary/domain/use-cases, integration, e2e) in technical architecture.
+- Renamed infrastructure `gateways` nomenclature to `adapters` and adjusted module integration test naming to focus on module-level integration semantics.

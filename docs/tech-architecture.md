@@ -146,7 +146,7 @@ Recommended module layout:
 modules/<feature>/
 ├─ presentation/            # controllers, request/response DTOs, http mappers
 ├─ application/             # use-cases and application services
-│  ├─ ports/                # repository/gateway/event interfaces + DI keys
+│  ├─ ports/                # repository/adapter/event interfaces + DI keys
 │  └─ use-cases/
 ├─ domain/                  # entities, value objects, business policies, domain errors
 ├─ infrastructure/          # prisma repositories, external adapters, persistence mappers
@@ -165,7 +165,7 @@ To keep structure predictable across the codebase:
 - In `presentation`, keep one controller per feature target when endpoints are separated by responsibility.
 - Keep tests pragmatic by complexity:
   - for simple/trivial use-cases, unit tests are optional
-  - for controllers, keep integration tests because they verify routing, wiring, and HTTP boundary behavior
+  - for modules, keep integration tests because they verify wiring and boundary behavior across layers
 
 Example (health):
 ```text
@@ -181,11 +181,16 @@ modules/system/
 │  └─ health/
 │     ├─ api/
 │     │  ├─ api-health.controller.ts
-│     │  └─ api-health.controller.integration.spec.ts
 │     ├─ database/
 │     ├─ web/
 │     └─ workers/
 └─ system.module.ts
+
+apps/api/test/integration/system/
+├─ api-health.integration.spec.ts
+├─ database-health.integration.spec.ts
+├─ web-health.integration.spec.ts
+└─ workers-health.integration.spec.ts
 ```
 
 How strongly to apply this:
@@ -273,6 +278,12 @@ Start with OpenTelemetry + structured logs and self-hosted-compatible tooling. R
 - Browser E2E tests: Playwright.
 - CI pipeline: GitHub Actions.
 
+Testing conventions:
+- Unitary tests must be written for `domain` and `application/use-cases`.
+- Integration tests for API modules live in `apps/api/test/integration/<module_name>/*.integration.spec.ts`.
+- Integration tests must load the real Nest module (`Test.createTestingModule({ imports: [<Module>] })`) and validate wiring between controller, use-cases, and adapters.
+- E2E tests live in `apps/api/test/*.e2e-spec.ts` and validate HTTP boundaries with the application bootstrap.
+
 ## Boundaries
 - `@shared` must stay framework-agnostic and import-safe for both `api` and `web`.
 - `@ui` is frontend-only and must not be imported by `api`.
@@ -284,7 +295,7 @@ Start with OpenTelemetry + structured logs and self-hosted-compatible tooling. R
 - `infrastructure` may depend on framework/provider details and must implement ports.
 
 ## Design Patterns
-- Ports and Adapters Pattern: Separate core business logic from external systems through ports (interfaces) and adapters (implementations). We use it for repositories, payment gateways, queues, email, and third-party APIs because it solves infrastructure coupling and makes provider swaps and testing safer.
+- Ports and Adapters Pattern: Separate core business logic from external systems through ports (interfaces) and adapters (implementations). We use it for repositories, payment provider adapters, queues, email, and third-party APIs because it solves infrastructure coupling and makes provider swaps and testing safer.
 - Use-case (Application Service) Pattern: Represent each business action as a dedicated use-case class that orchestrates one workflow. We use it for actions like `create-order`, `accept-order`, `confirm-payment`, and `request-withdrawal` because it solves controller/service sprawl and keeps flow logic explicit.
 - Repository Pattern: Isolate persistence concerns behind repository contracts. We use it for ports such as `OrderRepositoryPort`, `WalletRepositoryPort`, and `TicketRepositoryPort` because it solves direct database dependency in business layers.
 - Strategy Pattern: Encapsulate interchangeable rule implementations behind a common contract. We use it for pricing modifiers, coupon behavior, and similar variable rules because it solves large conditional chains and supports safe extension.
