@@ -89,7 +89,7 @@ Zero-cost extras:
 ### 10. Ratings and reputation
 - FR-061: Clients can rate boosters.
 - FR-062: Boosters can rate clients.
-- FR-063: Admin-defined reputation/achievement rules are supported.
+- FR-063: Admin-defined reputation/achievement rules are supported, including booster scoring and badge/medal milestones.
 
 ### 11. Admin control
 - FR-064: Admin financial dashboard.
@@ -100,6 +100,17 @@ Zero-cost extras:
 ### 12. Chargebacks
 - FR-068: Chargeback-associated users are blocked.
 - FR-069: Access is restored only after settlement.
+
+### 13. Marketing and social presence
+- FR-070: Public pages must expose official social channels (`Instagram`, `TikTok`).
+- FR-071: The platform supports linking booster highlight content for marketing showcases.
+
+### 14. Booster incentives
+- FR-072: Booster milestone achievements (for example, completed-job badges/medals) can be configured with financial compensation.
+- FR-073: Timeboxed booster campaigns/events (for example, weekly goals) can be configured with rewards.
+
+### 15. Admin governance
+- FR-074: Admin actions that affect booster standing or compensation must be auditable.
 
 ## Non-functional requirements
 
@@ -114,6 +125,12 @@ Zero-cost extras:
 ### Privacy and data protection
 - NFR-005: Secure storage for chat and ticket history.
 - NFR-006: Data handling aligned with applicable privacy-law obligations (including LGPD context).
+- NFR-007: Credential handling must follow least-retention and least-access principles for sensitive user data.
+- NFR-008: Security monitoring and incident-response readiness are required for credential/data exposure scenarios.
+
+### Growth and distribution
+- NFR-009: Product and marketing content strategy should improve organic discoverability for core search intents (for example, `elojob`).
+- NFR-010: Twitch/live-stream integration is out of scope for MVP due legal/operational risk.
 
 ## Inputs
 - Registration data (`username`, `email`, `password`, email verification token).
@@ -160,5 +177,6 @@ Zero-cost extras:
 - Platform scope: web only.
 - Payment gateway: Mercado Pago only.
 - Discord integration excluded.
+- Twitch/live-stream integration excluded in MVP.
 - Proof/image upload excluded.
 - Booster onboarding remains invite-only.

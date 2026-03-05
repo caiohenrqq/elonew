@@ -1,4 +1,4 @@
-# CODEX
+# AGENTS
 
 ## Project summary
 Monorepo for a League of Legends boosting platform with:
@@ -64,3 +64,6 @@ Official docs to use:
 - Added `SystemModule` health endpoints scaffold in API with TDD coverage for separated checks (`/api/health/api`, `/api/health/database`, `/api/health/web`, `/api/health/workers`) returning `{ status: 'ok' }`.
 - Refactored system health to one controller per target and added separated integration tests per controller plus unit tests for each health service.
 - Standardized health module naming/structure to use-cases and moved files to `health/<target>/...` folders in both application and presentation layers with updated tests/imports.
+- Added initial `payments` module with full feature-slice structure (domain, ports, use-cases, in-memory adapters, controller) and TDD coverage for 70% booster share plus hold/release lifecycle constraints.
+- Enhanced payments TDD coverage with idempotent confirm/release behavior to safely handle retried operations without invalid transition errors.
+- Added payment webhook idempotency support via processed-event port/use-case and endpoint coverage to ignore duplicated event IDs safely.
