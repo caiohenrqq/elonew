@@ -1,5 +1,5 @@
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
-import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment.use-case';
+import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {

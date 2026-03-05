@@ -1,5 +1,5 @@
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
-import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order.use-case';
+import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {

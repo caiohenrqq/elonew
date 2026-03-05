@@ -1,4 +1,8 @@
 import { Order } from '@modules/orders/domain/order.entity';
+import {
+	OrderCancellationNotAllowedError,
+	OrderInvalidTransitionError,
+} from '@modules/orders/domain/order.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 
 describe('Order domain rules', () => {
@@ -31,16 +35,12 @@ describe('Order domain rules', () => {
 		order.confirmPayment();
 		order.acceptByBooster();
 
-		expect(() => order.cancel()).toThrow(
-			'Order cannot be cancelled after booster acceptance.',
-		);
+		expect(() => order.cancel()).toThrow(OrderCancellationNotAllowedError);
 	});
 
 	it('blocks invalid transition when booster accepts before payment confirmation', () => {
 		const order = Order.create('order-1');
 
-		expect(() => order.acceptByBooster()).toThrow(
-			'Invalid order transition: awaiting_payment -> in_progress.',
-		);
+		expect(() => order.acceptByBooster()).toThrow(OrderInvalidTransitionError);
 	});
 });

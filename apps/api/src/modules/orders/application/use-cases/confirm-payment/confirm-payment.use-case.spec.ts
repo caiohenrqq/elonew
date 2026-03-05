@@ -1,6 +1,7 @@
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
-import { ConfirmPaymentUseCase } from '@modules/orders/application/use-cases/confirm-payment.use-case';
+import { ConfirmPaymentUseCase } from '@modules/orders/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
+import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();
@@ -36,7 +37,7 @@ describe('ConfirmPaymentUseCase', () => {
 		const useCase = new ConfirmPaymentUseCase(repository);
 
 		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
-			'Order not found.',
+			OrderNotFoundError,
 		);
 	});
 });

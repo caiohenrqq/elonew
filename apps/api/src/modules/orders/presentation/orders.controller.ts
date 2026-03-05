@@ -1,8 +1,14 @@
-import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order.use-case';
-import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order.use-case';
-import { ConfirmPaymentUseCase } from '@modules/orders/application/use-cases/confirm-payment.use-case';
-import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order.use-case';
-import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order.use-case';
+import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
+import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
+import { ConfirmPaymentUseCase } from '@modules/orders/application/use-cases/confirm-payment/confirm-payment.use-case';
+import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
+import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
+import {
+	OrderAlreadyExistsError,
+	OrderCancellationNotAllowedError,
+	OrderInvalidTransitionError,
+	OrderNotFoundError,
+} from '@modules/orders/domain/order.errors';
 import {
 	BadRequestException,
 	Body,
@@ -89,14 +95,18 @@ export class OrdersController {
 	private mapDomainError(
 		error: unknown,
 	): BadRequestException | NotFoundException {
-		if (!(error instanceof Error)) {
-			return new BadRequestException('Unexpected error.');
-		}
-
-		if (error.message === 'Order not found.') {
+		if (error instanceof OrderNotFoundError) {
 			return new NotFoundException(error.message);
 		}
 
-		return new BadRequestException(error.message);
+		if (
+			error instanceof OrderAlreadyExistsError ||
+			error instanceof OrderInvalidTransitionError ||
+			error instanceof OrderCancellationNotAllowedError
+		) {
+			return new BadRequestException(error.message);
+		}
+
+		return new BadRequestException('Unexpected error.');
 	}
 }

@@ -2,24 +2,25 @@ import {
 	ORDER_REPOSITORY_KEY,
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
+import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
 import { Inject, Injectable } from '@nestjs/common';
 
-type CancelOrderInput = {
+type ConfirmPaymentInput = {
 	orderId: string;
 };
 
 @Injectable()
-export class CancelOrderUseCase {
+export class ConfirmPaymentUseCase {
 	constructor(
 		@Inject(ORDER_REPOSITORY_KEY)
 		private readonly orderRepository: OrderRepositoryPort,
 	) {}
 
-	async execute(input: CancelOrderInput): Promise<void> {
+	async execute(input: ConfirmPaymentInput): Promise<void> {
 		const order = await this.orderRepository.findById(input.orderId);
-		if (!order) throw new Error('Order not found.');
+		if (!order) throw new OrderNotFoundError();
 
-		order.cancel();
+		order.confirmPayment();
 		await this.orderRepository.save(order);
 	}
 }

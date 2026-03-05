@@ -6,7 +6,7 @@ import type { OrderStatusPort } from '@modules/payments/application/ports/order-
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class OrderStatusFromOrdersRepositoryGateway implements OrderStatusPort {
+export class OrderStatusFromOrdersRepositoryAdapter implements OrderStatusPort {
 	constructor(
 		@Inject(ORDER_REPOSITORY_KEY)
 		private readonly orderRepository: OrderRepositoryPort,

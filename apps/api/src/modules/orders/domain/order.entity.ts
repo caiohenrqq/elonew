@@ -1,3 +1,7 @@
+import {
+	OrderCancellationNotAllowedError,
+	OrderInvalidTransitionError,
+} from '@modules/orders/domain/order.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 
 type AllowedTransitionMap = Record<OrderStatus, readonly OrderStatus[]>;
@@ -47,7 +51,7 @@ export class Order {
 			this.currentStatus === OrderStatus.IN_PROGRESS ||
 			this.currentStatus === OrderStatus.COMPLETED
 		)
-			throw new Error('Order cannot be cancelled after booster acceptance.');
+			throw new OrderCancellationNotAllowedError();
 
 		this.transitionTo(OrderStatus.CANCELLED);
 	}
@@ -55,9 +59,7 @@ export class Order {
 	private transitionTo(nextStatus: OrderStatus): void {
 		const allowed = ALLOWED_TRANSITIONS[this.currentStatus];
 		if (!allowed.includes(nextStatus))
-			throw new Error(
-				`Invalid order transition: ${this.currentStatus} -> ${nextStatus}.`,
-			);
+			throw new OrderInvalidTransitionError(this.currentStatus, nextStatus);
 
 		this.currentStatus = nextStatus;
 	}

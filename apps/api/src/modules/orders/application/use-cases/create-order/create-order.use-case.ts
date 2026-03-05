@@ -3,6 +3,7 @@ import {
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
 import { Order } from '@modules/orders/domain/order.entity';
+import { OrderAlreadyExistsError } from '@modules/orders/domain/order.errors';
 import type { OrderStatus } from '@modules/orders/domain/order-status';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -24,7 +25,7 @@ export class CreateOrderUseCase {
 
 	async execute(input: CreateOrderInput): Promise<CreateOrderOutput> {
 		const existingOrder = await this.orderRepository.findById(input.orderId);
-		if (existingOrder) throw new Error('Order already exists.');
+		if (existingOrder) throw new OrderAlreadyExistsError();
 
 		const order = Order.create(input.orderId);
 		await this.orderRepository.save(order);

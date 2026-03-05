@@ -1,7 +1,7 @@
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import type { OrderStatusPort } from '@modules/payments/application/ports/order-status.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
-import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold.use-case';
+import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {

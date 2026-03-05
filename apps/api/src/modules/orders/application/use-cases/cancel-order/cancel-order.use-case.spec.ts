@@ -1,6 +1,7 @@
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
-import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order.use-case';
+import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
+import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();
@@ -18,38 +19,27 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	}
 }
 
-describe('AcceptOrderUseCase', () => {
-	it('moves order to in progress when booster accepts a paid order', async () => {
+describe('CancelOrderUseCase', () => {
+	it('cancels an order when cancellation is allowed', async () => {
 		const repository = new InMemoryOrderRepository();
 		const order = Order.create('order-1');
 		order.confirmPayment();
 		repository.insert(order);
 
-		const useCase = new AcceptOrderUseCase(repository);
+		const useCase = new CancelOrderUseCase(repository);
+
 		await useCase.execute({ orderId: 'order-1' });
 
 		const savedOrder = await repository.findById('order-1');
-		expect(savedOrder?.status).toBe('in_progress');
+		expect(savedOrder?.status).toBe('cancelled');
 	});
 
 	it('throws when order does not exist', async () => {
 		const repository = new InMemoryOrderRepository();
-		const useCase = new AcceptOrderUseCase(repository);
+		const useCase = new CancelOrderUseCase(repository);
 
 		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
-			'Order not found.',
-		);
-	});
-
-	it('throws when order has not been paid yet', async () => {
-		const repository = new InMemoryOrderRepository();
-		const order = Order.create('order-2');
-		repository.insert(order);
-
-		const useCase = new AcceptOrderUseCase(repository);
-
-		await expect(useCase.execute({ orderId: 'order-2' })).rejects.toThrow(
-			'Invalid order transition: awaiting_payment -> in_progress.',
+			OrderNotFoundError,
 		);
 	});
 });

@@ -1,6 +1,7 @@
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
-import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order.use-case';
+import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
+import { OrderAlreadyExistsError } from '@modules/orders/domain/order.errors';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();
@@ -37,7 +38,7 @@ describe('CreateOrderUseCase', () => {
 		const useCase = new CreateOrderUseCase(repository);
 
 		await expect(useCase.execute({ orderId: 'order-1' })).rejects.toThrow(
-			'Order already exists.',
+			OrderAlreadyExistsError,
 		);
 	});
 });

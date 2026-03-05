@@ -1,6 +1,6 @@
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import type { ProcessedWebhookEventPort } from '@modules/payments/application/ports/processed-webhook-event.port';
-import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook.use-case';
+import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {
