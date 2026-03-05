@@ -1,0 +1,8 @@
+{
+	"name": "@packages/config",
+	"private": true,
+	"version": "0.0.0",
+	"dependencies": {
+		"zod": "^4.3.6"
+	}
+}

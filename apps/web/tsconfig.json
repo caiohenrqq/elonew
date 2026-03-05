@@ -13,13 +13,22 @@
 		"isolatedModules": true,
 		"jsx": "react-jsx",
 		"incremental": true,
+		"baseUrl": ".",
 		"plugins": [
 			{
 				"name": "next"
 			}
 		],
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"@app/*": ["./src/*"],
+			"@shared/*": ["../../packages/shared/src/*"],
+			"@database/*": ["../../packages/database/src/*"],
+			"@config/*": ["../../packages/config/src/*"],
+			"@auth/*": ["../../packages/auth/src/*"],
+			"@ui/*": ["../../packages/ui/src/*"],
+			"@testing/*": ["../../packages/testing/src/*"],
+			"@integrations/*": ["../../packages/integrations/src/*"]
 		}
 	},
 	"include": [

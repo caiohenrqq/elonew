@@ -6,7 +6,7 @@
 	"private": true,
 	"license": "UNLICENSED",
 	"scripts": {
-		"build": "nest build",
+		"build": "pnpm --filter @packages/database prisma:generate && nest build",
 		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
 		"start": "nest start",
 		"start:dev": "nest start --watch",
@@ -19,12 +19,18 @@
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-		"test:e2e": "jest --config ./test/jest-e2e.json"
+		"test:e2e": "jest --config ./test/jest-e2e.json",
+		"prisma:generate": "pnpm --filter @packages/database prisma:generate",
+		"prisma:validate": "pnpm --filter @packages/database prisma:validate",
+		"prisma:migrate:dev": "pnpm --filter @packages/database prisma:migrate:dev",
+		"prisma:migrate:deploy": "pnpm --filter @packages/database prisma:migrate:deploy",
+		"prisma:studio": "pnpm --filter @packages/database prisma:studio"
 	},
 	"dependencies": {
 		"@nestjs/common": "^11.0.1",
 		"@nestjs/core": "^11.0.1",
 		"@nestjs/platform-express": "^11.0.1",
+		"@prisma/client": "^7.4.2",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1"
 	},
@@ -44,6 +50,7 @@
 		"globals": "^16.0.0",
 		"jest": "^30.0.0",
 		"prettier": "^3.4.2",
+		"prisma": "^7.4.2",
 		"source-map-support": "^0.5.21",
 		"supertest": "^7.0.0",
 		"ts-jest": "^29.2.5",
@@ -59,6 +66,17 @@
 			"json",
 			"ts"
 		],
+		"moduleNameMapper": {
+			"^@app/(.*)$": "<rootDir>/$1",
+			"^@modules/(.*)$": "<rootDir>/modules/$1",
+			"^@shared/(.*)$": "<rootDir>/../../packages/shared/src/$1",
+			"^@database/(.*)$": "<rootDir>/../../packages/database/src/$1",
+			"^@config/(.*)$": "<rootDir>/../../packages/config/src/$1",
+			"^@auth/(.*)$": "<rootDir>/../../packages/auth/src/$1",
+			"^@ui/(.*)$": "<rootDir>/../../packages/ui/src/$1",
+			"^@testing/(.*)$": "<rootDir>/../../packages/testing/src/$1",
+			"^@integrations/(.*)$": "<rootDir>/../../packages/integrations/src/$1"
+		},
 		"rootDir": "src",
 		"testRegex": ".*\\.spec\\.ts$",
 		"transform": {

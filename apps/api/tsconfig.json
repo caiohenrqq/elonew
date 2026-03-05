@@ -14,6 +14,17 @@
 		"sourceMap": true,
 		"outDir": "./dist",
 		"baseUrl": "./",
+		"paths": {
+			"@app/*": ["src/*"],
+			"@modules/*": ["src/modules/*"],
+			"@shared/*": ["../../packages/shared/src/*"],
+			"@database/*": ["../../packages/database/src/*"],
+			"@config/*": ["../../packages/config/src/*"],
+			"@auth/*": ["../../packages/auth/src/*"],
+			"@ui/*": ["../../packages/ui/src/*"],
+			"@testing/*": ["../../packages/testing/src/*"],
+			"@integrations/*": ["../../packages/integrations/src/*"]
+		},
 		"incremental": true,
 		"skipLibCheck": true,
 		"strictNullChecks": true,

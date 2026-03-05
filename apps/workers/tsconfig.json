@@ -1,7 +1,19 @@
 {
 	"extends": "../api/tsconfig.json",
 	"compilerOptions": {
-		"outDir": "dist"
+		"outDir": "dist",
+		"baseUrl": "./",
+		"paths": {
+			"@app/*": ["src/*"],
+			"@modules/*": ["src/modules/*"],
+			"@shared/*": ["../../packages/shared/src/*"],
+			"@database/*": ["../../packages/database/src/*"],
+			"@config/*": ["../../packages/config/src/*"],
+			"@auth/*": ["../../packages/auth/src/*"],
+			"@ui/*": ["../../packages/ui/src/*"],
+			"@testing/*": ["../../packages/testing/src/*"],
+			"@integrations/*": ["../../packages/integrations/src/*"]
+		}
 	},
 	"include": ["src/**/*.ts"]
 }

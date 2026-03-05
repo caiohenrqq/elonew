@@ -1,0 +1,19 @@
+{
+  "name": "@packages/database",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+    "@prisma/client": "^7.4.2",
+    "dotenv": "^17.3.1"
+  },
+  "devDependencies": {
+    "prisma": "^7.4.2"
+  },
+  "scripts": {
+    "prisma:generate": "prisma --config ./prisma.config.ts generate",
+    "prisma:validate": "prisma --config ./prisma.config.ts validate",
+    "prisma:migrate:dev": "prisma --config ./prisma.config.ts migrate dev",
+    "prisma:migrate:deploy": "prisma --config ./prisma.config.ts migrate deploy",
+    "prisma:studio": "prisma --config ./prisma.config.ts studio"
+  }
+}
