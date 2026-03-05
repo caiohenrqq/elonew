@@ -156,6 +156,38 @@ modules/<feature>/
 Request flow:
 - `Controller -> UseCase -> Port -> Adapter/Repository -> DB or Provider`
 
+### Project standard for feature slices
+To keep structure predictable across the codebase:
+- In `application`, prefer `use-cases` naming instead of generic `services` for business actions.
+- Keep use-case folders simple when complexity is low.
+  - For simple modules (for example health checks returning a static status), use `application/use-cases/health/*.use-case.ts` without extra subfolders.
+  - Only add deeper subfolders per target when behavior becomes complex and needs stronger separation.
+- In `presentation`, keep one controller per feature target when endpoints are separated by responsibility.
+- Keep tests pragmatic by complexity:
+  - for simple/trivial use-cases, unit tests are optional
+  - for controllers, keep integration tests because they verify routing, wiring, and HTTP boundary behavior
+
+Example (health):
+```text
+modules/system/
+├─ application/
+│  └─ use-cases/
+│     └─ health/
+│        ├─ api-health.use-case.ts
+│        ├─ database-health.use-case.ts
+│        ├─ web-health.use-case.ts
+│        └─ workers-health.use-case.ts
+├─ presentation/
+│  └─ health/
+│     ├─ api/
+│     │  ├─ api-health.controller.ts
+│     │  └─ api-health.controller.integration.spec.ts
+│     ├─ database/
+│     ├─ web/
+│     └─ workers/
+└─ system.module.ts
+```
+
 How strongly to apply this:
 - Full structure for complex modules: `orders`, `payments`, `wallet`, provider/webhook flows.
 - Lighter structure allowed for low-risk CRUD modules.
