@@ -33,6 +33,7 @@ When documentation is needed, always use the official latest documentation.
 - Do not add code comments unless strictly necessary (for example, temporary placeholders).
 - YAML files must use spaces for indentation (never tabs).
 - Prefer one-line `if` statements when there is only a single throw statement (for example: `if (!order) throw new Error('Order not found.');`).
+- Avoid quick-fix type directives such as `/// <reference types=\"...\" />` for missing global types; prefer a proper project/package `tsconfig` fix (for example, `compilerOptions.types`) or explicit dependency configuration.
 
 ## Documentation maintenance rule for AI agents
 - After every medium or large change, add a brief summary entry to the `## Changelog` section in this file.
@@ -70,3 +71,21 @@ Official docs to use:
 - Refactored orders error handling to typed domain/application errors with controller `instanceof` mapping and expanded TDD coverage for HTTP exception mapping.
 - Standardized API integration test location under `apps/api/test/integration/<module_name>/*.integration.spec.ts` and documented test conventions (unitary/domain/use-cases, integration, e2e) in technical architecture.
 - Renamed infrastructure `gateways` nomenclature to `adapters` and adjusted module integration test naming to focus on module-level integration semantics.
+- Added `payments/domain/payment.errors.ts` and refactored payments domain/use-cases/controller to typed error handling with `instanceof` mapping and updated TDD assertions.
+- Updated root Biome all-workspace scripts to run from repository root (respecting ignore rules, including artifacts) and moved Prisma env-file loading to `packages/database/prisma.config.ts` to keep database package scripts clean.
+- Fixed API Nest runtime entrypoint resolution by enabling webpack build in `apps/api/nest-cli.json`, restoring `dist/main.js` output for watch/prod execution.
+- Switched Prisma command env injection to `dotenv-cli` from scripts, simplified `prisma.config.ts` to validation/config only, and added root-level `dotenv-cli` dependency declaration.
+- Moved Prisma operational commands to root-level `db:*` scripts with `dotenv-cli` and removed app-specific env orchestration scripts from `@packages/database` to keep package boundaries clean.
+- Added root `db` script alias and simplified root `db:*` commands to rely on Prisma auto-loading the package-local `prisma.config.ts` (removed explicit `--config` flags).
+- Added Prisma/Postgres adapters for orders and payments ports (`order`, `payment`, and processed webhook event persistence), introduced Prisma-backed order-status adapter, and wired modules to use Prisma outside tests while keeping in-memory adapters for test runtime.
+- Replaced `NODE_ENV`-based persistence branching with explicit DI token-based persistence selection (`inmemory|prisma`) and updated integration tests to override persistence driver provider directly.
+- Reverted persistence-driver token wiring and restored the previous test strategy using existing module behavior for integration tests.
+- Replaced ad-hoc `prisma.config.ts` Node type directive with a proper `packages/database/tsconfig.json` (`types: [\"node\"]`) and documented rule to avoid quick-fix triple-slash type directives.
+- Added API-level `AppConfigModule`/`AppConfigService` for typed env access and updated bootstrap/Prisma runtime code to consume env values through config service instead of direct env reads.
+- Added new intentionally failing tests for orders/payments TDD backlog (order existence validation on payment creation, idempotent order payment confirmation retries, and non-finite payment amount rejection).
+- Implemented TDD fixes for orders/payments backlog: payment creation now validates related order existence, payment amount validation rejects non-finite values, and order payment-confirmation use-case is idempotent for retry scenarios.
+- Renamed API config surface to `common/settings` with `AppSettingsModule`/`AppSettingsService` and updated module/bootstrap/database imports to remove `app-config` naming.
+- Updated API build/Prisma scripts to use root `db:*` commands and rebuilt `dist` to remove stale `app-config` runtime imports after settings-module rename.
+- Aligned Prisma 7 runtime setup with adapter-based connection approach (`@prisma/adapter-pg`) in API Prisma service and reduced `AppSettingsService` to only currently used env keys.
+- Documented and fixed Prisma 7 migration/runtime issue where API failed with `PrismaClientInitializationError` due to legacy datasource URL expectations; solution was to keep datasource URL out of `schema.prisma`, configure Prisma runtime through `PrismaClient({ adapter: new PrismaPg({ connectionString }) })`, add `@prisma/adapter-pg` + `pg` dependencies, and clean env-service typing to active keys.
+- Refactored shared Prisma location from `src/infrastructure/database` to `src/common/prisma` and updated API modules/tests imports to improve project navigation and Ctrl+P discoverability.
