@@ -5,3 +5,265 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role {
+  CLIENT
+  BOOSTER
+  ADMIN
+}
+
+enum OrderStatus {
+  awaiting_payment
+  pending_booster
+  in_progress
+  completed
+  cancelled
+}
+
+enum PaymentStatus {
+  awaiting_confirmation
+  held
+  released
+}
+
+enum ServiceType {
+  ELO_BOOST
+  DUO_BOOST
+  MD5
+  COACHING
+}
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+}
+
+model User {
+  id               String    @id @default(cuid())
+  username         String    @unique
+  email            String    @unique
+  password         String
+  role             Role      @default(CLIENT)
+  isActive         Boolean   @default(true)
+  emailConfirmedAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  profile          Profile?
+  ordersAsClient   Order[]   @relation("ClientOrders")
+  ordersAsBooster  Order[]   @relation("BoosterOrders")
+  wallet           Wallet?
+  chatMessages     ChatMessage[]
+  tickets          Ticket[]
+  ticketMessages   TicketMessage[]
+  ratingsGiven     Rating[]  @relation("RatingsGiven")
+  ratingsReceived  Rating[]  @relation("RatingsReceived")
+
+  @@map("users")
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  avatarUrl   String?
+  bio         String?
+  inviteToken String?  @unique
+  reputation  Float    @default(0)
+
+  @@map("profiles")
+}
+
+model Order {
+  id               String       @id @default(cuid())
+  clientId         String?
+  client           User?        @relation("ClientOrders", fields: [clientId], references: [id])
+  boosterId        String?
+  booster          User?        @relation("BoosterOrders", fields: [boosterId], references: [id])
+  status           OrderStatus  @default(awaiting_payment)
+  serviceType      ServiceType?
+  
+  // FR-013 fields
+  currentLeague    String?
+  currentDivision  String?
+  currentLp        Int?
+  desiredLeague    String?
+  desiredDivision  String?
+  server           String?
+  desiredQueue     String?
+  lpGain           Int?
+  deadline         DateTime?
+  
+  subtotal         Float?
+  totalAmount      Float?
+  discountAmount   Float        @default(0)
+  couponId         String?
+  coupon           Coupon?      @relation(fields: [couponId], references: [id])
+  
+  credentials      OrderCredentials?
+  extras           OrderExtra[]
+  payments         Payment[]
+  chat             Chat?
+  rating           Rating?
+  walletTransactions WalletTransaction[]
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([status])
+  @@index([clientId])
+  @@index([boosterId])
+  @@map("orders")
+}
+
+model OrderCredentials {
+  id           String   @id @default(cuid())
+  orderId      String   @unique
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  login        String
+  summonerName String
+  password     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("order_credentials")
+}
+
+model OrderExtra {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+  type    String
+  price   Float
+
+  @@map("order_extras")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id])
+  status        PaymentStatus @default(awaiting_confirmation)
+  grossAmount   Float
+  boosterAmount Float
+  gateway       String        @default("MERCADO_PAGO")
+  gatewayId     String?       @unique
+  gatewayStatus String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([orderId])
+  @@map("payments")
+}
+
+model Wallet {
+  id                 String   @id @default(cuid())
+  boosterId          String   @unique
+  booster            User     @relation(fields: [boosterId], references: [id])
+  balanceLocked      Float    @default(0)
+  balanceWithdrawable Float   @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id          String                @id @default(cuid())
+  walletId    String
+  wallet      Wallet                @relation(fields: [walletId], references: [id])
+  orderId     String?
+  order       Order?                @relation(fields: [orderId], references: [id])
+  amount      Float
+  type        WalletTransactionType
+  reason      String
+  availableAt DateTime
+  createdAt   DateTime              @default(now())
+
+  @@index([walletId, createdAt])
+  @@map("wallet_transactions")
+}
+
+model Coupon {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  discount       Float
+  isActive       Boolean  @default(true)
+  firstOrderOnly Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  orders Order[]
+
+  @@map("coupons")
+}
+
+model Chat {
+  id      String        @id @default(cuid())
+  orderId String        @unique
+  order   Order         @relation(fields: [orderId], references: [id])
+  messages ChatMessage[]
+
+  @@map("chats")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@map("chat_messages")
+}
+
+model Ticket {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  subject   String
+  status    String          @default("OPEN")
+  messages  TicketMessage[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@map("ticket_messages")
+}
+
+model Rating {
+  id         String   @id @default(cuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  fromUserId String
+  fromUser   User     @relation("RatingsGiven", fields: [fromUserId], references: [id])
+  toUserId   String
+  toUser     User     @relation("RatingsReceived", fields: [toUserId], references: [id])
+  score      Int
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  @@map("ratings")
+}
+
+model ProcessedWebhookEvent {
+  eventId     String   @id
+  processedAt DateTime @default(now())
+
+  @@map("processed_webhook_events")
+}
