@@ -13,7 +13,7 @@
 	},
 	"testEnvironment": "node",
 	"setupFiles": ["<rootDir>/load-test-env.ts"],
-	"testRegex": ".e2e-spec.ts$",
+	"testRegex": "integration-db/.*\\.db\\.integration\\.spec\\.ts$",
 	"transform": {
 		"^.+\\.(t|j)s$": "ts-jest"
 	}

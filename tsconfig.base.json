@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
+		"target": "ES2022",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"isolatedModules": true,
+		"declaration": true,
+		"sourceMap": true,
+		"baseUrl": ".",
+		"paths": {
+			"@app/*": ["apps/api/src/*"],
+			"@modules/*": ["apps/api/src/modules/*"],
+			"@shared/*": ["packages/shared/src/*"],
+			"@database/*": ["packages/database/src/*"],
+			"@config/*": ["packages/config/src/*"],
+			"@auth/*": ["packages/auth/src/*"],
+			"@ui/*": ["packages/ui/src/*"],
+			"@testing/*": ["packages/testing/src/*"],
+			"@integrations/*": ["packages/integrations/src/*"]
+		}
+	},
+	"exclude": ["node_modules", "dist"]
+}

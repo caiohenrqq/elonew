@@ -1,6 +1,6 @@
-import { envSchema } from '@config/env/env.schema';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { envSchema } from '@packages/config/env/env.schema';
 import { AppSettingsService } from './app-settings.service';
 
 @Global()

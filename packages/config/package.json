@@ -2,6 +2,19 @@
 	"name": "@packages/config",
 	"private": true,
 	"version": "0.0.0",
+	"exports": {
+		"./env/env.schema": {
+			"types": "./dist/env/env.schema.d.ts",
+			"default": "./dist/env/env.schema.js"
+		},
+		"./env/env.config": {
+			"types": "./dist/env/env.config.d.ts",
+			"default": "./dist/env/env.config.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json"
+	},
 	"dependencies": {
 		"zod": "^4.3.6"
 	}

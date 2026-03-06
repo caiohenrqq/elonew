@@ -1,6 +1,6 @@
-import type { AppEnv } from '@config/env/env.schema';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { AppEnv } from '@packages/config/env/env.schema';
 
 @Injectable()
 export class AppSettingsService {
