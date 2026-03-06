@@ -62,4 +62,24 @@ describe('PrismaPaymentRepository', () => {
 
 		await expect(repository.findById('missing-payment')).resolves.toBeNull();
 	});
+
+	it('throws when persisted payment status is invalid', async () => {
+		const prisma = {
+			payment: {
+				findUnique: jest.fn().mockResolvedValue({
+					id: 'payment-1',
+					orderId: 'order-1',
+					status: 'invalid_status',
+					grossAmount: 100,
+					boosterAmount: 70,
+				}),
+				upsert: jest.fn(),
+			},
+		};
+		const repository = new PrismaPaymentRepository(prisma as never);
+
+		await expect(repository.findById('payment-1')).rejects.toThrow(
+			'Invalid payment status persisted: invalid_status',
+		);
+	});
 });

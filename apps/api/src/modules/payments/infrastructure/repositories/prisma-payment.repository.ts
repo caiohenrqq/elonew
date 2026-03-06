@@ -3,6 +3,7 @@ import type { PaymentRepositoryPort } from '@modules/payments/application/ports/
 import { Payment } from '@modules/payments/domain/payment.entity';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Injectable } from '@nestjs/common';
+import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type PaymentRecord = {
 	id: string;
@@ -36,7 +37,11 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 		return Payment.rehydrate({
 			id: record.id,
 			orderId: record.orderId,
-			status: this.toPaymentStatus(record.status),
+			status: ensurePersistedEnum(
+				PaymentStatus,
+				record.status,
+				'payment status',
+			),
 			grossAmount: record.grossAmount,
 			boosterAmount: record.boosterAmount,
 		});
@@ -62,12 +67,5 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 
 	private getDelegate(): PaymentDelegate {
 		return (this.prisma as unknown as PaymentPrismaClient).payment;
-	}
-
-	private toPaymentStatus(value: string): PaymentStatus {
-		if (!Object.values(PaymentStatus).includes(value as PaymentStatus))
-			throw new Error(`Invalid payment status persisted: ${value}`);
-
-		return value as PaymentStatus;
 	}
 }

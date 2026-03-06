@@ -22,4 +22,17 @@ describe('OrderStatusFromPrismaAdapter', () => {
 
 		await expect(adapter.findByOrderId('missing-order')).resolves.toBeNull();
 	});
+
+	it('throws when persisted order status is invalid', async () => {
+		const prisma = {
+			order: {
+				findUnique: jest.fn().mockResolvedValue({ status: 'invalid_status' }),
+			},
+		};
+		const adapter = new OrderStatusFromPrismaAdapter(prisma as never);
+
+		await expect(adapter.findByOrderId('order-1')).rejects.toThrow(
+			'Invalid order status persisted: invalid_status',
+		);
+	});
 });

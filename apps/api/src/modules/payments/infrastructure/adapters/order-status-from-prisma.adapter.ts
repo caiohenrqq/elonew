@@ -2,6 +2,7 @@ import { PrismaService } from '@app/common/prisma/prisma.service';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import type { OrderStatusPort } from '@modules/payments/application/ports/order-status.port';
 import { Injectable } from '@nestjs/common';
+import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type OrderRecord = {
 	status: string;
@@ -28,10 +29,8 @@ export class OrderStatusFromPrismaAdapter implements OrderStatusPort {
 			select: { status: true },
 		});
 		if (!record) return null;
-		if (!Object.values(OrderStatus).includes(record.status as OrderStatus))
-			throw new Error(`Invalid order status persisted: ${record.status}`);
 
-		return record.status as OrderStatus;
+		return ensurePersistedEnum(OrderStatus, record.status, 'order status');
 	}
 
 	private getDelegate(): OrderDelegate {

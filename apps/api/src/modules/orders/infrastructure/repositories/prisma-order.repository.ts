@@ -3,6 +3,7 @@ import type { OrderRepositoryPort } from '@modules/orders/application/ports/orde
 import { Order } from '@modules/orders/domain/order.entity';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import { Injectable } from '@nestjs/common';
+import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type OrderRecord = {
 	id: string;
@@ -32,7 +33,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 
 		return Order.rehydrate({
 			id: record.id,
-			status: this.toOrderStatus(record.status),
+			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
 		});
 	}
 
@@ -51,12 +52,5 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 
 	private getDelegate(): OrderDelegate {
 		return (this.prisma as unknown as OrderPrismaClient).order;
-	}
-
-	private toOrderStatus(value: string): OrderStatus {
-		if (!Object.values(OrderStatus).includes(value as OrderStatus))
-			throw new Error(`Invalid order status persisted: ${value}`);
-
-		return value as OrderStatus;
 	}
 }

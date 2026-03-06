@@ -41,4 +41,20 @@ describe('PrismaOrderRepository', () => {
 
 		await expect(repository.findById('missing-order')).resolves.toBeNull();
 	});
+
+	it('throws when persisted order status is invalid', async () => {
+		const prisma = {
+			order: {
+				findUnique: jest
+					.fn()
+					.mockResolvedValue({ id: 'order-1', status: 'invalid_status' }),
+				upsert: jest.fn(),
+			},
+		};
+		const repository = new PrismaOrderRepository(prisma as never);
+
+		await expect(repository.findById('order-1')).rejects.toThrow(
+			'Invalid order status persisted: invalid_status',
+		);
+	});
 });
