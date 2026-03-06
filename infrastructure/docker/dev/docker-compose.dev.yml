@@ -22,6 +22,7 @@ services:
     build:
       context: ../../..
       dockerfile: infrastructure/docker/dev/Dockerfile.dev
+    init: true
     user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
     restart: unless-stopped
     working_dir: /workspace
@@ -46,13 +47,14 @@ services:
       [
         'sh',
         '-lc',
-        'pnpm --filter api run start:dev',
+        'pnpm --filter api run start:dev:stable',
       ]
 
   web:
     build:
       context: ../../..
       dockerfile: infrastructure/docker/dev/Dockerfile.dev
+    init: true
     user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
     restart: unless-stopped
     working_dir: /workspace
@@ -83,6 +85,7 @@ services:
     build:
       context: ../../..
       dockerfile: infrastructure/docker/dev/Dockerfile.dev
+    init: true
     user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
     restart: unless-stopped
     working_dir: /workspace
