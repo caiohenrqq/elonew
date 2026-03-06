@@ -12,6 +12,7 @@ Monorepo for a League of Legends boosting platform with:
 - Technical architecture and structure: `docs/tech-architecture.md`
 - Database guidelines: `docs/database.md`
 - Stack decisions: `docs/stack.md`
+- Package management: `docs/packages.md`
 
 ## Documentation rule for AI agents
 When documentation is needed, always use the official latest documentation.
@@ -23,7 +24,7 @@ When documentation is needed, always use the official latest documentation.
 ## Command execution rule for AI agents
 - Prefer `pnpx` instead of `pnpm dlx` for one-off CLI execution in general.
 - If execution is blocked by network/sandbox/permission issues, explicitly ask for human intervention and wait for guidance/approval before retrying repeatedly.
-- Do not run dependency installation commands directly (for example `pnpm add`, `pnpm install`, `pnpm remove`); ask the user to run them manually and continue after confirmation.
+- Dependency installation commands (for example `pnpm add`, `pnpm install`, `pnpm remove`) are allowed only after explicit user permission in the current task.
 - After every medium or large code change, run `pnpm biome:fix:all` and typecheck before finalizing.
 - Always ask for explicit user permission before running Git write actions (for example `git commit`, `git rebase`, `git merge`, `git tag`).
 - Never run `git push` unless the user explicitly asks for it; even when explicitly asked, ask for confirmation immediately before executing it.
@@ -34,9 +35,13 @@ When documentation is needed, always use the official latest documentation.
 - YAML files must use spaces for indentation (never tabs).
 - Prefer one-line `if` statements when there is only a single throw statement (for example: `if (!order) throw new Error('Order not found.');`).
 - Avoid quick-fix type directives such as `/// <reference types=\"...\" />` for missing global types; prefer a proper project/package `tsconfig` fix (for example, `compilerOptions.types`) or explicit dependency configuration.
+- Before adding new functions or utilities, first search the codebase for existing implementations and reuse/extend them when appropriate.
+- Avoid bypassing existing abstractions with manual implementations (for example, do not read `process.env` directly in app/runtime code when `AppSettingsService`/config service is the project standard).
+- Shared workspace packages must be consumed via package dependency + package exports entrypoints (for example `@packages/config/...`), never by importing `packages/*/src/*` from app code.
 
 ## Documentation maintenance rule for AI agents
 - After every medium or large change, add a brief summary entry to the `## Changelog` section in this file.
+- **Development Roadmap:** When a task in the `## Development Roadmap` is completed, mark it with an `[x]`.
 
 Official docs to use:
 - NestJS: https://docs.nestjs.com/
@@ -46,6 +51,50 @@ Official docs to use:
 - Playwright: https://playwright.dev/docs/api/class-test
 - pnpm: https://pnpm.io/installation
 - TypeScript: https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html
+
+## Development Roadmap
+
+### 1. Auth & User Management
+- [ ] Implement `User` domain logic and Prisma repository.
+- [ ] Create `SignUp` use-case with email confirmation placeholder.
+- [ ] Create `Login` use-case with JWT and Refresh Token rotation.
+- [ ] Implement `@Roles()` decorator and `AuthGuard` for RBAC.
+
+### 2. Service Catalog & Pricing
+- [ ] Implement Elo/Rank pricing engine (calculate subtotal based on rank difference).
+- [ ] Implement deterministic pricing modifiers for all 10+ extras (FR-035 to FR-044).
+- [ ] Create Zod schemas for order creation validation in `@packages/shared`.
+
+### 3. Core Order Flow
+- [ ] Complete `CreateOrder` use-case with `OrderCredentials` persistence.
+- [ ] Implement `AcceptOrder` and `RejectOrder` logic for boosters.
+- [ ] Implement `CancelOrder` with business rules (allow only before acceptance).
+- [ ] Implement `CompleteOrder` with automated credential deletion logic.
+
+### 4. Payments Integration (Mercado Pago)
+- [ ] Build `@packages/integrations/mercadopago` wrapper.
+- [ ] Implement `HandleWebhook` use-case with idempotency (using `ProcessedWebhookEvent`).
+- [ ] Map Mercado Pago states to internal `PaymentStatus` and trigger order transitions.
+
+### 5. Booster Wallet & Finances
+- [ ] Implement `Wallet` domain logic for Credit/Debit ledger entries.
+- [ ] Create `WithdrawalRequest` flow for boosters.
+- [ ] Build background worker (BullMQ) for "Lock Period" timer to release funds.
+
+### 6. Communication & Support
+- [ ] Implement WebSocket gateway for real-time internal Chat.
+- [ ] Create `Ticket` domain and use-cases for support history.
+- [ ] Add `Rating` system (Client rates Booster and vice-versa).
+
+### 7. Admin Governance
+- [ ] Implement Admin Dashboard API (Financial metrics: Revenue, active orders).
+- [ ] Create endpoints for Admin intervention (Force cancel, user block/unblock).
+
+### 8. Frontend implementation (Next.js)
+- [ ] Build shared component library in `@packages/ui`.
+- [ ] Implement Client Dashboard (Order creation, active order tracking).
+- [ ] Implement Booster Dashboard (Available orders queue, wallet management).
+- [ ] Implement Admin Dashboard (Metric overview, user management, support view).
 
 ## Changelog
 - Bootstrapped monorepo with `pnpm` workspace, `git init`, and base `apps/` + `packages/` structure.
@@ -89,3 +138,18 @@ Official docs to use:
 - Aligned Prisma 7 runtime setup with adapter-based connection approach (`@prisma/adapter-pg`) in API Prisma service and reduced `AppSettingsService` to only currently used env keys.
 - Documented and fixed Prisma 7 migration/runtime issue where API failed with `PrismaClientInitializationError` due to legacy datasource URL expectations; solution was to keep datasource URL out of `schema.prisma`, configure Prisma runtime through `PrismaClient({ adapter: new PrismaPg({ connectionString }) })`, add `@prisma/adapter-pg` + `pg` dependencies, and clean env-service typing to active keys.
 - Refactored shared Prisma location from `src/infrastructure/database` to `src/common/prisma` and updated API modules/tests imports to improve project navigation and Ctrl+P discoverability.
+- Stabilized API integration/e2e test wiring by overriding repository/status port providers with explicit in-memory adapters in test modules, removing direct Prisma cleanup calls that made tests depend on external Postgres reachability.
+- Refactored duplicated persisted-enum validation in Orders/Payments Prisma adapters and repositories into shared `common/persistence` utility, and expanded repository/adapter specs to cover invalid persisted status scenarios explicitly.
+- Added root-level implementation plan file `orders-payment-tdd-refactor.md` and executed the first refactor wave with shared controller domain-error mapping utility for Orders and Payments.
+- Added backend Dual-Lane testing structure with dedicated DB-backed Jest configs and suites (`test:integration:db`, `test:e2e:db`) while preserving fast default in-memory integration flow.
+- Added minimal Mercado Pago SDK integration placeholders under `packages/integrations/src/mercadopago` with explicit `Not implemented yet` behavior to preserve planned boundaries without premature implementation.
+- Added host-side DB test bootstrap scripts (`db:test:prepare`) that automatically ensure `elonew_test` exists via Docker Postgres service and apply Prisma migrations before DB-backed integration/e2e lanes.
+- Removed manual DB test prepare dependency from API test commands; `test:integration:db` and `test:e2e:db` now auto-bootstrap test DB existence and migrations through `db:test:prepare` (`database-test-setup.sh` + `database-test-ensure-exists.sh`).
+- Fixed API dev/prod bootstrap path mismatch where Nest looked for `apps/api/dist/main` but TypeScript emitted nested output due external-source config imports; moved API env validation/type to `src/common/settings` so build emits `dist/main.js` consistently.
+- Restored shared config architecture through `@packages/config` package exports (without barrel files), added package build step, and removed direct app imports to `packages/config/src/*` to keep runtime boundaries stable.
+- Stabilized API Docker watch mode by setting `apps/api/nest-cli.json` `compilerOptions.deleteOutDir` to `false` to avoid transient incremental rebuild races causing `MODULE_NOT_FOUND` in `dist` during app restart.
+- Added `api` dev startup flow `start:dev:clean` (`rm -rf dist` once on startup) and wired Docker dev API service to it, preventing stale artifact carry-over without requiring full `api build` in day-to-day development.
+- Hardened API bootstrap against dev-watch restart races by closing a previous in-process app instance and retrying `app.listen` on `EADDRINUSE` with short backoff in `src/main.ts`.
+- Replaced API Docker dev hot-reload runtime with stable model (`nest build --watch` + single `node --watch dist/main.js` via `api-dev-watch-runner.sh`) and simplified `src/main.ts` bootstrap, removing temporary `EADDRINUSE` retry/lock workaround.
+- Moved persisted-enum helper ownership from API `common/persistence` to shared package `@shared/utils/enum.utils`, removed API-local persistence folder, and updated Orders/Payments Prisma adapter/repository imports accordingly.
+- Refined the `## Development Roadmap` in `AGENTS.md` with granular sub-tasks for each core feature to improve progress tracking.

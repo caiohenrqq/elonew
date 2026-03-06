@@ -66,11 +66,20 @@ Practical implications:
 Use internal aliases to keep imports stable as packages evolve:
 - `@shared/*`
 - `@database/*`
-- `@config/*`
 - `@auth/*`
 - `@ui/*`
 - `@testing/*`
 - `@integrations/*`
+
+Boundary rule:
+- Apps must consume shared workspace libraries as packages (dependency + package exports), not through direct `packages/*/src/*` imports.
+- Avoid TS path aliases from apps to another package `src` folder because this leaks package internals into app build output.
+
+### API dev-watch stability note
+- In Docker/polling watch mode, keep `apps/api/nest-cli.json` with `compilerOptions.deleteOutDir: false`.
+- Reason: deleting `dist` before each incremental rebuild can trigger transient `MODULE_NOT_FOUND` (for example `./app-settings.service`) during restart race conditions.
+- For Docker dev runtime, prefer `nest build --watch` plus a single `node --watch dist/main.js` process instead of `nest start --watch`.
+- Reason: `nest start --watch` can overlap old/new app listeners and produce transient `EADDRINUSE` on `3000` during hot reload.
 
 ## Package purposes
 
@@ -92,6 +101,7 @@ Centralized project standards.
 - Shared `tsconfig` presets.
 - Shared ESLint and Prettier configuration.
 - Reusable environment/config conventions.
+- Export env/contracts via package subpath exports and import from app/runtime code using package paths (for example `@packages/config/env/env.schema`).
 
 ### `@auth` (`packages/auth`)
 Authorization and policy rules reused by API and web.
@@ -283,6 +293,9 @@ Testing conventions:
 - Integration tests for API modules live in `apps/api/test/integration/<module_name>/*.integration.spec.ts`.
 - Integration tests must load the real Nest module (`Test.createTestingModule({ imports: [<Module>] })`) and validate wiring between controller, use-cases, and adapters.
 - E2E tests live in `apps/api/test/*.e2e-spec.ts` and validate HTTP boundaries with the application bootstrap.
+- Use a Dual-Lane strategy for backend tests:
+  - In-memory lane (default): fast module integration and e2e tests with explicit DI overrides for repositories/ports.
+  - Postgres lane (`test:integration:db`, `test:e2e:db`): persistence-backed tests under `apps/api/test/integration-db/**` and `*.db.e2e-spec.ts`.
 
 ## Boundaries
 - `@shared` must stay framework-agnostic and import-safe for both `api` and `web`.
