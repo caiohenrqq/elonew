@@ -9,13 +9,15 @@
 		"db:test": "dotenv -e apps/api/.env.test -- pnpm --filter @packages/database exec prisma",
 		"web": "pnpm --filter web",
 		"workers": "pnpm --filter @apps/workers",
+
 		"dev": "pnpm -r --parallel dev",
+		"build": "pnpm api build && pnpm web build",
 		"start:dev:api": "pnpm api start:dev",
 		"start:dev:web": "pnpm web dev",
 		"start:dev:workers": "pnpm workers dev",
-		"build": "pnpm api build && pnpm web build",
+
 		"test:api": "pnpm api test",
-		"lint": "pnpm -r lint",
+
 		"biome:check:api": "pnpm api biome:check",
 		"biome:check:web": "pnpm web biome:check",
 		"biome:check:workers": "pnpm workers biome:check",
@@ -24,6 +26,7 @@
 		"biome:fix:web": "pnpm web biome:fix",
 		"biome:fix:workers": "pnpm workers biome:fix",
 		"biome:fix:all": "pnpm exec biome check --write .",
+
 		"db:generate": "pnpm db generate",
 		"db:validate": "pnpm db validate",
 		"db:migrate:dev": "pnpm db migrate dev",
@@ -31,6 +34,7 @@
 		"db:studio": "pnpm db studio",
 		"db:test:validate": "pnpm db:test validate",
 		"db:test:prepare": "bash infrastructure/scripts/database-test-setup.sh",
+
 		"docker:dev:up": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d",
 		"docker:dev:build": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml build",
 		"docker:dev:down": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down",

@@ -7,16 +7,16 @@
 	"license": "UNLICENSED",
 	"scripts": {
 		"build": "pnpm -w config:build && pnpm -w db:generate && nest build",
-		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
 		"start": "pnpm -w config:build && nest start",
 		"start:dev": "pnpm -w config:build && nest start --watch",
 		"start:dev:clean": "rm -rf dist && pnpm -w config:build && nest start --watch",
 		"start:dev:stable": "bash ../../infrastructure/scripts/api-dev-watch-runner.sh",
 		"start:debug": "pnpm -w config:build && nest start --debug --watch",
 		"start:prod": "node dist/main",
-		"lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+
 		"biome:check": "biome check .",
 		"biome:fix": "biome check --write .",
+
 		"test": "pnpm -w config:build && jest",
 		"test:unit": "pnpm -w config:build && jest \"src/.*\\.spec\\.ts$\" --runInBand",
 		"test:integration": "pnpm -w config:build && jest \"test/integration/.*\\.integration\\.spec\\.ts$\" --runInBand",
@@ -26,6 +26,7 @@
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"test:e2e": "pnpm -w config:build && jest --config ./test/jest-e2e.json",
 		"test:e2e:db": "pnpm -w config:build && pnpm -w db:test:prepare && jest --config ./test/jest-e2e-db.json --runInBand",
+
 		"prisma:generate": "pnpm -w db:generate",
 		"prisma:validate": "pnpm -w db:validate",
 		"prisma:migrate:dev": "pnpm -w db:migrate:dev",

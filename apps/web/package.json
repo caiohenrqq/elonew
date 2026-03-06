@@ -4,9 +4,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
 		"start": "next start",
-		"lint": "eslint",
+		"build": "next build",
 		"biome:check": "biome check .",
 		"biome:fix": "biome check --write ."
 	},
