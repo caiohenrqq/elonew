@@ -6,7 +6,7 @@
 	"private": true,
 	"license": "UNLICENSED",
 	"scripts": {
-		"build": "pnpm --filter @packages/database prisma:generate && nest build",
+		"build": "pnpm -w db:generate && nest build",
 		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
 		"start": "nest start",
 		"start:dev": "nest start --watch",
@@ -20,17 +20,21 @@
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"test:e2e": "jest --config ./test/jest-e2e.json",
-		"prisma:generate": "pnpm --filter @packages/database prisma:generate",
-		"prisma:validate": "pnpm --filter @packages/database prisma:validate",
-		"prisma:migrate:dev": "pnpm --filter @packages/database prisma:migrate:dev",
-		"prisma:migrate:deploy": "pnpm --filter @packages/database prisma:migrate:deploy",
-		"prisma:studio": "pnpm --filter @packages/database prisma:studio"
+		"prisma:generate": "pnpm -w db:generate",
+		"prisma:validate": "pnpm -w db:validate",
+		"prisma:migrate:dev": "pnpm -w db:migrate:dev",
+		"prisma:migrate:deploy": "pnpm -w db:migrate:deploy",
+		"prisma:studio": "pnpm -w db:studio"
 	},
 	"dependencies": {
+		"@prisma/adapter-pg": "latest",
 		"@nestjs/common": "^11.0.1",
+		"@nestjs/config": "^4.0.0",
 		"@nestjs/core": "^11.0.1",
 		"@nestjs/platform-express": "^11.0.1",
+		"@packages/config": "workspace:*",
 		"@prisma/client": "^7.4.2",
+		"pg": "latest",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1"
 	},
@@ -79,6 +83,9 @@
 		},
 		"rootDir": ".",
 		"testRegex": "(src/.*\\.spec\\.ts$|test/integration/.*\\.integration\\.spec\\.ts$)",
+		"setupFiles": [
+			"<rootDir>/test/load-test-env.ts"
+		],
 		"transform": {
 			"^.+\\.(t|j)s$": "ts-jest"
 		},

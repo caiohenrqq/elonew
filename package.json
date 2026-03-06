@@ -4,6 +4,7 @@
 	"packageManager": "pnpm@10.30.2",
 	"scripts": {
 		"api": "pnpm --filter api",
+		"db": "dotenv -e apps/api/.env -- pnpm --filter @packages/database exec prisma",
 		"web": "pnpm --filter web",
 		"workers": "pnpm --filter @apps/workers",
 		"dev": "pnpm -r --parallel dev",
@@ -16,11 +17,16 @@
 		"biome:check:api": "pnpm api biome:check",
 		"biome:check:web": "pnpm web biome:check",
 		"biome:check:workers": "pnpm workers biome:check",
-		"biome:check:all": "pnpm biome:check:api && pnpm biome:check:web && pnpm biome:check:workers",
+		"biome:check:all": "pnpm exec biome check .",
 		"biome:fix:api": "pnpm api biome:fix",
 		"biome:fix:web": "pnpm web biome:fix",
 		"biome:fix:workers": "pnpm workers biome:fix",
-		"biome:fix:all": "pnpm biome:fix:api && pnpm biome:fix:web && pnpm biome:fix:workers",
+		"biome:fix:all": "pnpm exec biome check --write .",
+		"db:generate": "pnpm db generate",
+		"db:validate": "pnpm db validate",
+		"db:migrate:dev": "pnpm db migrate dev",
+		"db:migrate:deploy": "pnpm db migrate deploy",
+		"db:studio": "pnpm db studio",
 		"docker:dev:up": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d",
 		"docker:dev:build": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml build",
 		"docker:dev:down": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down",
@@ -28,6 +34,8 @@
 		"docker:dev:reset": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down -v && docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d --build"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.5"
+		"@biomejs/biome": "^2.4.5",
+		"@types/node": "^25.3.5",
+		"dotenv-cli": "latest"
 	}
 }

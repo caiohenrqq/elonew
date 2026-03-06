@@ -1,0 +1,11 @@
+{
+	"compilerOptions": {
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
+		"target": "ES2023",
+		"types": ["node"],
+		"strict": true,
+		"noEmit": true
+	},
+	"include": ["prisma.config.ts"]
+}
