@@ -4,7 +4,9 @@
 	"packageManager": "pnpm@10.30.2",
 	"scripts": {
 		"api": "pnpm --filter api",
+		"config:build": "pnpm --filter @packages/config run build",
 		"db": "dotenv -e apps/api/.env -- pnpm --filter @packages/database exec prisma",
+		"db:test": "dotenv -e apps/api/.env.test -- pnpm --filter @packages/database exec prisma",
 		"web": "pnpm --filter web",
 		"workers": "pnpm --filter @apps/workers",
 		"dev": "pnpm -r --parallel dev",
@@ -27,6 +29,8 @@
 		"db:migrate:dev": "pnpm db migrate dev",
 		"db:migrate:deploy": "pnpm db migrate deploy",
 		"db:studio": "pnpm db studio",
+		"db:test:validate": "pnpm db:test validate",
+		"db:test:prepare": "bash infrastructure/scripts/database-test-setup.sh",
 		"docker:dev:up": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d",
 		"docker:dev:build": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml build",
 		"docker:dev:down": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down",
