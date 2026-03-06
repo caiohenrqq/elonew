@@ -1,3 +1,8 @@
+import {
+	mapAsBadRequest,
+	mapAsNotFound,
+	mapDomainErrorToHttpException,
+} from '@app/common/http/domain-error.mapper';
 import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
@@ -118,22 +123,14 @@ export class PaymentsController {
 	private mapDomainError(
 		error: unknown,
 	): BadRequestException | NotFoundException {
-		if (
-			error instanceof PaymentNotFoundError ||
-			error instanceof PaymentOrderNotFoundError
-		) {
-			return new NotFoundException(error.message);
-		}
-
-		if (
-			error instanceof PaymentAlreadyExistsError ||
-			error instanceof PaymentAmountInvalidError ||
-			error instanceof PaymentInvalidTransitionError ||
-			error instanceof PaymentHoldReleaseNotAllowedError
-		) {
-			return new BadRequestException(error.message);
-		}
-
-		return new BadRequestException('Unexpected error.');
+		return mapDomainErrorToHttpException(error, [
+			mapAsNotFound(PaymentNotFoundError, PaymentOrderNotFoundError),
+			mapAsBadRequest(
+				PaymentAlreadyExistsError,
+				PaymentAmountInvalidError,
+				PaymentInvalidTransitionError,
+				PaymentHoldReleaseNotAllowedError,
+			),
+		]) as BadRequestException | NotFoundException;
 	}
 }

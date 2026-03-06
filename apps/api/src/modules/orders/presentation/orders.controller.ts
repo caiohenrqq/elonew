@@ -1,3 +1,8 @@
+import {
+	mapAsBadRequest,
+	mapAsNotFound,
+	mapDomainErrorToHttpException,
+} from '@app/common/http/domain-error.mapper';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
@@ -95,18 +100,13 @@ export class OrdersController {
 	private mapDomainError(
 		error: unknown,
 	): BadRequestException | NotFoundException {
-		if (error instanceof OrderNotFoundError) {
-			return new NotFoundException(error.message);
-		}
-
-		if (
-			error instanceof OrderAlreadyExistsError ||
-			error instanceof OrderInvalidTransitionError ||
-			error instanceof OrderCancellationNotAllowedError
-		) {
-			return new BadRequestException(error.message);
-		}
-
-		return new BadRequestException('Unexpected error.');
+		return mapDomainErrorToHttpException(error, [
+			mapAsNotFound(OrderNotFoundError),
+			mapAsBadRequest(
+				OrderAlreadyExistsError,
+				OrderInvalidTransitionError,
+				OrderCancellationNotAllowedError,
+			),
+		]) as BadRequestException | NotFoundException;
 	}
 }

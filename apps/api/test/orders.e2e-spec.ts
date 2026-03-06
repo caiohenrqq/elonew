@@ -1,4 +1,5 @@
-import { PrismaService } from '@app/common/prisma/prisma.service';
+import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
+import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
@@ -10,13 +11,13 @@ describe('Orders (e2e)', () => {
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
-		}).compile();
+		})
+			.overrideProvider(ORDER_REPOSITORY_KEY)
+			.useClass(InMemoryOrderRepository)
+			.compile();
 
 		app = moduleRef.createNestApplication();
 		await app.init();
-
-		const prisma = moduleRef.get(PrismaService);
-		await prisma.order.deleteMany();
 	});
 
 	afterEach(async () => {

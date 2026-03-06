@@ -1,4 +1,5 @@
-import { PrismaService } from '@app/common/prisma/prisma.service';
+import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
+import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -6,16 +7,16 @@ import { Test } from '@nestjs/testing';
 
 describe('Orders module integration', () => {
 	let controller: OrdersController;
-	let prisma: PrismaService;
 
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [OrdersModule],
-		}).compile();
+		})
+			.overrideProvider(ORDER_REPOSITORY_KEY)
+			.useClass(InMemoryOrderRepository)
+			.compile();
 
 		controller = moduleRef.get(OrdersController);
-		prisma = moduleRef.get(PrismaService);
-		await prisma.order.deleteMany();
 	});
 
 	it('creates and fetches an order', async () => {
