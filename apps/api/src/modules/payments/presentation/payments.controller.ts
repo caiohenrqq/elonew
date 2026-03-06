@@ -4,6 +4,14 @@ import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-p
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import {
+	PaymentAlreadyExistsError,
+	PaymentAmountInvalidError,
+	PaymentHoldReleaseNotAllowedError,
+	PaymentInvalidTransitionError,
+	PaymentNotFoundError,
+	PaymentOrderNotFoundError,
+} from '@modules/payments/domain/payment.errors';
+import {
 	BadRequestException,
 	Body,
 	Controller,
@@ -110,17 +118,22 @@ export class PaymentsController {
 	private mapDomainError(
 		error: unknown,
 	): BadRequestException | NotFoundException {
-		if (!(error instanceof Error)) {
-			return new BadRequestException('Unexpected error.');
-		}
-
 		if (
-			error.message === 'Payment not found.' ||
-			error.message === 'Order not found.'
+			error instanceof PaymentNotFoundError ||
+			error instanceof PaymentOrderNotFoundError
 		) {
 			return new NotFoundException(error.message);
 		}
 
-		return new BadRequestException(error.message);
+		if (
+			error instanceof PaymentAlreadyExistsError ||
+			error instanceof PaymentAmountInvalidError ||
+			error instanceof PaymentInvalidTransitionError ||
+			error instanceof PaymentHoldReleaseNotAllowedError
+		) {
+			return new BadRequestException(error.message);
+		}
+
+		return new BadRequestException('Unexpected error.');
 	}
 }

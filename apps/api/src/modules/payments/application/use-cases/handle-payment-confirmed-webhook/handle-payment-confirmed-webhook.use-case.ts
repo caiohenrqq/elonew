@@ -6,6 +6,7 @@ import {
 	PROCESSED_WEBHOOK_EVENT_PORT_KEY,
 	type ProcessedWebhookEventPort,
 } from '@modules/payments/application/ports/processed-webhook-event.port';
+import { PaymentNotFoundError } from '@modules/payments/domain/payment.errors';
 import { Inject, Injectable } from '@nestjs/common';
 
 type HandlePaymentConfirmedWebhookInput = {
@@ -35,7 +36,7 @@ export class HandlePaymentConfirmedWebhookUseCase {
 		if (alreadyProcessed) return { processed: false };
 
 		const payment = await this.paymentRepository.findById(input.paymentId);
-		if (!payment) throw new Error('Payment not found.');
+		if (!payment) throw new PaymentNotFoundError();
 
 		payment.confirm();
 		await this.paymentRepository.save(payment);

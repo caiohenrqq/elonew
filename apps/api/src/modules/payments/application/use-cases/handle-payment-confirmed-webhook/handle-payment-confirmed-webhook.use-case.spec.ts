@@ -2,6 +2,7 @@ import type { PaymentRepositoryPort } from '@modules/payments/application/ports/
 import type { ProcessedWebhookEventPort } from '@modules/payments/application/ports/processed-webhook-event.port';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
+import { PaymentNotFoundError } from '@modules/payments/domain/payment.errors';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	private readonly payments = new Map<string, Payment>();
@@ -93,7 +94,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 
 		await expect(
 			useCase.execute({ eventId: 'event-3', paymentId: 'missing-payment' }),
-		).rejects.toThrow('Payment not found.');
+		).rejects.toThrow(PaymentNotFoundError);
 		await expect(processedWebhookEventPort.has('event-3')).resolves.toBe(false);
 	});
 });

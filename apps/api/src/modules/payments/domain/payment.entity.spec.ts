@@ -1,5 +1,9 @@
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import { Payment } from '@modules/payments/domain/payment.entity';
+import {
+	PaymentAmountInvalidError,
+	PaymentHoldReleaseNotAllowedError,
+} from '@modules/payments/domain/payment.errors';
 
 describe('Payment', () => {
 	it('starts awaiting confirmation & computes 70% booster amount', () => {
@@ -11,6 +15,26 @@ describe('Payment', () => {
 
 		expect(payment.status).toBe('awaiting_confirmation');
 		expect(payment.boosterAmount).toBe(70);
+	});
+
+	it('rejects non-positive payment amount', () => {
+		expect(() =>
+			Payment.create({
+				id: 'payment-invalid',
+				orderId: 'order-invalid',
+				grossAmount: 0,
+			}),
+		).toThrow(PaymentAmountInvalidError);
+	});
+
+	it('rejects non-finite payment amount values', () => {
+		expect(() =>
+			Payment.create({
+				id: 'payment-invalid-nan',
+				orderId: 'order-invalid-nan',
+				grossAmount: Number.NaN,
+			}),
+		).toThrow(PaymentAmountInvalidError);
 	});
 
 	it('holds funds when payment gets confirmed', () => {
@@ -45,7 +69,7 @@ describe('Payment', () => {
 		payment.confirm();
 
 		expect(() => payment.releaseHold(OrderStatus.IN_PROGRESS)).toThrow(
-			'Payment hold can only be released after order completion.',
+			PaymentHoldReleaseNotAllowedError,
 		);
 
 		payment.releaseHold(OrderStatus.COMPLETED);

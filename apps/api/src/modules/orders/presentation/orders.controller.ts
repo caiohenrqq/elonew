@@ -1,8 +1,8 @@
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
-import { ConfirmPaymentUseCase } from '@modules/orders/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
+import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import {
 	OrderAlreadyExistsError,
 	OrderCancellationNotAllowedError,
@@ -29,7 +29,7 @@ export class OrdersController {
 	constructor(
 		private readonly createOrderUseCase: CreateOrderUseCase,
 		private readonly getOrderUseCase: GetOrderUseCase,
-		private readonly confirmPaymentUseCase: ConfirmPaymentUseCase,
+		private readonly markOrderAsPaidUseCase: MarkOrderAsPaidUseCase,
 		private readonly acceptOrderUseCase: AcceptOrderUseCase,
 		private readonly cancelOrderUseCase: CancelOrderUseCase,
 	) {}
@@ -61,7 +61,7 @@ export class OrdersController {
 		@Param('orderId') orderId: string,
 	): Promise<{ success: true }> {
 		return this.executeMutation(() =>
-			this.confirmPaymentUseCase.execute({ orderId }),
+			this.markOrderAsPaidUseCase.execute({ orderId }),
 		);
 	}
 

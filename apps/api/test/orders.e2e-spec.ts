@@ -1,3 +1,4 @@
+import { PrismaService } from '@app/common/prisma/prisma.service';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
@@ -13,6 +14,9 @@ describe('Orders (e2e)', () => {
 
 		app = moduleRef.createNestApplication();
 		await app.init();
+
+		const prisma = moduleRef.get(PrismaService);
+		await prisma.order.deleteMany();
 	});
 
 	afterEach(async () => {

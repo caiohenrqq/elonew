@@ -1,3 +1,4 @@
+import { PrismaService } from '@app/common/prisma/prisma.service';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
@@ -6,6 +7,7 @@ import { Test } from '@nestjs/testing';
 describe('Payments module integration', () => {
 	let ordersController: OrdersController;
 	let paymentsController: PaymentsController;
+	let prisma: PrismaService;
 
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
@@ -14,6 +16,10 @@ describe('Payments module integration', () => {
 
 		ordersController = moduleRef.get(OrdersController);
 		paymentsController = moduleRef.get(PaymentsController);
+		prisma = moduleRef.get(PrismaService);
+		await prisma.processedWebhookEvent.deleteMany();
+		await prisma.payment.deleteMany();
+		await prisma.order.deleteMany();
 	});
 
 	it('creates and fetches a payment with 70% booster share', async () => {

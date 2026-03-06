@@ -1,0 +1,73 @@
+import { PrismaService } from '@app/common/prisma/prisma.service';
+import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
+import { Payment } from '@modules/payments/domain/payment.entity';
+import { PaymentStatus } from '@modules/payments/domain/payment-status';
+import { Injectable } from '@nestjs/common';
+
+type PaymentRecord = {
+	id: string;
+	orderId: string;
+	status: string;
+	grossAmount: number;
+	boosterAmount: number;
+};
+
+type PaymentDelegate = {
+	findUnique(args: { where: { id: string } }): Promise<PaymentRecord | null>;
+	upsert(args: {
+		where: { id: string };
+		create: PaymentRecord;
+		update: Omit<PaymentRecord, 'id' | 'orderId'>;
+	}): Promise<PaymentRecord>;
+};
+
+type PaymentPrismaClient = {
+	payment: PaymentDelegate;
+};
+
+@Injectable()
+export class PrismaPaymentRepository implements PaymentRepositoryPort {
+	constructor(private readonly prisma: PrismaService) {}
+
+	async findById(id: string): Promise<Payment | null> {
+		const record = await this.getDelegate().findUnique({ where: { id } });
+		if (!record) return null;
+
+		return Payment.rehydrate({
+			id: record.id,
+			orderId: record.orderId,
+			status: this.toPaymentStatus(record.status),
+			grossAmount: record.grossAmount,
+			boosterAmount: record.boosterAmount,
+		});
+	}
+
+	async save(payment: Payment): Promise<void> {
+		await this.getDelegate().upsert({
+			where: { id: payment.id },
+			create: {
+				id: payment.id,
+				orderId: payment.orderId,
+				status: payment.status,
+				grossAmount: payment.grossAmount,
+				boosterAmount: payment.boosterAmount,
+			},
+			update: {
+				status: payment.status,
+				grossAmount: payment.grossAmount,
+				boosterAmount: payment.boosterAmount,
+			},
+		});
+	}
+
+	private getDelegate(): PaymentDelegate {
+		return (this.prisma as unknown as PaymentPrismaClient).payment;
+	}
+
+	private toPaymentStatus(value: string): PaymentStatus {
+		if (!Object.values(PaymentStatus).includes(value as PaymentStatus))
+			throw new Error(`Invalid payment status persisted: ${value}`);
+
+		return value as PaymentStatus;
+	}
+}

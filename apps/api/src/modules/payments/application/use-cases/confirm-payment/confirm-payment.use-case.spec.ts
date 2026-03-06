@@ -1,6 +1,7 @@
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
+import { PaymentNotFoundError } from '@modules/payments/domain/payment.errors';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	private readonly payments = new Map<string, Payment>();
@@ -41,7 +42,7 @@ describe('ConfirmPaymentUseCase', () => {
 
 		await expect(
 			useCase.execute({ paymentId: 'missing-payment' }),
-		).rejects.toThrow('Payment not found.');
+		).rejects.toThrow(PaymentNotFoundError);
 	});
 
 	it('is idempotent when payment is already held', async () => {

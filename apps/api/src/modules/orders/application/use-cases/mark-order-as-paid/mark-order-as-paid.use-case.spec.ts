@@ -1,5 +1,5 @@
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
-import { ConfirmPaymentUseCase } from '@modules/orders/application/use-cases/confirm-payment/confirm-payment.use-case';
+import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
 import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
 
@@ -19,13 +19,13 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	}
 }
 
-describe('ConfirmPaymentUseCase', () => {
+describe('MarkOrderAsPaidUseCase', () => {
 	it('moves order to pending booster when payment is confirmed', async () => {
 		const repository = new InMemoryOrderRepository();
 		const order = Order.create('order-1');
 		repository.insert(order);
 
-		const useCase = new ConfirmPaymentUseCase(repository);
+		const useCase = new MarkOrderAsPaidUseCase(repository);
 		await useCase.execute({ orderId: 'order-1' });
 
 		const savedOrder = await repository.findById('order-1');
@@ -34,10 +34,27 @@ describe('ConfirmPaymentUseCase', () => {
 
 	it('throws when order does not exist', async () => {
 		const repository = new InMemoryOrderRepository();
-		const useCase = new ConfirmPaymentUseCase(repository);
+		const useCase = new MarkOrderAsPaidUseCase(repository);
 
 		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
 			OrderNotFoundError,
 		);
+	});
+
+	it('is idempotent when provider retries payment confirmation', async () => {
+		const repository = new InMemoryOrderRepository();
+		const order = Order.create('order-2');
+		repository.insert(order);
+		const useCase = new MarkOrderAsPaidUseCase(repository);
+
+		await useCase.execute({ orderId: 'order-2' });
+
+		await expect(
+			useCase.execute({ orderId: 'order-2' }),
+		).resolves.toBeUndefined();
+		await expect(repository.findById('order-2')).resolves.toMatchObject({
+			id: 'order-2',
+			status: 'pending_booster',
+		});
 	});
 });

@@ -1,6 +1,12 @@
+import { OrderStatus } from '@modules/orders/domain/order-status';
+import type { OrderStatusPort } from '@modules/payments/application/ports/order-status.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
+import {
+	PaymentAlreadyExistsError,
+	PaymentOrderNotFoundError,
+} from '@modules/payments/domain/payment.errors';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	private readonly payments = new Map<string, Payment>();
@@ -14,10 +20,24 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	}
 }
 
+class InMemoryOrderStatusPort implements OrderStatusPort {
+	private readonly orderStatuses = new Map<string, OrderStatus>();
+
+	set(orderId: string, status: OrderStatus): void {
+		this.orderStatuses.set(orderId, status);
+	}
+
+	async findByOrderId(orderId: string): Promise<OrderStatus | null> {
+		return this.orderStatuses.get(orderId) ?? null;
+	}
+}
+
 describe('CreatePaymentUseCase', () => {
 	it('creates a payment with hold lifecycle & 70% booster amount', async () => {
 		const repository = new InMemoryPaymentRepository();
-		const useCase = new CreatePaymentUseCase(repository);
+		const orderStatusPort = new InMemoryOrderStatusPort();
+		orderStatusPort.set('order-1', OrderStatus.AWAITING_PAYMENT);
+		const useCase = new CreatePaymentUseCase(repository, orderStatusPort);
 
 		await expect(
 			useCase.execute({
@@ -36,6 +56,8 @@ describe('CreatePaymentUseCase', () => {
 
 	it('throws when payment id already exists', async () => {
 		const repository = new InMemoryPaymentRepository();
+		const orderStatusPort = new InMemoryOrderStatusPort();
+		orderStatusPort.set('order-2', OrderStatus.AWAITING_PAYMENT);
 		await repository.save(
 			Payment.create({
 				id: 'payment-1',
@@ -44,13 +66,27 @@ describe('CreatePaymentUseCase', () => {
 			}),
 		);
 
-		const useCase = new CreatePaymentUseCase(repository);
+		const useCase = new CreatePaymentUseCase(repository, orderStatusPort);
 		await expect(
 			useCase.execute({
 				paymentId: 'payment-1',
 				orderId: 'order-2',
 				grossAmount: 40,
 			}),
-		).rejects.toThrow('Payment already exists.');
+		).rejects.toThrow(PaymentAlreadyExistsError);
+	});
+
+	it('throws when related order does not exist', async () => {
+		const repository = new InMemoryPaymentRepository();
+		const orderStatusPort = new InMemoryOrderStatusPort();
+		const useCase = new CreatePaymentUseCase(repository, orderStatusPort);
+
+		await expect(
+			useCase.execute({
+				paymentId: 'payment-missing-order',
+				orderId: 'missing-order',
+				grossAmount: 50,
+			}),
+		).rejects.toThrow(PaymentOrderNotFoundError);
 	});
 });

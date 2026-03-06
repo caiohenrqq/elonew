@@ -3,6 +3,7 @@ import type { OrderStatusPort } from '@modules/payments/application/ports/order-
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
+import { PaymentHoldReleaseNotAllowedError } from '@modules/payments/domain/payment.errors';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	private readonly payments = new Map<string, Payment>();
@@ -66,7 +67,7 @@ describe('ReleasePaymentHoldUseCase', () => {
 
 		const useCase = new ReleasePaymentHoldUseCase(repository, orderStatusPort);
 		await expect(useCase.execute({ paymentId: 'payment-2' })).rejects.toThrow(
-			'Payment hold can only be released after order completion.',
+			PaymentHoldReleaseNotAllowedError,
 		);
 	});
 

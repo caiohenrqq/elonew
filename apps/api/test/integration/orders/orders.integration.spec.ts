@@ -1,3 +1,4 @@
+import { PrismaService } from '@app/common/prisma/prisma.service';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
@@ -5,6 +6,7 @@ import { Test } from '@nestjs/testing';
 
 describe('Orders module integration', () => {
 	let controller: OrdersController;
+	let prisma: PrismaService;
 
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
@@ -12,6 +14,8 @@ describe('Orders module integration', () => {
 		}).compile();
 
 		controller = moduleRef.get(OrdersController);
+		prisma = moduleRef.get(PrismaService);
+		await prisma.order.deleteMany();
 	});
 
 	it('creates and fetches an order', async () => {

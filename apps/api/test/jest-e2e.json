@@ -13,6 +13,7 @@
 		"^@integrations/(.*)$": "<rootDir>/../../packages/integrations/src/$1"
 	},
 	"testEnvironment": "node",
+	"setupFiles": ["<rootDir>/load-test-env.ts"],
 	"testRegex": ".e2e-spec.ts$",
 	"transform": {
 		"^.+\\.(t|j)s$": "ts-jest"

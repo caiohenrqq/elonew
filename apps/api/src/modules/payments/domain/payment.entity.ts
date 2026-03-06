@@ -1,4 +1,9 @@
 import { OrderStatus } from '@modules/orders/domain/order-status';
+import {
+	PaymentAmountInvalidError,
+	PaymentHoldReleaseNotAllowedError,
+	PaymentInvalidTransitionError,
+} from '@modules/payments/domain/payment.errors';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
 
 type AllowedTransitionMap = Record<PaymentStatus, readonly PaymentStatus[]>;
@@ -23,8 +28,8 @@ export class Payment {
 		orderId: string;
 		grossAmount: number;
 	}): Payment {
-		if (input.grossAmount <= 0)
-			throw new Error('Payment amount must be greater than zero.');
+		if (!Number.isFinite(input.grossAmount) || input.grossAmount <= 0)
+			throw new PaymentAmountInvalidError();
 
 		const boosterAmount = Number((input.grossAmount * 0.7).toFixed(2));
 		return new Payment(
@@ -33,6 +38,22 @@ export class Payment {
 			input.grossAmount,
 			boosterAmount,
 			PaymentStatus.AWAITING_CONFIRMATION,
+		);
+	}
+
+	static rehydrate(input: {
+		id: string;
+		orderId: string;
+		grossAmount: number;
+		boosterAmount: number;
+		status: PaymentStatus;
+	}): Payment {
+		return new Payment(
+			input.id,
+			input.orderId,
+			input.grossAmount,
+			input.boosterAmount,
+			input.status,
 		);
 	}
 
@@ -54,9 +75,7 @@ export class Payment {
 		if (this.currentStatus === PaymentStatus.RELEASED) return;
 
 		if (orderStatus !== OrderStatus.COMPLETED)
-			throw new Error(
-				'Payment hold can only be released after order completion.',
-			);
+			throw new PaymentHoldReleaseNotAllowedError();
 
 		this.transitionTo(PaymentStatus.RELEASED);
 	}
@@ -64,9 +83,7 @@ export class Payment {
 	private transitionTo(nextStatus: PaymentStatus): void {
 		const allowed = ALLOWED_TRANSITIONS[this.currentStatus];
 		if (!allowed.includes(nextStatus))
-			throw new Error(
-				`Invalid payment transition: ${this.currentStatus} -> ${nextStatus}.`,
-			);
+			throw new PaymentInvalidTransitionError(this.currentStatus, nextStatus);
 
 		this.currentStatus = nextStatus;
 	}

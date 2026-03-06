@@ -30,6 +30,10 @@ export class Order {
 		return new Order(id, OrderStatus.AWAITING_PAYMENT);
 	}
 
+	static rehydrate(input: { id: string; status: OrderStatus }): Order {
+		return new Order(input.id, input.status);
+	}
+
 	get status(): OrderStatus {
 		return this.currentStatus;
 	}
