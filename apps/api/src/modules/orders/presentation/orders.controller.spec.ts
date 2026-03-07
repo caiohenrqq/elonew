@@ -12,11 +12,8 @@ import {
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
-import {
-	BadRequestException,
-	NotFoundException,
-} from '@nestjs/common';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 type MutationUseCase = {
 	execute: jest.Mock<Promise<void>, [unknown]>;

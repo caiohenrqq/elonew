@@ -72,7 +72,9 @@ describe('CompleteOrderUseCase', () => {
 		repository.insert(order);
 		const useCase = new CompleteOrderUseCase(repository);
 
-		await expect(useCase.execute({ orderId: 'order-3' })).resolves.toBeUndefined();
+		await expect(
+			useCase.execute({ orderId: 'order-3' }),
+		).resolves.toBeUndefined();
 		await expect(repository.findById('order-3')).resolves.toMatchObject({
 			id: 'order-3',
 			status: 'completed',
