@@ -67,9 +67,9 @@ Official docs to use:
 
 ### 3. Core Order Flow
 - [ ] Complete `CreateOrder` use-case with `OrderCredentials` persistence.
-- [ ] Implement `AcceptOrder` and `RejectOrder` logic for boosters.
-- [ ] Implement `CancelOrder` with business rules (allow only before acceptance).
-- [ ] Implement `CompleteOrder` with automated credential deletion logic.
+- [x] Implement `AcceptOrder` and `RejectOrder` logic for boosters.
+- [x] Implement `CancelOrder` with business rules (allow only before acceptance).
+- [x] Implement `CompleteOrder` with automated credential deletion logic.
 
 ### 4. Payments Integration (Mercado Pago)
 - [ ] Build `@packages/integrations/mercadopago` wrapper.
@@ -153,3 +153,6 @@ Official docs to use:
 - Replaced API Docker dev hot-reload runtime with stable model (`nest build --watch` + single `node --watch dist/main.js` via `api-dev-watch-runner.sh`) and simplified `src/main.ts` bootstrap, removing temporary `EADDRINUSE` retry/lock workaround.
 - Moved persisted-enum helper ownership from API `common/persistence` to shared package `@shared/utils/enum.utils`, removed API-local persistence folder, and updated Orders/Payments Prisma adapter/repository imports accordingly.
 - Refined the `## Development Roadmap` in `AGENTS.md` with granular sub-tasks for each core feature to improve progress tracking.
+- Implemented TDD-driven Orders/Payments core gap closure (without Mercado Pago adapter work): added Reject/Complete/SaveCredentials order flows, persisted `OrderCredentials` mapping in Prisma repository, wired payment confirm/webhook to trigger order paid transition via payments port adapter, expanded module integration and use-case/domain tests, and marked completed Core Order Flow roadmap items.
+- Refined Orders/Payments test strategy to focus unit tests on decision-heavy logic: removed low-value wiring-oriented unit specs (`get-order`, `get-payment`, and processed webhook repository), and added missing decision-path unit coverage (confirm-payment no-call on missing payment, webhook non-processed on downstream failure, release-hold not-found branches, and credentials allowed in `in_progress`).
+- Expanded Orders/Payments TDD coverage with adapter unit tests, credentials overwrite/completion edge-case tests, controller-level error-mapping tests for new order endpoints, DB-lane credential lifecycle integration tests, and a Prisma order-repository fix to make credential deletion idempotent in DB-backed flows.

@@ -70,4 +70,62 @@ describe('Orders module integration (db)', () => {
 			BadRequestException,
 		);
 	});
+
+	it('persists credentials after payment confirmation', async () => {
+		await controller.create({ orderId: 'order-db-4' });
+		await controller.confirmPayment('order-db-4');
+		await expect(
+			controller.saveCredentials('order-db-4', {
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			}),
+		).resolves.toEqual({ success: true });
+
+		const credentials = await prisma.orderCredentials.findUnique({
+			where: { orderId: 'order-db-4' },
+		});
+		expect(credentials).toMatchObject({
+			orderId: 'order-db-4',
+			login: 'login-db',
+			summonerName: 'summoner-db',
+			password: 'secret-db',
+		});
+	});
+
+	it('deletes credentials after order completion', async () => {
+		await controller.create({ orderId: 'order-db-5' });
+		await controller.confirmPayment('order-db-5');
+		await controller.saveCredentials('order-db-5', {
+			login: 'login-db',
+			summonerName: 'summoner-db',
+			password: 'secret-db',
+			confirmPassword: 'secret-db',
+		});
+		await controller.accept('order-db-5');
+		await controller.complete('order-db-5');
+
+		const credentials = await prisma.orderCredentials.findUnique({
+			where: { orderId: 'order-db-5' },
+		});
+		expect(credentials).toBeNull();
+		await expect(controller.get('order-db-5')).resolves.toEqual({
+			id: 'order-db-5',
+			status: 'completed',
+		});
+	});
+
+	it('rejects credentials before payment confirmation', async () => {
+		await controller.create({ orderId: 'order-db-6' });
+
+		await expect(
+			controller.saveCredentials('order-db-6', {
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			}),
+		).rejects.toBeInstanceOf(BadRequestException);
+	});
 });
