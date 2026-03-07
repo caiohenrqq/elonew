@@ -2,9 +2,15 @@ import { PrismaOrderRepository } from '@modules/orders/infrastructure/repositori
 
 describe('PrismaOrderRepository', () => {
 	it('saves and rehydrates an order from persistence records', async () => {
-		const findUnique = jest
-			.fn()
-			.mockResolvedValue({ id: 'order-1', status: 'pending_booster' });
+		const findUnique = jest.fn().mockResolvedValue({
+			id: 'order-1',
+			status: 'pending_booster',
+			credentials: {
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+			},
+		});
 		const upsert = jest.fn().mockResolvedValue(undefined);
 		const prisma = {
 			order: {
@@ -17,16 +23,52 @@ describe('PrismaOrderRepository', () => {
 		await repository.save({
 			id: 'order-1',
 			status: 'pending_booster',
+			credentials: {
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+			},
 		} as never);
 
 		await expect(repository.findById('order-1')).resolves.toMatchObject({
 			id: 'order-1',
 			status: 'pending_booster',
+			credentials: {
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+			},
 		});
 		expect(upsert).toHaveBeenCalledWith({
 			where: { id: 'order-1' },
-			create: { id: 'order-1', status: 'pending_booster' },
-			update: { status: 'pending_booster' },
+			create: {
+				id: 'order-1',
+				status: 'pending_booster',
+				credentials: {
+					create: {
+						login: 'login',
+						summonerName: 'summoner',
+						password: 'secret',
+					},
+				},
+			},
+			update: {
+				status: 'pending_booster',
+				credentials: {
+					upsert: {
+						create: {
+							login: 'login',
+							summonerName: 'summoner',
+							password: 'secret',
+						},
+						update: {
+							login: 'login',
+							summonerName: 'summoner',
+							password: 'secret',
+						},
+					},
+				},
+			},
 		});
 	});
 

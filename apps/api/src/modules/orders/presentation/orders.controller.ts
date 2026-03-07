@@ -5,12 +5,17 @@ import {
 } from '@app/common/http/domain-error.mapper';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
+import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/complete-order/complete-order.use-case';
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
+import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
+import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import {
 	OrderAlreadyExistsError,
 	OrderCancellationNotAllowedError,
+	OrderCredentialsPasswordMismatchError,
+	OrderCredentialsStorageNotAllowedError,
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
@@ -29,6 +34,13 @@ type CreateOrderRequestBody = {
 	orderId: string;
 };
 
+type SaveOrderCredentialsRequestBody = {
+	login: string;
+	summonerName: string;
+	password: string;
+	confirmPassword: string;
+};
+
 @Controller('orders')
 export class OrdersController {
 	constructor(
@@ -36,7 +48,10 @@ export class OrdersController {
 		private readonly getOrderUseCase: GetOrderUseCase,
 		private readonly markOrderAsPaidUseCase: MarkOrderAsPaidUseCase,
 		private readonly acceptOrderUseCase: AcceptOrderUseCase,
+		private readonly rejectOrderUseCase: RejectOrderUseCase,
 		private readonly cancelOrderUseCase: CancelOrderUseCase,
+		private readonly completeOrderUseCase: CompleteOrderUseCase,
+		private readonly saveOrderCredentialsUseCase: SaveOrderCredentialsUseCase,
 	) {}
 
 	@Post()
@@ -78,11 +93,46 @@ export class OrdersController {
 		);
 	}
 
+	@Post(':orderId/reject')
+	@HttpCode(200)
+	async reject(@Param('orderId') orderId: string): Promise<{ success: true }> {
+		return this.executeMutation(() =>
+			this.rejectOrderUseCase.execute({ orderId }),
+		);
+	}
+
 	@Post(':orderId/cancel')
 	@HttpCode(200)
 	async cancel(@Param('orderId') orderId: string): Promise<{ success: true }> {
 		return this.executeMutation(() =>
 			this.cancelOrderUseCase.execute({ orderId }),
+		);
+	}
+
+	@Post(':orderId/complete')
+	@HttpCode(200)
+	async complete(
+		@Param('orderId') orderId: string,
+	): Promise<{ success: true }> {
+		return this.executeMutation(() =>
+			this.completeOrderUseCase.execute({ orderId }),
+		);
+	}
+
+	@Post(':orderId/credentials')
+	@HttpCode(200)
+	async saveCredentials(
+		@Param('orderId') orderId: string,
+		@Body() body: SaveOrderCredentialsRequestBody,
+	): Promise<{ success: true }> {
+		return this.executeMutation(() =>
+			this.saveOrderCredentialsUseCase.execute({
+				orderId,
+				login: body.login,
+				summonerName: body.summonerName,
+				password: body.password,
+				confirmPassword: body.confirmPassword,
+			}),
 		);
 	}
 
@@ -106,6 +156,8 @@ export class OrdersController {
 				OrderAlreadyExistsError,
 				OrderInvalidTransitionError,
 				OrderCancellationNotAllowedError,
+				OrderCredentialsStorageNotAllowedError,
+				OrderCredentialsPasswordMismatchError,
 			),
 		]) as BadRequestException | NotFoundException;
 	}

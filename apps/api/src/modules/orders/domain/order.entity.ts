@@ -1,5 +1,6 @@
 import {
 	OrderCancellationNotAllowedError,
+	OrderCredentialsStorageNotAllowedError,
 	OrderInvalidTransitionError,
 } from '@modules/orders/domain/order.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
@@ -20,26 +21,54 @@ const ALLOWED_TRANSITIONS: AllowedTransitionMap = {
 	[OrderStatus.CANCELLED]: [],
 };
 
+const CREDENTIALS_ALLOWED_STATUSES = new Set<OrderStatus>([
+	OrderStatus.PENDING_BOOSTER,
+	OrderStatus.IN_PROGRESS,
+]);
+
+export type OrderCredentials = {
+	login: string;
+	summonerName: string;
+	password: string;
+};
+
 export class Order {
 	private constructor(
 		public readonly id: string,
 		private currentStatus: OrderStatus,
+		private currentCredentials: OrderCredentials | null,
 	) {}
 
 	static create(id: string): Order {
-		return new Order(id, OrderStatus.AWAITING_PAYMENT);
+		return new Order(id, OrderStatus.AWAITING_PAYMENT, null);
 	}
 
-	static rehydrate(input: { id: string; status: OrderStatus }): Order {
-		return new Order(input.id, input.status);
+	static rehydrate(input: {
+		id: string;
+		status: OrderStatus;
+		credentials?: OrderCredentials | null;
+	}): Order {
+		return new Order(input.id, input.status, input.credentials ?? null);
 	}
 
 	get status(): OrderStatus {
 		return this.currentStatus;
 	}
 
+	get credentials(): OrderCredentials | null {
+		return this.currentCredentials;
+	}
+
 	confirmPayment(): void {
 		this.transitionTo(OrderStatus.PENDING_BOOSTER);
+	}
+
+	rejectByBooster(): void {
+		if (this.currentStatus !== OrderStatus.PENDING_BOOSTER)
+			throw new OrderInvalidTransitionError(
+				this.currentStatus,
+				OrderStatus.PENDING_BOOSTER,
+			);
 	}
 
 	acceptByBooster(): void {
@@ -48,6 +77,7 @@ export class Order {
 
 	complete(): void {
 		this.transitionTo(OrderStatus.COMPLETED);
+		this.currentCredentials = null;
 	}
 
 	cancel(): void {
@@ -58,6 +88,13 @@ export class Order {
 			throw new OrderCancellationNotAllowedError();
 
 		this.transitionTo(OrderStatus.CANCELLED);
+	}
+
+	setCredentials(credentials: OrderCredentials): void {
+		if (!CREDENTIALS_ALLOWED_STATUSES.has(this.currentStatus))
+			throw new OrderCredentialsStorageNotAllowedError();
+
+		this.currentCredentials = credentials;
 	}
 
 	private transitionTo(nextStatus: OrderStatus): void {

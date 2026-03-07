@@ -21,3 +21,15 @@ export class OrderCancellationNotAllowedError extends Error {
 		super('Order cannot be cancelled after booster acceptance.');
 	}
 }
+
+export class OrderCredentialsStorageNotAllowedError extends Error {
+	constructor() {
+		super('Order credentials can only be stored after payment confirmation.');
+	}
+}
+
+export class OrderCredentialsPasswordMismatchError extends Error {
+	constructor() {
+		super('Order credentials password confirmation does not match.');
+	}
+}

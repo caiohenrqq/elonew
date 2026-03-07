@@ -1,4 +1,8 @@
 import {
+	ORDER_PAYMENT_CONFIRMATION_PORT_KEY,
+	type OrderPaymentConfirmationPort,
+} from '@modules/payments/application/ports/order-payment-confirmation.port';
+import {
 	PAYMENT_REPOSITORY_KEY,
 	type PaymentRepositoryPort,
 } from '@modules/payments/application/ports/payment-repository.port';
@@ -25,6 +29,8 @@ export class HandlePaymentConfirmedWebhookUseCase {
 		private readonly paymentRepository: PaymentRepositoryPort,
 		@Inject(PROCESSED_WEBHOOK_EVENT_PORT_KEY)
 		private readonly processedWebhookEventPort: ProcessedWebhookEventPort,
+		@Inject(ORDER_PAYMENT_CONFIRMATION_PORT_KEY)
+		private readonly orderPaymentConfirmationPort: OrderPaymentConfirmationPort,
 	) {}
 
 	async execute(
@@ -40,6 +46,7 @@ export class HandlePaymentConfirmedWebhookUseCase {
 
 		payment.confirm();
 		await this.paymentRepository.save(payment);
+		await this.orderPaymentConfirmationPort.markAsPaid(payment.orderId);
 		await this.processedWebhookEventPort.markProcessed(input.eventId);
 
 		return { processed: true };

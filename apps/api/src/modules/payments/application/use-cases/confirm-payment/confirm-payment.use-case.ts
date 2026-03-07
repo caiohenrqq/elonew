@@ -1,4 +1,8 @@
 import {
+	ORDER_PAYMENT_CONFIRMATION_PORT_KEY,
+	type OrderPaymentConfirmationPort,
+} from '@modules/payments/application/ports/order-payment-confirmation.port';
+import {
 	PAYMENT_REPOSITORY_KEY,
 	type PaymentRepositoryPort,
 } from '@modules/payments/application/ports/payment-repository.port';
@@ -14,6 +18,8 @@ export class ConfirmPaymentUseCase {
 	constructor(
 		@Inject(PAYMENT_REPOSITORY_KEY)
 		private readonly paymentRepository: PaymentRepositoryPort,
+		@Inject(ORDER_PAYMENT_CONFIRMATION_PORT_KEY)
+		private readonly orderPaymentConfirmationPort: OrderPaymentConfirmationPort,
 	) {}
 
 	async execute(input: ConfirmPaymentInput): Promise<void> {
@@ -22,5 +28,6 @@ export class ConfirmPaymentUseCase {
 
 		payment.confirm();
 		await this.paymentRepository.save(payment);
+		await this.orderPaymentConfirmationPort.markAsPaid(payment.orderId);
 	}
 }

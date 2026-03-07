@@ -36,13 +36,27 @@ describe('Orders module integration', () => {
 		await expect(controller.confirmPayment('order-2')).resolves.toEqual({
 			success: true,
 		});
+		await expect(
+			controller.saveCredentials('order-2', {
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+				confirmPassword: 'secret',
+			}),
+		).resolves.toEqual({ success: true });
+		await expect(controller.reject('order-2')).resolves.toEqual({
+			success: true,
+		});
 		await expect(controller.accept('order-2')).resolves.toEqual({
+			success: true,
+		});
+		await expect(controller.complete('order-2')).resolves.toEqual({
 			success: true,
 		});
 
 		await expect(controller.get('order-2')).resolves.toEqual({
 			id: 'order-2',
-			status: 'in_progress',
+			status: 'completed',
 		});
 	});
 
@@ -61,5 +75,13 @@ describe('Orders module integration', () => {
 		await expect(controller.accept('order-3')).rejects.toBeInstanceOf(
 			BadRequestException,
 		);
+		await expect(
+			controller.saveCredentials('order-3', {
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+				confirmPassword: 'secret',
+			}),
+		).rejects.toBeInstanceOf(BadRequestException);
 	});
 });

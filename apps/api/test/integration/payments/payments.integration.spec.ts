@@ -67,6 +67,10 @@ describe('Payments module integration', () => {
 			grossAmount: 100,
 		});
 		await paymentsController.confirm('payment-2');
+		await expect(ordersController.get('order-2')).resolves.toMatchObject({
+			id: 'order-2',
+			status: 'pending_booster',
+		});
 
 		await expect(paymentsController.release('payment-2')).rejects.toThrow(
 			'Payment hold can only be released after order completion.',
@@ -103,6 +107,10 @@ describe('Payments module integration', () => {
 				paymentId: 'payment-4',
 			}),
 		).resolves.toEqual({ processed: true });
+		await expect(ordersController.get('order-4')).resolves.toMatchObject({
+			id: 'order-4',
+			status: 'pending_booster',
+		});
 
 		await expect(
 			paymentsController.handlePaymentConfirmedWebhook({

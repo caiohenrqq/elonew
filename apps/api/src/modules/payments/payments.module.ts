@@ -1,6 +1,7 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import { AppSettingsModule } from '@app/common/settings/app-settings.module';
 import { OrdersModule } from '@modules/orders/orders.module';
+import { ORDER_PAYMENT_CONFIRMATION_PORT_KEY } from '@modules/payments/application/ports/order-payment-confirmation.port';
 import { ORDER_STATUS_PORT_KEY } from '@modules/payments/application/ports/order-status.port';
 import { PAYMENT_REPOSITORY_KEY } from '@modules/payments/application/ports/payment-repository.port';
 import { PROCESSED_WEBHOOK_EVENT_PORT_KEY } from '@modules/payments/application/ports/processed-webhook-event.port';
@@ -9,6 +10,7 @@ import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/cr
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
+import { OrderPaymentConfirmationFromOrdersAdapter } from '@modules/payments/infrastructure/adapters/order-payment-confirmation-from-orders.adapter';
 import { OrderStatusFromPrismaAdapter } from '@modules/payments/infrastructure/adapters/order-status-from-prisma.adapter';
 import { PrismaPaymentRepository } from '@modules/payments/infrastructure/repositories/prisma-payment.repository';
 import { PrismaProcessedWebhookEventRepository } from '@modules/payments/infrastructure/repositories/prisma-processed-webhook-event.repository';
@@ -34,6 +36,11 @@ import { Module } from '@nestjs/common';
 		{
 			provide: ORDER_STATUS_PORT_KEY,
 			useExisting: OrderStatusFromPrismaAdapter,
+		},
+		OrderPaymentConfirmationFromOrdersAdapter,
+		{
+			provide: ORDER_PAYMENT_CONFIRMATION_PORT_KEY,
+			useExisting: OrderPaymentConfirmationFromOrdersAdapter,
 		},
 		CreatePaymentUseCase,
 		GetPaymentUseCase,
