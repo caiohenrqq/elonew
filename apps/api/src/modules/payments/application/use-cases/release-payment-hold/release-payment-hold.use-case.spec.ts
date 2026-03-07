@@ -3,7 +3,11 @@ import type { OrderStatusPort } from '@modules/payments/application/ports/order-
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
-import { PaymentHoldReleaseNotAllowedError } from '@modules/payments/domain/payment.errors';
+import {
+	PaymentHoldReleaseNotAllowedError,
+	PaymentNotFoundError,
+	PaymentOrderNotFoundError,
+} from '@modules/payments/domain/payment.errors';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	private readonly payments = new Map<string, Payment>();
@@ -91,5 +95,32 @@ describe('ReleasePaymentHoldUseCase', () => {
 
 		const savedPayment = await repository.findById('payment-3');
 		expect(savedPayment?.status).toBe('released');
+	});
+
+	it('throws when payment does not exist', async () => {
+		const repository = new InMemoryPaymentRepository();
+		const orderStatusPort = new InMemoryOrderStatusPort();
+		const useCase = new ReleasePaymentHoldUseCase(repository, orderStatusPort);
+
+		await expect(
+			useCase.execute({ paymentId: 'missing-payment' }),
+		).rejects.toThrow(PaymentNotFoundError);
+	});
+
+	it('throws when order status does not exist', async () => {
+		const repository = new InMemoryPaymentRepository();
+		const orderStatusPort = new InMemoryOrderStatusPort();
+		const payment = Payment.create({
+			id: 'payment-4',
+			orderId: 'order-4',
+			grossAmount: 100,
+		});
+		payment.confirm();
+		repository.insert(payment);
+		const useCase = new ReleasePaymentHoldUseCase(repository, orderStatusPort);
+
+		await expect(useCase.execute({ paymentId: 'payment-4' })).rejects.toThrow(
+			PaymentOrderNotFoundError,
+		);
 	});
 });
