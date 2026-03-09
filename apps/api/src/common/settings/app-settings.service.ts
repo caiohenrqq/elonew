@@ -21,6 +21,12 @@ export class AppSettingsService {
 		return this.config.getOrThrow('DATABASE_URL', { infer: true });
 	}
 
+	get walletLockPeriodInHours() {
+		return this.config.getOrThrow('WALLET_LOCK_PERIOD_HOURS', {
+			infer: true,
+		});
+	}
+
 	get isProduction() {
 		return this.nodeEnv === 'production';
 	}

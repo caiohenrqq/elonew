@@ -35,20 +35,36 @@ export type OrderCredentials = {
 export class Order {
 	private constructor(
 		public readonly id: string,
+		private currentBoosterId: string | null,
 		private currentStatus: OrderStatus,
 		private currentCredentials: OrderCredentials | null,
 	) {}
 
-	static create(id: string): Order {
-		return new Order(id, OrderStatus.AWAITING_PAYMENT, null);
+	static create(id: string, input?: { boosterId?: string | null }): Order {
+		return new Order(
+			id,
+			input?.boosterId ?? null,
+			OrderStatus.AWAITING_PAYMENT,
+			null,
+		);
 	}
 
 	static rehydrate(input: {
 		id: string;
+		boosterId?: string | null;
 		status: OrderStatus;
 		credentials?: OrderCredentials | null;
 	}): Order {
-		return new Order(input.id, input.status, input.credentials ?? null);
+		return new Order(
+			input.id,
+			input.boosterId ?? null,
+			input.status,
+			input.credentials ?? null,
+		);
+	}
+
+	get boosterId(): string | null {
+		return this.currentBoosterId;
 	}
 
 	get status(): OrderStatus {
@@ -73,6 +89,10 @@ export class Order {
 
 	acceptByBooster(): void {
 		this.transitionTo(OrderStatus.IN_PROGRESS);
+	}
+
+	assignBooster(boosterId: string): void {
+		this.currentBoosterId = boosterId;
 	}
 
 	complete(): void {

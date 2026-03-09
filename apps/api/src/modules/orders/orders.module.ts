@@ -11,10 +11,11 @@ import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import { PrismaOrderRepository } from '@modules/orders/infrastructure/repositories/prisma-order.repository';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
+import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [AppSettingsModule],
+	imports: [AppSettingsModule, WalletModule],
 	controllers: [OrdersController],
 	providers: [
 		PrismaService,

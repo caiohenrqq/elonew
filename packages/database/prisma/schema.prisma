@@ -180,6 +180,7 @@ model WalletTransaction {
   type        WalletTransactionType
   reason      String
   availableAt DateTime
+  releasedAt  DateTime?
   createdAt   DateTime              @default(now())
 
   @@index([walletId, createdAt])
