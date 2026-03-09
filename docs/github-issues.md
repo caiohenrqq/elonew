@@ -2,6 +2,10 @@
 
 Use this template for backlog items.
 
+Title convention:
+- Single requirement: `[FR-016] Short title`
+- Multiple requirements: use one bracket with `/` separators, for example `[FR-018/FR-035/FR-050] Short title`
+
 ```md
 ## Task
 <clear implementation objective>
