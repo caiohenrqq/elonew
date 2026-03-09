@@ -78,6 +78,7 @@ When the user says "let's start" on a GitHub issue or asks to begin issue work, 
 7. Open the PR following the repository template.
    - Use the GitHub PR template structure.
    - Keep the PR scoped to the issue being delivered.
+   - After creating the PR, assign it to `caiohenrqq` unless the user explicitly asks for a different assignee.
    - If unrelated local changes exist, do not include them in the issue commit/PR unless the user explicitly asks.
 
 8. Ask for confirmation at the right moments.
@@ -197,4 +198,5 @@ Official docs to use:
 - Implemented TDD-driven Orders/Payments core gap closure (without Mercado Pago adapter work): added Reject/Complete/SaveCredentials order flows, persisted `OrderCredentials` mapping in Prisma repository, wired payment confirm/webhook to trigger order paid transition via payments port adapter, expanded module integration and use-case/domain tests, and marked completed Core Order Flow roadmap items.
 - Refined Orders/Payments test strategy to focus unit tests on decision-heavy logic: removed low-value wiring-oriented unit specs (`get-order`, `get-payment`, and processed webhook repository), and added missing decision-path unit coverage (confirm-payment no-call on missing payment, webhook non-processed on downstream failure, release-hold not-found branches, and credentials allowed in `in_progress`).
 - Expanded Orders/Payments TDD coverage with adapter unit tests, credentials overwrite/completion edge-case tests, controller-level error-mapping tests for new order endpoints, DB-lane credential lifecycle integration tests, and a Prisma order-repository fix to make credential deletion idempotent in DB-backed flows.
+- Updated the agent issue workflow to require assigning issue-delivery PRs to `caiohenrqq` after creation.
 - Implemented issue `#7` wallet core and runtime flow: added wallet locked/withdrawable domain/use-cases with TDD, introduced API wallet module/controllers plus Prisma repository scaffolding, wired order completion to trigger booster earnings credit through a port, added configurable `WALLET_LOCK_PERIOD_HOURS`, and created a worker HTTP trigger for releasing matured wallet funds.
