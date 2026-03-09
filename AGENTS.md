@@ -21,6 +21,11 @@ When documentation is needed, always use the official latest documentation.
 - Do not modify auto-generated `package.json` dependency versions from framework scaffolds (Nest/Next generators).
 - Use `@latest`/`latest` only when manually adding a new dependency or explicitly updating dependencies by hand.
 
+## Prisma migration rule for AI agents
+- Do not hand-write standalone SQL migration files by default.
+- When a Prisma schema change requires a migration, update `schema.prisma` first and then ask the user to run `pnpm db:migrate:dev --name <migration_name>` manually.
+- If a generated migration needs review, inspect the produced `migration.sql` after generation instead of prewriting it by hand.
+
 ## Command execution rule for AI agents
 - Prefer `pnpx` instead of `pnpm dlx` for one-off CLI execution in general.
 - If execution is blocked by network/sandbox/permission issues, explicitly ask for human intervention and wait for guidance/approval before retrying repeatedly.

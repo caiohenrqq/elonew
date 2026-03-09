@@ -3,6 +3,7 @@ import { AppSettingsModule } from '@app/common/settings/app-settings.module';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
+import { ClearOrderCredentialsUseCase } from '@modules/orders/application/use-cases/clear-order-credentials/clear-order-credentials.use-case';
 import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/complete-order/complete-order.use-case';
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
@@ -30,9 +31,14 @@ import { Module } from '@nestjs/common';
 		AcceptOrderUseCase,
 		RejectOrderUseCase,
 		CancelOrderUseCase,
+		ClearOrderCredentialsUseCase,
 		CompleteOrderUseCase,
 		SaveOrderCredentialsUseCase,
 	],
-	exports: [ORDER_REPOSITORY_KEY, MarkOrderAsPaidUseCase],
+	exports: [
+		ORDER_REPOSITORY_KEY,
+		MarkOrderAsPaidUseCase,
+		ClearOrderCredentialsUseCase,
+	],
 })
 export class OrdersModule {}

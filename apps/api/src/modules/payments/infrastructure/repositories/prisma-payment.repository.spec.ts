@@ -14,6 +14,7 @@ describe('PrismaPaymentRepository', () => {
 		const prisma = {
 			payment: {
 				findUnique,
+				findFirst: jest.fn(),
 				upsert,
 			},
 		};
@@ -55,6 +56,7 @@ describe('PrismaPaymentRepository', () => {
 		const prisma = {
 			payment: {
 				findUnique: jest.fn().mockResolvedValue(null),
+				findFirst: jest.fn(),
 				upsert: jest.fn(),
 			},
 		};
@@ -73,6 +75,7 @@ describe('PrismaPaymentRepository', () => {
 					grossAmount: 100,
 					boosterAmount: 70,
 				}),
+				findFirst: jest.fn(),
 				upsert: jest.fn(),
 			},
 		};
@@ -81,5 +84,29 @@ describe('PrismaPaymentRepository', () => {
 		await expect(repository.findById('payment-1')).rejects.toThrow(
 			'Invalid payment status persisted: invalid_status',
 		);
+	});
+
+	it('rehydrates failed payment status', async () => {
+		const prisma = {
+			payment: {
+				findUnique: jest.fn().mockResolvedValue({
+					id: 'payment-failed-1',
+					orderId: 'order-failed-1',
+					status: 'failed',
+					grossAmount: 100,
+					boosterAmount: 70,
+				}),
+				findFirst: jest.fn(),
+				upsert: jest.fn(),
+			},
+		};
+		const repository = new PrismaPaymentRepository(prisma as never);
+
+		await expect(
+			repository.findById('payment-failed-1'),
+		).resolves.toMatchObject({
+			id: 'payment-failed-1',
+			status: 'failed',
+		});
 	});
 });

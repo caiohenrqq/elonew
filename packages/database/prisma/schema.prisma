@@ -24,6 +24,7 @@ enum PaymentStatus {
   awaiting_confirmation
   held
   released
+  failed
 }
 
 enum ServiceType {
@@ -83,7 +84,6 @@ model Order {
   status           OrderStatus  @default(awaiting_payment)
   serviceType      ServiceType?
   
-  // FR-013 fields
   currentLeague    String?
   currentDivision  String?
   currentLp        Int?

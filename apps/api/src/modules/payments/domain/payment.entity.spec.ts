@@ -3,6 +3,7 @@ import { Payment } from '@modules/payments/domain/payment.entity';
 import {
 	PaymentAmountInvalidError,
 	PaymentHoldReleaseNotAllowedError,
+	PaymentInvalidTransitionError,
 } from '@modules/payments/domain/payment.errors';
 
 describe('Payment', () => {
@@ -87,5 +88,42 @@ describe('Payment', () => {
 
 		expect(() => payment.releaseHold(OrderStatus.COMPLETED)).not.toThrow();
 		expect(payment.status).toBe('released');
+	});
+
+	it('fails a payment before confirmation', () => {
+		const payment = Payment.create({
+			id: 'payment-6',
+			orderId: 'order-6',
+			grossAmount: 100,
+		});
+
+		payment.fail();
+
+		expect(payment.status).toBe('failed');
+	});
+
+	it('treats repeated failure as idempotent', () => {
+		const payment = Payment.create({
+			id: 'payment-7',
+			orderId: 'order-7',
+			grossAmount: 100,
+		});
+
+		payment.fail();
+
+		expect(() => payment.fail()).not.toThrow();
+		expect(payment.status).toBe('failed');
+	});
+
+	it('blocks failing a released payment', () => {
+		const payment = Payment.create({
+			id: 'payment-8',
+			orderId: 'order-8',
+			grossAmount: 100,
+		});
+		payment.confirm();
+		payment.releaseHold(OrderStatus.COMPLETED);
+
+		expect(() => payment.fail()).toThrow(PaymentInvalidTransitionError);
 	});
 });
