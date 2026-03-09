@@ -113,4 +113,39 @@ describe('Payments module integration (db)', () => {
 			},
 		);
 	});
+
+	it('fails a payment, clears credentials, and keeps the negative state idempotent', async () => {
+		await ordersController.create({ orderId: 'order-db-5' });
+		await paymentsController.create({
+			paymentId: 'payment-db-5',
+			orderId: 'order-db-5',
+			grossAmount: 100,
+		});
+		await ordersController.confirmPayment('order-db-5');
+		await ordersController.saveCredentials('order-db-5', {
+			login: 'login-db',
+			summonerName: 'summoner-db',
+			password: 'secret-db',
+			confirmPassword: 'secret-db',
+		});
+
+		await expect(paymentsController.fail('payment-db-5')).resolves.toEqual({
+			success: true,
+		});
+		await expect(paymentsController.fail('payment-db-5')).resolves.toEqual({
+			success: true,
+		});
+
+		await expect(paymentsController.get('payment-db-5')).resolves.toMatchObject(
+			{
+				id: 'payment-db-5',
+				status: 'failed',
+			},
+		);
+		await expect(
+			prisma.orderCredentials.findUnique({
+				where: { orderId: 'order-db-5' },
+			}),
+		).resolves.toBeNull();
+	});
 });

@@ -9,9 +9,13 @@ import { PaymentStatus } from '@modules/payments/domain/payment-status';
 type AllowedTransitionMap = Record<PaymentStatus, readonly PaymentStatus[]>;
 
 const ALLOWED_TRANSITIONS: AllowedTransitionMap = {
-	[PaymentStatus.AWAITING_CONFIRMATION]: [PaymentStatus.HELD],
+	[PaymentStatus.AWAITING_CONFIRMATION]: [
+		PaymentStatus.HELD,
+		PaymentStatus.FAILED,
+	],
 	[PaymentStatus.HELD]: [PaymentStatus.RELEASED],
 	[PaymentStatus.RELEASED]: [],
+	[PaymentStatus.FAILED]: [],
 };
 
 export class Payment {
@@ -69,6 +73,12 @@ export class Payment {
 			return;
 
 		this.transitionTo(PaymentStatus.HELD);
+	}
+
+	fail(): void {
+		if (this.currentStatus === PaymentStatus.FAILED) return;
+
+		this.transitionTo(PaymentStatus.FAILED);
 	}
 
 	releaseHold(orderStatus: OrderStatus): void {

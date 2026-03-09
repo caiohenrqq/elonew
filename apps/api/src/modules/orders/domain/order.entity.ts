@@ -117,6 +117,10 @@ export class Order {
 		this.currentCredentials = credentials;
 	}
 
+	clearCredentials(): void {
+		this.currentCredentials = null;
+	}
+
 	private transitionTo(nextStatus: OrderStatus): void {
 		const allowed = ALLOWED_TRANSITIONS[this.currentStatus];
 		if (!allowed.includes(nextStatus))

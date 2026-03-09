@@ -124,4 +124,25 @@ describe('Payments module integration', () => {
 			status: 'held',
 		});
 	});
+
+	it('fails a payment and keeps the negative state idempotent', async () => {
+		await ordersController.create({ orderId: 'order-5' });
+		await paymentsController.create({
+			paymentId: 'payment-5',
+			orderId: 'order-5',
+			grossAmount: 100,
+		});
+
+		await expect(paymentsController.fail('payment-5')).resolves.toEqual({
+			success: true,
+		});
+		await expect(paymentsController.fail('payment-5')).resolves.toEqual({
+			success: true,
+		});
+
+		await expect(paymentsController.get('payment-5')).resolves.toMatchObject({
+			id: 'payment-5',
+			status: 'failed',
+		});
+	});
 });

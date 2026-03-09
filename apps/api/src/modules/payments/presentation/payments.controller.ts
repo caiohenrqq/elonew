@@ -5,6 +5,7 @@ import {
 } from '@app/common/http/domain-error.mapper';
 import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
+import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail-payment/fail-payment.use-case';
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
@@ -44,6 +45,7 @@ export class PaymentsController {
 		private readonly createPaymentUseCase: CreatePaymentUseCase,
 		private readonly getPaymentUseCase: GetPaymentUseCase,
 		private readonly confirmPaymentUseCase: ConfirmPaymentUseCase,
+		private readonly failPaymentUseCase: FailPaymentUseCase,
 		private readonly handlePaymentConfirmedWebhookUseCase: HandlePaymentConfirmedWebhookUseCase,
 		private readonly releasePaymentHoldUseCase: ReleasePaymentHoldUseCase,
 	) {}
@@ -84,6 +86,16 @@ export class PaymentsController {
 	): Promise<{ success: true }> {
 		return this.executeMutation(() =>
 			this.confirmPaymentUseCase.execute({ paymentId }),
+		);
+	}
+
+	@Post(':paymentId/fail')
+	@HttpCode(200)
+	async fail(
+		@Param('paymentId') paymentId: string,
+	): Promise<{ success: true }> {
+		return this.executeMutation(() =>
+			this.failPaymentUseCase.execute({ paymentId }),
 		);
 	}
 
