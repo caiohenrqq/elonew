@@ -43,6 +43,47 @@ When documentation is needed, always use the official latest documentation.
 - After every medium or large change, add a brief summary entry to the `## Changelog` section in this file.
 - **Development Roadmap:** When a task in the `## Development Roadmap` is completed, mark it with an `[x]`.
 
+## Issue execution workflow for AI agents
+When the user says "let's start" on a GitHub issue or asks to begin issue work, follow this workflow by default:
+
+1. Read the issue and confirm the real scope before coding.
+   - Check the GitHub issue body.
+   - Check `AGENTS.md` and the relevant docs under `docs/`.
+   - Call out if the issue scope conflicts with roadmap/docs.
+
+2. Create or switch to the issue branch before implementation.
+   - Prefer a descriptive branch name tied to the issue number.
+   - Do not start implementation on `main` unless the user explicitly asks for it.
+
+3. Create an implementation plan before coding.
+   - The plan should match codebase standards and the current architecture.
+   - Keep it practical and decision-complete enough for implementation.
+
+4. Use TDD with focus on core behavior first.
+   - Start with fail-first tests for the decision-heavy/core feature behavior.
+   - Do not force micro-TDD for every trivial wiring change; prefer TDD around the core business rules and critical flows.
+   - After fail-first tests, implement the minimum needed to pass.
+   - Refactor after the core behavior is green.
+
+5. Verify after coding.
+   - Run targeted tests during implementation.
+   - After every medium or large code change, run `pnpm biome:fix:all`.
+   - Verify TypeScript/TSX syntax and type correctness before finalizing. If there is no dedicated typecheck script, run project-appropriate `tsc --noEmit` checks.
+
+6. Update issue progress as work advances.
+   - Do not leave issue checkboxes only for the end.
+   - When a checklist item or done-when item is actually complete, update the GitHub issue and mark it checked.
+   - If follow-up debt is discovered that should not block the issue, create or update a separate issue for it.
+
+7. Open the PR following the repository template.
+   - Use the GitHub PR template structure.
+   - Keep the PR scoped to the issue being delivered.
+   - If unrelated local changes exist, do not include them in the issue commit/PR unless the user explicitly asks.
+
+8. Ask for confirmation at the right moments.
+   - Ask before Git write actions that require user permission by project rule.
+   - During TDD-driven issue work, ask for confirmation after each major phase when the user requested that workflow (for example: fail-first tests added, core implementation green, refactor/verification complete).
+
 Official docs to use:
 - NestJS: https://docs.nestjs.com/
 - Next.js: https://nextjs.org/docs
