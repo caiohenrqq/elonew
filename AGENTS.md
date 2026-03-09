@@ -33,6 +33,7 @@ When documentation is needed, always use the official latest documentation.
 - Use indentation equivalent to 4 spaces (2 tabs).
 - Do not add code comments unless strictly necessary (for example, temporary placeholders).
 - YAML files must use spaces for indentation (never tabs).
+- Do not prefer quick fixes just because they are faster; choose the solution that best fits the documented architecture and improves long-term maintainability unless the user explicitly asks for a temporary workaround.
 - Prefer one-line `if` statements when there is only a single throw statement (for example: `if (!order) throw new Error('Order not found.');`).
 - Avoid quick-fix type directives such as `/// <reference types=\"...\" />` for missing global types; prefer a proper project/package `tsconfig` fix (for example, `compilerOptions.types`) or explicit dependency configuration.
 - Before adding new functions or utilities, first search the codebase for existing implementations and reuse/extend them when appropriate.
@@ -201,4 +202,5 @@ Official docs to use:
 - Expanded Orders/Payments TDD coverage with adapter unit tests, credentials overwrite/completion edge-case tests, controller-level error-mapping tests for new order endpoints, DB-lane credential lifecycle integration tests, and a Prisma order-repository fix to make credential deletion idempotent in DB-backed flows.
 - Updated the agent issue workflow to require assigning issue-delivery PRs to `caiohenrqq` after creation.
 - Updated the agent issue workflow to require adding matching labels to issue-delivery PRs before considering them complete.
+- Added an explicit agent rule to prefer architecture-aligned, long-term solutions over quick fixes unless a temporary workaround is explicitly requested.
 - Implemented issue `#7` wallet core and runtime flow: added wallet locked/withdrawable domain/use-cases with TDD, introduced API wallet module/controllers plus Prisma repository scaffolding, wired order completion to trigger booster earnings credit through a port, added configurable `WALLET_LOCK_PERIOD_HOURS`, and created a worker HTTP trigger for releasing matured wallet funds.
