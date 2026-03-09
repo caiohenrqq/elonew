@@ -9,6 +9,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type CreateOrderInput = {
 	orderId: string;
+	boosterId?: string;
 };
 
 type CreateOrderOutput = {
@@ -27,7 +28,9 @@ export class CreateOrderUseCase {
 		const existingOrder = await this.orderRepository.findById(input.orderId);
 		if (existingOrder) throw new OrderAlreadyExistsError();
 
-		const order = Order.create(input.orderId);
+		const order = Order.create(input.orderId, {
+			boosterId: input.boosterId,
+		});
 		await this.orderRepository.save(order);
 
 		return { id: order.id, status: order.status };

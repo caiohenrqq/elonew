@@ -15,6 +15,9 @@ type PaymentRecord = {
 
 type PaymentDelegate = {
 	findUnique(args: { where: { id: string } }): Promise<PaymentRecord | null>;
+	findFirst(args: {
+		where: { orderId: string };
+	}): Promise<PaymentRecord | null>;
 	upsert(args: {
 		where: { id: string };
 		create: PaymentRecord;
@@ -34,17 +37,14 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 		const record = await this.getDelegate().findUnique({ where: { id } });
 		if (!record) return null;
 
-		return Payment.rehydrate({
-			id: record.id,
-			orderId: record.orderId,
-			status: ensurePersistedEnum(
-				PaymentStatus,
-				record.status,
-				'payment status',
-			),
-			grossAmount: record.grossAmount,
-			boosterAmount: record.boosterAmount,
-		});
+		return this.mapRecordToDomain(record);
+	}
+
+	async findByOrderId(orderId: string): Promise<Payment | null> {
+		const record = await this.getDelegate().findFirst({ where: { orderId } });
+		if (!record) return null;
+
+		return this.mapRecordToDomain(record);
 	}
 
 	async save(payment: Payment): Promise<void> {
@@ -62,6 +62,20 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				grossAmount: payment.grossAmount,
 				boosterAmount: payment.boosterAmount,
 			},
+		});
+	}
+
+	private mapRecordToDomain(record: PaymentRecord): Payment {
+		return Payment.rehydrate({
+			id: record.id,
+			orderId: record.orderId,
+			status: ensurePersistedEnum(
+				PaymentStatus,
+				record.status,
+				'payment status',
+			),
+			grossAmount: record.grossAmount,
+			boosterAmount: record.boosterAmount,
 		});
 	}
 

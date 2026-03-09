@@ -1,4 +1,8 @@
 import {
+	ORDER_COMPLETION_EARNINGS_PORT_KEY,
+	type OrderCompletionEarningsPort,
+} from '@modules/orders/application/ports/order-completion-earnings.port';
+import {
 	ORDER_REPOSITORY_KEY,
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
@@ -14,6 +18,8 @@ export class CompleteOrderUseCase {
 	constructor(
 		@Inject(ORDER_REPOSITORY_KEY)
 		private readonly orderRepository: OrderRepositoryPort,
+		@Inject(ORDER_COMPLETION_EARNINGS_PORT_KEY)
+		private readonly orderCompletionEarningsPort: OrderCompletionEarningsPort,
 	) {}
 
 	async execute(input: CompleteOrderInput): Promise<void> {
@@ -22,5 +28,12 @@ export class CompleteOrderUseCase {
 
 		order.complete();
 		await this.orderRepository.save(order);
+		if (!order.boosterId) return;
+
+		await this.orderCompletionEarningsPort.creditCompletedOrderEarnings({
+			orderId: order.id,
+			boosterId: order.boosterId,
+			completedAt: new Date(),
+		});
 	}
 }

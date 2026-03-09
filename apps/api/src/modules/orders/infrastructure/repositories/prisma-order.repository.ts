@@ -10,6 +10,7 @@ import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type OrderRecord = {
 	id: string;
+	boosterId: string | null;
 	status: string;
 	credentials: {
 		login: string;
@@ -27,6 +28,7 @@ type OrderDelegate = {
 		where: { id: string };
 		create: {
 			id: string;
+			boosterId: string | null;
 			status: string;
 			credentials?:
 				| {
@@ -39,6 +41,7 @@ type OrderDelegate = {
 				| undefined;
 		};
 		update: {
+			boosterId: string | null;
 			status: string;
 			credentials?:
 				| {
@@ -82,6 +85,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 
 		return Order.rehydrate({
 			id: record.id,
+			boosterId: record.boosterId,
 			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
 			credentials: this.mapCredentialsFromRecord(record.credentials),
 		});
@@ -100,10 +104,12 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 			where: { id: order.id },
 			create: {
 				id: order.id,
+				boosterId: order.boosterId,
 				status: order.status,
 				credentials: credentialsCreate,
 			},
 			update: {
+				boosterId: order.boosterId,
 				status: order.status,
 				credentials: credentialsUpdate,
 			},

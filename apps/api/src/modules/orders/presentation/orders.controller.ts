@@ -32,6 +32,11 @@ import {
 
 type CreateOrderRequestBody = {
 	orderId: string;
+	boosterId?: string;
+};
+
+type AcceptOrderRequestBody = {
+	boosterId?: string;
 };
 
 type SaveOrderCredentialsRequestBody = {
@@ -59,7 +64,10 @@ export class OrdersController {
 		@Body() body: CreateOrderRequestBody,
 	): Promise<{ id: string; status: string }> {
 		try {
-			return await this.createOrderUseCase.execute({ orderId: body.orderId });
+			return await this.createOrderUseCase.execute({
+				orderId: body.orderId,
+				boosterId: body.boosterId,
+			});
 		} catch (error) {
 			throw this.mapDomainError(error);
 		}
@@ -87,9 +95,15 @@ export class OrdersController {
 
 	@Post(':orderId/accept')
 	@HttpCode(200)
-	async accept(@Param('orderId') orderId: string): Promise<{ success: true }> {
+	async accept(
+		@Param('orderId') orderId: string,
+		@Body() body?: AcceptOrderRequestBody,
+	): Promise<{ success: true }> {
 		return this.executeMutation(() =>
-			this.acceptOrderUseCase.execute({ orderId }),
+			this.acceptOrderUseCase.execute({
+				orderId,
+				boosterId: body?.boosterId,
+			}),
 		);
 	}
 

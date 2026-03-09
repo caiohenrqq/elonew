@@ -77,9 +77,9 @@ Official docs to use:
 - [ ] Map Mercado Pago states to internal `PaymentStatus` and trigger order transitions.
 
 ### 5. Booster Wallet & Finances
-- [ ] Implement `Wallet` domain logic for Credit/Debit ledger entries.
-- [ ] Create `WithdrawalRequest` flow for boosters.
-- [ ] Build background worker (BullMQ) for "Lock Period" timer to release funds.
+- [x] Implement `Wallet` domain logic for Credit/Debit ledger entries.
+- [x] Create `WithdrawalRequest` flow for boosters.
+- [x] Build background worker (BullMQ) for "Lock Period" timer to release funds.
 
 ### 6. Communication & Support
 - [ ] Implement WebSocket gateway for real-time internal Chat.
@@ -156,3 +156,4 @@ Official docs to use:
 - Implemented TDD-driven Orders/Payments core gap closure (without Mercado Pago adapter work): added Reject/Complete/SaveCredentials order flows, persisted `OrderCredentials` mapping in Prisma repository, wired payment confirm/webhook to trigger order paid transition via payments port adapter, expanded module integration and use-case/domain tests, and marked completed Core Order Flow roadmap items.
 - Refined Orders/Payments test strategy to focus unit tests on decision-heavy logic: removed low-value wiring-oriented unit specs (`get-order`, `get-payment`, and processed webhook repository), and added missing decision-path unit coverage (confirm-payment no-call on missing payment, webhook non-processed on downstream failure, release-hold not-found branches, and credentials allowed in `in_progress`).
 - Expanded Orders/Payments TDD coverage with adapter unit tests, credentials overwrite/completion edge-case tests, controller-level error-mapping tests for new order endpoints, DB-lane credential lifecycle integration tests, and a Prisma order-repository fix to make credential deletion idempotent in DB-backed flows.
+- Implemented issue `#7` wallet core and runtime flow: added wallet locked/withdrawable domain/use-cases with TDD, introduced API wallet module/controllers plus Prisma repository scaffolding, wired order completion to trigger booster earnings credit through a port, added configurable `WALLET_LOCK_PERIOD_HOURS`, and created a worker HTTP trigger for releasing matured wallet funds.
