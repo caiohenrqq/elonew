@@ -16,14 +16,25 @@ export function mapDomainErrorToHttpException(
 	rules: DomainErrorMappingRule[],
 	fallbackMessage = 'Unexpected error.',
 ): HttpException {
+	return (
+		tryMapDomainErrorToHttpException(error, rules) ??
+		new BadRequestException(fallbackMessage)
+	);
+}
+
+export function tryMapDomainErrorToHttpException(
+	error: unknown,
+	rules: DomainErrorMappingRule[],
+): HttpException | null {
 	for (const rule of rules) {
 		if (rule.errorTypes.some((errorType) => error instanceof errorType)) {
-			const message = error instanceof Error ? error.message : fallbackMessage;
+			const message =
+				error instanceof Error ? error.message : 'Unexpected error.';
 			return rule.toException(message);
 		}
 	}
 
-	return new BadRequestException(fallbackMessage);
+	return null;
 }
 
 export const mapAsNotFound = (
