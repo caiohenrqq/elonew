@@ -159,14 +159,17 @@ describe('Payments module integration (db)', () => {
 	});
 
 	it('fails a payment, clears credentials, and keeps the negative state idempotent', async () => {
-		await ordersController.create({ orderId: 'order-db-5' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 		await paymentsController.create({
 			paymentId: 'payment-db-5',
-			orderId: 'order-db-5',
+			orderId: createdOrder.id,
 			grossAmount: 100,
 		});
-		await ordersController.confirmPayment('order-db-5');
-		await ordersController.saveCredentials('order-db-5', {
+		await ordersController.confirmPayment(createdOrder.id);
+		await ordersController.saveCredentials(createdOrder.id, {
 			login: 'login-db',
 			summonerName: 'summoner-db',
 			password: 'secret-db',
@@ -188,7 +191,7 @@ describe('Payments module integration (db)', () => {
 		);
 		await expect(
 			prisma.orderCredentials.findUnique({
-				where: { orderId: 'order-db-5' },
+				where: { orderId: createdOrder.id },
 			}),
 		).resolves.toBeNull();
 	});

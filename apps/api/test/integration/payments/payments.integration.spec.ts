@@ -160,10 +160,13 @@ describe('Payments module integration', () => {
 	});
 
 	it('fails a payment and keeps the negative state idempotent', async () => {
-		await ordersController.create({ orderId: 'order-5' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 		await paymentsController.create({
 			paymentId: 'payment-5',
-			orderId: 'order-5',
+			orderId: createdOrder.id,
 			grossAmount: 100,
 		});
 
