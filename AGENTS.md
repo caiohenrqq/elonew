@@ -33,6 +33,7 @@ When documentation is needed, always use the official latest documentation.
 - Dependency installation commands (for example `pnpm add`, `pnpm install`, `pnpm remove`) are allowed only after explicit user permission in the current task.
 - After every medium or large code change, run `pnpm biome:fix:all` and typecheck before finalizing.
 - Never state or imply that everything is correct without running the relevant tests; if verification is blocked, say exactly which tests were not run and why.
+- For any agent-created commit, always follow `docs/commits.md` without exception; this rule applies to every commit message, commit split, and history rewrite performed by the agent.
 - Always ask for explicit user permission before running Git write actions (for example `git commit`, `git rebase`, `git merge`, `git tag`).
 - Never run `git push` unless the user explicitly asks for it; even when explicitly asked, ask for confirmation immediately before executing it.
 
@@ -182,6 +183,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Enforced a strict agent rule that all agent-created commits, including rewritten history, must always follow `docs/commits.md`.
 - Bootstrapped the monorepo, core docs, Docker/dev scripts, and workspace-wide tooling (`pnpm`, Biome, env conventions, aliases, package boundaries).
 - Built out the API modular structure across Orders, Payments, Wallet, Health, Config/Settings, Prisma persistence, and shared controller/error-mapping patterns with TDD-first coverage.
 - Stabilized local/dev/runtime behavior around Docker watch mode, API bootstrap/restart flow, Prisma 7 runtime configuration, DB-backed test lanes, and test bootstrap scripts.
