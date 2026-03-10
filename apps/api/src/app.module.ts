@@ -3,6 +3,8 @@ import { PaymentsModule } from '@modules/payments/payments.module';
 import { SystemModule } from '@modules/system/system.module';
 import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
+import { ApiDomainErrorFilter } from './common/http/api-domain-error.filter';
 import { AppSettingsModule } from './common/settings/app-settings.module';
 
 @Module({
@@ -14,6 +16,11 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 		WalletModule,
 	],
 	controllers: [],
-	providers: [],
+	providers: [
+		{
+			provide: APP_FILTER,
+			useClass: ApiDomainErrorFilter,
+		},
+	],
 })
 export class AppModule {}

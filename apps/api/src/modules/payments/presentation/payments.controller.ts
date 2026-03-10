@@ -1,8 +1,3 @@
-import {
-	mapAsBadRequest,
-	mapAsNotFound,
-	mapDomainErrorToHttpException,
-} from '@app/common/http/domain-error.mapper';
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
@@ -10,24 +5,7 @@ import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
-import {
-	PaymentAlreadyExistsError,
-	PaymentAmountInvalidError,
-	PaymentHoldReleaseNotAllowedError,
-	PaymentInvalidTransitionError,
-	PaymentNotFoundError,
-	PaymentOrderNotFoundError,
-} from '@modules/payments/domain/payment.errors';
-import {
-	BadRequestException,
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	NotFoundException,
-	Param,
-	Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import {
 	type CreatePaymentSchemaInput,
 	createPaymentSchema,
@@ -57,11 +35,7 @@ export class PaymentsController {
 		grossAmount: number;
 		boosterAmount: number;
 	}> {
-		try {
-			return await this.createPaymentUseCase.execute(body);
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
+		return await this.createPaymentUseCase.execute(body);
 	}
 
 	@Get(':paymentId')
@@ -72,11 +46,7 @@ export class PaymentsController {
 		grossAmount: number;
 		boosterAmount: number;
 	}> {
-		try {
-			return await this.getPaymentUseCase.execute({ paymentId });
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
+		return await this.getPaymentUseCase.execute({ paymentId });
 	}
 
 	@Post(':paymentId/confirm')
@@ -84,9 +54,8 @@ export class PaymentsController {
 	async confirm(
 		@Param('paymentId') paymentId: string,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.confirmPaymentUseCase.execute({ paymentId }),
-		);
+		await this.confirmPaymentUseCase.execute({ paymentId });
+		return { success: true };
 	}
 
 	@Post(':paymentId/fail')
@@ -94,9 +63,8 @@ export class PaymentsController {
 	async fail(
 		@Param('paymentId') paymentId: string,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.failPaymentUseCase.execute({ paymentId }),
-		);
+		await this.failPaymentUseCase.execute({ paymentId });
+		return { success: true };
 	}
 
 	@Post('webhooks/payment-confirmed')
@@ -105,11 +73,7 @@ export class PaymentsController {
 		@Body(new ZodValidationPipe(handlePaymentConfirmedWebhookSchema))
 		body: HandlePaymentConfirmedWebhookSchemaInput,
 	): Promise<{ processed: boolean }> {
-		try {
-			return await this.handlePaymentConfirmedWebhookUseCase.execute(body);
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
+		return await this.handlePaymentConfirmedWebhookUseCase.execute(body);
 	}
 
 	@Post(':paymentId/release')
@@ -117,33 +81,7 @@ export class PaymentsController {
 	async release(
 		@Param('paymentId') paymentId: string,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.releasePaymentHoldUseCase.execute({ paymentId }),
-		);
-	}
-
-	private async executeMutation(
-		mutation: () => Promise<void>,
-	): Promise<{ success: true }> {
-		try {
-			await mutation();
-			return { success: true };
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
-	}
-
-	private mapDomainError(
-		error: unknown,
-	): BadRequestException | NotFoundException {
-		return mapDomainErrorToHttpException(error, [
-			mapAsNotFound(PaymentNotFoundError, PaymentOrderNotFoundError),
-			mapAsBadRequest(
-				PaymentAlreadyExistsError,
-				PaymentAmountInvalidError,
-				PaymentInvalidTransitionError,
-				PaymentHoldReleaseNotAllowedError,
-			),
-		]) as BadRequestException | NotFoundException;
+		await this.releasePaymentHoldUseCase.execute({ paymentId });
+		return { success: true };
 	}
 }

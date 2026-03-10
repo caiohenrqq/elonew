@@ -1,8 +1,3 @@
-import {
-	mapAsBadRequest,
-	mapAsNotFound,
-	mapDomainErrorToHttpException,
-} from '@app/common/http/domain-error.mapper';
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
@@ -18,20 +13,10 @@ import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/ma
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import {
-	OrderAlreadyExistsError,
-	OrderCancellationNotAllowedError,
-	OrderCredentialsPasswordMismatchError,
-	OrderCredentialsStorageNotAllowedError,
-	OrderInvalidTransitionError,
-	OrderNotFoundError,
-} from '@modules/orders/domain/order.errors';
-import {
-	BadRequestException,
 	Body,
 	Controller,
 	Get,
 	HttpCode,
-	NotFoundException,
 	Param,
 	Post,
 	UseGuards,
@@ -69,34 +54,26 @@ export class OrdersController {
 		body: CreateOrderSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{ id: string; status: string }> {
-		try {
-			return await this.createOrderUseCase.execute({
-				clientId: currentUser.id,
-				serviceType: body.serviceType,
-				currentLeague: body.currentLeague,
-				currentDivision: body.currentDivision,
-				currentLp: body.currentLp,
-				desiredLeague: body.desiredLeague,
-				desiredDivision: body.desiredDivision,
-				server: body.server,
-				desiredQueue: body.desiredQueue,
-				lpGain: body.lpGain,
-				deadline: new Date(body.deadline),
-			});
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
+		return await this.createOrderUseCase.execute({
+			clientId: currentUser.id,
+			serviceType: body.serviceType,
+			currentLeague: body.currentLeague,
+			currentDivision: body.currentDivision,
+			currentLp: body.currentLp,
+			desiredLeague: body.desiredLeague,
+			desiredDivision: body.desiredDivision,
+			server: body.server,
+			desiredQueue: body.desiredQueue,
+			lpGain: body.lpGain,
+			deadline: new Date(body.deadline),
+		});
 	}
 
 	@Get(':orderId')
 	async get(
 		@Param('orderId') orderId: string,
 	): Promise<{ id: string; status: string }> {
-		try {
-			return await this.getOrderUseCase.execute({ orderId });
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
+		return await this.getOrderUseCase.execute({ orderId });
 	}
 
 	@Post(':orderId/payment-confirmed')
@@ -104,9 +81,8 @@ export class OrdersController {
 	async confirmPayment(
 		@Param('orderId') orderId: string,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.markOrderAsPaidUseCase.execute({ orderId }),
-		);
+		await this.markOrderAsPaidUseCase.execute({ orderId });
+		return { success: true };
 	}
 
 	@Post(':orderId/accept')
@@ -116,28 +92,25 @@ export class OrdersController {
 		@Body(new ZodValidationPipe(acceptOrderSchema))
 		body?: AcceptOrderSchemaInput,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.acceptOrderUseCase.execute({
-				orderId,
-				boosterId: body?.boosterId,
-			}),
-		);
+		await this.acceptOrderUseCase.execute({
+			orderId,
+			boosterId: body?.boosterId,
+		});
+		return { success: true };
 	}
 
 	@Post(':orderId/reject')
 	@HttpCode(200)
 	async reject(@Param('orderId') orderId: string): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.rejectOrderUseCase.execute({ orderId }),
-		);
+		await this.rejectOrderUseCase.execute({ orderId });
+		return { success: true };
 	}
 
 	@Post(':orderId/cancel')
 	@HttpCode(200)
 	async cancel(@Param('orderId') orderId: string): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.cancelOrderUseCase.execute({ orderId }),
-		);
+		await this.cancelOrderUseCase.execute({ orderId });
+		return { success: true };
 	}
 
 	@Post(':orderId/complete')
@@ -145,9 +118,8 @@ export class OrdersController {
 	async complete(
 		@Param('orderId') orderId: string,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.completeOrderUseCase.execute({ orderId }),
-		);
+		await this.completeOrderUseCase.execute({ orderId });
+		return { success: true };
 	}
 
 	@Post(':orderId/credentials')
@@ -157,40 +129,13 @@ export class OrdersController {
 		@Body(new ZodValidationPipe(saveOrderCredentialsSchema))
 		body: SaveOrderCredentialsSchemaInput,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.saveOrderCredentialsUseCase.execute({
-				orderId,
-				login: body.login,
-				summonerName: body.summonerName,
-				password: body.password,
-				confirmPassword: body.confirmPassword,
-			}),
-		);
-	}
-
-	private async executeMutation(
-		mutation: () => Promise<void>,
-	): Promise<{ success: true }> {
-		try {
-			await mutation();
-			return { success: true };
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
-	}
-
-	private mapDomainError(
-		error: unknown,
-	): BadRequestException | NotFoundException {
-		return mapDomainErrorToHttpException(error, [
-			mapAsNotFound(OrderNotFoundError),
-			mapAsBadRequest(
-				OrderAlreadyExistsError,
-				OrderInvalidTransitionError,
-				OrderCancellationNotAllowedError,
-				OrderCredentialsStorageNotAllowedError,
-				OrderCredentialsPasswordMismatchError,
-			),
-		]) as BadRequestException | NotFoundException;
+		await this.saveOrderCredentialsUseCase.execute({
+			orderId,
+			login: body.login,
+			summonerName: body.summonerName,
+			password: body.password,
+			confirmPassword: body.confirmPassword,
+		});
+		return { success: true };
 	}
 }

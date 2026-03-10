@@ -1,28 +1,9 @@
-import {
-	mapAsBadRequest,
-	mapAsNotFound,
-	mapDomainErrorToHttpException,
-} from '@app/common/http/domain-error.mapper';
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
 import { GetWalletUseCase } from '@modules/wallet/application/use-cases/get-wallet/get-wallet.use-case';
 import { ReleaseMaturedWalletFundsUseCase } from '@modules/wallet/application/use-cases/release-matured-wallet-funds/release-matured-wallet-funds.use-case';
 import { RequestWithdrawalUseCase } from '@modules/wallet/application/use-cases/request-withdrawal/request-withdrawal.use-case';
-import {
-	WalletInsufficientWithdrawableBalanceError,
-	WalletInvalidAmountError,
-	WalletNotFoundError,
-} from '@modules/wallet/domain/wallet.errors';
-import {
-	BadRequestException,
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	NotFoundException,
-	Param,
-	Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import {
 	type CreditCompletedOrderEarningsSchemaInput,
 	creditCompletedOrderEarningsSchema,
@@ -47,11 +28,7 @@ export class WalletsController {
 		balanceLocked: number;
 		balanceWithdrawable: number;
 	}> {
-		try {
-			return await this.getWalletUseCase.execute({ boosterId });
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
+		return await this.getWalletUseCase.execute({ boosterId });
 	}
 
 	@Post('credits/order-completed')
@@ -60,15 +37,14 @@ export class WalletsController {
 		@Body(new ZodValidationPipe(creditCompletedOrderEarningsSchema))
 		body: CreditCompletedOrderEarningsSchemaInput,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.creditCompletedOrderEarningsUseCase.execute({
-				orderId: body.orderId,
-				boosterId: body.boosterId,
-				amount: body.amount,
-				completedAt: new Date(body.completedAt),
-				lockPeriodInHours: body.lockPeriodInHours,
-			}),
-		);
+		await this.creditCompletedOrderEarningsUseCase.execute({
+			orderId: body.orderId,
+			boosterId: body.boosterId,
+			amount: body.amount,
+			completedAt: new Date(body.completedAt),
+			lockPeriodInHours: body.lockPeriodInHours,
+		});
+		return { success: true };
 	}
 
 	@Post('internal/release-matured-funds')
@@ -77,11 +53,10 @@ export class WalletsController {
 		@Body(new ZodValidationPipe(releaseMaturedWalletFundsSchema))
 		body: ReleaseMaturedWalletFundsSchemaInput,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.releaseMaturedWalletFundsUseCase.execute({
-				now: new Date(body.now),
-			}),
-		);
+		await this.releaseMaturedWalletFundsUseCase.execute({
+			now: new Date(body.now),
+		});
+		return { success: true };
 	}
 
 	@Post(':boosterId/withdrawals')
@@ -91,35 +66,11 @@ export class WalletsController {
 		@Body(new ZodValidationPipe(requestWithdrawalSchema))
 		body: RequestWithdrawalSchemaInput,
 	): Promise<{ success: true }> {
-		return this.executeMutation(() =>
-			this.requestWithdrawalUseCase.execute({
-				boosterId,
-				amount: body.amount,
-				requestedAt: new Date(body.requestedAt),
-			}),
-		);
-	}
-
-	private async executeMutation(
-		mutation: () => Promise<void>,
-	): Promise<{ success: true }> {
-		try {
-			await mutation();
-			return { success: true };
-		} catch (error) {
-			throw this.mapDomainError(error);
-		}
-	}
-
-	private mapDomainError(
-		error: unknown,
-	): BadRequestException | NotFoundException {
-		return mapDomainErrorToHttpException(error, [
-			mapAsNotFound(WalletNotFoundError),
-			mapAsBadRequest(
-				WalletInvalidAmountError,
-				WalletInsufficientWithdrawableBalanceError,
-			),
-		]) as BadRequestException | NotFoundException;
+		await this.requestWithdrawalUseCase.execute({
+			boosterId,
+			amount: body.amount,
+			requestedAt: new Date(body.requestedAt),
+		});
+		return { success: true };
 	}
 }
