@@ -118,7 +118,12 @@ When the user says "let's start" on a GitHub issue or asks to begin issue work, 
 - Preferred setup flow from the main repository root:
   1. Create or switch to the issue branch in a new worktree with `git worktree add <path> -b <branch>` when the branch does not exist yet.
   2. If the branch already exists, use `git worktree add <path> <branch>`.
-  3. Run all coding, tests, and issue-specific commands from inside that worktree, not from the main repository directory.
+  3. Prepare the worktree environment before coding or testing:
+     - run `pnpm install` inside the new worktree
+     - ensure required local env files exist in the worktree, especially `apps/api/.env` and `apps/api/.env.test`; if they are local-only and missing, copy them from the main repository checkout before running API commands
+     - run `pnpm -w db:generate` before API tests if Prisma client artifacts are missing in the worktree
+     - verify the worktree can execute at least one relevant narrow command before starting implementation
+  4. Run all coding, tests, and issue-specific commands from inside that worktree, not from the main repository directory.
 - Use the normal issue workflow above inside each worktree; `gh` remains the default tool for issue reading, Draft PR creation, issue linking, assignment, and labeling.
 - Do not have multiple agents use the same worktree or the same checked-out branch at the same time.
 - After the issue is merged or no longer active, remove the worktree with `git worktree remove <path>` instead of deleting the directory manually.
@@ -184,6 +189,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Added explicit worktree bootstrap instructions so new agent workspaces are prepared for install, env setup, Prisma generation, and test execution before coding starts.
 - Added a strict agent rule to prefer `gh` for GitHub operations whenever possible.
 - Enforced a strict agent rule that all agent-created commits, including rewritten history, must always follow `docs/commits.md`.
 - Bootstrapped the monorepo, core docs, Docker/dev scripts, and workspace-wide tooling (`pnpm`, Biome, env conventions, aliases, package boundaries).
