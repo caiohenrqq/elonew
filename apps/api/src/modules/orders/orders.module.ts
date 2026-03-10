@@ -1,5 +1,6 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import { AppSettingsModule } from '@app/common/settings/app-settings.module';
+import { AuthModule } from '@modules/auth/auth.module';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
@@ -15,7 +16,7 @@ import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [AppSettingsModule, WalletModule],
+	imports: [AppSettingsModule, AuthModule, WalletModule],
 	controllers: [OrdersController],
 	providers: [
 		PrismaService,

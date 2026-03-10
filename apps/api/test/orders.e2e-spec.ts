@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { INestApplication } from '@nestjs/common';
@@ -7,6 +8,37 @@ import { AppModule } from '../src/app.module';
 
 describe('Orders (e2e)', () => {
 	let app: INestApplication;
+
+	function getJwtSecret(): string {
+		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
+	}
+
+	function makeOrderPayload() {
+		return {
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			currentLp: 50,
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: '2026-03-31T00:00:00.000Z',
+		};
+	}
+
+	function signToken(payload: Record<string, unknown>): string {
+		const header = Buffer.from(
+			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+		).toString('base64url');
+		const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+		const signature = createHmac('sha256', getJwtSecret())
+			.update(`${header}.${body}`)
+			.digest('base64url');
+
+		return `${header}.${body}.${signature}`;
+	}
 
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
@@ -24,34 +56,85 @@ describe('Orders (e2e)', () => {
 		await app.close();
 	});
 
-	it('creates an order and returns it', async () => {
-		await request(app.getHttpServer())
-			.post('/orders')
-			.send({ orderId: 'order-1' })
-			.expect(201, { id: 'order-1', status: 'awaiting_payment' });
+	it('creates an authenticated order and returns it', async () => {
+		const token = signToken({ sub: 'client-1', role: 'CLIENT' });
+		let orderId = '';
 
 		await request(app.getHttpServer())
-			.get('/orders/order-1')
-			.expect(200, { id: 'order-1', status: 'awaiting_payment' });
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeOrderPayload())
+			.expect(201)
+			.expect(({ body }) => {
+				orderId = body.id;
+				expect(body).toEqual({
+					id: expect.any(String),
+					status: 'awaiting_payment',
+				});
+			});
+
+		await request(app.getHttpServer())
+			.get(`/orders/${orderId}`)
+			.expect(200, { id: orderId, status: 'awaiting_payment' });
 	});
 
 	it('moves order through payment and acceptance flow', async () => {
+		const token = signToken({ sub: 'client-2', role: 'CLIENT' });
+		let orderId = '';
+
 		await request(app.getHttpServer())
 			.post('/orders')
-			.send({ orderId: 'order-2' })
-			.expect(201);
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeOrderPayload())
+			.expect(201)
+			.expect(({ body }) => {
+				orderId = body.id;
+			});
 
 		await request(app.getHttpServer())
-			.post('/orders/order-2/payment-confirmed')
+			.post(`/orders/${orderId}/payment-confirmed`)
 			.expect(200, { success: true });
 
 		await request(app.getHttpServer())
-			.post('/orders/order-2/accept')
+			.post(`/orders/${orderId}/accept`)
 			.expect(200, { success: true });
 
 		await request(app.getHttpServer())
-			.get('/orders/order-2')
-			.expect(200, { id: 'order-2', status: 'in_progress' });
+			.get(`/orders/${orderId}`)
+			.expect(200, { id: orderId, status: 'in_progress' });
+	});
+
+	it('rejects unauthenticated create-order requests', async () => {
+		await request(app.getHttpServer())
+			.post('/orders')
+			.send(makeOrderPayload())
+			.expect(401);
+	});
+
+	it('rejects malformed access tokens', async () => {
+		const header = Buffer.from(
+			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+		).toString('base64url');
+		const payload = Buffer.from('not-json').toString('base64url');
+		const signature = createHmac('sha256', getJwtSecret())
+			.update(`${header}.${payload}`)
+			.digest('base64url');
+
+		await request(app.getHttpServer())
+			.post('/orders')
+			.set('Authorization', `Bearer ${header}.${payload}.${signature}`)
+			.send(makeOrderPayload())
+			.expect(401);
+	});
+
+	it('rejects invalid service types with bad request', async () => {
+		const token = signToken({ sub: 'client-3', role: 'CLIENT' });
+
+		await request(app.getHttpServer())
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ ...makeOrderPayload(), serviceType: 'unsupported' })
+			.expect(400);
 	});
 
 	it('returns 404 for unknown order in mutations', async () => {
@@ -65,13 +148,20 @@ describe('Orders (e2e)', () => {
 	});
 
 	it('returns 400 for invalid transition', async () => {
-		await request(app.getHttpServer())
-			.post('/orders')
-			.send({ orderId: 'order-3' })
-			.expect(201);
+		const token = signToken({ sub: 'client-4', role: 'CLIENT' });
+		let orderId = '';
 
 		await request(app.getHttpServer())
-			.post('/orders/order-3/accept')
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeOrderPayload())
+			.expect(201)
+			.expect(({ body }) => {
+				orderId = body.id;
+			});
+
+		await request(app.getHttpServer())
+			.post(`/orders/${orderId}/accept`)
 			.expect(400, {
 				message: 'Invalid order transition: awaiting_payment -> in_progress.',
 				error: 'Bad Request',

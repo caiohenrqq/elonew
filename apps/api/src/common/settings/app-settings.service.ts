@@ -21,6 +21,10 @@ export class AppSettingsService {
 		return this.config.getOrThrow('DATABASE_URL', { infer: true });
 	}
 
+	get jwtAccessTokenSecret() {
+		return this.config.getOrThrow('JWT_ACCESS_TOKEN_SECRET', { infer: true });
+	}
+
 	get walletLockPeriodInHours() {
 		return this.config.getOrThrow('WALLET_LOCK_PERIOD_HOURS', {
 			infer: true,

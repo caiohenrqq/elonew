@@ -3,15 +3,28 @@ import type { OrderRepositoryPort } from '@modules/orders/application/ports/orde
 import {
 	Order,
 	type OrderCredentials,
+	type OrderRequestDetails,
 } from '@modules/orders/domain/order.entity';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import { Injectable } from '@nestjs/common';
+import type { OrderServiceType } from '@shared/orders/service-type';
 import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type OrderRecord = {
 	id: string;
+	clientId: string | null;
 	boosterId: string | null;
 	status: string;
+	serviceType: string | null;
+	currentLeague: string | null;
+	currentDivision: string | null;
+	currentLp: number | null;
+	desiredLeague: string | null;
+	desiredDivision: string | null;
+	server: string | null;
+	desiredQueue: string | null;
+	lpGain: number | null;
+	deadline: Date | null;
 	credentials: {
 		login: string;
 		summonerName: string;
@@ -24,12 +37,50 @@ type OrderDelegate = {
 		where: { id: string };
 		include: { credentials: true };
 	}): Promise<OrderRecord | null>;
+	create(args: {
+		data: {
+			clientId: string | null;
+			boosterId: string | null;
+			status: string;
+			serviceType: string | null;
+			currentLeague: string | null;
+			currentDivision: string | null;
+			currentLp: number | null;
+			desiredLeague: string | null;
+			desiredDivision: string | null;
+			server: string | null;
+			desiredQueue: string | null;
+			lpGain: number | null;
+			deadline: Date | null;
+			credentials?:
+				| {
+						create: {
+							login: string;
+							summonerName: string;
+							password: string;
+						};
+				  }
+				| undefined;
+		};
+		include: { credentials: true };
+	}): Promise<OrderRecord>;
 	upsert(args: {
 		where: { id: string };
 		create: {
 			id: string;
+			clientId: string | null;
 			boosterId: string | null;
 			status: string;
+			serviceType: string | null;
+			currentLeague: string | null;
+			currentDivision: string | null;
+			currentLp: number | null;
+			desiredLeague: string | null;
+			desiredDivision: string | null;
+			server: string | null;
+			desiredQueue: string | null;
+			lpGain: number | null;
+			deadline: Date | null;
 			credentials?:
 				| {
 						create: {
@@ -41,8 +92,19 @@ type OrderDelegate = {
 				| undefined;
 		};
 		update: {
+			clientId: string | null;
 			boosterId: string | null;
 			status: string;
+			serviceType: string | null;
+			currentLeague: string | null;
+			currentDivision: string | null;
+			currentLp: number | null;
+			desiredLeague: string | null;
+			desiredDivision: string | null;
+			server: string | null;
+			desiredQueue: string | null;
+			lpGain: number | null;
+			deadline: Date | null;
 			credentials?:
 				| {
 						upsert: {
@@ -76,6 +138,21 @@ type OrderPrismaClient = {
 export class PrismaOrderRepository implements OrderRepositoryPort {
 	constructor(private readonly prisma: PrismaService) {}
 
+	async create(order: Order): Promise<Order> {
+		const record = await this.getDelegate().create({
+			data: {
+				clientId: order.clientId,
+				boosterId: order.boosterId,
+				status: order.status,
+				...this.mapRequestDetails(order.requestDetails),
+				credentials: this.mapCredentialsCreate(order.credentials),
+			},
+			include: { credentials: true },
+		});
+
+		return this.mapOrderFromRecord(record);
+	}
+
 	async findById(id: string): Promise<Order | null> {
 		const record = await this.getDelegate().findUnique({
 			where: { id },
@@ -83,12 +160,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 		});
 		if (!record) return null;
 
-		return Order.rehydrate({
-			id: record.id,
-			boosterId: record.boosterId,
-			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
-			credentials: this.mapCredentialsFromRecord(record.credentials),
-		});
+		return this.mapOrderFromRecord(record);
 	}
 
 	async save(order: Order): Promise<void> {
@@ -104,13 +176,17 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 			where: { id: order.id },
 			create: {
 				id: order.id,
+				clientId: order.clientId,
 				boosterId: order.boosterId,
 				status: order.status,
+				...this.mapRequestDetails(order.requestDetails),
 				credentials: credentialsCreate,
 			},
 			update: {
+				clientId: order.clientId,
 				boosterId: order.boosterId,
 				status: order.status,
+				...this.mapRequestDetails(order.requestDetails),
 				credentials: credentialsUpdate,
 			},
 		});
@@ -122,6 +198,17 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 
 	private getOrderCredentialsDelegate(): OrderCredentialsDelegate {
 		return (this.prisma as unknown as OrderPrismaClient).orderCredentials;
+	}
+
+	private mapOrderFromRecord(record: OrderRecord): Order {
+		return Order.rehydrate({
+			id: record.id,
+			clientId: record.clientId,
+			boosterId: record.boosterId,
+			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
+			credentials: this.mapCredentialsFromRecord(record.credentials),
+			requestDetails: this.mapRequestDetailsFromRecord(record),
+		});
 	}
 
 	private mapCredentialsFromRecord(
@@ -188,5 +275,92 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				},
 			},
 		};
+	}
+
+	private mapRequestDetails(requestDetails: OrderRequestDetails | null): {
+		serviceType: string | null;
+		currentLeague: string | null;
+		currentDivision: string | null;
+		currentLp: number | null;
+		desiredLeague: string | null;
+		desiredDivision: string | null;
+		server: string | null;
+		desiredQueue: string | null;
+		lpGain: number | null;
+		deadline: Date | null;
+	} {
+		return {
+			serviceType: requestDetails
+				? this.mapServiceTypeToPersistence(requestDetails.serviceType)
+				: null,
+			currentLeague: requestDetails?.currentLeague ?? null,
+			currentDivision: requestDetails?.currentDivision ?? null,
+			currentLp: requestDetails?.currentLp ?? null,
+			desiredLeague: requestDetails?.desiredLeague ?? null,
+			desiredDivision: requestDetails?.desiredDivision ?? null,
+			server: requestDetails?.server ?? null,
+			desiredQueue: requestDetails?.desiredQueue ?? null,
+			lpGain: requestDetails?.lpGain ?? null,
+			deadline: requestDetails?.deadline ?? null,
+		};
+	}
+
+	private mapRequestDetailsFromRecord(
+		record: OrderRecord,
+	): OrderRequestDetails | null {
+		if (
+			!record.serviceType ||
+			!record.currentLeague ||
+			!record.currentDivision ||
+			record.currentLp === null ||
+			!record.desiredLeague ||
+			!record.desiredDivision ||
+			!record.server ||
+			!record.desiredQueue ||
+			record.lpGain === null ||
+			!record.deadline
+		)
+			return null;
+
+		return {
+			serviceType: this.mapServiceTypeFromPersistence(record.serviceType),
+			currentLeague: record.currentLeague,
+			currentDivision: record.currentDivision,
+			currentLp: record.currentLp,
+			desiredLeague: record.desiredLeague,
+			desiredDivision: record.desiredDivision,
+			server: record.server,
+			desiredQueue: record.desiredQueue,
+			lpGain: record.lpGain,
+			deadline: record.deadline,
+		};
+	}
+
+	private mapServiceTypeToPersistence(serviceType: OrderServiceType): string {
+		switch (serviceType) {
+			case 'elo_boost':
+				return 'ELO_BOOST';
+			case 'duo_boost':
+				return 'DUO_BOOST';
+			case 'md5':
+				return 'MD5';
+			case 'coaching':
+				return 'COACHING';
+		}
+	}
+
+	private mapServiceTypeFromPersistence(serviceType: string): OrderServiceType {
+		switch (serviceType) {
+			case 'ELO_BOOST':
+				return 'elo_boost';
+			case 'DUO_BOOST':
+				return 'duo_boost';
+			case 'MD5':
+				return 'md5';
+			case 'COACHING':
+				return 'coaching';
+			default:
+				throw new Error(`Invalid order service type persisted: ${serviceType}`);
+		}
 	}
 }

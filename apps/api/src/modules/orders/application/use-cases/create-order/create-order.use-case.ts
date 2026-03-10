@@ -3,13 +3,22 @@ import {
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
 import { Order } from '@modules/orders/domain/order.entity';
-import { OrderAlreadyExistsError } from '@modules/orders/domain/order.errors';
 import type { OrderStatus } from '@modules/orders/domain/order-status';
 import { Inject, Injectable } from '@nestjs/common';
+import type { OrderServiceType } from '@shared/orders/service-type';
 
 type CreateOrderInput = {
-	orderId: string;
-	boosterId?: string;
+	clientId: string;
+	serviceType: OrderServiceType;
+	currentLeague: string;
+	currentDivision: string;
+	currentLp: number;
+	desiredLeague: string;
+	desiredDivision: string;
+	server: string;
+	desiredQueue: string;
+	lpGain: number;
+	deadline: Date;
 };
 
 type CreateOrderOutput = {
@@ -25,14 +34,23 @@ export class CreateOrderUseCase {
 	) {}
 
 	async execute(input: CreateOrderInput): Promise<CreateOrderOutput> {
-		const existingOrder = await this.orderRepository.findById(input.orderId);
-		if (existingOrder) throw new OrderAlreadyExistsError();
-
-		const order = Order.create(input.orderId, {
-			boosterId: input.boosterId,
+		const order = Order.createDraft({
+			clientId: input.clientId,
+			requestDetails: {
+				serviceType: input.serviceType,
+				currentLeague: input.currentLeague,
+				currentDivision: input.currentDivision,
+				currentLp: input.currentLp,
+				desiredLeague: input.desiredLeague,
+				desiredDivision: input.desiredDivision,
+				server: input.server,
+				desiredQueue: input.desiredQueue,
+				lpGain: input.lpGain,
+				deadline: input.deadline,
+			},
 		});
-		await this.orderRepository.save(order);
+		const createdOrder = await this.orderRepository.create(order);
 
-		return { id: order.id, status: order.status };
+		return { id: createdOrder.id, status: createdOrder.status };
 	}
 }

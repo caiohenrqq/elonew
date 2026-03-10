@@ -2,6 +2,7 @@ import {
 	WALLET_REPOSITORY_KEY,
 	type WalletRepositoryPort,
 } from '@modules/wallet/application/ports/wallet-repository.port';
+import { WalletNotFoundError } from '@modules/wallet/domain/wallet.errors';
 import { Inject, Injectable } from '@nestjs/common';
 
 type GetWalletInput = {
@@ -21,9 +22,9 @@ export class GetWalletUseCase {
 		private readonly walletRepository: WalletRepositoryPort,
 	) {}
 
-	async execute(input: GetWalletInput): Promise<GetWalletOutput> {
+	async execute(input: GetWalletInput): Promise<NonNullable<GetWalletOutput>> {
 		const wallet = await this.walletRepository.findByBoosterId(input.boosterId);
-		if (!wallet) return null;
+		if (!wallet) throw new WalletNotFoundError();
 
 		return {
 			boosterId: wallet.boosterId,

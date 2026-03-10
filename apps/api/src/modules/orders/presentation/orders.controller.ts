@@ -3,6 +3,12 @@ import {
 	mapAsNotFound,
 	mapDomainErrorToHttpException,
 } from '@app/common/http/domain-error.mapper';
+import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
+import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
+import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
+import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
+import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
 import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/complete-order/complete-order.use-case';
@@ -28,12 +34,13 @@ import {
 	NotFoundException,
 	Param,
 	Post,
+	UseGuards,
 } from '@nestjs/common';
-
-type CreateOrderRequestBody = {
-	orderId: string;
-	boosterId?: string;
-};
+import { Role } from '@packages/auth/roles/role';
+import {
+	type CreateOrderSchemaInput,
+	createOrderSchema,
+} from '@shared/orders/create-order.schema';
 
 type AcceptOrderRequestBody = {
 	boosterId?: string;
@@ -60,13 +67,26 @@ export class OrdersController {
 	) {}
 
 	@Post()
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
 	async create(
-		@Body() body: CreateOrderRequestBody,
+		@Body(new ZodValidationPipe(createOrderSchema))
+		body: CreateOrderSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{ id: string; status: string }> {
 		try {
 			return await this.createOrderUseCase.execute({
-				orderId: body.orderId,
-				boosterId: body.boosterId,
+				clientId: currentUser.id,
+				serviceType: body.serviceType,
+				currentLeague: body.currentLeague,
+				currentDivision: body.currentDivision,
+				currentLp: body.currentLp,
+				desiredLeague: body.desiredLeague,
+				desiredDivision: body.desiredDivision,
+				server: body.server,
+				desiredQueue: body.desiredQueue,
+				lpGain: body.lpGain,
+				deadline: new Date(body.deadline),
 			});
 		} catch (error) {
 			throw this.mapDomainError(error);
@@ -77,10 +97,11 @@ export class OrdersController {
 	async get(
 		@Param('orderId') orderId: string,
 	): Promise<{ id: string; status: string }> {
-		const order = await this.getOrderUseCase.execute({ orderId });
-		if (!order) throw new NotFoundException('Order not found.');
-
-		return order;
+		try {
+			return await this.getOrderUseCase.execute({ orderId });
+		} catch (error) {
+			throw this.mapDomainError(error);
+		}
 	}
 
 	@Post(':orderId/payment-confirmed')

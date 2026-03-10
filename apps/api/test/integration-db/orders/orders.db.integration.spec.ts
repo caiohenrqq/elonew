@@ -1,14 +1,33 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
+import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { Role } from '@packages/auth/roles/role';
+import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
 
 describe('Orders module integration (db)', () => {
 	let moduleRef: TestingModule;
 	let controller: OrdersController;
 	let prisma: PrismaService;
+	let clientUser: AuthenticatedUser;
+
+	function makeCreateOrderBody(): CreateOrderSchemaInput {
+		return {
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			currentLp: 50,
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: '2026-03-31T00:00:00.000Z',
+		};
+	}
 
 	beforeEach(async () => {
 		moduleRef = await Test.createTestingModule({
@@ -19,6 +38,19 @@ describe('Orders module integration (db)', () => {
 		prisma = moduleRef.get(PrismaService);
 		await prisma.payment.deleteMany();
 		await prisma.order.deleteMany();
+		const uniqueSuffix = Date.now().toString();
+		const createdUser = await prisma.user.create({
+			data: {
+				username: `client-${uniqueSuffix}`,
+				email: `client-${uniqueSuffix}@example.com`,
+				password: 'secret',
+				role: 'CLIENT',
+			},
+		});
+		clientUser = {
+			id: createdUser.id,
+			role: Role.CLIENT,
+		};
 	});
 
 	afterEach(async () => {
@@ -26,30 +58,52 @@ describe('Orders module integration (db)', () => {
 	});
 
 	it('creates and fetches an order', async () => {
-		await expect(controller.create({ orderId: 'order-db-1' })).resolves.toEqual(
-			{
-				id: 'order-db-1',
-				status: 'awaiting_payment',
-			},
+		const createdOrder = await controller.create(
+			makeCreateOrderBody(),
+			clientUser,
 		);
 
-		await expect(controller.get('order-db-1')).resolves.toEqual({
-			id: 'order-db-1',
+		expect(createdOrder).toMatchObject({
+			id: expect.any(String),
+			status: 'awaiting_payment',
+		});
+		const persistedOrder = await prisma.order.findUnique({
+			where: { id: createdOrder.id },
+		});
+		expect(persistedOrder).toMatchObject({
+			id: createdOrder.id,
+			clientId: clientUser.id,
+			serviceType: 'ELO_BOOST',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			currentLp: 50,
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+		});
+
+		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+			id: createdOrder.id,
 			status: 'awaiting_payment',
 		});
 	});
 
 	it('applies payment confirmation and acceptance transitions', async () => {
-		await controller.create({ orderId: 'order-db-2' });
-		await expect(controller.confirmPayment('order-db-2')).resolves.toEqual({
+		const createdOrder = await controller.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
+		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({
 			success: true,
 		});
-		await expect(controller.accept('order-db-2')).resolves.toEqual({
+		await expect(controller.accept(createdOrder.id)).resolves.toEqual({
 			success: true,
 		});
 
-		await expect(controller.get('order-db-2')).resolves.toEqual({
-			id: 'order-db-2',
+		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+			id: createdOrder.id,
 			status: 'in_progress',
 		});
 	});
@@ -64,18 +118,24 @@ describe('Orders module integration (db)', () => {
 	});
 
 	it('maps invalid transitions to bad request exception', async () => {
-		await controller.create({ orderId: 'order-db-3' });
+		const createdOrder = await controller.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 
-		await expect(controller.accept('order-db-3')).rejects.toBeInstanceOf(
+		await expect(controller.accept(createdOrder.id)).rejects.toBeInstanceOf(
 			BadRequestException,
 		);
 	});
 
 	it('persists credentials after payment confirmation', async () => {
-		await controller.create({ orderId: 'order-db-4' });
-		await controller.confirmPayment('order-db-4');
+		const createdOrder = await controller.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
+		await controller.confirmPayment(createdOrder.id);
 		await expect(
-			controller.saveCredentials('order-db-4', {
+			controller.saveCredentials(createdOrder.id, {
 				login: 'login-db',
 				summonerName: 'summoner-db',
 				password: 'secret-db',
@@ -84,10 +144,10 @@ describe('Orders module integration (db)', () => {
 		).resolves.toEqual({ success: true });
 
 		const credentials = await prisma.orderCredentials.findUnique({
-			where: { orderId: 'order-db-4' },
+			where: { orderId: createdOrder.id },
 		});
 		expect(credentials).toMatchObject({
-			orderId: 'order-db-4',
+			orderId: createdOrder.id,
 			login: 'login-db',
 			summonerName: 'summoner-db',
 			password: 'secret-db',
@@ -95,32 +155,38 @@ describe('Orders module integration (db)', () => {
 	});
 
 	it('deletes credentials after order completion', async () => {
-		await controller.create({ orderId: 'order-db-5' });
-		await controller.confirmPayment('order-db-5');
-		await controller.saveCredentials('order-db-5', {
+		const createdOrder = await controller.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
+		await controller.confirmPayment(createdOrder.id);
+		await controller.saveCredentials(createdOrder.id, {
 			login: 'login-db',
 			summonerName: 'summoner-db',
 			password: 'secret-db',
 			confirmPassword: 'secret-db',
 		});
-		await controller.accept('order-db-5');
-		await controller.complete('order-db-5');
+		await controller.accept(createdOrder.id);
+		await controller.complete(createdOrder.id);
 
 		const credentials = await prisma.orderCredentials.findUnique({
-			where: { orderId: 'order-db-5' },
+			where: { orderId: createdOrder.id },
 		});
 		expect(credentials).toBeNull();
-		await expect(controller.get('order-db-5')).resolves.toEqual({
-			id: 'order-db-5',
+		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+			id: createdOrder.id,
 			status: 'completed',
 		});
 	});
 
 	it('rejects credentials before payment confirmation', async () => {
-		await controller.create({ orderId: 'order-db-6' });
+		const createdOrder = await controller.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 
 		await expect(
-			controller.saveCredentials('order-db-6', {
+			controller.saveCredentials(createdOrder.id, {
 				login: 'login-db',
 				summonerName: 'summoner-db',
 				password: 'secret-db',
