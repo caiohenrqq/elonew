@@ -168,4 +168,54 @@ describe('Orders (e2e)', () => {
 				statusCode: 400,
 			});
 	});
+
+	it('rejects accept payloads with non-string boosterId', async () => {
+		const token = signToken({ sub: 'client-5', role: 'CLIENT' });
+		let orderId = '';
+
+		await request(app.getHttpServer())
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeOrderPayload())
+			.expect(201)
+			.expect(({ body }) => {
+				orderId = body.id;
+			});
+
+		await request(app.getHttpServer())
+			.post(`/orders/${orderId}/payment-confirmed`)
+			.expect(200, { success: true });
+
+		await request(app.getHttpServer())
+			.post(`/orders/${orderId}/accept`)
+			.send({ boosterId: 123 })
+			.expect(400);
+	});
+
+	it('rejects credentials payloads missing login', async () => {
+		const token = signToken({ sub: 'client-6', role: 'CLIENT' });
+		let orderId = '';
+
+		await request(app.getHttpServer())
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeOrderPayload())
+			.expect(201)
+			.expect(({ body }) => {
+				orderId = body.id;
+			});
+
+		await request(app.getHttpServer())
+			.post(`/orders/${orderId}/payment-confirmed`)
+			.expect(200, { success: true });
+
+		await request(app.getHttpServer())
+			.post(`/orders/${orderId}/credentials`)
+			.send({
+				summonerName: 'summoner',
+				password: 'secret',
+				confirmPassword: 'secret',
+			})
+			.expect(400);
+	});
 });

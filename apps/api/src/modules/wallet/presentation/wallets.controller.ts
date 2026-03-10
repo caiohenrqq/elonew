@@ -3,6 +3,7 @@ import {
 	mapAsNotFound,
 	mapDomainErrorToHttpException,
 } from '@app/common/http/domain-error.mapper';
+import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
 import { GetWalletUseCase } from '@modules/wallet/application/use-cases/get-wallet/get-wallet.use-case';
 import { ReleaseMaturedWalletFundsUseCase } from '@modules/wallet/application/use-cases/release-matured-wallet-funds/release-matured-wallet-funds.use-case';
@@ -22,23 +23,14 @@ import {
 	Param,
 	Post,
 } from '@nestjs/common';
-
-type ReleaseMaturedWalletFundsRequestBody = {
-	now: string;
-};
-
-type RequestWithdrawalRequestBody = {
-	amount: number;
-	requestedAt: string;
-};
-
-type CreditCompletedOrderEarningsRequestBody = {
-	orderId: string;
-	boosterId: string;
-	amount: number;
-	completedAt: string;
-	lockPeriodInHours: number;
-};
+import {
+	type CreditCompletedOrderEarningsSchemaInput,
+	creditCompletedOrderEarningsSchema,
+	type ReleaseMaturedWalletFundsSchemaInput,
+	type RequestWithdrawalSchemaInput,
+	releaseMaturedWalletFundsSchema,
+	requestWithdrawalSchema,
+} from './wallets.request-schemas';
 
 @Controller('wallets')
 export class WalletsController {
@@ -65,7 +57,8 @@ export class WalletsController {
 	@Post('credits/order-completed')
 	@HttpCode(200)
 	async creditCompletedOrderEarnings(
-		@Body() body: CreditCompletedOrderEarningsRequestBody,
+		@Body(new ZodValidationPipe(creditCompletedOrderEarningsSchema))
+		body: CreditCompletedOrderEarningsSchemaInput,
 	): Promise<{ success: true }> {
 		return this.executeMutation(() =>
 			this.creditCompletedOrderEarningsUseCase.execute({
@@ -81,7 +74,8 @@ export class WalletsController {
 	@Post('internal/release-matured-funds')
 	@HttpCode(200)
 	async releaseMaturedFunds(
-		@Body() body: ReleaseMaturedWalletFundsRequestBody,
+		@Body(new ZodValidationPipe(releaseMaturedWalletFundsSchema))
+		body: ReleaseMaturedWalletFundsSchemaInput,
 	): Promise<{ success: true }> {
 		return this.executeMutation(() =>
 			this.releaseMaturedWalletFundsUseCase.execute({
@@ -94,7 +88,8 @@ export class WalletsController {
 	@HttpCode(200)
 	async requestWithdrawal(
 		@Param('boosterId') boosterId: string,
-		@Body() body: RequestWithdrawalRequestBody,
+		@Body(new ZodValidationPipe(requestWithdrawalSchema))
+		body: RequestWithdrawalSchemaInput,
 	): Promise<{ success: true }> {
 		return this.executeMutation(() =>
 			this.requestWithdrawalUseCase.execute({

@@ -1,5 +1,6 @@
 import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
+import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail-payment/fail-payment.use-case';
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
@@ -41,6 +42,7 @@ function makeController() {
 		execute: jest.fn(),
 	};
 	const confirmPaymentUseCase = makeMutationUseCase();
+	const failPaymentUseCase = makeMutationUseCase();
 	const handlePaymentConfirmedWebhookUseCase = {
 		execute: jest.fn(),
 	} as unknown as HandlePaymentConfirmedWebhookUseCase;
@@ -51,6 +53,7 @@ function makeController() {
 			createPaymentUseCase,
 			getPaymentUseCase as unknown as GetPaymentUseCase,
 			confirmPaymentUseCase as unknown as ConfirmPaymentUseCase,
+			failPaymentUseCase as unknown as FailPaymentUseCase,
 			handlePaymentConfirmedWebhookUseCase,
 			releasePaymentHoldUseCase as unknown as ReleasePaymentHoldUseCase,
 		),

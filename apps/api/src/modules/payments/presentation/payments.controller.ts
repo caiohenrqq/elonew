@@ -3,6 +3,7 @@ import {
 	mapAsNotFound,
 	mapDomainErrorToHttpException,
 } from '@app/common/http/domain-error.mapper';
+import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
 import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail-payment/fail-payment.use-case';
@@ -27,17 +28,12 @@ import {
 	Param,
 	Post,
 } from '@nestjs/common';
-
-type CreatePaymentRequestBody = {
-	paymentId: string;
-	orderId: string;
-	grossAmount: number;
-};
-
-type HandlePaymentConfirmedWebhookRequestBody = {
-	eventId: string;
-	paymentId: string;
-};
+import {
+	type CreatePaymentSchemaInput,
+	createPaymentSchema,
+	type HandlePaymentConfirmedWebhookSchemaInput,
+	handlePaymentConfirmedWebhookSchema,
+} from './payments.request-schemas';
 
 @Controller('payments')
 export class PaymentsController {
@@ -51,7 +47,10 @@ export class PaymentsController {
 	) {}
 
 	@Post()
-	async create(@Body() body: CreatePaymentRequestBody): Promise<{
+	async create(
+		@Body(new ZodValidationPipe(createPaymentSchema))
+		body: CreatePaymentSchemaInput,
+	): Promise<{
 		id: string;
 		orderId: string;
 		status: string;
@@ -103,7 +102,8 @@ export class PaymentsController {
 	@Post('webhooks/payment-confirmed')
 	@HttpCode(200)
 	async handlePaymentConfirmedWebhook(
-		@Body() body: HandlePaymentConfirmedWebhookRequestBody,
+		@Body(new ZodValidationPipe(handlePaymentConfirmedWebhookSchema))
+		body: HandlePaymentConfirmedWebhookSchemaInput,
 	): Promise<{ processed: boolean }> {
 		try {
 			return await this.handlePaymentConfirmedWebhookUseCase.execute(body);
