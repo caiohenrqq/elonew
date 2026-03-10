@@ -8,13 +8,13 @@ import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/ma
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import {
+	OrderAlreadyExistsError,
 	OrderCredentialsPasswordMismatchError,
 	OrderCredentialsStorageNotAllowedError,
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 
 type MutationUseCase = {
@@ -116,47 +116,70 @@ describe('OrdersController', () => {
 		});
 	});
 
-	it('maps reject not-found errors to NotFoundException', async () => {
+	it('propagates domain errors from reject without local HTTP mapping', async () => {
 		const { controller, rejectOrderUseCase } = makeController();
 		rejectOrderUseCase.execute.mockRejectedValue(new OrderNotFoundError());
 
 		await expect(controller.reject('order-1')).rejects.toBeInstanceOf(
-			NotFoundException,
+			OrderNotFoundError,
 		);
 	});
 
-	it('maps reject invalid-transition errors to BadRequestException', async () => {
+	it('propagates domain errors from create without local HTTP mapping', async () => {
+		const { controller, createOrderExecute } = makeController();
+		createOrderExecute.mockRejectedValue(new OrderAlreadyExistsError());
+
+		await expect(
+			controller.create(
+				{
+					serviceType: 'elo_boost',
+					currentLeague: 'gold',
+					currentDivision: 'II',
+					currentLp: 50,
+					desiredLeague: 'platinum',
+					desiredDivision: 'IV',
+					server: 'br',
+					desiredQueue: 'solo_duo',
+					lpGain: 20,
+					deadline: '2026-03-31T00:00:00.000Z',
+				},
+				clientUser,
+			),
+		).rejects.toBeInstanceOf(OrderAlreadyExistsError);
+	});
+
+	it('propagates domain errors from reject without local HTTP mapping', async () => {
 		const { controller, rejectOrderUseCase } = makeController();
 		rejectOrderUseCase.execute.mockRejectedValue(
 			new OrderInvalidTransitionError('pending_booster', 'in_progress'),
 		);
 
 		await expect(controller.reject('order-2')).rejects.toBeInstanceOf(
-			BadRequestException,
+			OrderInvalidTransitionError,
 		);
 	});
 
-	it('maps complete not-found errors to NotFoundException', async () => {
+	it('propagates domain errors from complete without local HTTP mapping', async () => {
 		const { controller, completeOrderUseCase } = makeController();
 		completeOrderUseCase.execute.mockRejectedValue(new OrderNotFoundError());
 
 		await expect(controller.complete('order-3')).rejects.toBeInstanceOf(
-			NotFoundException,
+			OrderNotFoundError,
 		);
 	});
 
-	it('maps complete invalid-transition errors to BadRequestException', async () => {
+	it('propagates domain errors from complete without local HTTP mapping', async () => {
 		const { controller, completeOrderUseCase } = makeController();
 		completeOrderUseCase.execute.mockRejectedValue(
 			new OrderInvalidTransitionError('pending_booster', 'completed'),
 		);
 
 		await expect(controller.complete('order-4')).rejects.toBeInstanceOf(
-			BadRequestException,
+			OrderInvalidTransitionError,
 		);
 	});
 
-	it('maps credentials password mismatch errors to BadRequestException', async () => {
+	it('propagates credentials password mismatch errors without local HTTP mapping', async () => {
 		const { controller, saveOrderCredentialsUseCase } = makeController();
 		saveOrderCredentialsUseCase.execute.mockRejectedValue(
 			new OrderCredentialsPasswordMismatchError(),
@@ -169,10 +192,10 @@ describe('OrdersController', () => {
 				password: 'secret',
 				confirmPassword: 'different',
 			}),
-		).rejects.toBeInstanceOf(BadRequestException);
+		).rejects.toBeInstanceOf(OrderCredentialsPasswordMismatchError);
 	});
 
-	it('maps credentials storage-not-allowed errors to BadRequestException', async () => {
+	it('propagates credentials storage-not-allowed errors without local HTTP mapping', async () => {
 		const { controller, saveOrderCredentialsUseCase } = makeController();
 		saveOrderCredentialsUseCase.execute.mockRejectedValue(
 			new OrderCredentialsStorageNotAllowedError(),
@@ -185,10 +208,10 @@ describe('OrdersController', () => {
 				password: 'secret',
 				confirmPassword: 'secret',
 			}),
-		).rejects.toBeInstanceOf(BadRequestException);
+		).rejects.toBeInstanceOf(OrderCredentialsStorageNotAllowedError);
 	});
 
-	it('maps credentials order-not-found errors to NotFoundException', async () => {
+	it('propagates credentials order-not-found errors without local HTTP mapping', async () => {
 		const { controller, saveOrderCredentialsUseCase } = makeController();
 		saveOrderCredentialsUseCase.execute.mockRejectedValue(
 			new OrderNotFoundError(),
@@ -201,15 +224,15 @@ describe('OrdersController', () => {
 				password: 'secret',
 				confirmPassword: 'secret',
 			}),
-		).rejects.toBeInstanceOf(NotFoundException);
+		).rejects.toBeInstanceOf(OrderNotFoundError);
 	});
 
-	it('maps get not-found errors to NotFoundException', async () => {
+	it('propagates get not-found errors without local HTTP mapping', async () => {
 		const { controller, getOrderUseCase } = makeController();
 		getOrderUseCase.execute.mockRejectedValue(new OrderNotFoundError());
 
 		await expect(controller.get('order-8')).rejects.toBeInstanceOf(
-			NotFoundException,
+			OrderNotFoundError,
 		);
 	});
 });

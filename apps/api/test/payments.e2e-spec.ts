@@ -1,19 +1,29 @@
 import { createHmac } from 'node:crypto';
+import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
+import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { ORDER_STATUS_PORT_KEY } from '@modules/payments/application/ports/order-status.port';
 import { PAYMENT_REPOSITORY_KEY } from '@modules/payments/application/ports/payment-repository.port';
 import { PROCESSED_WEBHOOK_EVENT_PORT_KEY } from '@modules/payments/application/ports/processed-webhook-event.port';
 import { OrderStatusFromOrdersRepositoryAdapter } from '@modules/payments/infrastructure/adapters/order-status-from-orders-repository.adapter';
 import { InMemoryPaymentRepository } from '@modules/payments/infrastructure/repositories/in-memory-payment.repository';
 import { InMemoryProcessedWebhookEventRepository } from '@modules/payments/infrastructure/repositories/in-memory-processed-webhook-event.repository';
+import { PaymentsController } from '@modules/payments/presentation/payments.controller';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { Role } from '@packages/auth/roles/role';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 
 describe('Payments (e2e)', () => {
 	let app: INestApplication;
+	let ordersController: OrdersController;
+	let paymentsController: PaymentsController;
+	const clientUser: AuthenticatedUser = {
+		id: 'client-1',
+		role: Role.CLIENT,
+	};
 
 	function getJwtSecret(): string {
 		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
@@ -62,6 +72,8 @@ describe('Payments (e2e)', () => {
 
 		app = moduleRef.createNestApplication();
 		await app.init();
+		ordersController = moduleRef.get(OrdersController);
+		paymentsController = moduleRef.get(PaymentsController);
 	});
 
 	afterEach(async () => {
@@ -118,5 +130,52 @@ describe('Payments (e2e)', () => {
 				paymentId: 'payment-1',
 			})
 			.expect(400);
+	});
+
+	it('returns 404 when creating a payment for an unknown order', async () => {
+		await request(app.getHttpServer())
+			.post('/payments')
+			.send({
+				paymentId: 'payment-missing-order',
+				orderId: 'missing-order',
+				grossAmount: 100,
+			})
+			.expect(404, {
+				message: 'Order not found.',
+				error: 'Not Found',
+				statusCode: 404,
+			});
+	});
+
+	it('returns 400 when releasing a payment hold before order completion', async () => {
+		const order = await ordersController.create(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+		await paymentsController.create({
+			paymentId: 'payment-1',
+			orderId: order.id,
+			grossAmount: 100,
+		});
+		await paymentsController.confirm('payment-1');
+
+		await request(app.getHttpServer())
+			.post('/payments/payment-1/release')
+			.expect(400, {
+				message: 'Payment hold can only be released after order completion.',
+				error: 'Bad Request',
+				statusCode: 400,
+			});
 	});
 });

@@ -9,7 +9,6 @@ import {
 	PaymentNotFoundError,
 } from '@modules/payments/domain/payment.errors';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 type MutationUseCase = {
 	execute: jest.Mock<Promise<void>, [unknown]>;
@@ -82,23 +81,23 @@ describe('PaymentsController', () => {
 		});
 	});
 
-	it('maps get not-found errors to NotFoundException', async () => {
+	it('propagates get not-found errors without local HTTP mapping', async () => {
 		const { controller, getPaymentUseCase } = makeController();
 		getPaymentUseCase.execute.mockRejectedValue(new PaymentNotFoundError());
 
 		await expect(controller.get('payment-1')).rejects.toBeInstanceOf(
-			NotFoundException,
+			PaymentNotFoundError,
 		);
 	});
 
-	it('maps confirm invalid-transition errors to BadRequestException', async () => {
+	it('propagates confirm invalid-transition errors without local HTTP mapping', async () => {
 		const { controller, confirmPaymentUseCase } = makeController();
 		confirmPaymentUseCase.execute.mockRejectedValue(
 			new PaymentInvalidTransitionError('held', 'held'),
 		);
 
 		await expect(controller.confirm('payment-2')).rejects.toBeInstanceOf(
-			BadRequestException,
+			PaymentInvalidTransitionError,
 		);
 	});
 });

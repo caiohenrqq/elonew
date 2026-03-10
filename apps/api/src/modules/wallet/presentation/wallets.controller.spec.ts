@@ -7,7 +7,6 @@ import {
 	WalletNotFoundError,
 } from '@modules/wallet/domain/wallet.errors';
 import { WalletsController } from '@modules/wallet/presentation/wallets.controller';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 type MutationUseCase = {
 	execute: jest.Mock<Promise<void>, [unknown]>;
@@ -66,16 +65,16 @@ describe('WalletsController', () => {
 		});
 	});
 
-	it('maps get not-found errors to NotFoundException', async () => {
+	it('propagates get not-found errors without local HTTP mapping', async () => {
 		const { controller, getWalletUseCase } = makeController();
 		getWalletUseCase.execute.mockRejectedValue(new WalletNotFoundError());
 
 		await expect(controller.get('booster-2')).rejects.toBeInstanceOf(
-			NotFoundException,
+			WalletNotFoundError,
 		);
 	});
 
-	it('maps request-withdrawal domain errors to BadRequestException', async () => {
+	it('propagates request-withdrawal domain errors without local HTTP mapping', async () => {
 		const { controller, requestWithdrawalUseCase } = makeController();
 		requestWithdrawalUseCase.execute.mockRejectedValue(
 			new WalletInsufficientWithdrawableBalanceError(),
@@ -86,6 +85,6 @@ describe('WalletsController', () => {
 				amount: 10,
 				requestedAt: '2026-03-10T00:00:00.000Z',
 			}),
-		).rejects.toBeInstanceOf(BadRequestException);
+		).rejects.toBeInstanceOf(WalletInsufficientWithdrawableBalanceError);
 	});
 });
