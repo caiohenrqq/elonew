@@ -109,6 +109,12 @@ When the user says "let's start" on a GitHub issue or asks to begin issue work, 
    - Ask before Git write actions that require user permission by project rule.
    - During TDD-driven issue work, ask for confirmation after each major phase when the user requested that workflow (for example: fail-first tests added, core implementation green, refactor/verification complete).
 
+10. Check issue overlap before implementation when other issue work is active.
+   - Identify the main modules, controllers, shared packages, and infrastructure points the issue is likely to touch before coding.
+   - Check open issues and active branches/PRs for overlap in those same areas.
+   - If overlap is substantial, call out the conflict risk, propose an execution order or dependency, and avoid parallel implementation in separate branches unless the user explicitly wants that risk.
+   - Prefer landing refactors or shared-architecture changes before dependent feature work that would otherwise duplicate or conflict with those changes.
+
 ## Multi-agent issue workflow for AI agents
 - When parallel issue work is needed, prefer one `git worktree` per issue/agent instead of sharing the same working directory across multiple agents.
 - Keep the main repository as the coordination root, then create sibling worktrees for each active issue branch.
@@ -190,6 +196,7 @@ Official docs to use:
 
 ## Changelog
 - Added explicit worktree bootstrap instructions so new agent workspaces are prepared for install, env setup, Prisma generation, and test execution before coding starts.
+- Added a conflict-prevention rule requiring issue overlap checks before implementation when other active issue work exists.
 - Added a strict agent rule to prefer `gh` for GitHub operations whenever possible.
 - Enforced a strict agent rule that all agent-created commits, including rewritten history, must always follow `docs/commits.md`.
 - Bootstrapped the monorepo, core docs, Docker/dev scripts, and workspace-wide tooling (`pnpm`, Biome, env conventions, aliases, package boundaries).
