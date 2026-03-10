@@ -1,15 +1,34 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
+import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
+import { Role } from '@packages/auth/roles/role';
+import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
 
 describe('Payments module integration (db)', () => {
 	let moduleRef: TestingModule;
 	let ordersController: OrdersController;
 	let paymentsController: PaymentsController;
 	let prisma: PrismaService;
+	let clientUser: AuthenticatedUser;
+
+	function makeCreateOrderBody(): CreateOrderSchemaInput {
+		return {
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			currentLp: 50,
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: '2026-03-31T00:00:00.000Z',
+		};
+	}
 
 	beforeEach(async () => {
 		moduleRef = await Test.createTestingModule({
@@ -22,6 +41,19 @@ describe('Payments module integration (db)', () => {
 		await prisma.processedWebhookEvent.deleteMany();
 		await prisma.payment.deleteMany();
 		await prisma.order.deleteMany();
+		const uniqueSuffix = Date.now().toString();
+		const createdUser = await prisma.user.create({
+			data: {
+				username: `client-db-${uniqueSuffix}`,
+				email: `client-db-${uniqueSuffix}@example.com`,
+				password: 'secret',
+				role: 'CLIENT',
+			},
+		});
+		clientUser = {
+			id: createdUser.id,
+			role: Role.CLIENT,
+		};
 	});
 
 	afterEach(async () => {
@@ -29,17 +61,20 @@ describe('Payments module integration (db)', () => {
 	});
 
 	it('creates and fetches a payment with 70% booster share', async () => {
-		await ordersController.create({ orderId: 'order-db-1' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 
 		await expect(
 			paymentsController.create({
 				paymentId: 'payment-db-1',
-				orderId: 'order-db-1',
+				orderId: createdOrder.id,
 				grossAmount: 100,
 			}),
 		).resolves.toEqual({
 			id: 'payment-db-1',
-			orderId: 'order-db-1',
+			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 100,
 			boosterAmount: 70,
@@ -47,7 +82,7 @@ describe('Payments module integration (db)', () => {
 
 		await expect(paymentsController.get('payment-db-1')).resolves.toEqual({
 			id: 'payment-db-1',
-			orderId: 'order-db-1',
+			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 100,
 			boosterAmount: 70,
@@ -55,10 +90,13 @@ describe('Payments module integration (db)', () => {
 	});
 
 	it('keeps payment held until order completion', async () => {
-		await ordersController.create({ orderId: 'order-db-2' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 		await paymentsController.create({
 			paymentId: 'payment-db-2',
-			orderId: 'order-db-2',
+			orderId: createdOrder.id,
 			grossAmount: 100,
 		});
 		await paymentsController.confirm('payment-db-2');
@@ -69,10 +107,13 @@ describe('Payments module integration (db)', () => {
 	});
 
 	it('treats repeated confirm endpoint calls as idempotent', async () => {
-		await ordersController.create({ orderId: 'order-db-3' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 		await paymentsController.create({
 			paymentId: 'payment-db-3',
-			orderId: 'order-db-3',
+			orderId: createdOrder.id,
 			grossAmount: 100,
 		});
 
@@ -85,10 +126,13 @@ describe('Payments module integration (db)', () => {
 	});
 
 	it('ignores duplicated webhook event ids', async () => {
-		await ordersController.create({ orderId: 'order-db-4' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 		await paymentsController.create({
 			paymentId: 'payment-db-4',
-			orderId: 'order-db-4',
+			orderId: createdOrder.id,
 			grossAmount: 100,
 		});
 

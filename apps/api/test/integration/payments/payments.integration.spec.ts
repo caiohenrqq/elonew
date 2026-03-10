@@ -1,3 +1,4 @@
+import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
@@ -10,10 +11,31 @@ import { InMemoryProcessedWebhookEventRepository } from '@modules/payments/infra
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
 import { Test } from '@nestjs/testing';
+import { Role } from '@packages/auth/roles/role';
+import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
 
 describe('Payments module integration', () => {
 	let ordersController: OrdersController;
 	let paymentsController: PaymentsController;
+	const clientUser: AuthenticatedUser = {
+		id: 'client-1',
+		role: Role.CLIENT,
+	};
+
+	function makeCreateOrderBody(): CreateOrderSchemaInput {
+		return {
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			currentLp: 50,
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: '2026-03-31T00:00:00.000Z',
+		};
+	}
 
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
@@ -34,17 +56,20 @@ describe('Payments module integration', () => {
 	});
 
 	it('creates and fetches a payment with 70% booster share', async () => {
-		await ordersController.create({ orderId: 'order-1' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 
 		await expect(
 			paymentsController.create({
 				paymentId: 'payment-1',
-				orderId: 'order-1',
+				orderId: createdOrder.id,
 				grossAmount: 100,
 			}),
 		).resolves.toEqual({
 			id: 'payment-1',
-			orderId: 'order-1',
+			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 100,
 			boosterAmount: 70,
@@ -52,7 +77,7 @@ describe('Payments module integration', () => {
 
 		await expect(paymentsController.get('payment-1')).resolves.toEqual({
 			id: 'payment-1',
-			orderId: 'order-1',
+			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 100,
 			boosterAmount: 70,
@@ -60,15 +85,18 @@ describe('Payments module integration', () => {
 	});
 
 	it('keeps payment held until order completion', async () => {
-		await ordersController.create({ orderId: 'order-2' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 		await paymentsController.create({
 			paymentId: 'payment-2',
-			orderId: 'order-2',
+			orderId: createdOrder.id,
 			grossAmount: 100,
 		});
 		await paymentsController.confirm('payment-2');
-		await expect(ordersController.get('order-2')).resolves.toMatchObject({
-			id: 'order-2',
+		await expect(ordersController.get(createdOrder.id)).resolves.toMatchObject({
+			id: createdOrder.id,
 			status: 'pending_booster',
 		});
 
@@ -78,10 +106,13 @@ describe('Payments module integration', () => {
 	});
 
 	it('treats repeated confirm endpoint calls as idempotent', async () => {
-		await ordersController.create({ orderId: 'order-3' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 		await paymentsController.create({
 			paymentId: 'payment-3',
-			orderId: 'order-3',
+			orderId: createdOrder.id,
 			grossAmount: 100,
 		});
 
@@ -94,10 +125,13 @@ describe('Payments module integration', () => {
 	});
 
 	it('ignores duplicated webhook event ids', async () => {
-		await ordersController.create({ orderId: 'order-4' });
+		const createdOrder = await ordersController.create(
+			makeCreateOrderBody(),
+			clientUser,
+		);
 		await paymentsController.create({
 			paymentId: 'payment-4',
-			orderId: 'order-4',
+			orderId: createdOrder.id,
 			grossAmount: 100,
 		});
 
@@ -107,8 +141,8 @@ describe('Payments module integration', () => {
 				paymentId: 'payment-4',
 			}),
 		).resolves.toEqual({ processed: true });
-		await expect(ordersController.get('order-4')).resolves.toMatchObject({
-			id: 'order-4',
+		await expect(ordersController.get(createdOrder.id)).resolves.toMatchObject({
+			id: createdOrder.id,
 			status: 'pending_booster',
 		});
 

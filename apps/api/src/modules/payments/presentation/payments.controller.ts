@@ -73,10 +73,11 @@ export class PaymentsController {
 		grossAmount: number;
 		boosterAmount: number;
 	}> {
-		const payment = await this.getPaymentUseCase.execute({ paymentId });
-		if (!payment) throw new NotFoundException('Payment not found.');
-
-		return payment;
+		try {
+			return await this.getPaymentUseCase.execute({ paymentId });
+		} catch (error) {
+			throw this.mapDomainError(error);
+		}
 	}
 
 	@Post(':paymentId/confirm')

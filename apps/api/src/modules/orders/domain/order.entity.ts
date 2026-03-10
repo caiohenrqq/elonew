@@ -4,6 +4,7 @@ import {
 	OrderInvalidTransitionError,
 } from '@modules/orders/domain/order.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
+import type { OrderServiceType } from '@shared/orders/service-type';
 
 type AllowedTransitionMap = Record<OrderStatus, readonly OrderStatus[]>;
 
@@ -32,35 +33,81 @@ export type OrderCredentials = {
 	password: string;
 };
 
+export type OrderRequestDetails = {
+	serviceType: OrderServiceType;
+	currentLeague: string;
+	currentDivision: string;
+	currentLp: number;
+	desiredLeague: string;
+	desiredDivision: string;
+	server: string;
+	desiredQueue: string;
+	lpGain: number;
+	deadline: Date;
+};
+
 export class Order {
 	private constructor(
 		public readonly id: string,
+		private readonly currentClientId: string | null,
 		private currentBoosterId: string | null,
 		private currentStatus: OrderStatus,
 		private currentCredentials: OrderCredentials | null,
+		private readonly currentRequestDetails: OrderRequestDetails | null,
 	) {}
 
-	static create(id: string, input?: { boosterId?: string | null }): Order {
+	static create(
+		id: string,
+		input?: {
+			clientId?: string | null;
+			boosterId?: string | null;
+			requestDetails?: OrderRequestDetails | null;
+		},
+	): Order {
 		return new Order(
 			id,
+			input?.clientId ?? null,
 			input?.boosterId ?? null,
 			OrderStatus.AWAITING_PAYMENT,
 			null,
+			input?.requestDetails ?? null,
+		);
+	}
+
+	static createDraft(input: {
+		clientId: string;
+		requestDetails: OrderRequestDetails;
+	}): Order {
+		return new Order(
+			'',
+			input.clientId,
+			null,
+			OrderStatus.AWAITING_PAYMENT,
+			null,
+			input.requestDetails,
 		);
 	}
 
 	static rehydrate(input: {
 		id: string;
+		clientId?: string | null;
 		boosterId?: string | null;
 		status: OrderStatus;
 		credentials?: OrderCredentials | null;
+		requestDetails?: OrderRequestDetails | null;
 	}): Order {
 		return new Order(
 			input.id,
+			input.clientId ?? null,
 			input.boosterId ?? null,
 			input.status,
 			input.credentials ?? null,
+			input.requestDetails ?? null,
 		);
+	}
+
+	get clientId(): string | null {
+		return this.currentClientId;
 	}
 
 	get boosterId(): string | null {
@@ -73,6 +120,10 @@ export class Order {
 
 	get credentials(): OrderCredentials | null {
 		return this.currentCredentials;
+	}
+
+	get requestDetails(): OrderRequestDetails | null {
+		return this.currentRequestDetails;
 	}
 
 	confirmPayment(): void {

@@ -1,0 +1,14 @@
+{
+	"name": "@packages/auth",
+	"private": true,
+	"version": "0.0.0",
+	"exports": {
+		"./roles/role": {
+			"types": "./dist/roles/role.d.ts",
+			"default": "./dist/roles/role.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json"
+	}
+}

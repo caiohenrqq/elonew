@@ -4,7 +4,19 @@ describe('PrismaOrderRepository', () => {
 	it('saves and rehydrates an order from persistence records', async () => {
 		const findUnique = jest.fn().mockResolvedValue({
 			id: 'order-1',
+			clientId: 'client-1',
+			boosterId: null,
 			status: 'pending_booster',
+			serviceType: 'ELO_BOOST',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			currentLp: 50,
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: new Date('2026-03-31T00:00:00.000Z'),
 			credentials: {
 				login: 'login',
 				summonerName: 'summoner',
@@ -22,7 +34,20 @@ describe('PrismaOrderRepository', () => {
 		const repository = new PrismaOrderRepository(prisma as never);
 		await repository.save({
 			id: 'order-1',
+			clientId: 'client-1',
 			status: 'pending_booster',
+			requestDetails: {
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: new Date('2026-03-31T00:00:00.000Z'),
+			},
 			credentials: {
 				login: 'login',
 				summonerName: 'summoner',
@@ -32,7 +57,20 @@ describe('PrismaOrderRepository', () => {
 
 		await expect(repository.findById('order-1')).resolves.toMatchObject({
 			id: 'order-1',
+			clientId: 'client-1',
 			status: 'pending_booster',
+			requestDetails: {
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: new Date('2026-03-31T00:00:00.000Z'),
+			},
 			credentials: {
 				login: 'login',
 				summonerName: 'summoner',
@@ -43,7 +81,19 @@ describe('PrismaOrderRepository', () => {
 			where: { id: 'order-1' },
 			create: {
 				id: 'order-1',
+				clientId: 'client-1',
+				boosterId: undefined,
 				status: 'pending_booster',
+				serviceType: 'ELO_BOOST',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: new Date('2026-03-31T00:00:00.000Z'),
 				credentials: {
 					create: {
 						login: 'login',
@@ -53,7 +103,19 @@ describe('PrismaOrderRepository', () => {
 				},
 			},
 			update: {
+				clientId: 'client-1',
+				boosterId: undefined,
 				status: 'pending_booster',
+				serviceType: 'ELO_BOOST',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: new Date('2026-03-31T00:00:00.000Z'),
 				credentials: {
 					upsert: {
 						create: {

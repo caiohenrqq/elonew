@@ -1,12 +1,18 @@
+import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { Role } from '@packages/auth/roles/role';
 
 describe('Orders module integration', () => {
 	let controller: OrdersController;
+	const clientUser: AuthenticatedUser = {
+		id: 'client-1',
+		role: Role.CLIENT,
+	};
 
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
@@ -19,43 +25,73 @@ describe('Orders module integration', () => {
 		controller = moduleRef.get(OrdersController);
 	});
 
-	it('creates and fetches an order', async () => {
-		await expect(controller.create({ orderId: 'order-1' })).resolves.toEqual({
-			id: 'order-1',
+	it('creates and fetches an order with authenticated client details', async () => {
+		const createdOrder = await controller.create(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+
+		expect(createdOrder).toMatchObject({
+			id: expect.any(String),
 			status: 'awaiting_payment',
 		});
 
-		await expect(controller.get('order-1')).resolves.toEqual({
-			id: 'order-1',
+		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+			id: createdOrder.id,
 			status: 'awaiting_payment',
 		});
 	});
 
 	it('applies payment confirmation and acceptance transitions', async () => {
-		await controller.create({ orderId: 'order-2' });
-		await expect(controller.confirmPayment('order-2')).resolves.toEqual({
+		const createdOrder = await controller.create(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({
 			success: true,
 		});
 		await expect(
-			controller.saveCredentials('order-2', {
+			controller.saveCredentials(createdOrder.id, {
 				login: 'login',
 				summonerName: 'summoner',
 				password: 'secret',
 				confirmPassword: 'secret',
 			}),
 		).resolves.toEqual({ success: true });
-		await expect(controller.reject('order-2')).resolves.toEqual({
+		await expect(controller.reject(createdOrder.id)).resolves.toEqual({
 			success: true,
 		});
-		await expect(controller.accept('order-2')).resolves.toEqual({
+		await expect(controller.accept(createdOrder.id)).resolves.toEqual({
 			success: true,
 		});
-		await expect(controller.complete('order-2')).resolves.toEqual({
+		await expect(controller.complete(createdOrder.id)).resolves.toEqual({
 			success: true,
 		});
 
-		await expect(controller.get('order-2')).resolves.toEqual({
-			id: 'order-2',
+		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+			id: createdOrder.id,
 			status: 'completed',
 		});
 	});
@@ -70,13 +106,27 @@ describe('Orders module integration', () => {
 	});
 
 	it('maps invalid transitions to bad request exception', async () => {
-		await controller.create({ orderId: 'order-3' });
+		const createdOrder = await controller.create(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
 
-		await expect(controller.accept('order-3')).rejects.toBeInstanceOf(
+		await expect(controller.accept(createdOrder.id)).rejects.toBeInstanceOf(
 			BadRequestException,
 		);
 		await expect(
-			controller.saveCredentials('order-3', {
+			controller.saveCredentials(createdOrder.id, {
 				login: 'login',
 				summonerName: 'summoner',
 				password: 'secret',

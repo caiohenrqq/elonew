@@ -2,6 +2,7 @@ import {
 	PAYMENT_REPOSITORY_KEY,
 	type PaymentRepositoryPort,
 } from '@modules/payments/application/ports/payment-repository.port';
+import { PaymentNotFoundError } from '@modules/payments/domain/payment.errors';
 import type { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -24,9 +25,9 @@ export class GetPaymentUseCase {
 		private readonly paymentRepository: PaymentRepositoryPort,
 	) {}
 
-	async execute(input: GetPaymentInput): Promise<GetPaymentOutput | null> {
+	async execute(input: GetPaymentInput): Promise<GetPaymentOutput> {
 		const payment = await this.paymentRepository.findById(input.paymentId);
-		if (!payment) return null;
+		if (!payment) throw new PaymentNotFoundError();
 
 		return {
 			id: payment.id,

@@ -6,7 +6,6 @@
 		"^@modules/(.*)$": "<rootDir>/../src/modules/$1",
 		"^@shared/(.*)$": "<rootDir>/../../../packages/shared/src/$1",
 		"^@database/(.*)$": "<rootDir>/../../../packages/database/src/$1",
-		"^@auth/(.*)$": "<rootDir>/../../../packages/auth/src/$1",
 		"^@ui/(.*)$": "<rootDir>/../../../packages/ui/src/$1",
 		"^@testing/(.*)$": "<rootDir>/../../../packages/testing/src/$1",
 		"^@integrations/(.*)$": "<rootDir>/../../../packages/integrations/src/$1"
