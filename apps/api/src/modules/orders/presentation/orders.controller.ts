@@ -41,17 +41,12 @@ import {
 	type CreateOrderSchemaInput,
 	createOrderSchema,
 } from '@shared/orders/create-order.schema';
-
-type AcceptOrderRequestBody = {
-	boosterId?: string;
-};
-
-type SaveOrderCredentialsRequestBody = {
-	login: string;
-	summonerName: string;
-	password: string;
-	confirmPassword: string;
-};
+import {
+	type AcceptOrderSchemaInput,
+	acceptOrderSchema,
+	type SaveOrderCredentialsSchemaInput,
+	saveOrderCredentialsSchema,
+} from './orders.request-schemas';
 
 @Controller('orders')
 export class OrdersController {
@@ -118,7 +113,8 @@ export class OrdersController {
 	@HttpCode(200)
 	async accept(
 		@Param('orderId') orderId: string,
-		@Body() body?: AcceptOrderRequestBody,
+		@Body(new ZodValidationPipe(acceptOrderSchema))
+		body?: AcceptOrderSchemaInput,
 	): Promise<{ success: true }> {
 		return this.executeMutation(() =>
 			this.acceptOrderUseCase.execute({
@@ -158,7 +154,8 @@ export class OrdersController {
 	@HttpCode(200)
 	async saveCredentials(
 		@Param('orderId') orderId: string,
-		@Body() body: SaveOrderCredentialsRequestBody,
+		@Body(new ZodValidationPipe(saveOrderCredentialsSchema))
+		body: SaveOrderCredentialsSchemaInput,
 	): Promise<{ success: true }> {
 		return this.executeMutation(() =>
 			this.saveOrderCredentialsUseCase.execute({
