@@ -28,6 +28,7 @@ When documentation is needed, always use the official latest documentation.
 
 ## Command execution rule for AI agents
 - Prefer `pnpx` instead of `pnpm dlx` for one-off CLI execution in general.
+- Prefer `gh` for GitHub operations whenever possible instead of manual browser-based or raw API flows.
 - If execution is blocked by network/sandbox/permission issues, explicitly ask for human intervention and wait for guidance/approval before retrying repeatedly.
 - If a verification command is blocked by sandbox or permissions, ask the operator/human for approval to run that command outside the sandbox instead of assuming the verification is unnecessary.
 - Dependency installation commands (for example `pnpm add`, `pnpm install`, `pnpm remove`) are allowed only after explicit user permission in the current task.
@@ -183,6 +184,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Added a strict agent rule to prefer `gh` for GitHub operations whenever possible.
 - Enforced a strict agent rule that all agent-created commits, including rewritten history, must always follow `docs/commits.md`.
 - Bootstrapped the monorepo, core docs, Docker/dev scripts, and workspace-wide tooling (`pnpm`, Biome, env conventions, aliases, package boundaries).
 - Built out the API modular structure across Orders, Payments, Wallet, Health, Config/Settings, Prisma persistence, and shared controller/error-mapping patterns with TDD-first coverage.
