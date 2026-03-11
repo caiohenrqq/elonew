@@ -32,6 +32,7 @@ When documentation is needed, always use the official latest documentation.
 - If execution is blocked by network/sandbox/permission issues, explicitly ask for human intervention and wait for guidance/approval before retrying repeatedly.
 - If a verification command is blocked by sandbox or permissions, ask the operator/human for approval to run that command outside the sandbox instead of assuming the verification is unnecessary.
 - Dependency installation commands (for example `pnpm add`, `pnpm install`, `pnpm remove`) are allowed only after explicit user permission in the current task.
+- `pnpm install` must be run by the human/operator; agents should only provide the exact command and wait for confirmation that installation is complete.
 - After every medium or large code change, run `pnpm biome:fix:all` and typecheck before finalizing.
 - Never state or imply that everything is correct without running the relevant tests; if verification is blocked, say exactly which tests were not run and why.
 - For any agent-created commit, always follow `docs/commits.md` without exception; this rule applies to every commit message, commit split, and history rewrite performed by the agent.
@@ -195,6 +196,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Added an explicit rule that `pnpm install` must be run by the human/operator and agents should only provide the command.
 - Added explicit worktree bootstrap instructions so new agent workspaces are prepared for install, env setup, Prisma generation, and test execution before coding starts.
 - Added a conflict-prevention rule requiring issue overlap checks before implementation when other active issue work exists.
 - Added a strict agent rule to prefer `gh` for GitHub operations whenever possible.
