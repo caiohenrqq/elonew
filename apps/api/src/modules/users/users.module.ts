@@ -9,15 +9,27 @@ import { PrismaUserRepository } from '@modules/users/infrastructure/repositories
 import { Argon2PasswordHasher } from '@modules/users/infrastructure/security/argon2-password-hasher';
 import { HmacEmailConfirmationTokenService } from '@modules/users/infrastructure/security/hmac-email-confirmation-token.service';
 import { UsersController } from '@modules/users/presentation/users.controller';
+import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler.guard';
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
-	imports: [AppSettingsModule],
+	imports: [
+		AppSettingsModule,
+		ThrottlerModule.forRoot([
+			{
+				name: 'default',
+				ttl: 1000,
+				limit: 1,
+			},
+		]),
+	],
 	controllers: [UsersController],
 	providers: [
 		PrismaService,
 		PrismaUserRepository,
 		Argon2PasswordHasher,
+		UsersThrottlerGuard,
 		{
 			provide: PASSWORD_HASHER_KEY,
 			useExisting: Argon2PasswordHasher,

@@ -6,8 +6,8 @@ import {
 	confirmEmailSchema,
 	signUpSchema,
 } from '@modules/users/presentation/users.request-schemas';
-import { Body, Controller, Post } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler.guard';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 
 type SignUpBody = {
 	username: string;
@@ -20,6 +20,7 @@ type ConfirmEmailBody = {
 };
 
 @Controller('users')
+@UseGuards(UsersThrottlerGuard)
 export class UsersController {
 	constructor(
 		private readonly signUpUseCase: SignUpUseCase,
@@ -28,12 +29,6 @@ export class UsersController {
 	) {}
 
 	@Post('sign-up')
-	@Throttle({
-		default: {
-			limit: 3,
-			ttl: 60_000,
-		},
-	})
 	async signUp(@Body(new ZodValidationPipe(signUpSchema)) body: SignUpBody) {
 		const result = await this.signUpUseCase.execute({
 			username: body.username,
@@ -56,12 +51,6 @@ export class UsersController {
 	}
 
 	@Post('confirm-email')
-	@Throttle({
-		default: {
-			limit: 5,
-			ttl: 60_000,
-		},
-	})
 	confirmEmail(
 		@Body(new ZodValidationPipe(confirmEmailSchema)) body: ConfirmEmailBody,
 	) {
