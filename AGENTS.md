@@ -150,8 +150,8 @@ Official docs to use:
 ## Development Roadmap
 
 ### 1. Auth & User Management
-- [ ] Implement `User` domain logic and Prisma repository.
-- [ ] Create `SignUp` use-case with email confirmation placeholder.
+- [x] Implement `User` domain logic and Prisma repository.
+- [x] Create `SignUp` use-case with email confirmation placeholder.
 - [ ] Create `Login` use-case with JWT and Refresh Token rotation.
 - [ ] Implement `@Roles()` decorator and `AuthGuard` for RBAC.
 
@@ -198,6 +198,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Implemented the foundational Users module with pending-account sign-up, email-confirmation placeholder activation, Prisma-backed persistence, typed user errors, and API/e2e/DB coverage for the new auth entry flow.
 - Clarified worktree bootstrap with the full env-file set currently needed for test setup and the correct API test commands for e2e and DB-backed integration files.
 - Added an explicit rule that `pnpm install` must be run by the human/operator and agents should only provide the command.
 - Added explicit worktree bootstrap instructions so new agent workspaces are prepared for install, env setup, Prisma generation, and test execution before coding starts.
