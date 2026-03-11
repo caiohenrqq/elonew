@@ -1,6 +1,10 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type { UserRepositoryPort } from '@modules/users/application/ports/user-repository.port';
 import { User } from '@modules/users/domain/user.entity';
+import {
+	UserEmailAlreadyInUseError,
+	UsernameAlreadyInUseError,
+} from '@modules/users/domain/user.errors';
 import { Injectable } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import { ensurePersistedEnum } from '@shared/utils/enum.utils';
@@ -101,11 +105,20 @@ export class PrismaUserRepository implements UserRepositoryPort {
 	}
 
 	async create(user: User): Promise<User> {
-		const record = await this.getDelegate().create({
-			data: this.mapUserToPersistence(user),
-		});
+		try {
+			const record = await this.getDelegate().create({
+				data: this.mapUserToPersistence(user),
+			});
 
-		return this.mapUserFromRecord(record);
+			return this.mapUserFromRecord(record);
+		} catch (error) {
+			if (this.isUniqueConstraintErrorFor(error, 'email'))
+				throw new UserEmailAlreadyInUseError();
+			if (this.isUniqueConstraintErrorFor(error, 'username'))
+				throw new UsernameAlreadyInUseError();
+
+			throw error;
+		}
 	}
 
 	async save(user: User): Promise<void> {
@@ -146,5 +159,28 @@ export class PrismaUserRepository implements UserRepositoryPort {
 			emailConfirmationTokenHash: user.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: user.emailConfirmationTokenExpiresAt,
 		};
+	}
+
+	private isUniqueConstraintErrorFor(error: unknown, field: string): boolean {
+		if (!this.isPrismaUniqueConstraintError(error)) return false;
+		if (!error.meta || typeof error.meta !== 'object') return false;
+		if (!('target' in error.meta)) return false;
+
+		const { target } = error.meta as { target?: unknown };
+		if (Array.isArray(target)) return target.includes(field);
+		if (typeof target === 'string') return target === field;
+
+		return false;
+	}
+
+	private isPrismaUniqueConstraintError(
+		error: unknown,
+	): error is { code: string; meta?: unknown } {
+		return (
+			typeof error === 'object' &&
+			error !== null &&
+			'code' in error &&
+			error.code === 'P2002'
+		);
 	}
 }
