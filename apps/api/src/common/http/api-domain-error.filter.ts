@@ -1,6 +1,7 @@
 import {
 	mapAsBadRequest,
 	mapAsNotFound,
+	mapDomainErrorToHttpException,
 	tryMapDomainErrorToHttpException,
 } from '@app/common/http/domain-error.mapper';
 import {
@@ -22,12 +23,18 @@ import {
 	PaymentOrderNotFoundError,
 } from '@modules/payments/domain/payment.errors';
 import {
+	UserEmailAlreadyInUseError,
+	UserEmailConfirmationTokenInvalidError,
+	UsernameAlreadyInUseError,
+} from '@modules/users/domain/user.errors';
+import {
 	WalletInsufficientWithdrawableBalanceError,
 	WalletInvalidAmountError,
 	WalletNotFoundError,
 } from '@modules/wallet/domain/wallet.errors';
 import {
 	ArgumentsHost,
+	BadRequestException,
 	Catch,
 	type ExceptionFilter,
 	type HttpException,
@@ -37,6 +44,18 @@ import { BaseExceptionFilter } from '@nestjs/core';
 export function mapApiDomainErrorToHttpException(
 	error: unknown,
 ): HttpException | null {
+	if (
+		error instanceof UserEmailAlreadyInUseError ||
+		error instanceof UsernameAlreadyInUseError
+	)
+		return mapDomainErrorToHttpException(error, [
+			{
+				errorTypes: [UserEmailAlreadyInUseError, UsernameAlreadyInUseError],
+				toException: () =>
+					new BadRequestException('Registration is unavailable.'),
+			},
+		]);
+
 	return tryMapDomainErrorToHttpException(error, [
 		mapAsNotFound(
 			OrderNotFoundError,
@@ -58,6 +77,7 @@ export function mapApiDomainErrorToHttpException(
 			PaymentHoldReleaseNotAllowedError,
 			WalletInvalidAmountError,
 			WalletInsufficientWithdrawableBalanceError,
+			UserEmailConfirmationTokenInvalidError,
 		),
 	]);
 }

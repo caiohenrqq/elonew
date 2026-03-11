@@ -25,6 +25,42 @@ export class AppSettingsService {
 		return this.config.getOrThrow('JWT_ACCESS_TOKEN_SECRET', { infer: true });
 	}
 
+	get emailConfirmationTokenSecret() {
+		return this.config.getOrThrow('EMAIL_CONFIRMATION_TOKEN_SECRET', {
+			infer: true,
+		});
+	}
+
+	get emailConfirmationTokenTtlMinutes() {
+		return this.config.getOrThrow('EMAIL_CONFIRMATION_TOKEN_TTL_MINUTES', {
+			infer: true,
+		});
+	}
+
+	get usersSignUpThrottleLimit() {
+		return this.config.getOrThrow('USERS_SIGN_UP_THROTTLE_LIMIT', {
+			infer: true,
+		});
+	}
+
+	get usersSignUpThrottleTtlSeconds() {
+		return this.config.getOrThrow('USERS_SIGN_UP_THROTTLE_TTL_SECONDS', {
+			infer: true,
+		});
+	}
+
+	get usersConfirmEmailThrottleLimit() {
+		return this.config.getOrThrow('USERS_CONFIRM_EMAIL_THROTTLE_LIMIT', {
+			infer: true,
+		});
+	}
+
+	get usersConfirmEmailThrottleTtlSeconds() {
+		return this.config.getOrThrow('USERS_CONFIRM_EMAIL_THROTTLE_TTL_SECONDS', {
+			infer: true,
+		});
+	}
+
 	get walletLockPeriodInHours() {
 		return this.config.getOrThrow('WALLET_LOCK_PERIOD_HOURS', {
 			infer: true,
@@ -37,5 +73,9 @@ export class AppSettingsService {
 
 	get isDevelopment() {
 		return this.nodeEnv === 'development';
+	}
+
+	get isTest() {
+		return this.nodeEnv === 'test';
 	}
 }
