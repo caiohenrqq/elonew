@@ -76,12 +76,13 @@ export class Order {
 
 	static createDraft(input: {
 		clientId: string;
+		boosterId?: string | null;
 		requestDetails: OrderRequestDetails;
 	}): Order {
 		return new Order(
 			'',
 			input.clientId,
-			null,
+			input.boosterId ?? null,
 			OrderStatus.AWAITING_PAYMENT,
 			null,
 			input.requestDetails,

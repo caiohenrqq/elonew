@@ -56,6 +56,7 @@ export class OrdersController {
 	): Promise<{ id: string; status: string }> {
 		return await this.createOrderUseCase.execute({
 			clientId: currentUser.id,
+			boosterId: body.boosterId,
 			serviceType: body.serviceType,
 			currentLeague: body.currentLeague,
 			currentDivision: body.currentDivision,

@@ -137,6 +137,16 @@ describe('Orders (e2e)', () => {
 			.expect(400);
 	});
 
+	it('rejects create-order payloads with non-string boosterId', async () => {
+		const token = signToken({ sub: 'client-7', role: 'CLIENT' });
+
+		await request(app.getHttpServer())
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ ...makeOrderPayload(), boosterId: 123 })
+			.expect(400);
+	});
+
 	it('returns 404 for unknown order in mutations', async () => {
 		await request(app.getHttpServer())
 			.post('/orders/missing/cancel')
