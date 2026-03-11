@@ -1,9 +1,13 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
+import {
+	OrderCredentialsStorageNotAllowedError,
+	OrderInvalidTransitionError,
+	OrderNotFoundError,
+} from '@modules/orders/domain/order.errors';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 
@@ -96,16 +100,16 @@ describe('Orders module integration', () => {
 		});
 	});
 
-	it('maps missing order to not found exception', async () => {
+	it('propagates missing-order domain errors', async () => {
 		await expect(controller.get('missing-order')).rejects.toBeInstanceOf(
-			NotFoundException,
+			OrderNotFoundError,
 		);
 		await expect(
 			controller.confirmPayment('missing-order'),
-		).rejects.toBeInstanceOf(NotFoundException);
+		).rejects.toBeInstanceOf(OrderNotFoundError);
 	});
 
-	it('maps invalid transitions to bad request exception', async () => {
+	it('propagates invalid-transition domain errors', async () => {
 		const createdOrder = await controller.create(
 			{
 				serviceType: 'elo_boost',
@@ -123,7 +127,7 @@ describe('Orders module integration', () => {
 		);
 
 		await expect(controller.accept(createdOrder.id)).rejects.toBeInstanceOf(
-			BadRequestException,
+			OrderInvalidTransitionError,
 		);
 		await expect(
 			controller.saveCredentials(createdOrder.id, {
@@ -132,6 +136,6 @@ describe('Orders module integration', () => {
 				password: 'secret',
 				confirmPassword: 'secret',
 			}),
-		).rejects.toBeInstanceOf(BadRequestException);
+		).rejects.toBeInstanceOf(OrderCredentialsStorageNotAllowedError);
 	});
 });
