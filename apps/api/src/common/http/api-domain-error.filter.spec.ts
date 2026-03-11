@@ -1,5 +1,7 @@
 import { mapApiDomainErrorToHttpException } from '@app/common/http/api-domain-error.filter';
 import {
+	OrderBoosterNotEligibleError,
+	OrderBoosterNotFoundError,
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
@@ -24,6 +26,9 @@ describe('mapApiDomainErrorToHttpException', () => {
 		expect(
 			mapApiDomainErrorToHttpException(new WalletNotFoundError()),
 		).toBeInstanceOf(NotFoundException);
+		expect(
+			mapApiDomainErrorToHttpException(new OrderBoosterNotFoundError()),
+		).toBeInstanceOf(NotFoundException);
 	});
 
 	it('maps bad-request domain errors to BadRequestException', () => {
@@ -39,6 +44,9 @@ describe('mapApiDomainErrorToHttpException', () => {
 			mapApiDomainErrorToHttpException(
 				new WalletInsufficientWithdrawableBalanceError(),
 			),
+		).toBeInstanceOf(BadRequestException);
+		expect(
+			mapApiDomainErrorToHttpException(new OrderBoosterNotEligibleError()),
 		).toBeInstanceOf(BadRequestException);
 	});
 

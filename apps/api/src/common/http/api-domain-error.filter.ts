@@ -6,6 +6,8 @@ import {
 } from '@app/common/http/domain-error.mapper';
 import {
 	OrderAlreadyExistsError,
+	OrderBoosterNotEligibleError,
+	OrderBoosterNotFoundError,
 	OrderCancellationNotAllowedError,
 	OrderCredentialsPasswordMismatchError,
 	OrderCredentialsStorageNotAllowedError,
@@ -57,12 +59,14 @@ export function mapApiDomainErrorToHttpException(
 	return tryMapDomainErrorToHttpException(error, [
 		mapAsNotFound(
 			OrderNotFoundError,
+			OrderBoosterNotFoundError,
 			PaymentNotFoundError,
 			PaymentOrderNotFoundError,
 			WalletNotFoundError,
 		),
 		mapAsBadRequest(
 			OrderAlreadyExistsError,
+			OrderBoosterNotEligibleError,
 			OrderInvalidTransitionError,
 			OrderCancellationNotAllowedError,
 			OrderCredentialsStorageNotAllowedError,

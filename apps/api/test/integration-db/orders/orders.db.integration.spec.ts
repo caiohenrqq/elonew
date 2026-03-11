@@ -1,8 +1,13 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
+import {
+	OrderBoosterNotEligibleError,
+	OrderCredentialsStorageNotAllowedError,
+	OrderInvalidTransitionError,
+	OrderNotFoundError,
+} from '@modules/orders/domain/order.errors';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
@@ -90,6 +95,34 @@ describe('Orders module integration (db)', () => {
 		});
 	});
 
+	it('persists a selected booster on create-order', async () => {
+		const uniqueSuffix = `booster-${Date.now().toString()}`;
+		const booster = await prisma.user.create({
+			data: {
+				username: uniqueSuffix,
+				email: `${uniqueSuffix}@example.com`,
+				password: 'secret',
+				role: 'BOOSTER',
+			},
+		});
+
+		const createdOrder = await controller.create(
+			{
+				...makeCreateOrderBody(),
+				boosterId: booster.id,
+			},
+			clientUser,
+		);
+
+		const persistedOrder = await prisma.order.findUnique({
+			where: { id: createdOrder.id },
+		});
+		expect(persistedOrder).toMatchObject({
+			id: createdOrder.id,
+			boosterId: booster.id,
+		});
+	});
+
 	it('applies payment confirmation and acceptance transitions', async () => {
 		const createdOrder = await controller.create(
 			makeCreateOrderBody(),
@@ -110,11 +143,11 @@ describe('Orders module integration (db)', () => {
 
 	it('maps missing order to not found exception', async () => {
 		await expect(controller.get('missing-order')).rejects.toBeInstanceOf(
-			NotFoundException,
+			OrderNotFoundError,
 		);
 		await expect(
 			controller.confirmPayment('missing-order'),
-		).rejects.toBeInstanceOf(NotFoundException);
+		).rejects.toBeInstanceOf(OrderNotFoundError);
 	});
 
 	it('maps invalid transitions to bad request exception', async () => {
@@ -124,8 +157,30 @@ describe('Orders module integration (db)', () => {
 		);
 
 		await expect(controller.accept(createdOrder.id)).rejects.toBeInstanceOf(
-			BadRequestException,
+			OrderInvalidTransitionError,
 		);
+	});
+
+	it('rejects selected users that are not boosters', async () => {
+		const uniqueSuffix = `client-lookup-${Date.now().toString()}`;
+		const nonBooster = await prisma.user.create({
+			data: {
+				username: uniqueSuffix,
+				email: `${uniqueSuffix}@example.com`,
+				password: 'secret',
+				role: 'CLIENT',
+			},
+		});
+
+		await expect(
+			controller.create(
+				{
+					...makeCreateOrderBody(),
+					boosterId: nonBooster.id,
+				},
+				clientUser,
+			),
+		).rejects.toBeInstanceOf(OrderBoosterNotEligibleError);
 	});
 
 	it('persists credentials after payment confirmation', async () => {
@@ -192,6 +247,6 @@ describe('Orders module integration (db)', () => {
 				password: 'secret-db',
 				confirmPassword: 'secret-db',
 			}),
-		).rejects.toBeInstanceOf(BadRequestException);
+		).rejects.toBeInstanceOf(OrderCredentialsStorageNotAllowedError);
 	});
 });

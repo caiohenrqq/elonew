@@ -33,3 +33,15 @@ export class OrderCredentialsPasswordMismatchError extends Error {
 		super('Order credentials password confirmation does not match.');
 	}
 }
+
+export class OrderBoosterNotFoundError extends Error {
+	constructor() {
+		super('Selected booster not found.');
+	}
+}
+
+export class OrderBoosterNotEligibleError extends Error {
+	constructor() {
+		super('Selected user is not eligible for booster work.');
+	}
+}
