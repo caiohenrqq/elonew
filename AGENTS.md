@@ -126,9 +126,11 @@ When the user says "let's start" on a GitHub issue or asks to begin issue work, 
   1. Create or switch to the issue branch in a new worktree with `git worktree add <path> -b <branch>` when the branch does not exist yet.
   2. If the branch already exists, use `git worktree add <path> <branch>`.
   3. Prepare the worktree environment before coding or testing:
-     - run `pnpm install` inside the new worktree
-     - ensure required local env files exist in the worktree, especially `apps/api/.env` and `apps/api/.env.test`; if they are local-only and missing, copy them from the main repository checkout before running API commands
-     - run `pnpm -w db:generate` before API tests if Prisma client artifacts are missing in the worktree
+     - have the human run `pnpm install` inside the new worktree
+     - ensure required local env files exist in the worktree; if they are local-only and missing, copy them from the main repository checkout before running commands
+     - for the current test bootstrap, verify `apps/api/.env`, `apps/api/.env.test`, `apps/web/.env`, and `apps/workers/.env`
+     - use `pnpm --filter api test:e2e -- <file>` for e2e files and `pnpm --filter api test:integration:db -- <file>` for DB-backed integration files instead of the generic `pnpm --filter api test -- <file>` entrypoint
+     - run `pnpm -w db:generate` only if Prisma client artifacts are actually missing in the worktree
      - verify the worktree can execute at least one relevant narrow command before starting implementation
   4. Run all coding, tests, and issue-specific commands from inside that worktree, not from the main repository directory.
 - Use the normal issue workflow above inside each worktree; `gh` remains the default tool for issue reading, Draft PR creation, issue linking, assignment, and labeling.
@@ -196,6 +198,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Clarified worktree bootstrap with the full env-file set currently needed for test setup and the correct API test commands for e2e and DB-backed integration files.
 - Added an explicit rule that `pnpm install` must be run by the human/operator and agents should only provide the command.
 - Added explicit worktree bootstrap instructions so new agent workspaces are prepared for install, env setup, Prisma generation, and test execution before coding starts.
 - Added a conflict-prevention rule requiring issue overlap checks before implementation when other active issue work exists.
