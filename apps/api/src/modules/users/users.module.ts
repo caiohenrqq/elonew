@@ -16,13 +16,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 @Module({
 	imports: [
 		AppSettingsModule,
-		ThrottlerModule.forRoot([
-			{
-				name: 'default',
-				ttl: 1000,
-				limit: 1,
-			},
-		]),
+		ThrottlerModule.forRoot([]),
 	],
 	controllers: [UsersController],
 	providers: [
