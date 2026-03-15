@@ -1,12 +1,12 @@
 import { createHmac } from 'node:crypto';
 import { PrismaService } from '@app/common/prisma/prisma.service';
-import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import type { ApiHttpApp } from '../src/common/http/http-app.factory';
+import { createTestHttpApp, requestHttp } from './create-test-http-app';
 
 describe('Orders (e2e db)', () => {
-	let app: INestApplication;
+	let app: ApiHttpApp;
 	let prisma: PrismaService;
 	let clientId: string;
 
@@ -46,8 +46,7 @@ describe('Orders (e2e db)', () => {
 			imports: [AppModule],
 		}).compile();
 
-		app = moduleRef.createNestApplication();
-		await app.init();
+		app = await createTestHttpApp(moduleRef);
 
 		prisma = moduleRef.get(PrismaService);
 		await prisma.processedWebhookEvent.deleteMany();
@@ -73,18 +72,20 @@ describe('Orders (e2e db)', () => {
 		const token = signToken({ sub: clientId, role: 'CLIENT' });
 		let orderId = '';
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/orders')
 			.set('Authorization', `Bearer ${token}`)
 			.send(makeOrderPayload())
 			.expect(201)
-			.expect(({ body }) => {
+			.expect<{ id: string; status: string }>(({ body }) => {
 				orderId = body.id;
 				expect(body.status).toBe('awaiting_payment');
-			});
+			})
+			.execute();
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.get(`/orders/${orderId}`)
-			.expect(200, { id: orderId, status: 'awaiting_payment' });
+			.expect(200, { id: orderId, status: 'awaiting_payment' })
+			.execute();
 	});
 });
