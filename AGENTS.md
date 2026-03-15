@@ -198,6 +198,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Migrated the API transport bootstrap from Nest Express to Fastify, centralized app creation in a shared HTTP factory, and updated API e2e setup to build Fastify-backed test apps.
 - Clarified worktree bootstrap with the full env-file set currently needed for test setup and the correct API test commands for e2e and DB-backed integration files.
 - Added an explicit rule that `pnpm install` must be run by the human/operator and agents should only provide the command.
 - Added explicit worktree bootstrap instructions so new agent workspaces are prepared for install, env setup, Prisma generation, and test execution before coding starts.
