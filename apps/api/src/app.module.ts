@@ -1,6 +1,7 @@
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { SystemModule } from '@modules/system/system.module';
+import { UsersModule } from '@modules/users/users.module';
 import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
@@ -13,6 +14,7 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 		OrdersModule,
 		PaymentsModule,
 		SystemModule,
+		UsersModule,
 		WalletModule,
 	],
 	controllers: [],

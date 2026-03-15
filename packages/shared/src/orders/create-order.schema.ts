@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { orderServiceTypes } from './service-type';
 
 export const createOrderSchema = z.object({
+	boosterId: z.string().trim().min(1).optional(),
 	serviceType: z.enum(orderServiceTypes),
 	currentLeague: z.string().trim().min(1),
 	currentDivision: z.string().trim().min(1),

@@ -84,6 +84,7 @@ describe('OrdersController', () => {
 		await expect(
 			controller.create(
 				{
+					boosterId: 'booster-1',
 					serviceType: 'elo_boost',
 					currentLeague: 'gold',
 					currentDivision: 'II',
@@ -103,6 +104,7 @@ describe('OrdersController', () => {
 		});
 		expect(createOrderExecute).toHaveBeenCalledWith({
 			clientId: 'client-1',
+			boosterId: 'booster-1',
 			serviceType: 'elo_boost',
 			currentLeague: 'gold',
 			currentDivision: 'II',

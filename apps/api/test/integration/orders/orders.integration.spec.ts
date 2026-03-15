@@ -1,6 +1,8 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
+import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import {
+	OrderBoosterNotEligibleError,
 	OrderCredentialsStorageNotAllowedError,
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
@@ -13,10 +15,19 @@ import { Role } from '@packages/auth/roles/role';
 
 describe('Orders module integration', () => {
 	let controller: OrdersController;
+	let orderRepository: InMemoryOrderRepository;
 	const clientUser: AuthenticatedUser = {
 		id: 'client-1',
 		role: Role.CLIENT,
 	};
+
+	class BoosterLookupStub {
+		async findById(id: string): Promise<{ id: string; role: Role } | null> {
+			if (id === 'booster-1') return { id, role: Role.BOOSTER };
+			if (id === 'client-2') return { id, role: Role.CLIENT };
+			return null;
+		}
+	}
 
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
@@ -24,9 +35,12 @@ describe('Orders module integration', () => {
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
 			.useClass(InMemoryOrderRepository)
+			.overrideProvider(BOOSTER_USER_READER_KEY)
+			.useClass(BoosterLookupStub)
 			.compile();
 
 		controller = moduleRef.get(OrdersController);
+		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 	});
 
 	it('creates and fetches an order with authenticated client details', async () => {
@@ -100,6 +114,32 @@ describe('Orders module integration', () => {
 		});
 	});
 
+	it('creates an order with a selected booster and persists the booster id', async () => {
+		const createdOrder = await controller.create(
+			{
+				boosterId: 'booster-1',
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+
+		await expect(
+			orderRepository.findById(createdOrder.id),
+		).resolves.toMatchObject({
+			id: createdOrder.id,
+			boosterId: 'booster-1',
+		});
+	});
+
 	it('surfaces not-found domain errors for direct controller calls', async () => {
 		await expect(controller.get('missing-order')).rejects.toBeInstanceOf(
 			OrderNotFoundError,
@@ -137,5 +177,26 @@ describe('Orders module integration', () => {
 				confirmPassword: 'secret',
 			}),
 		).rejects.toBeInstanceOf(OrderCredentialsStorageNotAllowedError);
+	});
+
+	it('rejects selected users that are not boosters', async () => {
+		await expect(
+			controller.create(
+				{
+					boosterId: 'client-2',
+					serviceType: 'elo_boost',
+					currentLeague: 'gold',
+					currentDivision: 'II',
+					currentLp: 50,
+					desiredLeague: 'platinum',
+					desiredDivision: 'IV',
+					server: 'br',
+					desiredQueue: 'solo_duo',
+					lpGain: 20,
+					deadline: '2026-03-31T00:00:00.000Z',
+				},
+				clientUser,
+			),
+		).rejects.toBeInstanceOf(OrderBoosterNotEligibleError);
 	});
 });
