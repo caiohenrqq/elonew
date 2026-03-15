@@ -1,11 +1,9 @@
-import { AppModule } from '@app/app.module';
+import { createHttpApp } from '@app/common/http/http-app.factory';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
-import { NestFactory } from '@nestjs/core';
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule);
+	const app = await createHttpApp();
 	const appSettings = app.get(AppSettingsService);
-	app.getHttpAdapter().getInstance().disable('x-powered-by');
 
 	await app.listen(appSettings.port, '0.0.0.0');
 }

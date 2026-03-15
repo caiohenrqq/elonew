@@ -140,7 +140,7 @@ describe('Orders module integration', () => {
 		});
 	});
 
-	it('propagates missing-order domain errors', async () => {
+	it('surfaces not-found domain errors for direct controller calls', async () => {
 		await expect(controller.get('missing-order')).rejects.toBeInstanceOf(
 			OrderNotFoundError,
 		);
@@ -149,7 +149,7 @@ describe('Orders module integration', () => {
 		).rejects.toBeInstanceOf(OrderNotFoundError);
 	});
 
-	it('propagates invalid-transition domain errors', async () => {
+	it('surfaces invalid-transition domain errors for direct controller calls', async () => {
 		const createdOrder = await controller.create(
 			{
 				serviceType: 'elo_boost',

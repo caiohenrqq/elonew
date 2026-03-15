@@ -1,13 +1,13 @@
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
 import { InMemoryWalletRepository } from '@modules/wallet/infrastructure/repositories/in-memory-wallet.repository';
-import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import type { ApiHttpApp } from '../src/common/http/http-app.factory';
+import { createTestHttpApp, requestHttp } from './create-test-http-app';
 
 describe('Wallet (e2e)', () => {
-	let app: INestApplication;
+	let app: ApiHttpApp;
 	let creditCompletedOrderEarningsUseCase: CreditCompletedOrderEarningsUseCase;
 
 	beforeEach(async () => {
@@ -18,8 +18,7 @@ describe('Wallet (e2e)', () => {
 			.useClass(InMemoryWalletRepository)
 			.compile();
 
-		app = moduleRef.createNestApplication();
-		await app.init();
+		app = await createTestHttpApp(moduleRef);
 		creditCompletedOrderEarningsUseCase = moduleRef.get(
 			CreditCompletedOrderEarningsUseCase,
 		);
@@ -30,13 +29,14 @@ describe('Wallet (e2e)', () => {
 	});
 
 	it('returns 404 for an unknown wallet', async () => {
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.get('/wallets/missing-booster')
 			.expect(404, {
 				message: 'Wallet not found.',
 				error: 'Not Found',
 				statusCode: 404,
-			});
+			})
+			.execute();
 	});
 
 	it('returns 400 when withdrawing more than the withdrawable balance', async () => {
@@ -48,7 +48,7 @@ describe('Wallet (e2e)', () => {
 			lockPeriodInHours: 72,
 		});
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/wallets/booster-1/withdrawals')
 			.send({
 				amount: 10,
@@ -58,6 +58,7 @@ describe('Wallet (e2e)', () => {
 				message: 'Wallet does not have enough withdrawable balance.',
 				error: 'Bad Request',
 				statusCode: 400,
-			});
+			})
+			.execute();
 	});
 });
