@@ -1,7 +1,9 @@
 import {
 	BadRequestException,
+	ForbiddenException,
 	type HttpException,
 	NotFoundException,
+	UnauthorizedException,
 } from '@nestjs/common';
 
 type ErrorConstructor = new (...args: never[]) => Error;
@@ -49,4 +51,18 @@ export const mapAsBadRequest = (
 ): DomainErrorMappingRule => ({
 	errorTypes,
 	toException: (message: string) => new BadRequestException(message),
+});
+
+export const mapAsUnauthorized = (
+	...errorTypes: ErrorConstructor[]
+): DomainErrorMappingRule => ({
+	errorTypes,
+	toException: (message: string) => new UnauthorizedException(message),
+});
+
+export const mapAsForbidden = (
+	...errorTypes: ErrorConstructor[]
+): DomainErrorMappingRule => ({
+	errorTypes,
+	toException: (message: string) => new ForbiddenException(message),
 });

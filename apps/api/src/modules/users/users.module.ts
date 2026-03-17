@@ -14,10 +14,7 @@ import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
-	imports: [
-		AppSettingsModule,
-		ThrottlerModule.forRoot([]),
-	],
+	imports: [AppSettingsModule, ThrottlerModule.forRoot([])],
 	controllers: [UsersController],
 	providers: [
 		PrismaService,

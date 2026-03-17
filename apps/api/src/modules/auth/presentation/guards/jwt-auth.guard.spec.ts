@@ -1,8 +1,11 @@
 import { createHmac } from 'node:crypto';
 import type { AppSettingsService } from '@app/common/settings/app-settings.service';
+import {
+	AuthenticationRequiredError,
+	InvalidAccessTokenError,
+} from '@modules/auth/domain/auth.errors';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import type { ContextType, ExecutionContext, Type } from '@nestjs/common';
-import { UnauthorizedException } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 
 function encodeBase64Url(value: string): string {
@@ -108,7 +111,9 @@ describe('JwtAuthGuard', () => {
 		const guard = new JwtAuthGuard(appSettings);
 		const context = createExecutionContext({});
 
-		expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+		expect(() => guard.canActivate(context)).toThrow(
+			AuthenticationRequiredError,
+		);
 	});
 
 	it('rejects tokens with malformed json payloads', () => {
@@ -127,6 +132,6 @@ describe('JwtAuthGuard', () => {
 			authorization: `Bearer ${header}.${payload}.${signature}`,
 		});
 
-		expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+		expect(() => guard.canActivate(context)).toThrow(InvalidAccessTokenError);
 	});
 });

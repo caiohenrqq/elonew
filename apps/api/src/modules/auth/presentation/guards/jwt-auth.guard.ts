@@ -2,11 +2,14 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import {
+	AuthenticationRequiredError,
+	InvalidAccessTokenError,
+} from '@modules/auth/domain/auth.errors';
+import {
 	CanActivate,
 	type ExecutionContext,
 	Inject,
 	Injectable,
-	UnauthorizedException,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 
@@ -42,7 +45,7 @@ export class JwtAuthGuard implements CanActivate {
 
 	private getBearerToken(authorization?: string): string {
 		if (!authorization?.startsWith('Bearer '))
-			throw new UnauthorizedException('Authentication required.');
+			throw new AuthenticationRequiredError();
 
 		return authorization.slice('Bearer '.length).trim();
 	}
@@ -56,7 +59,7 @@ export class JwtAuthGuard implements CanActivate {
 			!encodedSignature ||
 			rest.length > 0
 		)
-			throw new UnauthorizedException('Invalid access token.');
+			throw new InvalidAccessTokenError();
 
 		const expectedSignature = createHmac(
 			'sha256',
@@ -70,7 +73,7 @@ export class JwtAuthGuard implements CanActivate {
 			expectedSignature.length !== receivedSignature.length ||
 			!timingSafeEqual(expectedSignature, receivedSignature)
 		)
-			throw new UnauthorizedException('Invalid access token.');
+			throw new InvalidAccessTokenError();
 
 		let payload: JwtPayload;
 		try {
@@ -78,13 +81,13 @@ export class JwtAuthGuard implements CanActivate {
 				Buffer.from(encodedPayload, 'base64url').toString('utf8'),
 			) as JwtPayload;
 		} catch {
-			throw new UnauthorizedException('Invalid access token.');
+			throw new InvalidAccessTokenError();
 		}
 		if (
 			typeof payload.sub !== 'string' ||
 			!Object.values(Role).includes(payload.role as Role)
 		)
-			throw new UnauthorizedException('Invalid access token.');
+			throw new InvalidAccessTokenError();
 
 		return payload;
 	}
