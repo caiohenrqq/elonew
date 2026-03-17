@@ -7,6 +7,13 @@ export const envSchema = z.object({
 	PORT: z.coerce.number().int().positive().default(3000),
 	DATABASE_URL: z.string().trim().min(1),
 	JWT_ACCESS_TOKEN_SECRET: z.string().trim().min(1).default('dev-secret'),
+	JWT_ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
+	JWT_REFRESH_TOKEN_SECRET: z
+		.string()
+		.trim()
+		.min(1)
+		.default('dev-refresh-secret'),
+	JWT_REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
 	EMAIL_CONFIRMATION_TOKEN_SECRET: z
 		.string()
 		.trim()
