@@ -90,7 +90,12 @@ describe('JwtAuthGuard', () => {
 		};
 		const guard = new JwtAuthGuard(appSettings);
 		const token = signTestToken(
-			{ sub: 'user-1', role: Role.CLIENT },
+			{
+				sub: 'user-1',
+				role: Role.CLIENT,
+				expiresAt: Math.floor(Date.now() / 1000) + 900,
+				issuedAt: Math.floor(Date.now() / 1000),
+			},
 			appSettings.jwtAccessTokenSecret,
 		);
 		const context = createExecutionContext({
@@ -130,6 +135,27 @@ describe('JwtAuthGuard', () => {
 			.digest('base64url');
 		const context = createExecutionContext({
 			authorization: `Bearer ${header}.${payload}.${signature}`,
+		});
+
+		expect(() => guard.canActivate(context)).toThrow(InvalidAccessTokenError);
+	});
+
+	it('rejects expired tokens', () => {
+		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
+			jwtAccessTokenSecret: 'test-secret',
+		};
+		const guard = new JwtAuthGuard(appSettings);
+		const token = signTestToken(
+			{
+				sub: 'user-1',
+				role: Role.CLIENT,
+				expiresAt: Math.floor(Date.now() / 1000) - 60,
+				issuedAt: Math.floor(Date.now() / 1000) - 120,
+			},
+			appSettings.jwtAccessTokenSecret,
+		);
+		const context = createExecutionContext({
+			authorization: `Bearer ${token}`,
 		});
 
 		expect(() => guard.canActivate(context)).toThrow(InvalidAccessTokenError);

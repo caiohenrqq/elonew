@@ -157,7 +157,7 @@ Official docs to use:
 ### 1. Auth & User Management
 - [x] Implement `User` domain logic and Prisma repository.
 - [x] Create `SignUp` use-case with email confirmation placeholder.
-- [ ] Create `Login` use-case with JWT and Refresh Token rotation.
+- [x] Create `Login` use-case with JWT and Refresh Token rotation.
 - [ ] Implement `@Roles()` decorator and `AuthGuard` for RBAC.
 
 ### 2. Service Catalog & Pricing
@@ -203,6 +203,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Implemented email-based auth login with JWT access tokens, DB-backed refresh-token rotation, explicit logout revocation, auth session persistence, and auth unit/integration/e2e coverage.
 - Removed redundant API controller unit tests in favor of integration/e2e coverage and documented that controller specs should exist only for uniquely controller-specific behavior.
 - Added explicit branch-discipline rules requiring `git fetch && git pull` before starting issue branches and forbidding issue code changes outside the active branch/worktree.
 - Standardized reusable auth guard failures around typed auth errors with shared `401`/`403` HTTP mapping, while keeping transport-boundary validation exceptions explicit.

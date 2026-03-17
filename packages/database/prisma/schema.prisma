@@ -61,6 +61,7 @@ model User {
   ticketMessages   TicketMessage[]
   ratingsGiven     Rating[]  @relation("RatingsGiven")
   ratingsReceived  Rating[]  @relation("RatingsReceived")
+  authSessions     AuthSession[]
 
   @@map("users")
 }
@@ -269,4 +270,20 @@ model ProcessedWebhookEvent {
   processedAt DateTime @default(now())
 
   @@map("processed_webhook_events")
+}
+
+model AuthSession {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String   @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  lastUsedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("auth_sessions")
 }

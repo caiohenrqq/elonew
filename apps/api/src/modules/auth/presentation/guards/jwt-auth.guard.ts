@@ -16,6 +16,8 @@ import { Role } from '@packages/auth/roles/role';
 type JwtPayload = {
 	sub?: unknown;
 	role?: unknown;
+	expiresAt?: unknown;
+	issuedAt?: unknown;
 };
 
 type JwtAuthGuardSettings = Pick<AppSettingsService, 'jwtAccessTokenSecret'>;
@@ -85,7 +87,10 @@ export class JwtAuthGuard implements CanActivate {
 		}
 		if (
 			typeof payload.sub !== 'string' ||
-			!Object.values(Role).includes(payload.role as Role)
+			!Object.values(Role).includes(payload.role as Role) ||
+			typeof payload.expiresAt !== 'number' ||
+			typeof payload.issuedAt !== 'number' ||
+			payload.expiresAt <= Math.floor(Date.now() / 1000)
 		)
 			throw new InvalidAccessTokenError();
 

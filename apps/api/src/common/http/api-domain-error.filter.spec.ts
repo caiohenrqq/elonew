@@ -1,6 +1,10 @@
 import { mapApiDomainErrorToHttpException } from '@app/common/http/api-domain-error.filter';
 import {
 	AuthenticationRequiredError,
+	AuthInvalidCredentialsError,
+	AuthRefreshTokenInvalidError,
+	AuthRefreshTokenRevokedError,
+	AuthUserInactiveError,
 	InsufficientPermissionsError,
 	InvalidAccessTokenError,
 } from '@modules/auth/domain/auth.errors';
@@ -68,7 +72,19 @@ describe('mapApiDomainErrorToHttpException', () => {
 			mapApiDomainErrorToHttpException(new InvalidAccessTokenError()),
 		).toBeInstanceOf(UnauthorizedException);
 		expect(
+			mapApiDomainErrorToHttpException(new AuthInvalidCredentialsError()),
+		).toBeInstanceOf(UnauthorizedException);
+		expect(
+			mapApiDomainErrorToHttpException(new AuthRefreshTokenInvalidError()),
+		).toBeInstanceOf(UnauthorizedException);
+		expect(
+			mapApiDomainErrorToHttpException(new AuthRefreshTokenRevokedError()),
+		).toBeInstanceOf(UnauthorizedException);
+		expect(
 			mapApiDomainErrorToHttpException(new InsufficientPermissionsError()),
+		).toBeInstanceOf(ForbiddenException);
+		expect(
+			mapApiDomainErrorToHttpException(new AuthUserInactiveError()),
 		).toBeInstanceOf(ForbiddenException);
 	});
 

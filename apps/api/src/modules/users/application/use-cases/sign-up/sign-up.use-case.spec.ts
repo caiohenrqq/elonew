@@ -69,6 +69,7 @@ describe('SignUpUseCase', () => {
 		const repository = new InMemoryUserRepository();
 		const passwordHasher: PasswordHasherPort = {
 			hash: jest.fn().mockResolvedValue('hashed-password'),
+			verify: jest.fn(),
 		};
 		const emailConfirmationTokenService: EmailConfirmationTokenServicePort = {
 			generate: jest.fn().mockReturnValue({
@@ -118,6 +119,7 @@ describe('SignUpUseCase', () => {
 		const repository = new InMemoryUserRepository();
 		const passwordHasher: PasswordHasherPort = {
 			hash: jest.fn().mockResolvedValue('hashed-password'),
+			verify: jest.fn(),
 		};
 		const emailConfirmationTokenService: EmailConfirmationTokenServicePort = {
 			generate: jest.fn().mockReturnValue({
@@ -152,6 +154,7 @@ describe('SignUpUseCase', () => {
 		const repository = new InMemoryUserRepository();
 		const passwordHasher: PasswordHasherPort = {
 			hash: jest.fn().mockResolvedValue('hashed-password'),
+			verify: jest.fn(),
 		};
 		const emailConfirmationTokenService: EmailConfirmationTokenServicePort = {
 			generate: jest.fn().mockReturnValue({

@@ -25,6 +25,24 @@ export class AppSettingsService {
 		return this.config.getOrThrow('JWT_ACCESS_TOKEN_SECRET', { infer: true });
 	}
 
+	get jwtAccessTokenTtlMinutes() {
+		return this.config.getOrThrow('JWT_ACCESS_TOKEN_TTL_MINUTES', {
+			infer: true,
+		});
+	}
+
+	get jwtRefreshTokenSecret() {
+		return this.config.getOrThrow('JWT_REFRESH_TOKEN_SECRET', {
+			infer: true,
+		});
+	}
+
+	get jwtRefreshTokenTtlDays() {
+		return this.config.getOrThrow('JWT_REFRESH_TOKEN_TTL_DAYS', {
+			infer: true,
+		});
+	}
+
 	get emailConfirmationTokenSecret() {
 		return this.config.getOrThrow('EMAIL_CONFIRMATION_TOKEN_SECRET', {
 			infer: true,

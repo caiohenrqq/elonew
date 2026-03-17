@@ -1,3 +1,4 @@
+import { AuthModule } from '@modules/auth/auth.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { SystemModule } from '@modules/system/system.module';
@@ -11,6 +12,7 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 @Module({
 	imports: [
 		AppSettingsModule,
+		AuthModule,
 		OrdersModule,
 		PaymentsModule,
 		SystemModule,

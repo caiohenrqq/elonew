@@ -22,6 +22,9 @@ describe('Users (e2e)', () => {
 			testingModule.overrideProvider(AppSettingsService).useValue({
 				port: 3000,
 				jwtAccessTokenSecret: 'test-secret',
+				jwtAccessTokenTtlMinutes: 15,
+				jwtRefreshTokenSecret: 'test-refresh-secret',
+				jwtRefreshTokenTtlDays: 7,
 				emailConfirmationTokenSecret: 'test-email-confirmation-secret',
 				emailConfirmationTokenTtlMinutes: 30,
 				usersSignUpThrottleLimit: 3,

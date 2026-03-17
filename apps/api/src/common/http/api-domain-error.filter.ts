@@ -8,6 +8,10 @@ import {
 } from '@app/common/http/domain-error.mapper';
 import {
 	AuthenticationRequiredError,
+	AuthInvalidCredentialsError,
+	AuthRefreshTokenInvalidError,
+	AuthRefreshTokenRevokedError,
+	AuthUserInactiveError,
 	InsufficientPermissionsError,
 	InvalidAccessTokenError,
 } from '@modules/auth/domain/auth.errors';
@@ -64,7 +68,14 @@ export function mapApiDomainErrorToHttpException(
 		]);
 
 	return tryMapDomainErrorToHttpException(error, [
-		mapAsUnauthorized(AuthenticationRequiredError, InvalidAccessTokenError),
+		mapAsUnauthorized(
+			AuthenticationRequiredError,
+			InvalidAccessTokenError,
+			AuthInvalidCredentialsError,
+			AuthRefreshTokenInvalidError,
+			AuthRefreshTokenRevokedError,
+		),
+		mapAsForbidden(AuthUserInactiveError),
 		mapAsForbidden(InsufficientPermissionsError),
 		mapAsNotFound(
 			OrderNotFoundError,
