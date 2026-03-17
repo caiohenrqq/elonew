@@ -37,5 +37,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
 		SignUpUseCase,
 		ConfirmEmailUseCase,
 	],
+	exports: [USER_REPOSITORY_KEY, PASSWORD_HASHER_KEY],
 })
 export class UsersModule {}
