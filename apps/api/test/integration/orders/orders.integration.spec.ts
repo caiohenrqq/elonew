@@ -69,6 +69,17 @@ describe('Orders module integration', () => {
 			id: createdOrder.id,
 			status: 'awaiting_payment',
 		});
+
+		const persistedOrder = await orderRepository.findById(createdOrder.id);
+		expect(persistedOrder).toMatchObject({
+			id: createdOrder.id,
+			clientId: clientUser.id,
+			boosterId: null,
+		});
+		expect(persistedOrder?.requestDetails?.deadline).toEqual(
+			new Date('2026-03-31T00:00:00.000Z'),
+		);
+		expect(persistedOrder?.requestDetails?.deadline).toBeInstanceOf(Date);
 	});
 
 	it('applies payment confirmation and acceptance transitions', async () => {
