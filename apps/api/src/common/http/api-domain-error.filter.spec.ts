@@ -1,5 +1,10 @@
 import { mapApiDomainErrorToHttpException } from '@app/common/http/api-domain-error.filter';
 import {
+	AuthenticationRequiredError,
+	InsufficientPermissionsError,
+	InvalidAccessTokenError,
+} from '@modules/auth/domain/auth.errors';
+import {
 	OrderBoosterNotEligibleError,
 	OrderBoosterNotFoundError,
 	OrderInvalidTransitionError,
@@ -13,7 +18,12 @@ import {
 	WalletInsufficientWithdrawableBalanceError,
 	WalletNotFoundError,
 } from '@modules/wallet/domain/wallet.errors';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
 
 describe('mapApiDomainErrorToHttpException', () => {
 	it('maps not-found domain errors to NotFoundException', () => {
@@ -48,6 +58,18 @@ describe('mapApiDomainErrorToHttpException', () => {
 		expect(
 			mapApiDomainErrorToHttpException(new OrderBoosterNotEligibleError()),
 		).toBeInstanceOf(BadRequestException);
+	});
+
+	it('maps auth errors to unauthorized and forbidden exceptions', () => {
+		expect(
+			mapApiDomainErrorToHttpException(new AuthenticationRequiredError()),
+		).toBeInstanceOf(UnauthorizedException);
+		expect(
+			mapApiDomainErrorToHttpException(new InvalidAccessTokenError()),
+		).toBeInstanceOf(UnauthorizedException);
+		expect(
+			mapApiDomainErrorToHttpException(new InsufficientPermissionsError()),
+		).toBeInstanceOf(ForbiddenException);
 	});
 
 	it('returns null for unmapped errors', () => {

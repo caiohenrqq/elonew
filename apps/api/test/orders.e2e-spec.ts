@@ -134,6 +134,20 @@ describe('Orders (e2e)', () => {
 			.execute();
 	});
 
+	it('rejects authenticated users without the required role', async () => {
+		const token = signToken({ sub: 'booster-1', role: 'BOOSTER' });
+
+		await request(app.getHttpServer())
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeOrderPayload())
+			.expect(403, {
+				message: 'Insufficient permissions.',
+				error: 'Forbidden',
+				statusCode: 403,
+			});
+	});
+
 	it('rejects invalid service types with bad request', async () => {
 		const token = signToken({ sub: 'client-3', role: 'CLIENT' });
 

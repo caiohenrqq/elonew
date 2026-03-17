@@ -1,9 +1,16 @@
 import {
 	mapAsBadRequest,
+	mapAsForbidden,
 	mapAsNotFound,
+	mapAsUnauthorized,
 	mapDomainErrorToHttpException,
 	tryMapDomainErrorToHttpException,
 } from '@app/common/http/domain-error.mapper';
+import {
+	AuthenticationRequiredError,
+	InsufficientPermissionsError,
+	InvalidAccessTokenError,
+} from '@modules/auth/domain/auth.errors';
 import {
 	OrderAlreadyExistsError,
 	OrderBoosterNotEligibleError,
@@ -57,6 +64,8 @@ export function mapApiDomainErrorToHttpException(
 		]);
 
 	return tryMapDomainErrorToHttpException(error, [
+		mapAsUnauthorized(AuthenticationRequiredError, InvalidAccessTokenError),
+		mapAsForbidden(InsufficientPermissionsError),
 		mapAsNotFound(
 			OrderNotFoundError,
 			OrderBoosterNotFoundError,

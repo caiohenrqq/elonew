@@ -47,6 +47,7 @@ When documentation is needed, always use the official latest documentation.
 - Prefer one-line `if` statements when there is only a single throw statement (for example: `if (!order) throw new OrderNotFoundError();`).
 - In domain-driven backend flows, prefer typed domain errors from `*.errors.ts` instead of inline/manual string errors, throw them from the domain/application layer, and map them to HTTP exceptions only at the presentation boundary.
 - When a new business error appears, extend the module's domain `*.errors.ts` and reuse that type consistently across use-cases, controllers, and tests.
+- Reusable auth failures (for example missing auth, invalid access token, insufficient permissions) must also use typed module errors and central HTTP mapping; keep direct Nest HTTP exceptions only for transport-boundary concerns such as schema/request validation.
 - Avoid quick-fix type directives such as `/// <reference types=\"...\" />` for missing global types; prefer a proper project/package `tsconfig` fix (for example, `compilerOptions.types`) or explicit dependency configuration.
 - Before adding new functions or utilities, first search the codebase for existing implementations and reuse/extend them when appropriate.
 - Avoid bypassing existing abstractions with manual implementations (for example, do not read `process.env` directly in app/runtime code when `AppSettingsService`/config service is the project standard).
@@ -198,6 +199,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Standardized reusable auth guard failures around typed auth errors with shared `401`/`403` HTTP mapping, while keeping transport-boundary validation exceptions explicit.
 - Migrated the API transport bootstrap from Nest Express to Fastify, centralized app creation in a shared HTTP factory, and updated API e2e setup to build Fastify-backed test apps.
 - Implemented the foundational Users module with pending-account sign-up, email-confirmation placeholder activation, Prisma-backed persistence, typed user errors, and API/e2e/DB coverage for the new auth entry flow.
 - Clarified worktree bootstrap with the full env-file set currently needed for test setup and the correct API test commands for e2e and DB-backed integration files.

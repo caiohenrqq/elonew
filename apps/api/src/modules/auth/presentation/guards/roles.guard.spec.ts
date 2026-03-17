@@ -1,7 +1,7 @@
+import { InsufficientPermissionsError } from '@modules/auth/domain/auth.errors';
 import { ROLES_METADATA_KEY } from '@modules/auth/presentation/decorators/roles.decorator';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import type { ContextType, ExecutionContext, Type } from '@nestjs/common';
-import { ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from '@packages/auth/roles/role';
 
@@ -88,6 +88,8 @@ describe('RolesGuard', () => {
 		const guard = new RolesGuard(reflector);
 		const context = createExecutionContext(Role.BOOSTER);
 
-		expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+		expect(() => guard.canActivate(context)).toThrow(
+			InsufficientPermissionsError,
+		);
 	});
 });
