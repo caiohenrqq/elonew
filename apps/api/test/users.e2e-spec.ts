@@ -78,6 +78,29 @@ describe('Users (e2e)', () => {
 			.execute();
 	});
 
+	it('hides the preview token outside development and test', async () => {
+		await app.close();
+		await createApp({
+			isDevelopment: false,
+			isTest: false,
+		});
+
+		await requestHttp(app)
+			.post('/users/sign-up')
+			.send({
+				username: 'summoner-hidden-token',
+				email: 'summoner-hidden-token@example.com',
+				password: 'Secret123456!',
+			})
+			.expect(201)
+			.expect<{
+				emailConfirmationPreviewToken: null;
+			}>(({ body }) => {
+				expect(body.emailConfirmationPreviewToken).toBeNull();
+			})
+			.execute();
+	});
+
 	it('rejects invalid sign-up payloads with bad request', async () => {
 		await requestHttp(app)
 			.post('/users/sign-up')

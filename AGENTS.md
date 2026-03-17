@@ -52,6 +52,7 @@ When documentation is needed, always use the official latest documentation.
 - Before adding new functions or utilities, first search the codebase for existing implementations and reuse/extend them when appropriate.
 - Avoid bypassing existing abstractions with manual implementations (for example, do not read `process.env` directly in app/runtime code when `AppSettingsService`/config service is the project standard).
 - Shared workspace packages must be consumed via package dependency + package exports entrypoints (for example `@packages/config/...`), never by importing `packages/*/src/*` from app code.
+- Controller unit tests are not the default; keep them only when they protect controller-specific behavior that is not already covered by use-case plus integration/e2e tests, and prefer moving cross-layer behavior checks into integration/e2e coverage instead of mocked controller specs.
 
 ## HTTP validation rule for AI agents
 - In `apps/api`, prefer request-boundary validation with Zod schemas plus `ZodValidationPipe` over TypeScript-only body/param/query types.
@@ -202,6 +203,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Removed redundant API controller unit tests in favor of integration/e2e coverage and documented that controller specs should exist only for uniquely controller-specific behavior.
 - Added explicit branch-discipline rules requiring `git fetch && git pull` before starting issue branches and forbidding issue code changes outside the active branch/worktree.
 - Standardized reusable auth guard failures around typed auth errors with shared `401`/`403` HTTP mapping, while keeping transport-boundary validation exceptions explicit.
 - Migrated the API transport bootstrap from Nest Express to Fastify, centralized app creation in a shared HTTP factory, and updated API e2e setup to build Fastify-backed test apps.
