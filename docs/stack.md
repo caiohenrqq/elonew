@@ -7,7 +7,7 @@ This stack is optimized for a web-first MVP that includes payments, order lifecy
 - Runtime: `Node.js`
 - Package manager and workspace tooling: `pnpm` + `pnpm workspaces`
 - Language: `TypeScript`
-- Backend: `NestJS`
+- Backend: `NestJS` on `Fastify`
 - Frontend: `Next.js`
 - Database: `PostgreSQL`
 - ORM and migrations: `Prisma`

@@ -1,13 +1,13 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import { InMemoryUserRepository } from '@modules/users/infrastructure/repositories/in-memory-user.repository';
-import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import type { ApiHttpApp } from '../src/common/http/http-app.factory';
+import { createTestHttpApp, requestHttp } from './create-test-http-app';
 
 describe('Users (e2e)', () => {
-	let app: INestApplication;
+	let app: ApiHttpApp;
 
 	async function createApp(
 		settingsOverride?: Partial<Record<keyof AppSettingsService, unknown>>,
@@ -36,8 +36,7 @@ describe('Users (e2e)', () => {
 		}
 
 		const moduleRef = await testingModule.compile();
-		app = moduleRef.createNestApplication();
-		await app.init();
+		app = await createTestHttpApp(moduleRef);
 	}
 
 	beforeEach(async () => {
@@ -49,7 +48,7 @@ describe('Users (e2e)', () => {
 	});
 
 	it('creates a pending user through the sign-up endpoint', async () => {
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/sign-up')
 			.send({
 				username: 'summoner1',
@@ -57,7 +56,15 @@ describe('Users (e2e)', () => {
 				password: 'Secret123456!',
 			})
 			.expect(201)
-			.expect(({ body }) => {
+			.expect<{
+				id: string;
+				username: string;
+				email: string;
+				role: string;
+				isActive: boolean;
+				emailConfirmedAt: null;
+				emailConfirmationPreviewToken: string;
+			}>(({ body }) => {
 				expect(body).toEqual({
 					id: expect.any(String),
 					username: 'summoner1',
@@ -67,24 +74,26 @@ describe('Users (e2e)', () => {
 					emailConfirmedAt: null,
 					emailConfirmationPreviewToken: expect.any(String),
 				});
-			});
+			})
+			.execute();
 	});
 
 	it('rejects invalid sign-up payloads with bad request', async () => {
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/sign-up')
 			.send({
 				username: 'summoner1',
 				email: 'summoner1@example.com',
 				password: 'short',
 			})
-			.expect(400);
+			.expect(400)
+			.execute();
 	});
 
 	it('confirms email and activates the pending user', async () => {
 		let token = '';
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/sign-up')
 			.send({
 				username: 'summoner2',
@@ -92,33 +101,41 @@ describe('Users (e2e)', () => {
 				password: 'Secret123456!',
 			})
 			.expect(201)
-			.expect(({ body }) => {
+			.expect<{ emailConfirmationPreviewToken: string }>(({ body }) => {
 				token = body.emailConfirmationPreviewToken;
-			});
+			})
+			.execute();
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/confirm-email')
 			.send({ token })
 			.expect(201)
-			.expect(({ body }) => {
+			.expect<{
+				id: string;
+				isActive: boolean;
+				emailConfirmedAt: string;
+				emailConfirmationToken: null;
+			}>(({ body }) => {
 				expect(body).toEqual({
 					id: expect.any(String),
 					isActive: true,
 					emailConfirmedAt: expect.any(String),
 					emailConfirmationToken: null,
 				});
-			});
+			})
+			.execute();
 	});
 
 	it('returns bad request when the confirmation token is invalid', async () => {
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/confirm-email')
 			.send({ token: 'missing-token' })
 			.expect(400, {
 				message: 'Invalid confirmation token.',
 				error: 'Bad Request',
 				statusCode: 400,
-			});
+			})
+			.execute();
 	});
 
 	it('returns a generic duplicate-registration response', async () => {
@@ -128,12 +145,13 @@ describe('Users (e2e)', () => {
 			password: 'Secret123456!',
 		};
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/sign-up')
 			.send(payload)
-			.expect(201);
+			.expect(201)
+			.execute();
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/sign-up')
 			.send({
 				...payload,
@@ -143,29 +161,32 @@ describe('Users (e2e)', () => {
 				message: 'Registration is unavailable.',
 				error: 'Bad Request',
 				statusCode: 400,
-			});
+			})
+			.execute();
 	});
 
 	it('rate-limits repeated sign-up attempts', async () => {
 		for (let index = 0; index < 3; index++) {
-			await request(app.getHttpServer())
+			await requestHttp(app)
 				.post('/users/sign-up')
 				.send({
 					username: `summoner-rate-${index}`,
 					email: `summoner-rate-${index}@example.com`,
 					password: 'Secret123456!',
 				})
-				.expect(201);
+				.expect(201)
+				.execute();
 		}
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/sign-up')
 			.send({
 				username: 'summoner-rate-overflow',
 				email: 'summoner-rate-overflow@example.com',
 				password: 'Secret123456!',
 			})
-			.expect(429);
+			.expect(429)
+			.execute();
 	});
 
 	it('rate-limits confirm-email requests using the configured settings', async () => {
@@ -175,15 +196,17 @@ describe('Users (e2e)', () => {
 			usersConfirmEmailThrottleTtlSeconds: 60,
 		});
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/confirm-email')
 			.send({ token: 'missing-token-1' })
-			.expect(400);
+			.expect(400)
+			.execute();
 
-		await request(app.getHttpServer())
+		await requestHttp(app)
 			.post('/users/confirm-email')
 			.send({ token: 'missing-token-2' })
-			.expect(429);
+			.expect(429)
+			.execute();
 	});
 
 	it('does not throttle unrelated routes with the users limits', async () => {
@@ -196,9 +219,12 @@ describe('Users (e2e)', () => {
 		});
 
 		for (let index = 0; index < 3; index++) {
-			await request(app.getHttpServer()).get('/api/health/api').expect(200, {
-				status: 'ok',
-			});
+			await requestHttp(app)
+				.get('/api/health/api')
+				.expect(200, {
+					status: 'ok',
+				})
+				.execute();
 		}
 	});
 });
