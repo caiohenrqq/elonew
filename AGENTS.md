@@ -75,8 +75,10 @@ When the user says "let's start" on a GitHub issue or asks to begin issue work, 
    - Call out if the issue scope conflicts with roadmap/docs.
 
 2. Create or switch to the issue branch before implementation.
+   - Before creating or switching to the issue branch, run `git fetch && git pull` to make sure the local base branch is up to date.
    - Prefer a descriptive branch name tied to the issue number.
    - Do not start implementation on `main` unless the user explicitly asks for it.
+   - After switching, keep all issue-related code changes on that active issue branch only; do not create or edit issue code from a different local branch.
 
 3. Create a Draft PR linked to the issue before implementation.
    - Open it as soon as the branch exists and the issue scope is confirmed.
@@ -120,6 +122,7 @@ When the user says "let's start" on a GitHub issue or asks to begin issue work, 
 ## Multi-agent issue workflow for AI agents
 - When parallel issue work is needed, prefer one `git worktree` per issue/agent instead of sharing the same working directory across multiple agents.
 - Keep the main repository as the coordination root, then create sibling worktrees for each active issue branch.
+- Never create or edit issue code outside the worktree/branch currently assigned to that issue.
 - Recommended naming pattern:
   - worktree path: `../workspaces/<issue-number>-<short-name>`
   - branch name: `<issue-number>-<short-name>`
@@ -199,6 +202,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Added explicit branch-discipline rules requiring `git fetch && git pull` before starting issue branches and forbidding issue code changes outside the active branch/worktree.
 - Standardized reusable auth guard failures around typed auth errors with shared `401`/`403` HTTP mapping, while keeping transport-boundary validation exceptions explicit.
 - Migrated the API transport bootstrap from Nest Express to Fastify, centralized app creation in a shared HTTP factory, and updated API e2e setup to build Fastify-backed test apps.
 - Implemented the foundational Users module with pending-account sign-up, email-confirmation placeholder activation, Prisma-backed persistence, typed user errors, and API/e2e/DB coverage for the new auth entry flow.
