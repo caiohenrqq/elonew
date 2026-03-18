@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { createBullmqRedisConnection } from '@packages/config/queue/bullmq-redis.connection';
 import type { WalletFundsReleaseJob } from '@shared/wallet/wallet-funds-release-job';
 import { Worker } from 'bullmq';
 
@@ -24,25 +25,9 @@ export class BullmqWalletFundsReleaseWorkerFactory {
 				await input.processJob(job.data);
 			},
 			{
-				connection: this.getRedisConnection(input.redisUrl),
+				connection: createBullmqRedisConnection(input.redisUrl),
 				concurrency: input.concurrency,
 			},
 		);
-	}
-
-	private getRedisConnection(redisUrl: string) {
-		const parsed = new URL(redisUrl);
-
-		return {
-			host: parsed.hostname,
-			port: Number(parsed.port || '6379'),
-			username: parsed.username || undefined,
-			password: parsed.password || undefined,
-			db:
-				parsed.pathname && parsed.pathname !== '/'
-					? Number(parsed.pathname.slice(1))
-					: undefined,
-			maxRetriesPerRequest: null,
-		};
 	}
 }

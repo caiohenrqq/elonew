@@ -7,6 +7,10 @@
 			"types": "./dist/env/env.schema.d.ts",
 			"default": "./dist/env/env.schema.js"
 		},
+		"./env/worker-env.schema": {
+			"types": "./dist/env/worker-env.schema.d.ts",
+			"default": "./dist/env/worker-env.schema.js"
+		},
 		"./env/wallet-funds-release.config": {
 			"types": "./dist/env/wallet-funds-release.config.d.ts",
 			"default": "./dist/env/wallet-funds-release.config.js"
@@ -14,6 +18,10 @@
 		"./env/env.config": {
 			"types": "./dist/env/env.config.d.ts",
 			"default": "./dist/env/env.config.js"
+		},
+		"./queue/bullmq-redis.connection": {
+			"types": "./dist/queue/bullmq-redis.connection.d.ts",
+			"default": "./dist/queue/bullmq-redis.connection.js"
 		}
 	},
 	"scripts": {

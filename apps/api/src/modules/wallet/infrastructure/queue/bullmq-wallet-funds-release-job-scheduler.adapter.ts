@@ -1,6 +1,7 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { type WalletFundsReleaseJobSchedulerPort } from '@modules/wallet/application/ports/wallet-funds-release-job-scheduler.port';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { createBullmqRedisConnection } from '@packages/config/queue/bullmq-redis.connection';
 import type { WalletFundsReleaseJob } from '@shared/wallet/wallet-funds-release-job';
 import { Queue } from 'bullmq';
 
@@ -45,26 +46,10 @@ export class BullmqWalletFundsReleaseJobSchedulerAdapter
 		this.queue = new Queue<WalletFundsReleaseJob>(
 			this.appSettings.walletFundsReleaseQueueName,
 			{
-				connection: this.getRedisConnection(),
+				connection: createBullmqRedisConnection(this.appSettings.redisUrl),
 			},
 		);
 
 		return this.queue;
-	}
-
-	private getRedisConnection() {
-		const parsed = new URL(this.appSettings.redisUrl);
-
-		return {
-			host: parsed.hostname,
-			port: Number(parsed.port || '6379'),
-			username: parsed.username || undefined,
-			password: parsed.password || undefined,
-			db:
-				parsed.pathname && parsed.pathname !== '/'
-					? Number(parsed.pathname.slice(1))
-					: undefined,
-			maxRetriesPerRequest: null,
-		};
 	}
 }

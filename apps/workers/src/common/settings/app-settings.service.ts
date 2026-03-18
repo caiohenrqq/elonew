@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { WorkerEnv } from './worker-env';
+import type { WorkerEnv } from '@packages/config/env/worker-env.schema';
 
 @Injectable()
 export class AppSettingsService {
