@@ -6,6 +6,7 @@ import {
 	type WalletFundsReleaseConsumerInstance,
 } from '@modules/wallet-funds-release/infrastructure/queue/bullmq-wallet-funds-release.worker-factory';
 import {
+	Inject,
 	Injectable,
 	Logger,
 	OnApplicationBootstrap,
@@ -22,8 +23,11 @@ export class BullmqWalletFundsReleaseConsumerAdapter
 	private worker: WalletFundsReleaseConsumerInstance | null = null;
 
 	constructor(
+		@Inject(AppSettingsService)
 		private readonly appSettings: AppSettingsService,
+		@Inject(ProcessWalletFundsReleaseJobUseCase)
 		private readonly processWalletFundsReleaseJobUseCase: ProcessWalletFundsReleaseJobUseCase,
+		@Inject(BullmqWalletFundsReleaseWorkerFactory)
 		private readonly workerFactory: BullmqWalletFundsReleaseWorkerFactory,
 	) {}
 

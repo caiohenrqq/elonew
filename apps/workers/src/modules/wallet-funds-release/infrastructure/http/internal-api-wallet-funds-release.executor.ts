@@ -2,14 +2,17 @@ import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { type WalletFundsReleaseExecutorPort } from '@modules/wallet-funds-release/application/ports/wallet-funds-release-executor.port';
 import type { ProcessWalletFundsReleaseJobInput } from '@modules/wallet-funds-release/application/process-wallet-funds-release-job.input';
 import { WalletFundsReleaseExecutionFailedError } from '@modules/wallet-funds-release/domain/wallet-funds-release.errors';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { WALLET_FUNDS_RELEASE_INTERNAL_ROUTE } from '@shared/wallet/wallet-funds-release.contract';
 
 @Injectable()
 export class InternalApiWalletFundsReleaseExecutorAdapter
 	implements WalletFundsReleaseExecutorPort
 {
-	constructor(private readonly appSettings: AppSettingsService) {}
+	constructor(
+		@Inject(AppSettingsService)
+		private readonly appSettings: AppSettingsService,
+	) {}
 
 	async execute(input: ProcessWalletFundsReleaseJobInput): Promise<void> {
 		try {
