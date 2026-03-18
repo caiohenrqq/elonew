@@ -4,6 +4,7 @@ import { GetWalletUseCase } from '@modules/wallet/application/use-cases/get-wall
 import { ReleaseMaturedWalletFundsUseCase } from '@modules/wallet/application/use-cases/release-matured-wallet-funds/release-matured-wallet-funds.use-case';
 import { RequestWithdrawalUseCase } from '@modules/wallet/application/use-cases/request-withdrawal/request-withdrawal.use-case';
 import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { WALLET_FUNDS_RELEASE_INTERNAL_ROUTE } from '@shared/wallet/wallet-funds-release.contract';
 import {
 	type CreditCompletedOrderEarningsSchemaInput,
 	creditCompletedOrderEarningsSchema,
@@ -47,13 +48,15 @@ export class WalletsController {
 		return { success: true };
 	}
 
-	@Post('internal/release-matured-funds')
+	@Post(WALLET_FUNDS_RELEASE_INTERNAL_ROUTE.replace('/wallets/', ''))
 	@HttpCode(200)
 	async releaseMaturedFunds(
 		@Body(new ZodValidationPipe(releaseMaturedWalletFundsSchema))
 		body: ReleaseMaturedWalletFundsSchemaInput,
 	): Promise<{ success: true }> {
 		await this.releaseMaturedWalletFundsUseCase.execute({
+			orderId: body.orderId,
+			boosterId: body.boosterId,
 			now: new Date(body.now),
 		});
 		return { success: true };

@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+	DEFAULT_REDIS_URL,
+	DEFAULT_WALLET_FUNDS_RELEASE_QUEUE_NAME,
+} from './wallet-funds-release.config';
 
 export const envSchema = z.object({
 	NODE_ENV: z
@@ -6,6 +10,7 @@ export const envSchema = z.object({
 		.default('development'),
 	PORT: z.coerce.number().int().positive().default(3000),
 	DATABASE_URL: z.string().trim().min(1),
+	REDIS_URL: z.string().trim().min(1).default(DEFAULT_REDIS_URL),
 	JWT_ACCESS_TOKEN_SECRET: z.string().trim().min(1).default('dev-secret'),
 	JWT_ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
 	JWT_REFRESH_TOKEN_SECRET: z
@@ -41,6 +46,11 @@ export const envSchema = z.object({
 		.positive()
 		.default(60),
 	WALLET_LOCK_PERIOD_HOURS: z.coerce.number().int().positive().default(72),
+	WALLET_FUNDS_RELEASE_QUEUE_NAME: z
+		.string()
+		.trim()
+		.min(1)
+		.default(DEFAULT_WALLET_FUNDS_RELEASE_QUEUE_NAME),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
