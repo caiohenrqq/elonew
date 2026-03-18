@@ -13,6 +13,8 @@ export type CreditCompletedOrderEarningsSchemaInput = z.infer<
 >;
 
 export const releaseMaturedWalletFundsSchema = z.object({
+	orderId: z.string().trim().min(1),
+	boosterId: z.string().trim().min(1),
 	now: z.string().datetime(),
 });
 

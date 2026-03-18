@@ -5,6 +5,8 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 
 type ReleaseMaturedWalletFundsInput = {
+	boosterId: string;
+	orderId: string;
 	now: Date;
 };
 
@@ -16,11 +18,13 @@ export class ReleaseMaturedWalletFundsUseCase {
 	) {}
 
 	async execute(input: ReleaseMaturedWalletFundsInput): Promise<void> {
-		const wallets = await this.walletRepository.findAll();
+		const wallet = await this.walletRepository.findByBoosterId(input.boosterId);
+		if (!wallet) return;
 
-		for (const wallet of wallets) {
-			wallet.releaseMaturedFunds(input.now);
-			await this.walletRepository.save(wallet);
-		}
+		wallet.releaseOrderCompletionFunds({
+			orderId: input.orderId,
+			now: input.now,
+		});
+		await this.walletRepository.save(wallet);
 	}
 }

@@ -69,6 +69,17 @@ export class Wallet {
 		});
 	}
 
+	findOrderCompletionCredit(orderId: string): WalletTransaction | null {
+		return (
+			this.transactions.find(
+				(transaction) =>
+					transaction.type === 'credit' &&
+					transaction.reason === 'order_completion' &&
+					transaction.orderId === orderId,
+			) ?? null
+		);
+	}
+
 	releaseMaturedFunds(now: Date): void {
 		for (const transaction of this.transactions) {
 			if (transaction.type !== 'credit') continue;
@@ -76,6 +87,23 @@ export class Wallet {
 			if (transaction.availableAt > now) continue;
 
 			transaction.releasedAt = now;
+			this.balanceLocked = this.roundToCents(
+				this.balanceLocked - transaction.amount,
+			);
+			this.balanceWithdrawable = this.roundToCents(
+				this.balanceWithdrawable + transaction.amount,
+			);
+		}
+	}
+
+	releaseOrderCompletionFunds(input: { orderId: string; now: Date }): void {
+		for (const transaction of this.transactions) {
+			if (transaction.type !== 'credit') continue;
+			if (transaction.orderId !== input.orderId) continue;
+			if (transaction.releasedAt) continue;
+			if (transaction.availableAt > input.now) continue;
+
+			transaction.releasedAt = input.now;
 			this.balanceLocked = this.roundToCents(
 				this.balanceLocked - transaction.amount,
 			);

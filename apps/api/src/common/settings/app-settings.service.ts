@@ -21,6 +21,10 @@ export class AppSettingsService {
 		return this.config.getOrThrow('DATABASE_URL', { infer: true });
 	}
 
+	get redisUrl() {
+		return this.config.getOrThrow('REDIS_URL', { infer: true });
+	}
+
 	get jwtAccessTokenSecret() {
 		return this.config.getOrThrow('JWT_ACCESS_TOKEN_SECRET', { infer: true });
 	}
@@ -81,6 +85,12 @@ export class AppSettingsService {
 
 	get walletLockPeriodInHours() {
 		return this.config.getOrThrow('WALLET_LOCK_PERIOD_HOURS', {
+			infer: true,
+		});
+	}
+
+	get walletFundsReleaseQueueName() {
+		return this.config.getOrThrow('WALLET_FUNDS_RELEASE_QUEUE_NAME', {
 			infer: true,
 		});
 	}

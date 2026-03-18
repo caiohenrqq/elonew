@@ -7,6 +7,10 @@
 			"types": "./dist/env/env.schema.d.ts",
 			"default": "./dist/env/env.schema.js"
 		},
+		"./env/wallet-funds-release.config": {
+			"types": "./dist/env/wallet-funds-release.config.d.ts",
+			"default": "./dist/env/wallet-funds-release.config.js"
+		},
 		"./env/env.config": {
 			"types": "./dist/env/env.config.d.ts",
 			"default": "./dist/env/env.config.js"

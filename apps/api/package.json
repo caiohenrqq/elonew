@@ -13,10 +13,8 @@
 		"start:dev:stable": "bash ../../infrastructure/scripts/api-dev-watch-runner.sh",
 		"start:debug": "pnpm -w config:build && pnpm -w auth:build && nest start --debug --watch",
 		"start:prod": "node dist/main",
-
 		"biome:check": "biome check .",
 		"biome:fix": "biome check --write .",
-
 		"test": "pnpm -w config:build && pnpm -w auth:build && jest",
 		"test:unit": "pnpm -w config:build && pnpm -w auth:build && jest \"src/.*\\.spec\\.ts$\" --runInBand",
 		"test:integration": "pnpm -w config:build && pnpm -w auth:build && jest \"test/integration/.*\\.integration\\.spec\\.ts$\" --runInBand",
@@ -26,7 +24,6 @@
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"test:e2e": "pnpm -w config:build && pnpm -w auth:build && jest --config ./test/jest-e2e.json",
 		"test:e2e:db": "pnpm -w config:build && pnpm -w auth:build && pnpm -w db:test:prepare && jest --config ./test/jest-e2e-db.json --runInBand",
-
 		"prisma:generate": "pnpm -w db:generate",
 		"prisma:validate": "pnpm -w db:validate",
 		"prisma:migrate:dev": "pnpm -w db:migrate:dev",
@@ -34,7 +31,6 @@
 		"prisma:studio": "pnpm -w db:studio"
 	},
 	"dependencies": {
-		"@prisma/adapter-pg": "latest",
 		"@nestjs/common": "^11.0.1",
 		"@nestjs/config": "^4.0.0",
 		"@nestjs/core": "^11.0.1",
@@ -43,9 +39,12 @@
 		"@packages/auth": "workspace:*",
 		"@packages/config": "workspace:*",
 		"@packages/shared": "workspace:*",
+		"@prisma/adapter-pg": "latest",
 		"@prisma/client": "^7.4.2",
-		"fastify": "latest",
 		"argon2": "latest",
+		"bullmq": "^5.71.0",
+		"fastify": "latest",
+		"ioredis": "^5.10.0",
 		"pg": "latest",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1",
