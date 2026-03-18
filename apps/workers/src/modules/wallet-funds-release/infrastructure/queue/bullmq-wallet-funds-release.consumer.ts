@@ -1,5 +1,6 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { ProcessWalletFundsReleaseJobUseCase } from '@modules/wallet-funds-release/application/use-cases/process-wallet-funds-release-job/process-wallet-funds-release-job.use-case';
+import { WalletFundsReleaseInvalidJobError } from '@modules/wallet-funds-release/domain/wallet-funds-release.errors';
 import {
 	BullmqWalletFundsReleaseWorkerFactory,
 	type WalletFundsReleaseConsumerInstance,
@@ -34,7 +35,9 @@ export class BullmqWalletFundsReleaseConsumerAdapter
 			redisUrl: this.appSettings.redisUrl,
 			concurrency: this.appSettings.workerConcurrency,
 			processJob: async (job) => {
-				await this.processWalletFundsReleaseJobUseCase.execute(job);
+				await this.processWalletFundsReleaseJobUseCase.execute(
+					this.mapJobToInput(job),
+				);
 			},
 		});
 
@@ -45,5 +48,21 @@ export class BullmqWalletFundsReleaseConsumerAdapter
 		if (!this.worker) return;
 		await this.worker.close();
 		this.worker = null;
+	}
+
+	private mapJobToInput(job: {
+		orderId: string;
+		boosterId: string;
+		availableAt: string;
+	}) {
+		const availableAt = new Date(job.availableAt);
+		if (Number.isNaN(availableAt.getTime()))
+			throw new WalletFundsReleaseInvalidJobError();
+
+		return {
+			orderId: job.orderId,
+			boosterId: job.boosterId,
+			availableAt,
+		};
 	}
 }

@@ -203,6 +203,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Refined the workers wallet-release flow to map shared queue payloads at the infrastructure boundary, use a worker-local typed processing input internally, and standardize executor/invalid-job failures with typed module errors plus targeted tests.
 - Centralized workers env validation and BullMQ Redis connection parsing in `@packages/config`, then expanded worker/runtime coverage for test-mode bootstrap and shared Redis connection parsing to reduce duplication drift across API and workers.
 - Centralized wallet release defaults in `@packages/config` and the internal wallet-release route contract in `@packages/shared` to remove duplicated runtime sources of truth across API and workers.
 - Refactored the workers wallet-release runtime into a Nest-based feature module with explicit application ports/use-cases, a broker-agnostic API job-scheduler port, and BullMQ isolated to infrastructure adapters on both publishing and consuming sides.

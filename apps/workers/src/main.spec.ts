@@ -22,7 +22,7 @@ test('InternalApiWalletFundsReleaseExecutorAdapter posts the targeted release pa
 		await adapter.execute({
 			orderId: 'order-1',
 			boosterId: 'booster-1',
-			availableAt: '2026-03-12T12:00:00.000Z',
+			availableAt: new Date('2026-03-12T12:00:00.000Z'),
 		});
 	} finally {
 		globalThis.fetch = originalFetch;
