@@ -18,6 +18,17 @@ services:
       timeout: 5s
       retries: 20
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   api:
     build:
       context: ../../..
@@ -29,10 +40,13 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - ../../../apps/api/.env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@database:5432/elonew
+      REDIS_URL: redis://redis:6379
       PNPM_HOME: /pnpm
       PNPM_STORE_DIR: /pnpm/store
       CHOKIDAR_USEPOLLING: 'true'
@@ -92,12 +106,16 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       api:
         condition: service_started
     env_file:
       - ../../../apps/workers/.env
     environment:
+      API_INTERNAL_BASE_URL: http://api:3000
       DATABASE_URL: postgresql://postgres:postgres@database:5432/elonew
+      REDIS_URL: redis://redis:6379
       PNPM_HOME: /pnpm
       PNPM_STORE_DIR: /pnpm/store
       CHOKIDAR_USEPOLLING: 'true'

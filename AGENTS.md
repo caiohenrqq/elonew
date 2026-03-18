@@ -203,6 +203,10 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Replaced the wallet-release BullMQ job id delimiter from `:` to a BullMQ-safe format and added direct scheduler coverage so containerized enqueue paths can succeed without runtime job-id validation failures.
+- Fixed the Docker API dev watch runner to start the emitted `apps/api/dist/apps/api/src/main.js` entrypoint so the API container actually serves requests after the watch build completes.
+- Pointed the Dockerized workers runtime at `http://api:3000` for internal wallet-release API calls so consumed BullMQ jobs resolve the API container instead of container-local `localhost`.
+- Added a dedicated Redis service to the dev Docker Compose stack and switched containerized API/workers `REDIS_URL` wiring from `localhost` to the compose `redis` hostname so BullMQ-based flows boot correctly in Docker.
 - Refined the workers wallet-release flow to map shared queue payloads at the infrastructure boundary, use a worker-local typed processing input internally, and standardize executor/invalid-job failures with typed module errors plus targeted tests.
 - Centralized workers env validation and BullMQ Redis connection parsing in `@packages/config`, then expanded worker/runtime coverage for test-mode bootstrap and shared Redis connection parsing to reduce duplication drift across API and workers.
 - Centralized wallet release defaults in `@packages/config` and the internal wallet-release route contract in `@packages/shared` to remove duplicated runtime sources of truth across API and workers.

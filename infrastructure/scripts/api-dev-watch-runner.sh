@@ -15,8 +15,10 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
-until [ -f apps/api/dist/main.js ]; do
+API_MAIN_PATH="apps/api/dist/apps/api/src/main.js"
+
+until [ -f "$API_MAIN_PATH" ]; do
 	sleep 0.2
 done
 
-node --watch --watch-path apps/api/dist apps/api/dist/main.js
+node --watch --watch-path apps/api/dist "$API_MAIN_PATH"

@@ -5,6 +5,13 @@ import { createBullmqRedisConnection } from '@packages/config/queue/bullmq-redis
 import type { WalletFundsReleaseJob } from '@shared/wallet/wallet-funds-release-job';
 import { Queue } from 'bullmq';
 
+export function createWalletFundsReleaseJobId(input: {
+	boosterId: string;
+	orderId: string;
+}): string {
+	return `${input.boosterId}__${input.orderId}`;
+}
+
 @Injectable()
 export class BullmqWalletFundsReleaseJobSchedulerAdapter
 	implements WalletFundsReleaseJobSchedulerPort, OnModuleDestroy
@@ -28,7 +35,7 @@ export class BullmqWalletFundsReleaseJobSchedulerAdapter
 				availableAt: input.availableAt.toISOString(),
 			},
 			{
-				jobId: `${input.boosterId}:${input.orderId}`,
+				jobId: createWalletFundsReleaseJobId(input),
 				delay: Math.max(input.availableAt.getTime() - Date.now(), 0),
 				removeOnComplete: 100,
 				removeOnFail: 100,
