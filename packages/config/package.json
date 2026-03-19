@@ -19,6 +19,14 @@
 			"types": "./dist/env/env.config.d.ts",
 			"default": "./dist/env/env.config.js"
 		},
+		"./orders/elo-boost-price-table": {
+			"types": "./dist/orders/elo-boost-price-table.d.ts",
+			"default": "./dist/orders/elo-boost-price-table.js"
+		},
+		"./orders/duo-boost-price-table": {
+			"types": "./dist/orders/duo-boost-price-table.d.ts",
+			"default": "./dist/orders/duo-boost-price-table.js"
+		},
 		"./queue/bullmq-redis.connection": {
 			"types": "./dist/queue/bullmq-redis.connection.d.ts",
 			"default": "./dist/queue/bullmq-redis.connection.js"
