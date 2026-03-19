@@ -6,7 +6,10 @@ import {
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
-import { OrderQuoteAlreadyUsedError } from '@modules/orders/domain/order-pricing.errors';
+import {
+	OrderCouponInvalidError,
+	OrderQuoteAlreadyUsedError,
+} from '@modules/orders/domain/order-pricing.errors';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import type { TestingModule } from '@nestjs/testing';
@@ -63,6 +66,7 @@ describe('Orders module integration (db)', () => {
 		await prisma.payment.deleteMany();
 		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
+		await prisma.coupon.deleteMany();
 		const uniqueSuffix = Date.now().toString();
 		const createdUser = await prisma.user.create({
 			data: {
@@ -141,6 +145,230 @@ describe('Orders module integration (db)', () => {
 			id: createdOrder.id,
 			boosterId: booster.id,
 		});
+	});
+
+	it('persists coupon pricing from quote to created order', async () => {
+		const coupon = await prisma.coupon.create({
+			data: {
+				code: 'WELCOME10',
+				discountType: 'PERCENTAGE',
+				discount: 10,
+				isActive: true,
+				firstOrderOnly: false,
+			},
+		});
+
+		const quote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+				couponCode: 'WELCOME10',
+			},
+			clientUser,
+		);
+
+		expect(quote).toMatchObject({
+			subtotal: 25.2,
+			totalAmount: 22.68,
+			discountAmount: 2.52,
+		});
+
+		const persistedQuote = await prisma.orderQuote.findUnique({
+			where: { id: quote.quoteId },
+		});
+		expect(persistedQuote).toMatchObject({
+			id: quote.quoteId,
+			couponId: coupon.id,
+			discountAmount: 2.52,
+			totalAmount: 22.68,
+		});
+
+		const createdOrder = await controller.create(
+			{
+				quoteId: quote.quoteId,
+			},
+			clientUser,
+		);
+
+		const persistedOrder = await prisma.order.findUnique({
+			where: { id: createdOrder.id },
+		});
+		expect(persistedOrder).toMatchObject({
+			id: createdOrder.id,
+			couponId: coupon.id,
+			discountAmount: 2.52,
+			totalAmount: 22.68,
+		});
+	});
+
+	it('rejects consuming a second first-order coupon quote after the first order is created', async () => {
+		await prisma.coupon.create({
+			data: {
+				code: 'FIRST10',
+				discountType: 'PERCENTAGE',
+				discount: 10,
+				isActive: true,
+				firstOrderOnly: true,
+			},
+		});
+
+		const firstQuote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+				couponCode: 'FIRST10',
+			},
+			clientUser,
+		);
+		const secondQuote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+				couponCode: 'FIRST10',
+			},
+			clientUser,
+		);
+
+		await expect(
+			controller.create({ quoteId: firstQuote.quoteId }, clientUser),
+		).resolves.toMatchObject({
+			status: 'awaiting_payment',
+			totalAmount: 22.68,
+			discountAmount: 2.52,
+		});
+
+		await expect(
+			controller.create({ quoteId: secondQuote.quoteId }, clientUser),
+		).rejects.toBeInstanceOf(OrderCouponInvalidError);
+
+		await expect(
+			prisma.order.count({
+				where: {
+					clientId: clientUser.id,
+					discountAmount: 2.52,
+				},
+			}),
+		).resolves.toBe(1);
+	});
+
+	it('creates only one discounted order when two first-order coupon quotes are consumed concurrently', async () => {
+		await prisma.coupon.create({
+			data: {
+				code: 'FIRST10',
+				discountType: 'PERCENTAGE',
+				discount: 10,
+				isActive: true,
+				firstOrderOnly: true,
+			},
+		});
+
+		const firstQuote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+				couponCode: 'FIRST10',
+			},
+			clientUser,
+		);
+		const secondQuote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+				couponCode: 'FIRST10',
+			},
+			clientUser,
+		);
+
+		const results = await Promise.allSettled([
+			controller.create({ quoteId: firstQuote.quoteId }, clientUser),
+			controller.create({ quoteId: secondQuote.quoteId }, clientUser),
+		]);
+
+		const successfulResults = results.filter(
+			(
+				result,
+			): result is PromiseFulfilledResult<{
+				id: string;
+				status: string;
+				subtotal: number | null;
+				totalAmount: number | null;
+				discountAmount: number;
+			}> => result.status === 'fulfilled',
+		);
+		const failedResults = results.filter(
+			(result): result is PromiseRejectedResult => result.status === 'rejected',
+		);
+
+		expect(successfulResults).toHaveLength(1);
+		expect(failedResults).toHaveLength(1);
+		expect(successfulResults[0]?.value).toMatchObject({
+			status: 'awaiting_payment',
+			totalAmount: 22.68,
+			discountAmount: 2.52,
+		});
+		expect(failedResults[0]?.reason).toBeInstanceOf(OrderCouponInvalidError);
+
+		await expect(
+			prisma.order.count({
+				where: {
+					clientId: clientUser.id,
+					discountAmount: 2.52,
+				},
+			}),
+		).resolves.toBe(1);
+
+		await expect(
+			prisma.orderQuote.count({
+				where: {
+					id: {
+						in: [firstQuote.quoteId, secondQuote.quoteId],
+					},
+					consumedAt: {
+						not: null,
+					},
+				},
+			}),
+		).resolves.toBe(1);
 	});
 
 	it('creates exactly one order when the same quote is submitted concurrently', async () => {

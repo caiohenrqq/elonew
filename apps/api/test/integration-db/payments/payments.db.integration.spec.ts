@@ -59,6 +59,7 @@ describe('Payments module integration (db)', () => {
 		await prisma.payment.deleteMany();
 		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
+		await prisma.coupon.deleteMany();
 		const uniqueSuffix = Date.now().toString();
 		const createdUser = await prisma.user.create({
 			data: {
@@ -105,6 +106,58 @@ describe('Payments module integration (db)', () => {
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
+		});
+	});
+
+	it('creates a payment from the discounted order total when a coupon is applied', async () => {
+		await prisma.coupon.create({
+			data: {
+				code: 'WELCOME10',
+				discountType: 'PERCENTAGE',
+				discount: 10,
+				isActive: true,
+				firstOrderOnly: false,
+			},
+		});
+
+		const quote = await ordersController.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+				couponCode: 'WELCOME10',
+			},
+			clientUser,
+		);
+
+		const createdOrder = await ordersController.create(
+			{
+				quoteId: quote.quoteId,
+			},
+			clientUser,
+		);
+
+		await expect(
+			paymentsController.create(
+				{
+					paymentId: 'payment-db-coupon-1',
+					orderId: createdOrder.id,
+				},
+				clientUser,
+			),
+		).resolves.toEqual({
+			id: 'payment-db-coupon-1',
+			orderId: createdOrder.id,
+			status: 'awaiting_confirmation',
+			grossAmount: 22.68,
+			boosterAmount: 15.88,
 		});
 	});
 
