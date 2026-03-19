@@ -3,6 +3,7 @@ import { orderServiceTypes } from './service-type';
 
 export const createOrderQuoteSchema = z.object({
 	serviceType: z.enum(orderServiceTypes),
+	couponCode: z.string().trim().min(1).optional(),
 	currentLeague: z.string().trim().min(1),
 	currentDivision: z.string().trim().min(1),
 	currentLp: z.number().int().min(0).max(99),

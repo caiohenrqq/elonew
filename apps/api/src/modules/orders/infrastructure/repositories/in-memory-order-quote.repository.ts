@@ -10,6 +10,7 @@ import { Injectable } from '@nestjs/common';
 type StoredQuote = {
 	id: string;
 	clientId: string;
+	couponId: string | null;
 	requestDetails: OrderQuoteSnapshot['requestDetails'];
 	pricing: OrderQuoteSnapshot['pricing'];
 	expiresAt: Date;
@@ -24,6 +25,7 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 
 	async create(input: {
 		clientId: string;
+		couponId: string | null;
 		requestDetails: OrderQuoteSnapshot['requestDetails'];
 		pricing: OrderQuoteSnapshot['pricing'];
 		expiresAt: Date;
@@ -31,6 +33,7 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		const quote: StoredQuote = {
 			id: `quote-${this.nextId++}`,
 			clientId: input.clientId,
+			couponId: input.couponId,
 			requestDetails: input.requestDetails,
 			pricing: input.pricing,
 			expiresAt: input.expiresAt,
@@ -58,6 +61,7 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		quote.orderId = input.orderId;
 
 		return {
+			couponId: quote.couponId,
 			requestDetails: quote.requestDetails,
 			pricing: quote.pricing,
 		};

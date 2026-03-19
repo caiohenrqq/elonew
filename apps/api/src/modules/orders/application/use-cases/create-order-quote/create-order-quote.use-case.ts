@@ -5,6 +5,10 @@ import {
 	type OrderQuoteRepositoryPort,
 } from '@modules/orders/application/ports/order-quote-repository.port';
 import {
+	ORDER_COUPON_SERVICE_KEY,
+	type OrderCouponService,
+} from '@modules/orders/application/services/order-coupon.service';
+import {
 	ORDER_PRICING_SERVICE_KEY,
 	type OrderPricingService,
 } from '@modules/orders/application/services/order-pricing.service';
@@ -12,6 +16,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type CreateOrderQuoteInput = OrderQuoteRequestDetails & {
 	clientId: string;
+	couponCode?: string;
 	now: Date;
 };
 
@@ -27,6 +32,8 @@ export class CreateOrderQuoteUseCase {
 	constructor(
 		@Inject(ORDER_PRICING_SERVICE_KEY)
 		private readonly orderPricingService: OrderPricingService,
+		@Inject(ORDER_COUPON_SERVICE_KEY)
+		private readonly orderCouponService: OrderCouponService,
 		@Inject(ORDER_QUOTE_REPOSITORY_KEY)
 		private readonly orderQuoteRepository: OrderQuoteRepositoryPort,
 		@Inject(AppSettingsService)
@@ -47,10 +54,16 @@ export class CreateOrderQuoteUseCase {
 			deadline: input.deadline,
 		};
 		const pricing = this.orderPricingService.calculate(requestDetails);
+		const couponAdjustedPricing = await this.orderCouponService.apply({
+			clientId: input.clientId,
+			couponCode: input.couponCode,
+			pricing,
+		});
 		const quote = await this.orderQuoteRepository.create({
 			clientId: input.clientId,
+			couponId: couponAdjustedPricing.couponId,
 			requestDetails,
-			pricing,
+			pricing: couponAdjustedPricing.pricing,
 			expiresAt: new Date(
 				input.now.getTime() + this.appSettings.orderQuoteTtlMinutes * 60_000,
 			),
@@ -58,9 +71,9 @@ export class CreateOrderQuoteUseCase {
 
 		return {
 			quoteId: quote.id,
-			subtotal: pricing.subtotal,
-			totalAmount: pricing.totalAmount,
-			discountAmount: pricing.discountAmount,
+			subtotal: couponAdjustedPricing.pricing.subtotal,
+			totalAmount: couponAdjustedPricing.pricing.totalAmount,
+			discountAmount: couponAdjustedPricing.pricing.discountAmount,
 		};
 	}
 }

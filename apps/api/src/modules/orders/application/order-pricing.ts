@@ -20,6 +20,7 @@ export type OrderPricingSnapshot = {
 };
 
 export type OrderQuoteSnapshot = {
+	couponId: string | null;
 	requestDetails: OrderQuoteRequestDetails;
 	pricing: OrderPricingSnapshot;
 };

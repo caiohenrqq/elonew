@@ -51,6 +51,7 @@ export class Order {
 		public readonly id: string,
 		private readonly currentClientId: string | null,
 		private currentBoosterId: string | null,
+		private readonly currentCouponId: string | null,
 		private currentStatus: OrderStatus,
 		private currentCredentials: OrderCredentials | null,
 		private readonly currentRequestDetails: OrderRequestDetails | null,
@@ -71,6 +72,7 @@ export class Order {
 			id,
 			input?.clientId ?? null,
 			input?.boosterId ?? null,
+			null,
 			OrderStatus.AWAITING_PAYMENT,
 			null,
 			input?.requestDetails ?? null,
@@ -84,6 +86,7 @@ export class Order {
 		id?: string;
 		clientId: string;
 		boosterId?: string | null;
+		couponId?: string | null;
 		requestDetails: OrderRequestDetails;
 		pricing: {
 			subtotal: number;
@@ -95,6 +98,7 @@ export class Order {
 			input.id ?? '',
 			input.clientId,
 			input.boosterId ?? null,
+			input.couponId ?? null,
 			OrderStatus.AWAITING_PAYMENT,
 			null,
 			input.requestDetails,
@@ -108,6 +112,7 @@ export class Order {
 		id: string;
 		clientId?: string | null;
 		boosterId?: string | null;
+		couponId?: string | null;
 		status: OrderStatus;
 		credentials?: OrderCredentials | null;
 		requestDetails?: OrderRequestDetails | null;
@@ -119,6 +124,7 @@ export class Order {
 			input.id,
 			input.clientId ?? null,
 			input.boosterId ?? null,
+			input.couponId ?? null,
 			input.status,
 			input.credentials ?? null,
 			input.requestDetails ?? null,
@@ -134,6 +140,10 @@ export class Order {
 
 	get boosterId(): string | null {
 		return this.currentBoosterId;
+	}
+
+	get couponId(): string | null {
+		return this.currentCouponId;
 	}
 
 	get status(): OrderStatus {

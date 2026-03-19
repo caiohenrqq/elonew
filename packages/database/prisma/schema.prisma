@@ -39,6 +39,11 @@ enum WalletTransactionType {
   DEBIT
 }
 
+enum CouponDiscountType {
+  PERCENTAGE
+  FIXED
+}
+
 model User {
   id               String    @id @default(cuid())
   username         String    @unique
@@ -125,6 +130,8 @@ model OrderQuote {
   id               String       @id @default(cuid())
   clientId         String
   client           User         @relation(fields: [clientId], references: [id])
+  couponId         String?
+  coupon           Coupon?      @relation(fields: [couponId], references: [id])
   serviceType      ServiceType
   currentLeague    String
   currentDivision  String
@@ -224,6 +231,7 @@ model WalletTransaction {
 model Coupon {
   id             String   @id @default(cuid())
   code           String   @unique
+  discountType   CouponDiscountType
   discount       Float
   isActive       Boolean  @default(true)
   firstOrderOnly Boolean  @default(false)
@@ -231,6 +239,7 @@ model Coupon {
   updatedAt      DateTime @updatedAt
 
   orders Order[]
+  orderQuotes OrderQuote[]
 
   @@map("coupons")
 }

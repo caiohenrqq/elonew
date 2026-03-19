@@ -2,19 +2,21 @@ import { PrismaService } from '@app/common/prisma/prisma.service';
 import type { OrderCheckoutPort } from '@modules/orders/application/ports/order-checkout.port';
 import { Order } from '@modules/orders/domain/order.entity';
 import {
+	OrderCouponInvalidError,
 	OrderQuoteAlreadyUsedError,
 	OrderQuoteExpiredError,
 	OrderQuoteNotFoundError,
 } from '@modules/orders/domain/order-pricing.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import { Injectable } from '@nestjs/common';
-import { ServiceType } from '@prisma/client';
+import { CouponDiscountType, Prisma, ServiceType } from '@prisma/client';
 import type { OrderServiceType } from '@shared/orders/service-type';
 import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type QuoteRecord = {
 	id: string;
 	clientId: string;
+	couponId: string | null;
 	serviceType: string;
 	currentLeague: string;
 	currentDivision: string;
@@ -36,6 +38,7 @@ type OrderRecord = {
 	id: string;
 	clientId: string | null;
 	boosterId: string | null;
+	couponId: string | null;
 	status: string;
 	serviceType: string | null;
 	currentLeague: string | null;
@@ -51,6 +54,14 @@ type OrderRecord = {
 	totalAmount: number | null;
 	discountAmount: number;
 	credentials: null;
+};
+
+type CouponRecord = {
+	id: string;
+	discountType: CouponDiscountType;
+	discount: number;
+	isActive: boolean;
+	firstOrderOnly: boolean;
 };
 
 type OrderQuoteDelegate = {
@@ -72,11 +83,16 @@ type OrderQuoteDelegate = {
 };
 
 type OrderDelegate = {
+	findFirst(args: {
+		where: { clientId: string };
+		select: { id: true };
+	}): Promise<{ id: string } | null>;
 	create(args: {
 		data: {
 			id: string;
 			clientId: string;
 			boosterId: string | null;
+			couponId: string | null;
 			status: string;
 			serviceType: ServiceType;
 			currentLeague: string;
@@ -96,9 +112,15 @@ type OrderDelegate = {
 	}): Promise<OrderRecord>;
 };
 
+type CouponDelegate = {
+	findUnique(args: { where: { id: string } }): Promise<CouponRecord | null>;
+};
+
 type OrdersTransactionClient = {
+	$queryRaw<T>(query: Prisma.Sql): Promise<T>;
 	orderQuote: OrderQuoteDelegate;
 	order: OrderDelegate;
+	coupon: CouponDelegate;
 };
 
 @Injectable()
@@ -123,12 +145,17 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 			if (!quote) throw new OrderQuoteNotFoundError();
 			if (quote.consumedAt) throw new OrderQuoteAlreadyUsedError();
 			if (quote.expiresAt <= input.now) throw new OrderQuoteExpiredError();
+			await this.validateCouponForCheckout(client, {
+				clientId: input.clientId,
+				couponId: quote.couponId,
+			});
 
 			const order = await client.order.create({
 				data: {
 					id: input.orderId,
 					clientId: input.clientId,
 					boosterId: input.boosterId ?? null,
+					couponId: quote.couponId,
 					status: OrderStatus.AWAITING_PAYMENT,
 					serviceType: this.mapServiceTypeToPersistence(quote.serviceType),
 					currentLeague: quote.currentLeague,
@@ -167,11 +194,45 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 		});
 	}
 
+	private async validateCouponForCheckout(
+		client: OrdersTransactionClient,
+		input: {
+			clientId: string;
+			couponId: string | null;
+		},
+	): Promise<void> {
+		if (!input.couponId) return;
+
+		const coupon = await client.coupon.findUnique({
+			where: { id: input.couponId },
+		});
+		if (!coupon) throw new OrderCouponInvalidError();
+		if (!coupon.isActive) throw new OrderCouponInvalidError();
+		if (!Number.isFinite(coupon.discount) || coupon.discount < 0)
+			throw new OrderCouponInvalidError();
+		if (coupon.discountType !== CouponDiscountType.PERCENTAGE) {
+			if (coupon.discountType !== CouponDiscountType.FIXED)
+				throw new OrderCouponInvalidError();
+		}
+		if (!coupon.firstOrderOnly) return;
+
+		await client.$queryRaw<{ id: string }[]>(
+			Prisma.sql`SELECT id FROM "users" WHERE id = ${input.clientId} FOR UPDATE`,
+		);
+
+		const existingOrder = await client.order.findFirst({
+			where: { clientId: input.clientId },
+			select: { id: true },
+		});
+		if (existingOrder) throw new OrderCouponInvalidError();
+	}
+
 	private mapOrderFromRecord(record: OrderRecord): Order {
 		return Order.rehydrate({
 			id: record.id,
 			clientId: record.clientId,
 			boosterId: record.boosterId,
+			couponId: record.couponId,
 			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
 			requestDetails: {
 				serviceType: this.mapServiceTypeFromPersistence(record.serviceType),

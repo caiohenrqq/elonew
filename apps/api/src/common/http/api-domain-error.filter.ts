@@ -26,6 +26,11 @@ import {
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
 import {
+	OrderCouponDiscountInvalidError,
+	OrderCouponFirstOrderOnlyError,
+	OrderCouponInactiveError,
+	OrderCouponInvalidError,
+	OrderCouponNotFoundError,
 	OrderQuoteAlreadyUsedError,
 	OrderQuoteExpiredError,
 	OrderQuoteNotFoundError,
@@ -76,6 +81,16 @@ export function mapApiDomainErrorToHttpException(
 		]);
 
 	return tryMapDomainErrorToHttpException(error, [
+		{
+			errorTypes: [
+				OrderCouponInvalidError,
+				OrderCouponNotFoundError,
+				OrderCouponInactiveError,
+				OrderCouponFirstOrderOnlyError,
+				OrderCouponDiscountInvalidError,
+			],
+			toException: () => new BadRequestException('Coupon is invalid.'),
+		},
 		mapAsUnauthorized(
 			AuthenticationRequiredError,
 			InvalidAccessTokenError,

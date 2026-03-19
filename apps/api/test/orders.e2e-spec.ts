@@ -1,4 +1,6 @@
 import { createHmac } from 'node:crypto';
+import type { StoredCoupon } from '@modules/orders/application/ports/coupon-lookup.port';
+import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
@@ -12,6 +14,24 @@ import { createTestHttpApp, requestHttp } from './create-test-http-app';
 
 describe('Orders (e2e)', () => {
 	let app: ApiHttpApp;
+	let couponLookup: CouponLookupStub;
+	let orderRepository: InMemoryOrderRepository;
+
+	class CouponLookupStub {
+		public coupons = new Map<string, StoredCoupon>();
+
+		async findByCode(code: string): Promise<StoredCoupon | null> {
+			return (
+				Array.from(this.coupons.values()).find(
+					(coupon) => coupon.code === code,
+				) ?? null
+			);
+		}
+
+		async findById(id: string): Promise<StoredCoupon | null> {
+			return this.coupons.get(id) ?? null;
+		}
+	}
 
 	function getJwtSecret(): string {
 		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
@@ -79,6 +99,7 @@ describe('Orders (e2e)', () => {
 	}
 
 	beforeEach(async () => {
+		couponLookup = new CouponLookupStub();
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
@@ -88,9 +109,12 @@ describe('Orders (e2e)', () => {
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
 			.useClass(InMemoryOrderQuoteRepository)
+			.overrideProvider(COUPON_LOOKUP_PORT_KEY)
+			.useValue(couponLookup)
 			.compile();
 
 		app = await createTestHttpApp(moduleRef);
+		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 	});
 
 	afterEach(async () => {
@@ -238,6 +262,102 @@ describe('Orders (e2e)', () => {
 			.set('Authorization', `Bearer ${token}`)
 			.send({ ...makeQuotePayload(), serviceType: 'unsupported' })
 			.expect(400)
+			.execute();
+	});
+
+	it('returns the same invalid coupon response for missing and inactive coupons', async () => {
+		const token = signToken({ sub: 'client-coupon', role: 'CLIENT' });
+		couponLookup.coupons.set('INACTIVE10', {
+			id: 'coupon-inactive',
+			code: 'INACTIVE10',
+			discountType: 'percentage',
+			discount: 10,
+			isActive: false,
+			firstOrderOnly: false,
+		});
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ ...makeQuotePayload(), couponCode: 'MISSING10' })
+			.expect(400, {
+				message: 'Coupon is invalid.',
+				error: 'Bad Request',
+				statusCode: 400,
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ ...makeQuotePayload(), couponCode: 'INACTIVE10' })
+			.expect(400, {
+				message: 'Coupon is invalid.',
+				error: 'Bad Request',
+				statusCode: 400,
+			})
+			.execute();
+	});
+
+	it('returns the same invalid coupon response when a first-order coupon becomes ineligible', async () => {
+		const token = signToken({ sub: 'client-first-order', role: 'CLIENT' });
+		couponLookup.coupons.set('FIRST10', {
+			id: 'coupon-first',
+			code: 'FIRST10',
+			discountType: 'percentage',
+			discount: 10,
+			isActive: true,
+			firstOrderOnly: true,
+		});
+
+		const existingOrder = await createQuotedOrder(token);
+		expect(await orderRepository.findById(existingOrder.id)).toBeTruthy();
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ ...makeQuotePayload(), couponCode: 'FIRST10' })
+			.expect(400, {
+				message: 'Coupon is invalid.',
+				error: 'Bad Request',
+				statusCode: 400,
+			})
+			.execute();
+	});
+
+	it('rejects consuming a stale first-order coupon quote after another order is created', async () => {
+		const token = signToken({ sub: 'client-stale-coupon', role: 'CLIENT' });
+		let couponQuoteId = '';
+		couponLookup.coupons.set('coupon-first', {
+			id: 'coupon-first',
+			code: 'FIRST10',
+			discountType: 'percentage',
+			discount: 10,
+			isActive: true,
+			firstOrderOnly: true,
+		});
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ ...makeQuotePayload(), couponCode: 'FIRST10' })
+			.expect(201)
+			.expect<{ quoteId: string }>(({ body }) => {
+				couponQuoteId = body.quoteId;
+			})
+			.execute();
+
+		await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ quoteId: couponQuoteId })
+			.expect(400, {
+				message: 'Coupon is invalid.',
+				error: 'Bad Request',
+				statusCode: 400,
+			})
 			.execute();
 	});
 

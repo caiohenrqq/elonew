@@ -1,8 +1,15 @@
 import type { OrderQuoteSnapshot } from '@modules/orders/application/order-pricing';
+import type {
+	CouponLookupPort,
+	StoredCoupon,
+} from '@modules/orders/application/ports/coupon-lookup.port';
 import type { OrderQuoteRepositoryPort } from '@modules/orders/application/ports/order-quote-repository.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { Order } from '@modules/orders/domain/order.entity';
-import { OrderQuoteAlreadyUsedError } from '@modules/orders/domain/order-pricing.errors';
+import {
+	OrderCouponInvalidError,
+	OrderQuoteAlreadyUsedError,
+} from '@modules/orders/domain/order-pricing.errors';
 import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
@@ -16,6 +23,7 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 			id: order.id,
 			clientId: order.clientId,
 			boosterId: order.boosterId,
+			couponId: order.couponId,
 			status: order.status,
 			requestDetails: order.requestDetails,
 			subtotal: order.subtotal,
@@ -40,11 +48,38 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	async save(order: Order): Promise<void> {
 		this.orders.set(order.id, order);
 	}
+
+	async existsForClient(clientId: string): Promise<boolean> {
+		return Array.from(this.orders.values()).some(
+			(order) => order.clientId === clientId,
+		);
+	}
+}
+
+class CouponLookupStub implements CouponLookupPort {
+	private readonly coupons = new Map<string, StoredCoupon>();
+
+	async findByCode(code: string): Promise<StoredCoupon | null> {
+		return (
+			Array.from(this.coupons.values()).find(
+				(coupon) => coupon.code === code,
+			) ?? null
+		);
+	}
+
+	async findById(id: string): Promise<StoredCoupon | null> {
+		return this.coupons.get(id) ?? null;
+	}
+
+	insert(coupon: StoredCoupon): void {
+		this.coupons.set(coupon.id, coupon);
+	}
 }
 
 type StoredQuote = {
 	id: string;
 	clientId: string;
+	couponId: string | null;
 	requestDetails: OrderQuoteSnapshot['requestDetails'];
 	pricing: OrderQuoteSnapshot['pricing'];
 	expiresAt: Date;
@@ -57,6 +92,7 @@ class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 
 	async create(_: {
 		clientId: string;
+		couponId: string | null;
 		requestDetails: OrderQuoteSnapshot['requestDetails'];
 		pricing: OrderQuoteSnapshot['pricing'];
 		expiresAt: Date;
@@ -79,6 +115,7 @@ class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		quote.orderId = input.orderId;
 
 		return {
+			couponId: quote.couponId,
 			requestDetails: quote.requestDetails,
 			pricing: quote.pricing,
 		};
@@ -110,6 +147,7 @@ function makeQuote(): StoredQuote {
 	return {
 		id: 'quote-1',
 		clientId: 'client-1',
+		couponId: null,
 		requestDetails: {
 			serviceType: 'elo_boost',
 			currentLeague: 'gold',
@@ -137,10 +175,12 @@ describe('InMemoryOrderCheckoutRepository', () => {
 	it('creates an order and keeps the quote linked to that order id', async () => {
 		const orderRepository = new InMemoryOrderRepository();
 		const quoteRepository = new InMemoryOrderQuoteRepository();
+		const couponLookup = new CouponLookupStub();
 		quoteRepository.insert(makeQuote());
 		const repository = new InMemoryOrderCheckoutRepository(
 			orderRepository,
 			quoteRepository,
+			couponLookup,
 		);
 
 		const createdOrder = await repository.createDraftOrderFromOwnedQuote({
@@ -161,10 +201,12 @@ describe('InMemoryOrderCheckoutRepository', () => {
 		const orderRepository = new InMemoryOrderRepository();
 		orderRepository.shouldFailCreate = true;
 		const quoteRepository = new InMemoryOrderQuoteRepository();
+		const couponLookup = new CouponLookupStub();
 		quoteRepository.insert(makeQuote());
 		const repository = new InMemoryOrderCheckoutRepository(
 			orderRepository,
 			quoteRepository,
+			couponLookup,
 		);
 
 		await expect(
@@ -175,6 +217,57 @@ describe('InMemoryOrderCheckoutRepository', () => {
 				now: new Date('2026-03-18T12:00:00.000Z'),
 			}),
 		).rejects.toThrow('create failed');
+
+		expect(quoteRepository.getById('quote-1')).toMatchObject({
+			consumedAt: null,
+			orderId: null,
+		});
+	});
+
+	it('restores the quote when a first-order coupon becomes invalid at checkout', async () => {
+		const orderRepository = new InMemoryOrderRepository();
+		await orderRepository.create(
+			Order.createDraft({
+				id: 'existing-order',
+				clientId: 'client-1',
+				couponId: null,
+				requestDetails: makeQuote().requestDetails,
+				pricing: makeQuote().pricing,
+			}),
+		);
+		const quoteRepository = new InMemoryOrderQuoteRepository();
+		quoteRepository.insert({
+			...makeQuote(),
+			couponId: 'coupon-1',
+			pricing: {
+				subtotal: 25.2,
+				totalAmount: 22.68,
+				discountAmount: 2.52,
+			},
+		});
+		const couponLookup = new CouponLookupStub();
+		couponLookup.insert({
+			id: 'coupon-1',
+			code: 'FIRST10',
+			discountType: 'percentage',
+			discount: 10,
+			isActive: true,
+			firstOrderOnly: true,
+		});
+		const repository = new InMemoryOrderCheckoutRepository(
+			orderRepository,
+			quoteRepository,
+			couponLookup,
+		);
+
+		await expect(
+			repository.createDraftOrderFromOwnedQuote({
+				orderId: 'order-1',
+				clientId: 'client-1',
+				quoteId: 'quote-1',
+				now: new Date('2026-03-18T12:00:00.000Z'),
+			}),
+		).rejects.toBeInstanceOf(OrderCouponInvalidError);
 
 		expect(quoteRepository.getById('quote-1')).toMatchObject({
 			consumedAt: null,
