@@ -5,6 +5,7 @@ export const ORDER_QUOTE_REPOSITORY_KEY = Symbol('ORDER_QUOTE_REPOSITORY_KEY');
 export interface OrderQuoteRepositoryPort {
 	create(input: {
 		clientId: string;
+		couponId: string | null;
 		requestDetails: OrderQuoteSnapshot['requestDetails'];
 		pricing: OrderQuoteSnapshot['pricing'];
 		expiresAt: Date;

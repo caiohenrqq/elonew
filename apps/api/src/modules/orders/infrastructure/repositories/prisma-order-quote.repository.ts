@@ -13,6 +13,7 @@ import type { OrderServiceType } from '@shared/orders/service-type';
 type OrderQuoteRecord = {
 	id: string;
 	clientId: string;
+	couponId: string | null;
 	serviceType: string;
 	currentLeague: string;
 	currentDivision: string;
@@ -37,6 +38,7 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 
 	async create(input: {
 		clientId: string;
+		couponId: string | null;
 		requestDetails: OrderQuoteSnapshot['requestDetails'];
 		pricing: OrderQuoteSnapshot['pricing'];
 		expiresAt: Date;
@@ -44,6 +46,7 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		const record = await this.prisma.orderQuote.create({
 			data: {
 				clientId: input.clientId,
+				couponId: input.couponId,
 				serviceType: this.mapServiceTypeToPersistence(
 					input.requestDetails.serviceType,
 				),
@@ -121,6 +124,7 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 
 	private mapSnapshot(record: OrderQuoteRecord): OrderQuoteSnapshot {
 		return {
+			couponId: record.couponId,
 			requestDetails: {
 				serviceType: this.mapServiceTypeFromPersistence(record.serviceType),
 				currentLeague: record.currentLeague,

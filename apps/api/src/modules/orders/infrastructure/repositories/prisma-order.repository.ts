@@ -14,6 +14,7 @@ type OrderRecord = {
 	id: string;
 	clientId: string | null;
 	boosterId: string | null;
+	couponId: string | null;
 	status: string;
 	serviceType: string | null;
 	currentLeague: string | null;
@@ -44,11 +45,16 @@ type OrderDelegate = {
 		where: { id: string; clientId: string };
 		include: { credentials: true };
 	}): Promise<OrderRecord | null>;
+	findFirst(args: {
+		where: { clientId: string };
+		select: { id: true };
+	}): Promise<{ id: string } | null>;
 	create(args: {
 		data: {
 			id?: string;
 			clientId: string | null;
 			boosterId: string | null;
+			couponId: string | null;
 			status: string;
 			serviceType: string | null;
 			currentLeague: string | null;
@@ -81,6 +87,7 @@ type OrderDelegate = {
 			id: string;
 			clientId: string | null;
 			boosterId: string | null;
+			couponId: string | null;
 			status: string;
 			serviceType: string | null;
 			currentLeague: string | null;
@@ -108,6 +115,7 @@ type OrderDelegate = {
 		update: {
 			clientId: string | null;
 			boosterId: string | null;
+			couponId: string | null;
 			status: string;
 			serviceType: string | null;
 			currentLeague: string | null;
@@ -161,6 +169,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				id: order.id || undefined,
 				clientId: order.clientId,
 				boosterId: order.boosterId,
+				couponId: order.couponId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
@@ -192,6 +201,15 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 		return this.mapOrderFromRecord(record);
 	}
 
+	async existsForClient(clientId: string): Promise<boolean> {
+		const record = await this.getDelegate().findFirst({
+			where: { clientId },
+			select: { id: true },
+		});
+
+		return record !== null;
+	}
+
 	async save(order: Order): Promise<void> {
 		const credentialsCreate = this.mapCredentialsCreate(order.credentials);
 		const credentialsUpdate = this.mapCredentialsUpdate(order.credentials);
@@ -207,6 +225,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				id: order.id,
 				clientId: order.clientId,
 				boosterId: order.boosterId,
+				couponId: order.couponId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
@@ -215,6 +234,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 			update: {
 				clientId: order.clientId,
 				boosterId: order.boosterId,
+				couponId: order.couponId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
@@ -236,6 +256,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 			id: record.id,
 			clientId: record.clientId,
 			boosterId: record.boosterId,
+			couponId: record.couponId,
 			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
 			credentials: this.mapCredentialsFromRecord(record.credentials),
 			requestDetails: this.mapRequestDetailsFromRecord(record),

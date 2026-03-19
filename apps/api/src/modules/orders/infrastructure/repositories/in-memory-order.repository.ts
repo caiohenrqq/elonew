@@ -10,6 +10,7 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 			id: order.id || `order-${this.nextId++}`,
 			clientId: order.clientId,
 			boosterId: order.boosterId,
+			couponId: order.couponId,
 			status: order.status,
 			credentials: order.credentials,
 			requestDetails: order.requestDetails,
@@ -30,6 +31,12 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 		if (!order || order.clientId !== clientId) return null;
 
 		return order;
+	}
+
+	async existsForClient(clientId: string): Promise<boolean> {
+		return Array.from(this.orders.values()).some(
+			(order) => order.clientId === clientId,
+		);
 	}
 
 	async save(order: Order): Promise<void> {

@@ -67,6 +67,7 @@ export class OrdersController {
 	}> {
 		return await this.createOrderQuoteUseCase.execute({
 			clientId: currentUser.id,
+			couponCode: body.couponCode,
 			now: new Date(),
 			serviceType: body.serviceType,
 			currentLeague: body.currentLeague,

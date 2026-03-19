@@ -6,5 +6,6 @@ export interface OrderRepositoryPort {
 	create(order: Order): Promise<Order>;
 	findById(id: string): Promise<Order | null>;
 	findByIdForClient(id: string, clientId: string): Promise<Order | null>;
+	existsForClient?(clientId: string): Promise<boolean>;
 	save(order: Order): Promise<void>;
 }

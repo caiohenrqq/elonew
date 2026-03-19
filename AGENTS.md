@@ -203,6 +203,9 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Hardened coupon checkout by aligning the in-memory path with checkout-time coupon revalidation, adding concurrent first-order coupon redemption coverage, and making the generated coupon migration safe for non-empty coupon tables.
+- Revalidated coupon eligibility during quote consumption to stop first-order coupon stockpiling, and normalized all coupon validation failures to the same generic bad-request response with DB/e2e regression coverage.
+- Added coupon-aware quote checkout with typed coupon validation, quote-to-order coupon persistence, discounted payment amount coverage, and support for fixed or percentage coupon discounts including first-order-only enforcement.
 - Added DB-backed concurrency coverage proving same-quote double-submit creates exactly one order, consumes the quote once, and fails the loser with the expected quote-used error without requiring checkout implementation changes.
 - Added a dedicated order-checkout boundary so quote consumption and order creation are linked transactionally in Prisma, while tests now cover quote rollback on create failure and cross-client payment reads with ownership-aware in-memory payment lookup.
 - Replaced stateless order quote tokens with persisted one-time client-owned quotes, enforced client ownership on order/payment reads and payment creation, and added security regression coverage for quote reuse and cross-client checkout access.
