@@ -21,17 +21,35 @@ describe('Orders module integration (db)', () => {
 
 	function makeCreateOrderBody(): CreateOrderSchemaInput {
 		return {
-			serviceType: 'elo_boost',
-			currentLeague: 'gold',
-			currentDivision: 'II',
-			currentLp: 50,
-			desiredLeague: 'platinum',
-			desiredDivision: 'IV',
-			server: 'br',
-			desiredQueue: 'solo_duo',
-			lpGain: 20,
-			deadline: '2026-03-31T00:00:00.000Z',
+			quoteId: 'replace-in-test',
 		};
+	}
+
+	async function createQuotedOrder(input?: { boosterId?: string }) {
+		const quote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+
+		return await controller.create(
+			{
+				...makeCreateOrderBody(),
+				quoteId: quote.quoteId,
+				boosterId: input?.boosterId,
+			},
+			clientUser,
+		);
 	}
 
 	beforeEach(async () => {
@@ -42,6 +60,7 @@ describe('Orders module integration (db)', () => {
 		controller = moduleRef.get(OrdersController);
 		prisma = moduleRef.get(PrismaService);
 		await prisma.payment.deleteMany();
+		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
 		const uniqueSuffix = Date.now().toString();
 		const createdUser = await prisma.user.create({
@@ -63,14 +82,14 @@ describe('Orders module integration (db)', () => {
 	});
 
 	it('creates and fetches an order', async () => {
-		const createdOrder = await controller.create(
-			makeCreateOrderBody(),
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 
 		expect(createdOrder).toMatchObject({
 			id: expect.any(String),
 			status: 'awaiting_payment',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 		const persistedOrder = await prisma.order.findUnique({
 			where: { id: createdOrder.id },
@@ -87,11 +106,17 @@ describe('Orders module integration (db)', () => {
 			server: 'br',
 			desiredQueue: 'solo_duo',
 			lpGain: 20,
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 
-		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'awaiting_payment',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 	});
 
@@ -106,13 +131,7 @@ describe('Orders module integration (db)', () => {
 			},
 		});
 
-		const createdOrder = await controller.create(
-			{
-				...makeCreateOrderBody(),
-				boosterId: booster.id,
-			},
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder({ boosterId: booster.id });
 
 		const persistedOrder = await prisma.order.findUnique({
 			where: { id: createdOrder.id },
@@ -124,10 +143,7 @@ describe('Orders module integration (db)', () => {
 	});
 
 	it('applies payment confirmation and acceptance transitions', async () => {
-		const createdOrder = await controller.create(
-			makeCreateOrderBody(),
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({
 			success: true,
 		});
@@ -135,26 +151,26 @@ describe('Orders module integration (db)', () => {
 			success: true,
 		});
 
-		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'in_progress',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 	});
 
 	it('maps missing order to not found exception', async () => {
-		await expect(controller.get('missing-order')).rejects.toBeInstanceOf(
-			OrderNotFoundError,
-		);
+		await expect(
+			controller.get('missing-order', clientUser),
+		).rejects.toBeInstanceOf(OrderNotFoundError);
 		await expect(
 			controller.confirmPayment('missing-order'),
 		).rejects.toBeInstanceOf(OrderNotFoundError);
 	});
 
 	it('maps invalid transitions to bad request exception', async () => {
-		const createdOrder = await controller.create(
-			makeCreateOrderBody(),
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 
 		await expect(controller.accept(createdOrder.id)).rejects.toBeInstanceOf(
 			OrderInvalidTransitionError,
@@ -175,7 +191,23 @@ describe('Orders module integration (db)', () => {
 		await expect(
 			controller.create(
 				{
-					...makeCreateOrderBody(),
+					quoteId: (
+						await controller.quote(
+							{
+								serviceType: 'elo_boost',
+								currentLeague: 'gold',
+								currentDivision: 'II',
+								currentLp: 50,
+								desiredLeague: 'platinum',
+								desiredDivision: 'IV',
+								server: 'br',
+								desiredQueue: 'solo_duo',
+								lpGain: 20,
+								deadline: '2026-03-31T00:00:00.000Z',
+							},
+							clientUser,
+						)
+					).quoteId,
 					boosterId: nonBooster.id,
 				},
 				clientUser,
@@ -184,10 +216,7 @@ describe('Orders module integration (db)', () => {
 	});
 
 	it('persists credentials after payment confirmation', async () => {
-		const createdOrder = await controller.create(
-			makeCreateOrderBody(),
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 		await controller.confirmPayment(createdOrder.id);
 		await expect(
 			controller.saveCredentials(createdOrder.id, {
@@ -210,10 +239,7 @@ describe('Orders module integration (db)', () => {
 	});
 
 	it('deletes credentials after order completion', async () => {
-		const createdOrder = await controller.create(
-			makeCreateOrderBody(),
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 		await controller.confirmPayment(createdOrder.id);
 		await controller.saveCredentials(createdOrder.id, {
 			login: 'login-db',
@@ -228,17 +254,17 @@ describe('Orders module integration (db)', () => {
 			where: { orderId: createdOrder.id },
 		});
 		expect(credentials).toBeNull();
-		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'completed',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 	});
 
 	it('rejects credentials before payment confirmation', async () => {
-		const createdOrder = await controller.create(
-			makeCreateOrderBody(),
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 
 		await expect(
 			controller.saveCredentials(createdOrder.id, {
