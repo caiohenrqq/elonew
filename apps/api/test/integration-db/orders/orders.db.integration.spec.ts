@@ -6,6 +6,7 @@ import {
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
+import { OrderQuoteAlreadyUsedError } from '@modules/orders/domain/order-pricing.errors';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import type { TestingModule } from '@nestjs/testing';
@@ -140,6 +141,72 @@ describe('Orders module integration (db)', () => {
 			id: createdOrder.id,
 			boosterId: booster.id,
 		});
+	});
+
+	it('creates exactly one order when the same quote is submitted concurrently', async () => {
+		const quote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+
+		const results = await Promise.allSettled([
+			controller.create({ quoteId: quote.quoteId }, clientUser),
+			controller.create({ quoteId: quote.quoteId }, clientUser),
+		]);
+
+		const successfulResults = results.filter(
+			(
+				result,
+			): result is PromiseFulfilledResult<{
+				id: string;
+				status: string;
+				subtotal: number | null;
+				totalAmount: number | null;
+				discountAmount: number;
+			}> => result.status === 'fulfilled',
+		);
+		const failedResults = results.filter(
+			(result): result is PromiseRejectedResult => result.status === 'rejected',
+		);
+
+		expect(successfulResults).toHaveLength(1);
+		expect(failedResults).toHaveLength(1);
+		expect(successfulResults[0]?.value).toMatchObject({
+			id: expect.any(String),
+			status: 'awaiting_payment',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
+		});
+		expect(failedResults[0]?.reason).toBeInstanceOf(OrderQuoteAlreadyUsedError);
+
+		const persistedOrders = await prisma.order.findMany({
+			where: { clientId: clientUser.id },
+			orderBy: { createdAt: 'asc' },
+		});
+		expect(persistedOrders).toHaveLength(1);
+		expect(persistedOrders[0]?.id).toBe(successfulResults[0]?.value.id);
+
+		const persistedQuote = await prisma.orderQuote.findUnique({
+			where: { id: quote.quoteId },
+		});
+		expect(persistedQuote).toMatchObject({
+			id: quote.quoteId,
+			clientId: clientUser.id,
+			orderId: successfulResults[0]?.value.id,
+		});
+		expect(persistedQuote?.consumedAt).toBeInstanceOf(Date);
 	});
 
 	it('applies payment confirmation and acceptance transitions', async () => {
