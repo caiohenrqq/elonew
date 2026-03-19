@@ -161,9 +161,9 @@ Official docs to use:
 - [ ] Implement `@Roles()` decorator and `AuthGuard` for RBAC.
 
 ### 2. Service Catalog & Pricing
-- [ ] Implement Elo/Rank pricing engine (calculate subtotal based on rank difference).
+- [x] Implement Elo/Rank pricing engine (calculate subtotal based on rank difference).
 - [ ] Implement deterministic pricing modifiers for all 10+ extras (FR-035 to FR-044).
-- [ ] Create Zod schemas for order creation validation in `@packages/shared`.
+- [x] Create Zod schemas for order creation validation in `@packages/shared`.
 
 ### 3. Core Order Flow
 - [x] Complete `CreateOrder` use-case with `OrderCredentials` persistence.
@@ -203,6 +203,9 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Added a dedicated order-checkout boundary so quote consumption and order creation are linked transactionally in Prisma, while tests now cover quote rollback on create failure and cross-client payment reads with ownership-aware in-memory payment lookup.
+- Replaced stateless order quote tokens with persisted one-time client-owned quotes, enforced client ownership on order/payment reads and payment creation, and added security regression coverage for quote reuse and cross-client checkout access.
+- Added quote-driven subtotal calculation for orders, persisted quote-derived pricing on created orders, and changed payment creation to derive the charge amount from the persisted order total so checkout pays the amount the user saw.
 - Replaced the wallet-release BullMQ job id delimiter from `:` to a BullMQ-safe format and added direct scheduler coverage so containerized enqueue paths can succeed without runtime job-id validation failures.
 - Fixed the Docker API dev watch runner to start the emitted `apps/api/dist/apps/api/src/main.js` entrypoint so the API container actually serves requests after the watch build completes.
 - Pointed the Dockerized workers runtime at `http://api:3000` for internal wallet-release API calls so consumed BullMQ jobs resolve the API container instead of container-local `localhost`.
