@@ -1,4 +1,8 @@
 import {
+	ORDER_PAYMENT_AMOUNT_PORT_KEY,
+	type OrderPaymentAmountPort,
+} from '@modules/payments/application/ports/order-payment-amount.port';
+import {
 	ORDER_STATUS_PORT_KEY,
 	type OrderStatusPort,
 } from '@modules/payments/application/ports/order-status.port';
@@ -15,9 +19,9 @@ import type { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable } from '@nestjs/common';
 
 type CreatePaymentInput = {
+	clientId: string;
 	paymentId: string;
 	orderId: string;
-	grossAmount: number;
 };
 
 type CreatePaymentOutput = {
@@ -35,6 +39,8 @@ export class CreatePaymentUseCase {
 		private readonly paymentRepository: PaymentRepositoryPort,
 		@Inject(ORDER_STATUS_PORT_KEY)
 		private readonly orderStatusPort: OrderStatusPort,
+		@Inject(ORDER_PAYMENT_AMOUNT_PORT_KEY)
+		private readonly orderPaymentAmountPort: OrderPaymentAmountPort,
 	) {}
 
 	async execute(input: CreatePaymentInput): Promise<CreatePaymentOutput> {
@@ -42,13 +48,22 @@ export class CreatePaymentUseCase {
 			input.paymentId,
 		);
 		if (existingPayment) throw new PaymentAlreadyExistsError();
-		const orderStatus = await this.orderStatusPort.findByOrderId(input.orderId);
+		const orderStatus = await this.orderStatusPort.findByOrderIdForClient(
+			input.orderId,
+			input.clientId,
+		);
 		if (!orderStatus) throw new PaymentOrderNotFoundError();
+		const grossAmount =
+			await this.orderPaymentAmountPort.findByOrderIdForClient(
+				input.orderId,
+				input.clientId,
+			);
+		if (grossAmount === null) throw new PaymentOrderNotFoundError();
 
 		const payment = Payment.create({
 			id: input.paymentId,
 			orderId: input.orderId,
-			grossAmount: input.grossAmount,
+			grossAmount,
 		});
 
 		await this.paymentRepository.save(payment);

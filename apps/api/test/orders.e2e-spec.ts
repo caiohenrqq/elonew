@@ -1,6 +1,10 @@
 import { createHmac } from 'node:crypto';
+import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
+import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
+import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
@@ -13,7 +17,7 @@ describe('Orders (e2e)', () => {
 		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
 	}
 
-	function makeOrderPayload() {
+	function makeQuotePayload() {
 		return {
 			serviceType: 'elo_boost',
 			currentLeague: 'gold',
@@ -26,6 +30,33 @@ describe('Orders (e2e)', () => {
 			lpGain: 20,
 			deadline: '2026-03-31T00:00:00.000Z',
 		};
+	}
+
+	async function createQuotedOrder(token: string): Promise<{ id: string }> {
+		let quoteId = '';
+		let orderId = '';
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeQuotePayload())
+			.expect(201)
+			.expect<{ quoteId: string }>(({ body }) => {
+				quoteId = body.quoteId;
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ quoteId })
+			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				orderId = body.id;
+			})
+			.execute();
+
+		return { id: orderId };
 	}
 
 	function signToken(payload: Record<string, unknown>): string {
@@ -53,6 +84,10 @@ describe('Orders (e2e)', () => {
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
 			.useClass(InMemoryOrderRepository)
+			.overrideProvider(ORDER_CHECKOUT_PORT_KEY)
+			.useClass(InMemoryOrderCheckoutRepository)
+			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
+			.useClass(InMemoryOrderQuoteRepository)
 			.compile();
 
 		app = await createTestHttpApp(moduleRef);
@@ -64,62 +99,101 @@ describe('Orders (e2e)', () => {
 
 	it('creates an authenticated order and returns it', async () => {
 		const token = signToken({ sub: 'client-1', role: 'CLIENT' });
-		let orderId = '';
+		const createdOrder = await createQuotedOrder(token);
 
 		await requestHttp(app)
-			.post('/orders')
+			.get(`/orders/${createdOrder.id}`)
 			.set('Authorization', `Bearer ${token}`)
-			.send(makeOrderPayload())
+			.expect(200, {
+				id: createdOrder.id,
+				status: 'awaiting_payment',
+				subtotal: 25.2,
+				totalAmount: 25.2,
+				discountAmount: 0,
+			})
+			.execute();
+	});
+
+	it('rejects fetching another client order', async () => {
+		const ownerToken = signToken({ sub: 'client-owner', role: 'CLIENT' });
+		const otherToken = signToken({ sub: 'client-other', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(ownerToken);
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}`)
+			.set('Authorization', `Bearer ${otherToken}`)
+			.expect(404, {
+				message: 'Order not found.',
+				error: 'Not Found',
+				statusCode: 404,
+			})
+			.execute();
+	});
+
+	it('rejects reusing a consumed quote', async () => {
+		const token = signToken({ sub: 'client-reuse', role: 'CLIENT' });
+		let quoteId = '';
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeQuotePayload())
 			.expect(201)
-			.expect<{ id: string; status: string }>(({ body }) => {
-				orderId = body.id;
-				expect(body).toEqual({
-					id: expect.any(String),
-					status: 'awaiting_payment',
-				});
+			.expect<{ quoteId: string }>(({ body }) => {
+				quoteId = body.quoteId;
 			})
 			.execute();
 
 		await requestHttp(app)
-			.get(`/orders/${orderId}`)
-			.expect(200, { id: orderId, status: 'awaiting_payment' })
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ quoteId })
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ quoteId })
+			.expect(400, {
+				message: 'Quote has already been used.',
+				error: 'Bad Request',
+				statusCode: 400,
+			})
 			.execute();
 	});
 
 	it('moves order through payment and acceptance flow', async () => {
 		const token = signToken({ sub: 'client-2', role: 'CLIENT' });
-		let orderId = '';
+		const createdOrder = await createQuotedOrder(token);
 
 		await requestHttp(app)
-			.post('/orders')
+			.post(`/orders/${createdOrder.id}/payment-confirmed`)
+			.expect(200, { success: true })
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/accept`)
+			.expect(200, { success: true })
+			.execute();
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}`)
 			.set('Authorization', `Bearer ${token}`)
-			.send(makeOrderPayload())
-			.expect(201)
-			.expect<{ id: string }>(({ body }) => {
-				orderId = body.id;
+			.expect(200, {
+				id: createdOrder.id,
+				status: 'in_progress',
+				subtotal: 25.2,
+				totalAmount: 25.2,
+				discountAmount: 0,
 			})
-			.execute();
-
-		await requestHttp(app)
-			.post(`/orders/${orderId}/payment-confirmed`)
-			.expect(200, { success: true })
-			.execute();
-
-		await requestHttp(app)
-			.post(`/orders/${orderId}/accept`)
-			.expect(200, { success: true })
-			.execute();
-
-		await requestHttp(app)
-			.get(`/orders/${orderId}`)
-			.expect(200, { id: orderId, status: 'in_progress' })
 			.execute();
 	});
 
 	it('rejects unauthenticated create-order requests', async () => {
 		await requestHttp(app)
-			.post('/orders')
-			.send(makeOrderPayload())
+			.post('/orders/quote')
+			.send(makeQuotePayload())
 			.expect(401)
 			.execute();
 	});
@@ -134,9 +208,9 @@ describe('Orders (e2e)', () => {
 			.digest('base64url');
 
 		await requestHttp(app)
-			.post('/orders')
+			.post('/orders/quote')
 			.set('Authorization', `Bearer ${header}.${payload}.${signature}`)
-			.send(makeOrderPayload())
+			.send(makeQuotePayload())
 			.expect(401)
 			.execute();
 	});
@@ -145,9 +219,9 @@ describe('Orders (e2e)', () => {
 		const token = signToken({ sub: 'booster-1', role: 'BOOSTER' });
 
 		await requestHttp(app)
-			.post('/orders')
+			.post('/orders/quote')
 			.set('Authorization', `Bearer ${token}`)
-			.send(makeOrderPayload())
+			.send(makeQuotePayload())
 			.expect(403, {
 				message: 'Insufficient permissions.',
 				error: 'Forbidden',
@@ -160,27 +234,41 @@ describe('Orders (e2e)', () => {
 		const token = signToken({ sub: 'client-3', role: 'CLIENT' });
 
 		await requestHttp(app)
-			.post('/orders')
+			.post('/orders/quote')
 			.set('Authorization', `Bearer ${token}`)
-			.send({ ...makeOrderPayload(), serviceType: 'unsupported' })
+			.send({ ...makeQuotePayload(), serviceType: 'unsupported' })
 			.expect(400)
 			.execute();
 	});
 
 	it('rejects create-order payloads with non-string boosterId', async () => {
 		const token = signToken({ sub: 'client-7', role: 'CLIENT' });
+		let quoteId = '';
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeQuotePayload())
+			.expect(201)
+			.expect<{ quoteId: string }>(({ body }) => {
+				quoteId = body.quoteId;
+			})
+			.execute();
 
 		await requestHttp(app)
 			.post('/orders')
 			.set('Authorization', `Bearer ${token}`)
-			.send({ ...makeOrderPayload(), boosterId: 123 })
+			.send({ quoteId, boosterId: 123 })
 			.expect(400)
 			.execute();
 	});
 
 	it('returns 404 for unknown order in mutations', async () => {
+		const token = signToken({ sub: 'client-8', role: 'CLIENT' });
+
 		await requestHttp(app)
-			.post('/orders/missing/cancel')
+			.get('/orders/missing')
+			.set('Authorization', `Bearer ${token}`)
 			.expect(404, {
 				message: 'Order not found.',
 				error: 'Not Found',
@@ -191,20 +279,10 @@ describe('Orders (e2e)', () => {
 
 	it('returns 400 for invalid transition', async () => {
 		const token = signToken({ sub: 'client-4', role: 'CLIENT' });
-		let orderId = '';
+		const createdOrder = await createQuotedOrder(token);
 
 		await requestHttp(app)
-			.post('/orders')
-			.set('Authorization', `Bearer ${token}`)
-			.send(makeOrderPayload())
-			.expect(201)
-			.expect<{ id: string }>(({ body }) => {
-				orderId = body.id;
-			})
-			.execute();
-
-		await requestHttp(app)
-			.post(`/orders/${orderId}/accept`)
+			.post(`/orders/${createdOrder.id}/accept`)
 			.expect(400, {
 				message: 'Invalid order transition: awaiting_payment -> in_progress.',
 				error: 'Bad Request',
@@ -215,25 +293,15 @@ describe('Orders (e2e)', () => {
 
 	it('rejects accept payloads with non-string boosterId', async () => {
 		const token = signToken({ sub: 'client-5', role: 'CLIENT' });
-		let orderId = '';
+		const createdOrder = await createQuotedOrder(token);
 
 		await requestHttp(app)
-			.post('/orders')
-			.set('Authorization', `Bearer ${token}`)
-			.send(makeOrderPayload())
-			.expect(201)
-			.expect<{ id: string }>(({ body }) => {
-				orderId = body.id;
-			})
-			.execute();
-
-		await requestHttp(app)
-			.post(`/orders/${orderId}/payment-confirmed`)
+			.post(`/orders/${createdOrder.id}/payment-confirmed`)
 			.expect(200, { success: true })
 			.execute();
 
 		await requestHttp(app)
-			.post(`/orders/${orderId}/accept`)
+			.post(`/orders/${createdOrder.id}/accept`)
 			.send({ boosterId: 123 })
 			.expect(400)
 			.execute();
@@ -241,25 +309,15 @@ describe('Orders (e2e)', () => {
 
 	it('rejects credentials payloads missing login', async () => {
 		const token = signToken({ sub: 'client-6', role: 'CLIENT' });
-		let orderId = '';
+		const createdOrder = await createQuotedOrder(token);
 
 		await requestHttp(app)
-			.post('/orders')
-			.set('Authorization', `Bearer ${token}`)
-			.send(makeOrderPayload())
-			.expect(201)
-			.expect<{ id: string }>(({ body }) => {
-				orderId = body.id;
-			})
-			.execute();
-
-		await requestHttp(app)
-			.post(`/orders/${orderId}/payment-confirmed`)
+			.post(`/orders/${createdOrder.id}/payment-confirmed`)
 			.expect(200, { success: true })
 			.execute();
 
 		await requestHttp(app)
-			.post(`/orders/${orderId}/credentials`)
+			.post(`/orders/${createdOrder.id}/credentials`)
 			.send({
 				summonerName: 'summoner',
 				password: 'secret',

@@ -25,6 +25,9 @@ type OrderRecord = {
 	desiredQueue: string | null;
 	lpGain: number | null;
 	deadline: Date | null;
+	subtotal: number | null;
+	totalAmount: number | null;
+	discountAmount: number;
 	credentials: {
 		login: string;
 		summonerName: string;
@@ -37,8 +40,13 @@ type OrderDelegate = {
 		where: { id: string };
 		include: { credentials: true };
 	}): Promise<OrderRecord | null>;
+	findFirst(args: {
+		where: { id: string; clientId: string };
+		include: { credentials: true };
+	}): Promise<OrderRecord | null>;
 	create(args: {
 		data: {
+			id?: string;
 			clientId: string | null;
 			boosterId: string | null;
 			status: string;
@@ -52,6 +60,9 @@ type OrderDelegate = {
 			desiredQueue: string | null;
 			lpGain: number | null;
 			deadline: Date | null;
+			subtotal: number | null;
+			totalAmount: number | null;
+			discountAmount: number;
 			credentials?:
 				| {
 						create: {
@@ -81,6 +92,9 @@ type OrderDelegate = {
 			desiredQueue: string | null;
 			lpGain: number | null;
 			deadline: Date | null;
+			subtotal: number | null;
+			totalAmount: number | null;
+			discountAmount: number;
 			credentials?:
 				| {
 						create: {
@@ -105,6 +119,9 @@ type OrderDelegate = {
 			desiredQueue: string | null;
 			lpGain: number | null;
 			deadline: Date | null;
+			subtotal: number | null;
+			totalAmount: number | null;
+			discountAmount: number;
 			credentials?:
 				| {
 						upsert: {
@@ -141,10 +158,12 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 	async create(order: Order): Promise<Order> {
 		const record = await this.getDelegate().create({
 			data: {
+				id: order.id || undefined,
 				clientId: order.clientId,
 				boosterId: order.boosterId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
+				...this.mapPricing(order),
 				credentials: this.mapCredentialsCreate(order.credentials),
 			},
 			include: { credentials: true },
@@ -156,6 +175,16 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 	async findById(id: string): Promise<Order | null> {
 		const record = await this.getDelegate().findUnique({
 			where: { id },
+			include: { credentials: true },
+		});
+		if (!record) return null;
+
+		return this.mapOrderFromRecord(record);
+	}
+
+	async findByIdForClient(id: string, clientId: string): Promise<Order | null> {
+		const record = await this.getDelegate().findFirst({
+			where: { id, clientId },
 			include: { credentials: true },
 		});
 		if (!record) return null;
@@ -180,6 +209,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				boosterId: order.boosterId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
+				...this.mapPricing(order),
 				credentials: credentialsCreate,
 			},
 			update: {
@@ -187,6 +217,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				boosterId: order.boosterId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
+				...this.mapPricing(order),
 				credentials: credentialsUpdate,
 			},
 		});
@@ -208,6 +239,9 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
 			credentials: this.mapCredentialsFromRecord(record.credentials),
 			requestDetails: this.mapRequestDetailsFromRecord(record),
+			subtotal: record.subtotal,
+			totalAmount: record.totalAmount,
+			discountAmount: record.discountAmount,
 		});
 	}
 
@@ -347,6 +381,18 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 			case 'coaching':
 				return 'COACHING';
 		}
+	}
+
+	private mapPricing(order: Order): {
+		subtotal: number | null;
+		totalAmount: number | null;
+		discountAmount: number;
+	} {
+		return {
+			subtotal: order.subtotal,
+			totalAmount: order.totalAmount,
+			discountAmount: order.discountAmount,
+		};
 	}
 
 	private mapServiceTypeFromPersistence(serviceType: string): OrderServiceType {

@@ -17,17 +17,34 @@ describe('Payments module integration (db)', () => {
 
 	function makeCreateOrderBody(): CreateOrderSchemaInput {
 		return {
-			serviceType: 'elo_boost',
-			currentLeague: 'gold',
-			currentDivision: 'II',
-			currentLp: 50,
-			desiredLeague: 'platinum',
-			desiredDivision: 'IV',
-			server: 'br',
-			desiredQueue: 'solo_duo',
-			lpGain: 20,
-			deadline: '2026-03-31T00:00:00.000Z',
+			quoteId: 'replace-in-test',
 		};
+	}
+
+	async function createQuotedOrder() {
+		const quote = await ordersController.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+
+		return await ordersController.create(
+			{
+				...makeCreateOrderBody(),
+				quoteId: quote.quoteId,
+			},
+			clientUser,
+		);
 	}
 
 	beforeEach(async () => {
@@ -40,6 +57,7 @@ describe('Payments module integration (db)', () => {
 		prisma = moduleRef.get(PrismaService);
 		await prisma.processedWebhookEvent.deleteMany();
 		await prisma.payment.deleteMany();
+		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
 		const uniqueSuffix = Date.now().toString();
 		const createdUser = await prisma.user.create({
@@ -61,44 +79,44 @@ describe('Payments module integration (db)', () => {
 	});
 
 	it('creates and fetches a payment with 70% booster share', async () => {
-		const createdOrder = await ordersController.create(
-			makeCreateOrderBody(),
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 
 		await expect(
-			paymentsController.create({
-				paymentId: 'payment-db-1',
-				orderId: createdOrder.id,
-				grossAmount: 100,
-			}),
+			paymentsController.create(
+				{
+					paymentId: 'payment-db-1',
+					orderId: createdOrder.id,
+				},
+				clientUser,
+			),
 		).resolves.toEqual({
 			id: 'payment-db-1',
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
-			grossAmount: 100,
-			boosterAmount: 70,
+			grossAmount: 25.2,
+			boosterAmount: 17.64,
 		});
 
-		await expect(paymentsController.get('payment-db-1')).resolves.toEqual({
+		await expect(
+			paymentsController.get('payment-db-1', clientUser),
+		).resolves.toEqual({
 			id: 'payment-db-1',
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
-			grossAmount: 100,
-			boosterAmount: 70,
+			grossAmount: 25.2,
+			boosterAmount: 17.64,
 		});
 	});
 
 	it('keeps payment held until order completion', async () => {
-		const createdOrder = await ordersController.create(
-			makeCreateOrderBody(),
+		const createdOrder = await createQuotedOrder();
+		await paymentsController.create(
+			{
+				paymentId: 'payment-db-2',
+				orderId: createdOrder.id,
+			},
 			clientUser,
 		);
-		await paymentsController.create({
-			paymentId: 'payment-db-2',
-			orderId: createdOrder.id,
-			grossAmount: 100,
-		});
 		await paymentsController.confirm('payment-db-2');
 
 		await expect(paymentsController.release('payment-db-2')).rejects.toThrow(
@@ -107,15 +125,14 @@ describe('Payments module integration (db)', () => {
 	});
 
 	it('treats repeated confirm endpoint calls as idempotent', async () => {
-		const createdOrder = await ordersController.create(
-			makeCreateOrderBody(),
+		const createdOrder = await createQuotedOrder();
+		await paymentsController.create(
+			{
+				paymentId: 'payment-db-3',
+				orderId: createdOrder.id,
+			},
 			clientUser,
 		);
-		await paymentsController.create({
-			paymentId: 'payment-db-3',
-			orderId: createdOrder.id,
-			grossAmount: 100,
-		});
 
 		await expect(paymentsController.confirm('payment-db-3')).resolves.toEqual({
 			success: true,
@@ -126,15 +143,14 @@ describe('Payments module integration (db)', () => {
 	});
 
 	it('ignores duplicated webhook event ids', async () => {
-		const createdOrder = await ordersController.create(
-			makeCreateOrderBody(),
+		const createdOrder = await createQuotedOrder();
+		await paymentsController.create(
+			{
+				paymentId: 'payment-db-4',
+				orderId: createdOrder.id,
+			},
 			clientUser,
 		);
-		await paymentsController.create({
-			paymentId: 'payment-db-4',
-			orderId: createdOrder.id,
-			grossAmount: 100,
-		});
 
 		await expect(
 			paymentsController.handlePaymentConfirmedWebhook({
@@ -150,24 +166,23 @@ describe('Payments module integration (db)', () => {
 			}),
 		).resolves.toEqual({ processed: false });
 
-		await expect(paymentsController.get('payment-db-4')).resolves.toMatchObject(
-			{
-				id: 'payment-db-4',
-				status: 'held',
-			},
-		);
+		await expect(
+			paymentsController.get('payment-db-4', clientUser),
+		).resolves.toMatchObject({
+			id: 'payment-db-4',
+			status: 'held',
+		});
 	});
 
 	it('fails a payment, clears credentials, and keeps the negative state idempotent', async () => {
-		const createdOrder = await ordersController.create(
-			makeCreateOrderBody(),
+		const createdOrder = await createQuotedOrder();
+		await paymentsController.create(
+			{
+				paymentId: 'payment-db-5',
+				orderId: createdOrder.id,
+			},
 			clientUser,
 		);
-		await paymentsController.create({
-			paymentId: 'payment-db-5',
-			orderId: createdOrder.id,
-			grossAmount: 100,
-		});
 		await ordersController.confirmPayment(createdOrder.id);
 		await ordersController.saveCredentials(createdOrder.id, {
 			login: 'login-db',
@@ -183,12 +198,12 @@ describe('Payments module integration (db)', () => {
 			success: true,
 		});
 
-		await expect(paymentsController.get('payment-db-5')).resolves.toMatchObject(
-			{
-				id: 'payment-db-5',
-				status: 'failed',
-			},
-		);
+		await expect(
+			paymentsController.get('payment-db-5', clientUser),
+		).resolves.toMatchObject({
+			id: 'payment-db-5',
+			status: 'failed',
+		});
 		await expect(
 			prisma.orderCredentials.findUnique({
 				where: { orderId: createdOrder.id },

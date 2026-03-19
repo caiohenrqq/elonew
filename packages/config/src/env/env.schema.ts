@@ -29,6 +29,7 @@ export const envSchema = z.object({
 		.int()
 		.positive()
 		.default(30),
+	ORDER_QUOTE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
 	USERS_SIGN_UP_THROTTLE_LIMIT: z.coerce.number().int().positive().default(3),
 	USERS_SIGN_UP_THROTTLE_TTL_SECONDS: z.coerce
 		.number()

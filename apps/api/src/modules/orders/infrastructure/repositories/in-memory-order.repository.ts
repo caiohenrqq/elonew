@@ -7,12 +7,15 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 
 	async create(order: Order): Promise<Order> {
 		const createdOrder = Order.rehydrate({
-			id: `order-${this.nextId++}`,
+			id: order.id || `order-${this.nextId++}`,
 			clientId: order.clientId,
 			boosterId: order.boosterId,
 			status: order.status,
 			credentials: order.credentials,
 			requestDetails: order.requestDetails,
+			subtotal: order.subtotal,
+			totalAmount: order.totalAmount,
+			discountAmount: order.discountAmount,
 		});
 		this.orders.set(createdOrder.id, createdOrder);
 		return createdOrder;
@@ -20,6 +23,13 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 
 	async findById(id: string): Promise<Order | null> {
 		return this.orders.get(id) ?? null;
+	}
+
+	async findByIdForClient(id: string, clientId: string): Promise<Order | null> {
+		const order = this.orders.get(id) ?? null;
+		if (!order || order.clientId !== clientId) return null;
+
+		return order;
 	}
 
 	async save(order: Order): Promise<void> {

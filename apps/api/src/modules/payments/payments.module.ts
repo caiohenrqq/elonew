@@ -1,7 +1,9 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import { AppSettingsModule } from '@app/common/settings/app-settings.module';
+import { AuthModule } from '@modules/auth/auth.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { ORDER_CREDENTIAL_CLEANUP_PORT_KEY } from '@modules/payments/application/ports/order-credential-cleanup.port';
+import { ORDER_PAYMENT_AMOUNT_PORT_KEY } from '@modules/payments/application/ports/order-payment-amount.port';
 import { ORDER_PAYMENT_CONFIRMATION_PORT_KEY } from '@modules/payments/application/ports/order-payment-confirmation.port';
 import { ORDER_STATUS_PORT_KEY } from '@modules/payments/application/ports/order-status.port';
 import { PAYMENT_REPOSITORY_KEY } from '@modules/payments/application/ports/payment-repository.port';
@@ -13,6 +15,7 @@ import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-p
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { OrderCredentialCleanupFromOrdersAdapter } from '@modules/payments/infrastructure/adapters/order-credential-cleanup-from-orders.adapter';
+import { OrderPaymentAmountFromPrismaAdapter } from '@modules/payments/infrastructure/adapters/order-payment-amount-from-prisma.adapter';
 import { OrderPaymentConfirmationFromOrdersAdapter } from '@modules/payments/infrastructure/adapters/order-payment-confirmation-from-orders.adapter';
 import { OrderStatusFromPrismaAdapter } from '@modules/payments/infrastructure/adapters/order-status-from-prisma.adapter';
 import { PrismaPaymentRepository } from '@modules/payments/infrastructure/repositories/prisma-payment.repository';
@@ -21,7 +24,7 @@ import { PaymentsController } from '@modules/payments/presentation/payments.cont
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [AppSettingsModule, OrdersModule],
+	imports: [AppSettingsModule, AuthModule, OrdersModule],
 	controllers: [PaymentsController],
 	providers: [
 		PrismaService,
@@ -39,6 +42,11 @@ import { Module } from '@nestjs/common';
 		{
 			provide: ORDER_STATUS_PORT_KEY,
 			useExisting: OrderStatusFromPrismaAdapter,
+		},
+		OrderPaymentAmountFromPrismaAdapter,
+		{
+			provide: ORDER_PAYMENT_AMOUNT_PORT_KEY,
+			useExisting: OrderPaymentAmountFromPrismaAdapter,
 		},
 		OrderPaymentConfirmationFromOrdersAdapter,
 		{

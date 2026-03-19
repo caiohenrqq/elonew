@@ -1,12 +1,12 @@
+import { randomUUID } from 'node:crypto';
 import {
 	BOOSTER_USER_READER_KEY,
 	type BoosterUserReaderPort,
 } from '@modules/orders/application/ports/booster-user-reader.port';
 import {
-	ORDER_REPOSITORY_KEY,
-	type OrderRepositoryPort,
-} from '@modules/orders/application/ports/order-repository.port';
-import { Order } from '@modules/orders/domain/order.entity';
+	ORDER_CHECKOUT_PORT_KEY,
+	type OrderCheckoutPort,
+} from '@modules/orders/application/ports/order-checkout.port';
 import {
 	OrderBoosterNotEligibleError,
 	OrderBoosterNotFoundError,
@@ -14,35 +14,29 @@ import {
 import type { OrderStatus } from '@modules/orders/domain/order-status';
 import { Inject, Injectable } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
-import type { OrderServiceType } from '@shared/orders/service-type';
 
 type CreateOrderInput = {
 	clientId: string;
 	boosterId?: string;
-	serviceType: OrderServiceType;
-	currentLeague: string;
-	currentDivision: string;
-	currentLp: number;
-	desiredLeague: string;
-	desiredDivision: string;
-	server: string;
-	desiredQueue: string;
-	lpGain: number;
-	deadline: Date;
+	quoteId: string;
+	now: Date;
 };
 
 type CreateOrderOutput = {
 	id: string;
 	status: OrderStatus;
+	subtotal: number | null;
+	totalAmount: number | null;
+	discountAmount: number;
 };
 
 @Injectable()
 export class CreateOrderUseCase {
 	constructor(
-		@Inject(ORDER_REPOSITORY_KEY)
-		private readonly orderRepository: OrderRepositoryPort,
 		@Inject(BOOSTER_USER_READER_KEY)
 		private readonly boosterUserReader: BoosterUserReaderPort,
+		@Inject(ORDER_CHECKOUT_PORT_KEY)
+		private readonly orderCheckout: OrderCheckoutPort,
 	) {}
 
 	async execute(input: CreateOrderInput): Promise<CreateOrderOutput> {
@@ -53,24 +47,21 @@ export class CreateOrderUseCase {
 				throw new OrderBoosterNotEligibleError();
 		}
 
-		const order = Order.createDraft({
-			clientId: input.clientId,
-			boosterId: input.boosterId,
-			requestDetails: {
-				serviceType: input.serviceType,
-				currentLeague: input.currentLeague,
-				currentDivision: input.currentDivision,
-				currentLp: input.currentLp,
-				desiredLeague: input.desiredLeague,
-				desiredDivision: input.desiredDivision,
-				server: input.server,
-				desiredQueue: input.desiredQueue,
-				lpGain: input.lpGain,
-				deadline: input.deadline,
-			},
-		});
-		const createdOrder = await this.orderRepository.create(order);
+		const createdOrder =
+			await this.orderCheckout.createDraftOrderFromOwnedQuote({
+				orderId: randomUUID(),
+				clientId: input.clientId,
+				boosterId: input.boosterId,
+				quoteId: input.quoteId,
+				now: input.now,
+			});
 
-		return { id: createdOrder.id, status: createdOrder.status };
+		return {
+			id: createdOrder.id,
+			status: createdOrder.status,
+			subtotal: createdOrder.subtotal,
+			totalAmount: createdOrder.totalAmount,
+			discountAmount: createdOrder.discountAmount,
+		};
 	}
 }

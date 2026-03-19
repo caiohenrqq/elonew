@@ -1,5 +1,7 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
+import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import {
 	OrderBoosterNotEligibleError,
@@ -8,6 +10,8 @@ import {
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
+import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
+import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { Test } from '@nestjs/testing';
@@ -29,12 +33,43 @@ describe('Orders module integration', () => {
 		}
 	}
 
+	function makeQuotePayload() {
+		return {
+			serviceType: 'elo_boost' as const,
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			currentLp: 50,
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: '2026-03-31T00:00:00.000Z',
+		};
+	}
+
+	async function createQuotedOrder(input?: { boosterId?: string }) {
+		const quote = await controller.quote(makeQuotePayload(), clientUser);
+
+		return await controller.create(
+			{
+				quoteId: quote.quoteId,
+				boosterId: input?.boosterId,
+			},
+			clientUser,
+		);
+	}
+
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [OrdersModule],
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
 			.useClass(InMemoryOrderRepository)
+			.overrideProvider(ORDER_CHECKOUT_PORT_KEY)
+			.useClass(InMemoryOrderCheckoutRepository)
+			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
+			.useClass(InMemoryOrderQuoteRepository)
 			.overrideProvider(BOOSTER_USER_READER_KEY)
 			.useClass(BoosterLookupStub)
 			.compile();
@@ -44,30 +79,22 @@ describe('Orders module integration', () => {
 	});
 
 	it('creates and fetches an order with authenticated client details', async () => {
-		const createdOrder = await controller.create(
-			{
-				serviceType: 'elo_boost',
-				currentLeague: 'gold',
-				currentDivision: 'II',
-				currentLp: 50,
-				desiredLeague: 'platinum',
-				desiredDivision: 'IV',
-				server: 'br',
-				desiredQueue: 'solo_duo',
-				lpGain: 20,
-				deadline: '2026-03-31T00:00:00.000Z',
-			},
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 
 		expect(createdOrder).toMatchObject({
 			id: expect.any(String),
 			status: 'awaiting_payment',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 
-		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'awaiting_payment',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 
 		const persistedOrder = await orderRepository.findById(createdOrder.id);
@@ -83,21 +110,7 @@ describe('Orders module integration', () => {
 	});
 
 	it('applies payment confirmation and acceptance transitions', async () => {
-		const createdOrder = await controller.create(
-			{
-				serviceType: 'elo_boost',
-				currentLeague: 'gold',
-				currentDivision: 'II',
-				currentLp: 50,
-				desiredLeague: 'platinum',
-				desiredDivision: 'IV',
-				server: 'br',
-				desiredQueue: 'solo_duo',
-				lpGain: 20,
-				deadline: '2026-03-31T00:00:00.000Z',
-			},
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({
 			success: true,
 		});
@@ -119,29 +132,17 @@ describe('Orders module integration', () => {
 			success: true,
 		});
 
-		await expect(controller.get(createdOrder.id)).resolves.toEqual({
+		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'completed',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 	});
 
 	it('creates an order with a selected booster and persists the booster id', async () => {
-		const createdOrder = await controller.create(
-			{
-				boosterId: 'booster-1',
-				serviceType: 'elo_boost',
-				currentLeague: 'gold',
-				currentDivision: 'II',
-				currentLp: 50,
-				desiredLeague: 'platinum',
-				desiredDivision: 'IV',
-				server: 'br',
-				desiredQueue: 'solo_duo',
-				lpGain: 20,
-				deadline: '2026-03-31T00:00:00.000Z',
-			},
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder({ boosterId: 'booster-1' });
 
 		await expect(
 			orderRepository.findById(createdOrder.id),
@@ -152,30 +153,16 @@ describe('Orders module integration', () => {
 	});
 
 	it('surfaces not-found domain errors for direct controller calls', async () => {
-		await expect(controller.get('missing-order')).rejects.toBeInstanceOf(
-			OrderNotFoundError,
-		);
+		await expect(
+			controller.get('missing-order', clientUser),
+		).rejects.toBeInstanceOf(OrderNotFoundError);
 		await expect(
 			controller.confirmPayment('missing-order'),
 		).rejects.toBeInstanceOf(OrderNotFoundError);
 	});
 
 	it('surfaces invalid-transition domain errors for direct controller calls', async () => {
-		const createdOrder = await controller.create(
-			{
-				serviceType: 'elo_boost',
-				currentLeague: 'gold',
-				currentDivision: 'II',
-				currentLp: 50,
-				desiredLeague: 'platinum',
-				desiredDivision: 'IV',
-				server: 'br',
-				desiredQueue: 'solo_duo',
-				lpGain: 20,
-				deadline: '2026-03-31T00:00:00.000Z',
-			},
-			clientUser,
-		);
+		const createdOrder = await createQuotedOrder();
 
 		await expect(controller.accept(createdOrder.id)).rejects.toBeInstanceOf(
 			OrderInvalidTransitionError,
@@ -194,17 +181,9 @@ describe('Orders module integration', () => {
 		await expect(
 			controller.create(
 				{
+					quoteId: (await controller.quote(makeQuotePayload(), clientUser))
+						.quoteId,
 					boosterId: 'client-2',
-					serviceType: 'elo_boost',
-					currentLeague: 'gold',
-					currentDivision: 'II',
-					currentLp: 50,
-					desiredLeague: 'platinum',
-					desiredDivision: 'IV',
-					server: 'br',
-					desiredQueue: 'solo_duo',
-					lpGain: 20,
-					deadline: '2026-03-31T00:00:00.000Z',
 				},
 				clientUser,
 			),

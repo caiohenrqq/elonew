@@ -16,7 +16,12 @@ type PaymentRecord = {
 type PaymentDelegate = {
 	findUnique(args: { where: { id: string } }): Promise<PaymentRecord | null>;
 	findFirst(args: {
-		where: { orderId: string };
+		where:
+			| { orderId: string }
+			| {
+					id: string;
+					order: { clientId: string };
+			  };
 	}): Promise<PaymentRecord | null>;
 	upsert(args: {
 		where: { id: string };
@@ -35,6 +40,21 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 
 	async findById(id: string): Promise<Payment | null> {
 		const record = await this.getDelegate().findUnique({ where: { id } });
+		if (!record) return null;
+
+		return this.mapRecordToDomain(record);
+	}
+
+	async findByIdForClient(
+		id: string,
+		clientId: string,
+	): Promise<Payment | null> {
+		const record = await this.getDelegate().findFirst({
+			where: {
+				id,
+				order: { clientId },
+			},
+		});
 		if (!record) return null;
 
 		return this.mapRecordToDomain(record);

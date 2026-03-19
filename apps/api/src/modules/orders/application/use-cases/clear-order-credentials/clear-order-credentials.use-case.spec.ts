@@ -15,6 +15,10 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		return this.orders.get(id) ?? null;
 	}
 
+	async findByIdForClient(id: string): Promise<Order | null> {
+		return this.findById(id);
+	}
+
 	async save(order: Order): Promise<void> {
 		this.orders.set(order.id, order);
 	}

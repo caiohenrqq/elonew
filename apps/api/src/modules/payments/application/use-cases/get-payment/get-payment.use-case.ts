@@ -8,6 +8,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type GetPaymentInput = {
 	paymentId: string;
+	clientId: string;
 };
 
 type GetPaymentOutput = {
@@ -26,7 +27,10 @@ export class GetPaymentUseCase {
 	) {}
 
 	async execute(input: GetPaymentInput): Promise<GetPaymentOutput> {
-		const payment = await this.paymentRepository.findById(input.paymentId);
+		const payment = await this.paymentRepository.findByIdForClient(
+			input.paymentId,
+			input.clientId,
+		);
 		if (!payment) throw new PaymentNotFoundError();
 
 		return {

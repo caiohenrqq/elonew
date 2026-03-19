@@ -26,6 +26,14 @@ import {
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
 import {
+	OrderQuoteAlreadyUsedError,
+	OrderQuoteExpiredError,
+	OrderQuoteNotFoundError,
+	OrderRankNotPricedError,
+	OrderRankProgressionInvalidError,
+	OrderUnsupportedPricingServiceTypeError,
+} from '@modules/orders/domain/order-pricing.errors';
+import {
 	PaymentAlreadyExistsError,
 	PaymentAmountInvalidError,
 	PaymentHoldReleaseNotAllowedError,
@@ -80,6 +88,7 @@ export function mapApiDomainErrorToHttpException(
 		mapAsNotFound(
 			OrderNotFoundError,
 			OrderBoosterNotFoundError,
+			OrderQuoteNotFoundError,
 			PaymentNotFoundError,
 			PaymentOrderNotFoundError,
 			WalletNotFoundError,
@@ -91,6 +100,11 @@ export function mapApiDomainErrorToHttpException(
 			OrderCancellationNotAllowedError,
 			OrderCredentialsStorageNotAllowedError,
 			OrderCredentialsPasswordMismatchError,
+			OrderUnsupportedPricingServiceTypeError,
+			OrderRankNotPricedError,
+			OrderRankProgressionInvalidError,
+			OrderQuoteExpiredError,
+			OrderQuoteAlreadyUsedError,
 			PaymentAlreadyExistsError,
 			PaymentAmountInvalidError,
 			PaymentInvalidTransitionError,

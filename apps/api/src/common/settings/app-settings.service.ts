@@ -59,6 +59,12 @@ export class AppSettingsService {
 		});
 	}
 
+	get orderQuoteTtlMinutes() {
+		return this.config.getOrThrow('ORDER_QUOTE_TTL_MINUTES', {
+			infer: true,
+		});
+	}
+
 	get usersSignUpThrottleLimit() {
 		return this.config.getOrThrow('USERS_SIGN_UP_THROTTLE_LIMIT', {
 			infer: true,
