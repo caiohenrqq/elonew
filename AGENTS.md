@@ -109,6 +109,10 @@ When the user says "let's start" on a GitHub issue or asks to begin issue work, 
    - If follow-up debt is discovered that should not block the issue, create or update a separate issue for it.
 
 8. Maintain the PR using the repository template and keep unrelated local changes out of the issue PR unless the user explicitly asks.
+   - PR title must follow the exact Conventional Commit-style pattern: `<type>(<scope>): <description>`.
+   - PR body must follow `.github/PULL_REQUEST_TEMPLATE/pull_request_template.md` exactly, preserving the same section headings, order, checklist items, and `Closes: <issue link>` line.
+   - PR labels must be set explicitly from the repository’s existing label set; do not leave relevant PRs unlabeled.
+   - When updating an existing PR, normalize its title, body, and labels to the same exact standard instead of using ad hoc formats.
 
 9. Ask for confirmation at the right moments.
    - Ask before Git write actions that require user permission by project rule.
@@ -203,6 +207,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Added a strict agent rule that pull request titles, bodies, and labels must always follow the repository PR template exactly when creating or updating PRs.
 - Hardened coupon checkout by aligning the in-memory path with checkout-time coupon revalidation, adding concurrent first-order coupon redemption coverage, and making the generated coupon migration safe for non-empty coupon tables.
 - Revalidated coupon eligibility during quote consumption to stop first-order coupon stockpiling, and normalized all coupon validation failures to the same generic bad-request response with DB/e2e regression coverage.
 - Added coupon-aware quote checkout with typed coupon validation, quote-to-order coupon persistence, discounted payment amount coverage, and support for fixed or percentage coupon discounts including first-order-only enforcement.
