@@ -203,6 +203,7 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Added DB-backed concurrency coverage proving same-quote double-submit creates exactly one order, consumes the quote once, and fails the loser with the expected quote-used error without requiring checkout implementation changes.
 - Added a dedicated order-checkout boundary so quote consumption and order creation are linked transactionally in Prisma, while tests now cover quote rollback on create failure and cross-client payment reads with ownership-aware in-memory payment lookup.
 - Replaced stateless order quote tokens with persisted one-time client-owned quotes, enforced client ownership on order/payment reads and payment creation, and added security regression coverage for quote reuse and cross-client checkout access.
 - Added quote-driven subtotal calculation for orders, persisted quote-derived pricing on created orders, and changed payment creation to derive the charge amount from the persisted order total so checkout pays the amount the user saw.
