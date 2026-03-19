@@ -15,6 +15,13 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		return this.orders.get(id) ?? null;
 	}
 
+	async findByIdForClient(id: string, clientId: string): Promise<Order | null> {
+		const order = this.orders.get(id) ?? null;
+		if (!order || order.clientId !== clientId) return null;
+
+		return order;
+	}
+
 	async save(order: Order): Promise<void> {
 		this.orders.set(order.id, order);
 	}
@@ -25,25 +32,46 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 }
 
 describe('GetOrderUseCase', () => {
-	it('returns the order summary when the order exists', async () => {
+	it('returns the owned order summary when the order exists', async () => {
 		const repository = new InMemoryOrderRepository();
-		const order = Order.create('order-1');
+		const order = Order.rehydrate({
+			id: 'order-1',
+			clientId: 'client-1',
+			status: 'awaiting_payment' as never,
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
+		});
 		repository.insert(order);
 
 		const useCase = new GetOrderUseCase(repository);
 
-		await expect(useCase.execute({ orderId: 'order-1' })).resolves.toEqual({
+		await expect(
+			useCase.execute({ orderId: 'order-1', clientId: 'client-1' }),
+		).resolves.toEqual({
 			id: 'order-1',
 			status: 'awaiting_payment',
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
 		});
 	});
 
-	it('throws when the order does not exist', async () => {
+	it('throws when the order belongs to another client', async () => {
 		const repository = new InMemoryOrderRepository();
+		const order = Order.rehydrate({
+			id: 'order-1',
+			clientId: 'client-2',
+			status: 'awaiting_payment' as never,
+			subtotal: 25.2,
+			totalAmount: 25.2,
+			discountAmount: 0,
+		});
+		repository.insert(order);
 		const useCase = new GetOrderUseCase(repository);
 
-		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
-			OrderNotFoundError,
-		);
+		await expect(
+			useCase.execute({ orderId: 'order-1', clientId: 'client-1' }),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 });

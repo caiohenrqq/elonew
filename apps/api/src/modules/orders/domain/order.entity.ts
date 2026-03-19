@@ -54,6 +54,9 @@ export class Order {
 		private currentStatus: OrderStatus,
 		private currentCredentials: OrderCredentials | null,
 		private readonly currentRequestDetails: OrderRequestDetails | null,
+		private readonly currentSubtotal: number | null,
+		private readonly currentTotalAmount: number | null,
+		private readonly currentDiscountAmount: number,
 	) {}
 
 	static create(
@@ -71,21 +74,33 @@ export class Order {
 			OrderStatus.AWAITING_PAYMENT,
 			null,
 			input?.requestDetails ?? null,
+			null,
+			null,
+			0,
 		);
 	}
 
 	static createDraft(input: {
+		id?: string;
 		clientId: string;
 		boosterId?: string | null;
 		requestDetails: OrderRequestDetails;
+		pricing: {
+			subtotal: number;
+			totalAmount: number;
+			discountAmount: number;
+		};
 	}): Order {
 		return new Order(
-			'',
+			input.id ?? '',
 			input.clientId,
 			input.boosterId ?? null,
 			OrderStatus.AWAITING_PAYMENT,
 			null,
 			input.requestDetails,
+			input.pricing.subtotal,
+			input.pricing.totalAmount,
+			input.pricing.discountAmount,
 		);
 	}
 
@@ -96,6 +111,9 @@ export class Order {
 		status: OrderStatus;
 		credentials?: OrderCredentials | null;
 		requestDetails?: OrderRequestDetails | null;
+		subtotal?: number | null;
+		totalAmount?: number | null;
+		discountAmount?: number;
 	}): Order {
 		return new Order(
 			input.id,
@@ -104,6 +122,9 @@ export class Order {
 			input.status,
 			input.credentials ?? null,
 			input.requestDetails ?? null,
+			input.subtotal ?? null,
+			input.totalAmount ?? null,
+			input.discountAmount ?? 0,
 		);
 	}
 
@@ -125,6 +146,18 @@ export class Order {
 
 	get requestDetails(): OrderRequestDetails | null {
 		return this.currentRequestDetails;
+	}
+
+	get subtotal(): number | null {
+		return this.currentSubtotal;
+	}
+
+	get totalAmount(): number | null {
+		return this.currentTotalAmount;
+	}
+
+	get discountAmount(): number {
+		return this.currentDiscountAmount;
 	}
 
 	confirmPayment(): void {

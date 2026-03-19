@@ -5,5 +5,6 @@ export const ORDER_REPOSITORY_KEY = Symbol('ORDER_REPOSITORY_KEY');
 export interface OrderRepositoryPort {
 	create(order: Order): Promise<Order>;
 	findById(id: string): Promise<Order | null>;
+	findByIdForClient(id: string, clientId: string): Promise<Order | null>;
 	save(order: Order): Promise<void>;
 }

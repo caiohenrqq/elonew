@@ -55,6 +55,7 @@ model User {
   profile          Profile?
   ordersAsClient   Order[]   @relation("ClientOrders")
   ordersAsBooster  Order[]   @relation("BoosterOrders")
+  orderQuotes      OrderQuote[]
   wallet           Wallet?
   chatMessages     ChatMessage[]
   tickets          Ticket[]
@@ -104,6 +105,7 @@ model Order {
   coupon           Coupon?      @relation(fields: [couponId], references: [id])
   
   credentials      OrderCredentials?
+  quote            OrderQuote?
   extras           OrderExtra[]
   payments         Payment[]
   chat             Chat?
@@ -117,6 +119,35 @@ model Order {
   @@index([clientId])
   @@index([boosterId])
   @@map("orders")
+}
+
+model OrderQuote {
+  id               String       @id @default(cuid())
+  clientId         String
+  client           User         @relation(fields: [clientId], references: [id])
+  serviceType      ServiceType
+  currentLeague    String
+  currentDivision  String
+  currentLp        Int
+  desiredLeague    String
+  desiredDivision  String
+  server           String
+  desiredQueue     String
+  lpGain           Int
+  deadline         DateTime
+  subtotal         Float
+  totalAmount      Float
+  discountAmount   Float        @default(0)
+  expiresAt        DateTime
+  consumedAt       DateTime?
+  orderId          String?      @unique
+  order            Order?       @relation(fields: [orderId], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([clientId, expiresAt])
+  @@index([clientId, consumedAt])
+  @@map("order_quotes")
 }
 
 model OrderCredentials {

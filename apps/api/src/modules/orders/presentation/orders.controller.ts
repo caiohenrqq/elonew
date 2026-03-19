@@ -8,6 +8,7 @@ import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
 import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/complete-order/complete-order.use-case';
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
+import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
@@ -27,6 +28,10 @@ import {
 	createOrderSchema,
 } from '@shared/orders/create-order.schema';
 import {
+	type CreateOrderQuoteSchemaInput,
+	createOrderQuoteSchema,
+} from '@shared/orders/create-order-quote.schema';
+import {
 	type AcceptOrderSchemaInput,
 	acceptOrderSchema,
 	type SaveOrderCredentialsSchemaInput,
@@ -37,6 +42,7 @@ import {
 export class OrdersController {
 	constructor(
 		private readonly createOrderUseCase: CreateOrderUseCase,
+		private readonly createOrderQuoteUseCase: CreateOrderQuoteUseCase,
 		private readonly getOrderUseCase: GetOrderUseCase,
 		private readonly markOrderAsPaidUseCase: MarkOrderAsPaidUseCase,
 		private readonly acceptOrderUseCase: AcceptOrderUseCase,
@@ -46,17 +52,22 @@ export class OrdersController {
 		private readonly saveOrderCredentialsUseCase: SaveOrderCredentialsUseCase,
 	) {}
 
-	@Post()
+	@Post('quote')
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
-	async create(
-		@Body(new ZodValidationPipe(createOrderSchema))
-		body: CreateOrderSchemaInput,
+	async quote(
+		@Body(new ZodValidationPipe(createOrderQuoteSchema))
+		body: CreateOrderQuoteSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
-	): Promise<{ id: string; status: string }> {
-		return await this.createOrderUseCase.execute({
+	): Promise<{
+		quoteId: string;
+		subtotal: number;
+		totalAmount: number;
+		discountAmount: number;
+	}> {
+		return await this.createOrderQuoteUseCase.execute({
 			clientId: currentUser.id,
-			boosterId: body.boosterId,
+			now: new Date(),
 			serviceType: body.serviceType,
 			currentLeague: body.currentLeague,
 			currentDivision: body.currentDivision,
@@ -70,11 +81,45 @@ export class OrdersController {
 		});
 	}
 
+	@Post()
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
+	async create(
+		@Body(new ZodValidationPipe(createOrderSchema))
+		body: CreateOrderSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<{
+		id: string;
+		status: string;
+		subtotal: number | null;
+		totalAmount: number | null;
+		discountAmount: number;
+	}> {
+		return await this.createOrderUseCase.execute({
+			clientId: currentUser.id,
+			boosterId: body.boosterId,
+			quoteId: body.quoteId,
+			now: new Date(),
+		});
+	}
+
 	@Get(':orderId')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
 	async get(
 		@Param('orderId') orderId: string,
-	): Promise<{ id: string; status: string }> {
-		return await this.getOrderUseCase.execute({ orderId });
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<{
+		id: string;
+		status: string;
+		subtotal: number | null;
+		totalAmount: number | null;
+		discountAmount: number;
+	}> {
+		return await this.getOrderUseCase.execute({
+			orderId,
+			clientId: currentUser.id,
+		});
 	}
 
 	@Post(':orderId/payment-confirmed')
