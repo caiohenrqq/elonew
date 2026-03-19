@@ -4,56 +4,82 @@ import { Payment } from '@modules/payments/domain/payment.entity';
 import { PaymentNotFoundError } from '@modules/payments/domain/payment.errors';
 
 class InMemoryPaymentRepository implements PaymentRepositoryPort {
-	private readonly payments = new Map<string, Payment>();
+	private readonly payments = new Map<
+		string,
+		{ payment: Payment; clientId: string }
+	>();
 
 	async findById(id: string): Promise<Payment | null> {
-		return this.payments.get(id) ?? null;
+		return this.payments.get(id)?.payment ?? null;
+	}
+
+	async findByIdForClient(
+		id: string,
+		clientId: string,
+	): Promise<Payment | null> {
+		const record = this.payments.get(id);
+		if (!record || record.clientId !== clientId) return null;
+
+		return record.payment;
 	}
 
 	async findByOrderId(orderId: string): Promise<Payment | null> {
-		for (const payment of this.payments.values()) {
-			if (payment.orderId === orderId) return payment;
+		for (const record of this.payments.values()) {
+			if (record.payment.orderId === orderId) return record.payment;
 		}
 
 		return null;
 	}
 
 	async save(payment: Payment): Promise<void> {
-		this.payments.set(payment.id, payment);
+		this.payments.set(payment.id, { payment, clientId: 'client-1' });
 	}
 
-	insert(payment: Payment): void {
-		this.payments.set(payment.id, payment);
+	insert(payment: Payment, clientId: string): void {
+		this.payments.set(payment.id, { payment, clientId });
 	}
 }
 
 describe('GetPaymentUseCase', () => {
-	it('returns payment details when the payment exists', async () => {
+	it('returns the owned payment summary when the payment exists', async () => {
 		const repository = new InMemoryPaymentRepository();
-		const payment = Payment.create({
-			id: 'payment-1',
-			orderId: 'order-1',
-			grossAmount: 100,
-		});
-		repository.insert(payment);
+		repository.insert(
+			Payment.create({
+				id: 'payment-1',
+				orderId: 'order-1',
+				grossAmount: 25.2,
+			}),
+			'client-1',
+		);
 
-		const useCase = new GetPaymentUseCase(repository);
-
-		await expect(useCase.execute({ paymentId: 'payment-1' })).resolves.toEqual({
-			id: 'payment-1',
-			orderId: 'order-1',
-			status: 'awaiting_confirmation',
-			grossAmount: 100,
-			boosterAmount: 70,
-		});
-	});
-
-	it('throws when the payment does not exist', async () => {
-		const repository = new InMemoryPaymentRepository();
 		const useCase = new GetPaymentUseCase(repository);
 
 		await expect(
-			useCase.execute({ paymentId: 'missing-payment' }),
+			useCase.execute({ paymentId: 'payment-1', clientId: 'client-1' }),
+		).resolves.toEqual({
+			id: 'payment-1',
+			orderId: 'order-1',
+			status: 'awaiting_confirmation',
+			grossAmount: 25.2,
+			boosterAmount: 17.64,
+		});
+	});
+
+	it('throws when the payment belongs to another client', async () => {
+		const repository = new InMemoryPaymentRepository();
+		repository.insert(
+			Payment.create({
+				id: 'payment-1',
+				orderId: 'order-1',
+				grossAmount: 25.2,
+			}),
+			'client-2',
+		);
+
+		const useCase = new GetPaymentUseCase(repository);
+
+		await expect(
+			useCase.execute({ paymentId: 'payment-1', clientId: 'client-1' }),
 		).rejects.toThrow(PaymentNotFoundError);
 	});
 });

@@ -1,4 +1,5 @@
 import { OrderStatus } from '@modules/orders/domain/order-status';
+import type { OrderPaymentAmountPort } from '@modules/payments/application/ports/order-payment-amount.port';
 import type { OrderStatusPort } from '@modules/payments/application/ports/order-status.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
@@ -15,6 +16,10 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return this.payments.get(id) ?? null;
 	}
 
+	async findByIdForClient(): Promise<Payment | null> {
+		throw new Error('not needed in this test');
+	}
+
 	async findByOrderId(orderId: string): Promise<Payment | null> {
 		for (const payment of this.payments.values()) {
 			if (payment.orderId === orderId) return payment;
@@ -29,29 +34,69 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 }
 
 class InMemoryOrderStatusPort implements OrderStatusPort {
-	private readonly orderStatuses = new Map<string, OrderStatus>();
+	private readonly orderStatuses = new Map<
+		string,
+		{ clientId: string; status: OrderStatus }
+	>();
 
-	set(orderId: string, status: OrderStatus): void {
-		this.orderStatuses.set(orderId, status);
+	set(orderId: string, clientId: string, status: OrderStatus): void {
+		this.orderStatuses.set(orderId, { clientId, status });
 	}
 
 	async findByOrderId(orderId: string): Promise<OrderStatus | null> {
-		return this.orderStatuses.get(orderId) ?? null;
+		return this.orderStatuses.get(orderId)?.status ?? null;
+	}
+
+	async findByOrderIdForClient(
+		orderId: string,
+		clientId: string,
+	): Promise<OrderStatus | null> {
+		const order = this.orderStatuses.get(orderId);
+		if (!order || order.clientId !== clientId) return null;
+
+		return order.status;
+	}
+}
+
+class InMemoryOrderPaymentAmountPort implements OrderPaymentAmountPort {
+	private readonly orderAmounts = new Map<
+		string,
+		{ clientId: string; totalAmount: number }
+	>();
+
+	set(orderId: string, clientId: string, totalAmount: number): void {
+		this.orderAmounts.set(orderId, { clientId, totalAmount });
+	}
+
+	async findByOrderIdForClient(
+		orderId: string,
+		clientId: string,
+	): Promise<number | null> {
+		const order = this.orderAmounts.get(orderId);
+		if (!order || order.clientId !== clientId) return null;
+
+		return order.totalAmount;
 	}
 }
 
 describe('CreatePaymentUseCase', () => {
-	it('creates a payment with hold lifecycle & 70% booster amount', async () => {
+	it('creates a payment from the owned order total amount', async () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
-		orderStatusPort.set('order-1', OrderStatus.AWAITING_PAYMENT);
-		const useCase = new CreatePaymentUseCase(repository, orderStatusPort);
+		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		orderStatusPort.set('order-1', 'client-1', OrderStatus.AWAITING_PAYMENT);
+		orderPaymentAmountPort.set('order-1', 'client-1', 100);
+		const useCase = new CreatePaymentUseCase(
+			repository,
+			orderStatusPort,
+			orderPaymentAmountPort,
+		);
 
 		await expect(
 			useCase.execute({
+				clientId: 'client-1',
 				paymentId: 'payment-1',
 				orderId: 'order-1',
-				grossAmount: 100,
 			}),
 		).resolves.toEqual({
 			id: 'payment-1',
@@ -62,10 +107,33 @@ describe('CreatePaymentUseCase', () => {
 		});
 	});
 
+	it('rejects payment creation for another client order', async () => {
+		const repository = new InMemoryPaymentRepository();
+		const orderStatusPort = new InMemoryOrderStatusPort();
+		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		orderStatusPort.set('order-1', 'client-2', OrderStatus.AWAITING_PAYMENT);
+		orderPaymentAmountPort.set('order-1', 'client-2', 100);
+		const useCase = new CreatePaymentUseCase(
+			repository,
+			orderStatusPort,
+			orderPaymentAmountPort,
+		);
+
+		await expect(
+			useCase.execute({
+				clientId: 'client-1',
+				paymentId: 'payment-1',
+				orderId: 'order-1',
+			}),
+		).rejects.toThrow(PaymentOrderNotFoundError);
+	});
+
 	it('throws when payment id already exists', async () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
-		orderStatusPort.set('order-2', OrderStatus.AWAITING_PAYMENT);
+		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		orderStatusPort.set('order-2', 'client-1', OrderStatus.AWAITING_PAYMENT);
+		orderPaymentAmountPort.set('order-2', 'client-1', 40);
 		await repository.save(
 			Payment.create({
 				id: 'payment-1',
@@ -74,12 +142,16 @@ describe('CreatePaymentUseCase', () => {
 			}),
 		);
 
-		const useCase = new CreatePaymentUseCase(repository, orderStatusPort);
+		const useCase = new CreatePaymentUseCase(
+			repository,
+			orderStatusPort,
+			orderPaymentAmountPort,
+		);
 		await expect(
 			useCase.execute({
+				clientId: 'client-1',
 				paymentId: 'payment-1',
 				orderId: 'order-2',
-				grossAmount: 40,
 			}),
 		).rejects.toThrow(PaymentAlreadyExistsError);
 	});
@@ -87,13 +159,18 @@ describe('CreatePaymentUseCase', () => {
 	it('throws when related order does not exist', async () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
-		const useCase = new CreatePaymentUseCase(repository, orderStatusPort);
+		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		const useCase = new CreatePaymentUseCase(
+			repository,
+			orderStatusPort,
+			orderPaymentAmountPort,
+		);
 
 		await expect(
 			useCase.execute({
+				clientId: 'client-1',
 				paymentId: 'payment-missing-order',
 				orderId: 'missing-order',
-				grossAmount: 50,
 			}),
 		).rejects.toThrow(PaymentOrderNotFoundError);
 	});

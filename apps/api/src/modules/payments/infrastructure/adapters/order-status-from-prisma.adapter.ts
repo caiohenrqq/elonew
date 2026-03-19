@@ -13,6 +13,10 @@ type OrderDelegate = {
 		where: { id: string };
 		select: { status: true };
 	}): Promise<OrderRecord | null>;
+	findFirst(args: {
+		where: { id: string; clientId: string };
+		select: { status: true };
+	}): Promise<OrderRecord | null>;
 };
 
 type OrderStatusPrismaClient = {
@@ -26,6 +30,19 @@ export class OrderStatusFromPrismaAdapter implements OrderStatusPort {
 	async findByOrderId(orderId: string): Promise<OrderStatus | null> {
 		const record = await this.getDelegate().findUnique({
 			where: { id: orderId },
+			select: { status: true },
+		});
+		if (!record) return null;
+
+		return ensurePersistedEnum(OrderStatus, record.status, 'order status');
+	}
+
+	async findByOrderIdForClient(
+		orderId: string,
+		clientId: string,
+	): Promise<OrderStatus | null> {
+		const record = await this.getDelegate().findFirst({
+			where: { id: orderId, clientId },
 			select: { status: true },
 		});
 		if (!record) return null;

@@ -18,4 +18,14 @@ export class OrderStatusFromOrdersRepositoryAdapter implements OrderStatusPort {
 
 		return order.status;
 	}
+
+	async findByOrderIdForClient(orderId: string, clientId: string) {
+		const order = await this.orderRepository.findByIdForClient(
+			orderId,
+			clientId,
+		);
+		if (!order) return null;
+
+		return order.status;
+	}
 }
