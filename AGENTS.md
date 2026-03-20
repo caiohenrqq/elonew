@@ -44,6 +44,7 @@ When documentation is needed, always use the official latest documentation.
 - Do not add code comments unless strictly necessary (for example, temporary placeholders).
 - YAML files must use spaces for indentation (never tabs).
 - Do not prefer quick fixes just because they are faster; choose the solution that best fits the documented architecture and improves long-term maintainability unless the user explicitly asks for a temporary workaround.
+- Prefer ready seams over speculative wiring: do not add future provider config, adapter methods, or abstractions unless the current issue explicitly needs them or the next committed step will consume them immediately.
 - Prefer one-line `if` statements when there is only a single throw statement (for example: `if (!order) throw new OrderNotFoundError();`).
 - In domain-driven backend flows, prefer typed domain errors from `*.errors.ts` instead of inline/manual string errors, throw them from the domain/application layer, and map them to HTTP exceptions only at the presentation boundary.
 - When a new business error appears, extend the module's domain `*.errors.ts` and reuse that type consistently across use-cases, controllers, and tests.
@@ -123,6 +124,11 @@ When the user says "let's start" on a GitHub issue or asks to begin issue work, 
    - Check open issues and active branches/PRs for overlap in those same areas.
    - If overlap is substantial, call out the conflict risk, propose an execution order or dependency, and avoid parallel implementation in separate branches unless the user explicitly wants that risk.
    - Prefer landing refactors or shared-architecture changes before dependent feature work that would otherwise duplicate or conflict with those changes.
+
+11. Keep implementation aligned with the tracked issue body, not only with local architectural preference.
+   - If implementation choices narrow or expand the effective scope, update the GitHub issue text/checklists immediately instead of leaving the issue claiming work that the branch no longer contains.
+   - In payment/order/auth flows, prioritize behavioral safety first: preserve or strengthen idempotency, duplicate protection, and ownership checks before adding future-facing scaffolding.
+   - Add regression tests for the business rule being changed, not only for the new structure or abstraction added around it.
 
 ## Multi-agent issue workflow for AI agents
 - When parallel issue work is needed, prefer one `git worktree` per issue/agent instead of sharing the same working directory across multiple agents.
@@ -207,6 +213,8 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Narrowed issue `#40` to the actual landed prerequisite scope, and added agent guidance to avoid speculative feature scaffolding, keep issues aligned with implementation, and prioritize behavioral safety plus regression coverage in future feature work.
+- Prepared the payments module for future Mercado Pago integration by moving local payment-id generation server-side, persisting gateway metadata defaults/lookups, extending Mercado Pago runtime config, and adding regression coverage without implementing real provider calls or webhook reconciliation yet.
 - Secured payment mutation and webhook boundaries by moving confirm/fail/release routes behind internal API-key auth, requiring verified Mercado Pago webhook signatures before payment confirmation, and adding auth/webhook regression coverage across unit, integration, e2e, and DB-backed tests.
 - Added enum-backed payment-method selection to payment creation/get flows, with shared payment-method contracts, Zod validation, payment aggregate persistence, and regression coverage across unit, integration, and e2e tests pending Prisma migration generation.
 - Added a strict agent rule that pull request titles, bodies, and labels must always follow the repository PR template exactly when creating or updating PRs.
