@@ -12,6 +12,7 @@ import { PrismaAuthSessionRepository } from '@modules/auth/infrastructure/reposi
 import { HmacAccessTokenService } from '@modules/auth/infrastructure/security/hmac-access-token.service';
 import { HmacRefreshTokenService } from '@modules/auth/infrastructure/security/hmac-refresh-token.service';
 import { AuthController } from '@modules/auth/presentation/auth.controller';
+import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { UsersModule } from '@modules/users/users.module';
@@ -40,9 +41,10 @@ import { Module } from '@nestjs/common';
 		LoginUseCase,
 		RefreshSessionUseCase,
 		LogoutUseCase,
+		InternalApiKeyGuard,
 		JwtAuthGuard,
 		RolesGuard,
 	],
-	exports: [JwtAuthGuard, RolesGuard],
+	exports: [InternalApiKeyGuard, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

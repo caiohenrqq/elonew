@@ -2,6 +2,7 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
+import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
@@ -14,9 +15,11 @@ import {
 	Body,
 	Controller,
 	Get,
+	Headers,
 	HttpCode,
 	Param,
 	Post,
+	Query,
 	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
@@ -24,8 +27,12 @@ import type { PaymentMethod } from '@shared/payments/payment-method';
 import {
 	type CreatePaymentSchemaInput,
 	createPaymentSchema,
+	type HandlePaymentConfirmedWebhookQuerySchemaInput,
 	type HandlePaymentConfirmedWebhookSchemaInput,
+	handlePaymentConfirmedWebhookQuerySchema,
 	handlePaymentConfirmedWebhookSchema,
+	type PaymentIdParamSchemaInput,
+	paymentIdParamSchema,
 } from './payments.request-schemas';
 
 @Controller('payments')
@@ -64,7 +71,8 @@ export class PaymentsController {
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async get(
-		@Param('paymentId') paymentId: string,
+		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
+		paymentId: PaymentIdParamSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{
 		id: string;
@@ -80,19 +88,23 @@ export class PaymentsController {
 		});
 	}
 
-	@Post(':paymentId/confirm')
+	@Post('internal/:paymentId/confirm')
+	@UseGuards(InternalApiKeyGuard)
 	@HttpCode(200)
 	async confirm(
-		@Param('paymentId') paymentId: string,
+		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
+		paymentId: PaymentIdParamSchemaInput,
 	): Promise<{ success: true }> {
 		await this.confirmPaymentUseCase.execute({ paymentId });
 		return { success: true };
 	}
 
-	@Post(':paymentId/fail')
+	@Post('internal/:paymentId/fail')
+	@UseGuards(InternalApiKeyGuard)
 	@HttpCode(200)
 	async fail(
-		@Param('paymentId') paymentId: string,
+		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
+		paymentId: PaymentIdParamSchemaInput,
 	): Promise<{ success: true }> {
 		await this.failPaymentUseCase.execute({ paymentId });
 		return { success: true };
@@ -103,14 +115,25 @@ export class PaymentsController {
 	async handlePaymentConfirmedWebhook(
 		@Body(new ZodValidationPipe(handlePaymentConfirmedWebhookSchema))
 		body: HandlePaymentConfirmedWebhookSchemaInput,
+		@Query(new ZodValidationPipe(handlePaymentConfirmedWebhookQuerySchema))
+		query: HandlePaymentConfirmedWebhookQuerySchemaInput,
+		@Headers('x-signature') signature?: string,
+		@Headers('x-request-id') requestId?: string,
 	): Promise<{ processed: boolean }> {
-		return await this.handlePaymentConfirmedWebhookUseCase.execute(body);
+		return await this.handlePaymentConfirmedWebhookUseCase.execute({
+			...body,
+			notificationResourceId: query['data.id'],
+			signature,
+			requestId,
+		});
 	}
 
-	@Post(':paymentId/release')
+	@Post('internal/:paymentId/release')
+	@UseGuards(InternalApiKeyGuard)
 	@HttpCode(200)
 	async release(
-		@Param('paymentId') paymentId: string,
+		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
+		paymentId: PaymentIdParamSchemaInput,
 	): Promise<{ success: true }> {
 		await this.releasePaymentHoldUseCase.execute({ paymentId });
 		return { success: true };

@@ -33,3 +33,15 @@ export class PaymentOrderNotFoundError extends Error {
 		super('Order not found.');
 	}
 }
+
+export class PaymentWebhookSignatureInvalidError extends Error {
+	constructor() {
+		super('Invalid payment webhook signature.');
+	}
+}
+
+export class PaymentWebhookNotificationMismatchError extends Error {
+	constructor() {
+		super('Payment webhook notification is invalid.');
+	}
+}

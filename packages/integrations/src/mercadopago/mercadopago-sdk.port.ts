@@ -21,6 +21,7 @@ export interface MercadoPagoSdkPort {
 	verifyWebhookSignature(input: {
 		payload: MercadoPagoWebhookPayload;
 		signature?: string;
+		requestId?: string;
 	}): Promise<boolean>;
 }
 

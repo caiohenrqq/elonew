@@ -10,6 +10,18 @@ export class InvalidAccessTokenError extends Error {
 	}
 }
 
+export class InternalApiKeyRequiredError extends Error {
+	constructor() {
+		super('Internal API key required.');
+	}
+}
+
+export class InvalidInternalApiKeyError extends Error {
+	constructor() {
+		super('Invalid internal API key.');
+	}
+}
+
 export class InsufficientPermissionsError extends Error {
 	constructor() {
 		super('Insufficient permissions.');

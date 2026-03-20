@@ -17,3 +17,15 @@ export const handlePaymentConfirmedWebhookSchema = z.object({
 export type HandlePaymentConfirmedWebhookSchemaInput = z.infer<
 	typeof handlePaymentConfirmedWebhookSchema
 >;
+
+export const handlePaymentConfirmedWebhookQuerySchema = z.object({
+	'data.id': z.string().trim().min(1),
+});
+
+export type HandlePaymentConfirmedWebhookQuerySchemaInput = z.infer<
+	typeof handlePaymentConfirmedWebhookQuerySchema
+>;
+
+export const paymentIdParamSchema = z.string().trim().min(1);
+
+export type PaymentIdParamSchemaInput = z.infer<typeof paymentIdParamSchema>;
