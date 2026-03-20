@@ -28,6 +28,10 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return null;
 	}
 
+	async findByGatewayId(): Promise<Payment | null> {
+		throw new Error('not needed in this test');
+	}
+
 	async save(payment: Payment): Promise<void> {
 		this.payments.set(payment.id, payment);
 	}

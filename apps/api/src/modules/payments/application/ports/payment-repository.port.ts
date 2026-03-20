@@ -6,5 +6,6 @@ export interface PaymentRepositoryPort {
 	findById(id: string): Promise<Payment | null>;
 	findByIdForClient(id: string, clientId: string): Promise<Payment | null>;
 	findByOrderId(orderId: string): Promise<Payment | null>;
+	findByGatewayId(gatewayId: string): Promise<Payment | null>;
 	save(payment: Payment): Promise<void>;
 }

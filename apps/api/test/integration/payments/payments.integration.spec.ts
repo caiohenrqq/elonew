@@ -93,28 +93,27 @@ describe('Payments module integration', () => {
 	it('creates and fetches a payment with 70% booster share', async () => {
 		const createdOrder = await createQuotedOrder();
 
-		await expect(
-			paymentsController.create(
-				{
-					paymentId: 'payment-1',
-					orderId: createdOrder.id,
-					paymentMethod: 'pix',
-				},
-				clientUser,
-			),
-		).resolves.toEqual({
-			id: 'payment-1',
+		const createdPayment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+
+		expect(createdPayment).toMatchObject({
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
 			paymentMethod: 'pix',
 		});
+		expect(createdPayment.id).toEqual(expect.any(String));
 
 		await expect(
-			paymentsController.get('payment-1', clientUser),
-		).resolves.toEqual({
-			id: 'payment-1',
+			paymentsController.get(createdPayment.id, clientUser),
+		).resolves.toMatchObject({
+			id: createdPayment.id,
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
@@ -123,17 +122,38 @@ describe('Payments module integration', () => {
 		});
 	});
 
-	it('keeps payment held until order completion', async () => {
+	it('rejects creating a second payment for the same order', async () => {
 		const createdOrder = await createQuotedOrder();
+
 		await paymentsController.create(
 			{
-				paymentId: 'payment-2',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
-		await paymentsController.confirm('payment-2');
+
+		await expect(
+			paymentsController.create(
+				{
+					orderId: createdOrder.id,
+					paymentMethod: 'pix',
+				},
+				clientUser,
+			),
+		).rejects.toThrow('Payment already exists.');
+	});
+
+	it('keeps payment held until order completion', async () => {
+		const createdOrder = await createQuotedOrder();
+		const payment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+		await paymentsController.confirm(payment.id);
 		await expect(
 			ordersController.get(createdOrder.id, clientUser),
 		).resolves.toMatchObject({
@@ -141,35 +161,33 @@ describe('Payments module integration', () => {
 			status: 'pending_booster',
 		});
 
-		await expect(paymentsController.release('payment-2')).rejects.toThrow(
+		await expect(paymentsController.release(payment.id)).rejects.toThrow(
 			'Payment hold can only be released after order completion.',
 		);
 	});
 
 	it('treats repeated confirm endpoint calls as idempotent', async () => {
 		const createdOrder = await createQuotedOrder();
-		await paymentsController.create(
+		const payment = await paymentsController.create(
 			{
-				paymentId: 'payment-3',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
 
-		await expect(paymentsController.confirm('payment-3')).resolves.toEqual({
+		await expect(paymentsController.confirm(payment.id)).resolves.toEqual({
 			success: true,
 		});
-		await expect(paymentsController.confirm('payment-3')).resolves.toEqual({
+		await expect(paymentsController.confirm(payment.id)).resolves.toEqual({
 			success: true,
 		});
 	});
 
 	it('ignores duplicated webhook event ids', async () => {
 		const createdOrder = await createQuotedOrder();
-		await paymentsController.create(
+		const payment = await paymentsController.create(
 			{
-				paymentId: 'payment-4',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			},
@@ -180,9 +198,9 @@ describe('Payments module integration', () => {
 			paymentsController.handlePaymentConfirmedWebhook(
 				{
 					eventId: 'event-1',
-					paymentId: 'payment-4',
+					paymentId: payment.id,
 				},
-				{ 'data.id': 'payment-4' },
+				{ 'data.id': payment.id },
 				'signature-1',
 				'request-1',
 			),
@@ -198,39 +216,38 @@ describe('Payments module integration', () => {
 			paymentsController.handlePaymentConfirmedWebhook(
 				{
 					eventId: 'event-1',
-					paymentId: 'payment-4',
+					paymentId: payment.id,
 				},
-				{ 'data.id': 'payment-4' },
+				{ 'data.id': payment.id },
 				'signature-1',
 				'request-1',
 			),
 		).resolves.toEqual({ processed: false });
 
 		await expect(
-			paymentsController.get('payment-4', clientUser),
-		).resolves.toMatchObject({ id: 'payment-4', status: 'held' });
+			paymentsController.get(payment.id, clientUser),
+		).resolves.toMatchObject({ id: payment.id, status: 'held' });
 	});
 
 	it('fails a payment and keeps the negative state idempotent', async () => {
 		const createdOrder = await createQuotedOrder();
-		await paymentsController.create(
+		const payment = await paymentsController.create(
 			{
-				paymentId: 'payment-5',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
 
-		await expect(paymentsController.fail('payment-5')).resolves.toEqual({
+		await expect(paymentsController.fail(payment.id)).resolves.toEqual({
 			success: true,
 		});
-		await expect(paymentsController.fail('payment-5')).resolves.toEqual({
+		await expect(paymentsController.fail(payment.id)).resolves.toEqual({
 			success: true,
 		});
 
 		await expect(
-			paymentsController.get('payment-5', clientUser),
-		).resolves.toMatchObject({ id: 'payment-5', status: 'failed' });
+			paymentsController.get(payment.id, clientUser),
+		).resolves.toMatchObject({ id: payment.id, status: 'failed' });
 	});
 });

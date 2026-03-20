@@ -24,6 +24,10 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return null;
 	}
 
+	async findByGatewayId(): Promise<Payment | null> {
+		throw new Error('not needed in this test');
+	}
+
 	async save(payment: Payment): Promise<void> {
 		if (this.failOnSavePaymentIds.has(payment.id))
 			throw new Error('Payment save failed.');

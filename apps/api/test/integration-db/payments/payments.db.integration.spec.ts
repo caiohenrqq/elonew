@@ -89,28 +89,27 @@ describe('Payments module integration (db)', () => {
 	it('creates and fetches a payment with 70% booster share', async () => {
 		const createdOrder = await createQuotedOrder();
 
-		await expect(
-			paymentsController.create(
-				{
-					paymentId: 'payment-db-1',
-					orderId: createdOrder.id,
-					paymentMethod: 'pix',
-				},
-				clientUser,
-			),
-		).resolves.toEqual({
-			id: 'payment-db-1',
+		const createdPayment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+
+		expect(createdPayment).toMatchObject({
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
 			paymentMethod: 'pix',
 		});
+		expect(createdPayment.id).toEqual(expect.any(String));
 
 		await expect(
-			paymentsController.get('payment-db-1', clientUser),
-		).resolves.toEqual({
-			id: 'payment-db-1',
+			paymentsController.get(createdPayment.id, clientUser),
+		).resolves.toMatchObject({
+			id: createdPayment.id,
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
@@ -157,14 +156,12 @@ describe('Payments module integration (db)', () => {
 		await expect(
 			paymentsController.create(
 				{
-					paymentId: 'payment-db-coupon-1',
 					orderId: createdOrder.id,
 					paymentMethod: 'boleto',
 				},
 				clientUser,
 			),
-		).resolves.toEqual({
-			id: 'payment-db-coupon-1',
+		).resolves.toMatchObject({
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
 			grossAmount: 22.68,
@@ -173,47 +170,94 @@ describe('Payments module integration (db)', () => {
 		});
 	});
 
-	it('keeps payment held until order completion', async () => {
+	it('persists Mercado Pago gateway defaults for a newly created payment', async () => {
 		const createdOrder = await createQuotedOrder();
-		await paymentsController.create(
+		const createdPayment = await paymentsController.create(
 			{
-				paymentId: 'payment-db-2',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
-		await paymentsController.confirm('payment-db-2');
 
-		await expect(paymentsController.release('payment-db-2')).rejects.toThrow(
+		await expect(
+			prisma.payment.findUnique({
+				where: { id: createdPayment.id },
+			}),
+		).resolves.toMatchObject({
+			id: createdPayment.id,
+			gateway: 'MERCADO_PAGO',
+			gatewayId: null,
+			gatewayStatus: null,
+		});
+	});
+
+	it('rejects creating a second payment for the same order', async () => {
+		const createdOrder = await createQuotedOrder();
+
+		await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+
+		await expect(
+			paymentsController.create(
+				{
+					orderId: createdOrder.id,
+					paymentMethod: 'pix',
+				},
+				clientUser,
+			),
+		).rejects.toThrow('Payment already exists.');
+
+		await expect(
+			prisma.payment.count({
+				where: { orderId: createdOrder.id },
+			}),
+		).resolves.toBe(1);
+	});
+
+	it('keeps payment held until order completion', async () => {
+		const createdOrder = await createQuotedOrder();
+		const payment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+		await paymentsController.confirm(payment.id);
+
+		await expect(paymentsController.release(payment.id)).rejects.toThrow(
 			'Payment hold can only be released after order completion.',
 		);
 	});
 
 	it('treats repeated confirm endpoint calls as idempotent', async () => {
 		const createdOrder = await createQuotedOrder();
-		await paymentsController.create(
+		const payment = await paymentsController.create(
 			{
-				paymentId: 'payment-db-3',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
 
-		await expect(paymentsController.confirm('payment-db-3')).resolves.toEqual({
+		await expect(paymentsController.confirm(payment.id)).resolves.toEqual({
 			success: true,
 		});
-		await expect(paymentsController.confirm('payment-db-3')).resolves.toEqual({
+		await expect(paymentsController.confirm(payment.id)).resolves.toEqual({
 			success: true,
 		});
 	});
 
 	it('ignores duplicated webhook event ids', async () => {
 		const createdOrder = await createQuotedOrder();
-		await paymentsController.create(
+		const payment = await paymentsController.create(
 			{
-				paymentId: 'payment-db-4',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			},
@@ -224,9 +268,9 @@ describe('Payments module integration (db)', () => {
 			paymentsController.handlePaymentConfirmedWebhook(
 				{
 					eventId: 'event-db-1',
-					paymentId: 'payment-db-4',
+					paymentId: payment.id,
 				},
-				{ 'data.id': 'payment-db-4' },
+				{ 'data.id': payment.id },
 				'signature-db-1',
 				'request-db-1',
 			),
@@ -236,27 +280,26 @@ describe('Payments module integration (db)', () => {
 			paymentsController.handlePaymentConfirmedWebhook(
 				{
 					eventId: 'event-db-1',
-					paymentId: 'payment-db-4',
+					paymentId: payment.id,
 				},
-				{ 'data.id': 'payment-db-4' },
+				{ 'data.id': payment.id },
 				'signature-db-1',
 				'request-db-1',
 			),
 		).resolves.toEqual({ processed: false });
 
 		await expect(
-			paymentsController.get('payment-db-4', clientUser),
+			paymentsController.get(payment.id, clientUser),
 		).resolves.toMatchObject({
-			id: 'payment-db-4',
+			id: payment.id,
 			status: 'held',
 		});
 	});
 
 	it('fails a payment, clears credentials, and keeps the negative state idempotent', async () => {
 		const createdOrder = await createQuotedOrder();
-		await paymentsController.create(
+		const payment = await paymentsController.create(
 			{
-				paymentId: 'payment-db-5',
 				orderId: createdOrder.id,
 				paymentMethod: 'credit_card',
 			},
@@ -270,17 +313,17 @@ describe('Payments module integration (db)', () => {
 			confirmPassword: 'secret-db',
 		});
 
-		await expect(paymentsController.fail('payment-db-5')).resolves.toEqual({
+		await expect(paymentsController.fail(payment.id)).resolves.toEqual({
 			success: true,
 		});
-		await expect(paymentsController.fail('payment-db-5')).resolves.toEqual({
+		await expect(paymentsController.fail(payment.id)).resolves.toEqual({
 			success: true,
 		});
 
 		await expect(
-			paymentsController.get('payment-db-5', clientUser),
+			paymentsController.get(payment.id, clientUser),
 		).resolves.toMatchObject({
-			id: 'payment-db-5',
+			id: payment.id,
 			status: 'failed',
 		});
 		await expect(
