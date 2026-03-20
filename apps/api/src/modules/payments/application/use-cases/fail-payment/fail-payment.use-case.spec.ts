@@ -49,6 +49,7 @@ describe('FailPaymentUseCase', () => {
 				id: 'payment-1',
 				orderId: 'order-1',
 				grossAmount: 100,
+				paymentMethod: 'pix',
 			}),
 		);
 
@@ -70,6 +71,7 @@ describe('FailPaymentUseCase', () => {
 			id: 'payment-2',
 			orderId: 'order-2',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.fail();
 		paymentRepository.insert(payment);

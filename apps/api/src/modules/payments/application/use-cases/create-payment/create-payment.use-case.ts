@@ -17,11 +17,13 @@ import {
 } from '@modules/payments/domain/payment.errors';
 import type { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable } from '@nestjs/common';
+import type { PaymentMethod } from '@shared/payments/payment-method';
 
 type CreatePaymentInput = {
 	clientId: string;
 	paymentId: string;
 	orderId: string;
+	paymentMethod: PaymentMethod;
 };
 
 type CreatePaymentOutput = {
@@ -30,6 +32,7 @@ type CreatePaymentOutput = {
 	status: PaymentStatus;
 	grossAmount: number;
 	boosterAmount: number;
+	paymentMethod: PaymentMethod;
 };
 
 @Injectable()
@@ -64,6 +67,7 @@ export class CreatePaymentUseCase {
 			id: input.paymentId,
 			orderId: input.orderId,
 			grossAmount,
+			paymentMethod: input.paymentMethod,
 		});
 
 		await this.paymentRepository.save(payment);
@@ -74,6 +78,7 @@ export class CreatePaymentUseCase {
 			status: payment.status,
 			grossAmount: payment.grossAmount,
 			boosterAmount: payment.boosterAmount,
+			paymentMethod: payment.paymentMethod,
 		};
 	}
 }

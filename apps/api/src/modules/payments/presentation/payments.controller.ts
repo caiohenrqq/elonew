@@ -20,6 +20,7 @@ import {
 	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
+import type { PaymentMethod } from '@shared/payments/payment-method';
 import {
 	type CreatePaymentSchemaInput,
 	createPaymentSchema,
@@ -51,6 +52,7 @@ export class PaymentsController {
 		status: string;
 		grossAmount: number;
 		boosterAmount: number;
+		paymentMethod: PaymentMethod;
 	}> {
 		return await this.createPaymentUseCase.execute({
 			clientId: currentUser.id,
@@ -70,6 +72,7 @@ export class PaymentsController {
 		status: string;
 		grossAmount: number;
 		boosterAmount: number;
+		paymentMethod: PaymentMethod;
 	}> {
 		return await this.getPaymentUseCase.execute({
 			paymentId,
