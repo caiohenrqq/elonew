@@ -96,6 +96,7 @@ describe('CreatePaymentUseCase', () => {
 			useCase.execute({
 				clientId: 'client-1',
 				paymentId: 'payment-1',
+				paymentMethod: 'pix',
 				orderId: 'order-1',
 			}),
 		).resolves.toEqual({
@@ -104,6 +105,7 @@ describe('CreatePaymentUseCase', () => {
 			status: 'awaiting_confirmation',
 			grossAmount: 100,
 			boosterAmount: 70,
+			paymentMethod: 'pix',
 		});
 	});
 
@@ -123,6 +125,7 @@ describe('CreatePaymentUseCase', () => {
 			useCase.execute({
 				clientId: 'client-1',
 				paymentId: 'payment-1',
+				paymentMethod: 'pix',
 				orderId: 'order-1',
 			}),
 		).rejects.toThrow(PaymentOrderNotFoundError);
@@ -139,6 +142,7 @@ describe('CreatePaymentUseCase', () => {
 				id: 'payment-1',
 				orderId: 'order-1',
 				grossAmount: 100,
+				paymentMethod: 'credit_card',
 			}),
 		);
 
@@ -151,6 +155,7 @@ describe('CreatePaymentUseCase', () => {
 			useCase.execute({
 				clientId: 'client-1',
 				paymentId: 'payment-1',
+				paymentMethod: 'pix',
 				orderId: 'order-2',
 			}),
 		).rejects.toThrow(PaymentAlreadyExistsError);
@@ -170,6 +175,7 @@ describe('CreatePaymentUseCase', () => {
 			useCase.execute({
 				clientId: 'client-1',
 				paymentId: 'payment-missing-order',
+				paymentMethod: 'pix',
 				orderId: 'missing-order',
 			}),
 		).rejects.toThrow(PaymentOrderNotFoundError);

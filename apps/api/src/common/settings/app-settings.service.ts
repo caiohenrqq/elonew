@@ -29,6 +29,10 @@ export class AppSettingsService {
 		return this.config.getOrThrow('JWT_ACCESS_TOKEN_SECRET', { infer: true });
 	}
 
+	get internalApiKey() {
+		return this.config.getOrThrow('INTERNAL_API_KEY', { infer: true });
+	}
+
 	get jwtAccessTokenTtlMinutes() {
 		return this.config.getOrThrow('JWT_ACCESS_TOKEN_TTL_MINUTES', {
 			infer: true,
@@ -55,6 +59,12 @@ export class AppSettingsService {
 
 	get emailConfirmationTokenTtlMinutes() {
 		return this.config.getOrThrow('EMAIL_CONFIRMATION_TOKEN_TTL_MINUTES', {
+			infer: true,
+		});
+	}
+
+	get mercadoPagoWebhookSecret() {
+		return this.config.getOrThrow('MERCADO_PAGO_WEBHOOK_SECRET', {
 			infer: true,
 		});
 	}

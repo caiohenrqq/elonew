@@ -61,6 +61,7 @@ describe('ReleasePaymentHoldUseCase', () => {
 			id: 'payment-1',
 			orderId: 'order-1',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.confirm();
 		repository.insert(payment);
@@ -80,6 +81,7 @@ describe('ReleasePaymentHoldUseCase', () => {
 			id: 'payment-2',
 			orderId: 'order-2',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.confirm();
 		repository.insert(payment);
@@ -98,6 +100,7 @@ describe('ReleasePaymentHoldUseCase', () => {
 			id: 'payment-3',
 			orderId: 'order-3',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.confirm();
 		payment.releaseHold(OrderStatus.COMPLETED);
@@ -130,6 +133,7 @@ describe('ReleasePaymentHoldUseCase', () => {
 			id: 'payment-4',
 			orderId: 'order-4',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.confirm();
 		repository.insert(payment);

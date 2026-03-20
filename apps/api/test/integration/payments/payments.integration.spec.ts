@@ -1,3 +1,4 @@
+import { MERCADO_PAGO_SDK_PORT_KEY } from '@integrations/mercadopago/mercadopago-sdk.port';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
@@ -74,6 +75,11 @@ describe('Payments module integration', () => {
 			.useClass(InMemoryPaymentRepository)
 			.overrideProvider(PROCESSED_WEBHOOK_EVENT_PORT_KEY)
 			.useClass(InMemoryProcessedWebhookEventRepository)
+			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
+			.useValue({
+				createPayment: jest.fn(),
+				verifyWebhookSignature: jest.fn().mockResolvedValue(true),
+			})
 			.overrideProvider(ORDER_STATUS_PORT_KEY)
 			.useClass(OrderStatusFromOrdersRepositoryAdapter)
 			.overrideProvider(ORDER_PAYMENT_AMOUNT_PORT_KEY)
@@ -92,6 +98,7 @@ describe('Payments module integration', () => {
 				{
 					paymentId: 'payment-1',
 					orderId: createdOrder.id,
+					paymentMethod: 'pix',
 				},
 				clientUser,
 			),
@@ -101,6 +108,7 @@ describe('Payments module integration', () => {
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
+			paymentMethod: 'pix',
 		});
 
 		await expect(
@@ -111,6 +119,7 @@ describe('Payments module integration', () => {
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
+			paymentMethod: 'pix',
 		});
 	});
 
@@ -120,6 +129,7 @@ describe('Payments module integration', () => {
 			{
 				paymentId: 'payment-2',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
@@ -142,6 +152,7 @@ describe('Payments module integration', () => {
 			{
 				paymentId: 'payment-3',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
@@ -160,15 +171,21 @@ describe('Payments module integration', () => {
 			{
 				paymentId: 'payment-4',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
 
 		await expect(
-			paymentsController.handlePaymentConfirmedWebhook({
-				eventId: 'event-1',
-				paymentId: 'payment-4',
-			}),
+			paymentsController.handlePaymentConfirmedWebhook(
+				{
+					eventId: 'event-1',
+					paymentId: 'payment-4',
+				},
+				{ 'data.id': 'payment-4' },
+				'signature-1',
+				'request-1',
+			),
 		).resolves.toEqual({ processed: true });
 		await expect(
 			ordersController.get(createdOrder.id, clientUser),
@@ -178,10 +195,15 @@ describe('Payments module integration', () => {
 		});
 
 		await expect(
-			paymentsController.handlePaymentConfirmedWebhook({
-				eventId: 'event-1',
-				paymentId: 'payment-4',
-			}),
+			paymentsController.handlePaymentConfirmedWebhook(
+				{
+					eventId: 'event-1',
+					paymentId: 'payment-4',
+				},
+				{ 'data.id': 'payment-4' },
+				'signature-1',
+				'request-1',
+			),
 		).resolves.toEqual({ processed: false });
 
 		await expect(
@@ -195,6 +217,7 @@ describe('Payments module integration', () => {
 			{
 				paymentId: 'payment-5',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			},
 			clientUser,
 		);

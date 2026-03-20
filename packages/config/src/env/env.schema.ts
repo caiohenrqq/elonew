@@ -12,6 +12,7 @@ export const envSchema = z.object({
 	DATABASE_URL: z.string().trim().min(1),
 	REDIS_URL: z.string().trim().min(1).default(DEFAULT_REDIS_URL),
 	JWT_ACCESS_TOKEN_SECRET: z.string().trim().min(1).default('dev-secret'),
+	INTERNAL_API_KEY: z.string().trim().min(1).default('dev-internal-api-key'),
 	JWT_ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
 	JWT_REFRESH_TOKEN_SECRET: z
 		.string()
@@ -29,6 +30,11 @@ export const envSchema = z.object({
 		.int()
 		.positive()
 		.default(30),
+	MERCADO_PAGO_WEBHOOK_SECRET: z
+		.string()
+		.trim()
+		.min(1)
+		.default('dev-mercado-pago-webhook-secret'),
 	ORDER_QUOTE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
 	USERS_SIGN_UP_THROTTLE_LIMIT: z.coerce.number().int().positive().default(3),
 	USERS_SIGN_UP_THROTTLE_TTL_SECONDS: z.coerce

@@ -27,6 +27,12 @@ enum PaymentStatus {
   failed
 }
 
+enum PaymentMethod {
+  CREDIT_CARD @map("credit_card")
+  PIX         @map("pix")
+  BOLETO      @map("boleto")
+}
+
 enum ServiceType {
   ELO_BOOST
   DUO_BOOST
@@ -187,6 +193,7 @@ model Payment {
   status        PaymentStatus @default(awaiting_confirmation)
   grossAmount   Float
   boosterAmount Float
+  paymentMethod PaymentMethod
   gateway       String        @default("MERCADO_PAGO")
   gatewayId     String?       @unique
   gatewayStatus String?

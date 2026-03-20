@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto';
+import { MERCADO_PAGO_SDK_PORT_KEY } from '@integrations/mercadopago/mercadopago-sdk.port';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
@@ -26,6 +27,9 @@ describe('Payments (e2e)', () => {
 	let app: ApiHttpApp;
 	let ordersController: OrdersController;
 	let paymentsController: PaymentsController;
+	const testInternalApiKey =
+		process.env.INTERNAL_API_KEY ?? 'test-internal-api-key';
+	const validWebhookSignature = 'valid-signature';
 	const clientUser: AuthenticatedUser = {
 		id: 'client-1',
 		role: Role.CLIENT,
@@ -110,6 +114,13 @@ describe('Payments (e2e)', () => {
 			.useClass(InMemoryPaymentRepository)
 			.overrideProvider(PROCESSED_WEBHOOK_EVENT_PORT_KEY)
 			.useClass(InMemoryProcessedWebhookEventRepository)
+			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
+			.useValue({
+				createPayment: jest.fn(),
+				verifyWebhookSignature: jest.fn(async ({ signature }) => {
+					return signature === validWebhookSignature;
+				}),
+			})
 			.overrideProvider(ORDER_STATUS_PORT_KEY)
 			.useClass(OrderStatusFromOrdersRepositoryAdapter)
 			.overrideProvider(ORDER_PAYMENT_AMOUNT_PORT_KEY)
@@ -122,7 +133,7 @@ describe('Payments (e2e)', () => {
 	});
 
 	afterEach(async () => {
-		await app.close();
+		if (app) await app.close();
 	});
 
 	it('rejects create-payment payloads missing paymentId', async () => {
@@ -139,6 +150,37 @@ describe('Payments (e2e)', () => {
 			.execute();
 	});
 
+	it('rejects create-payment payloads missing paymentMethod', async () => {
+		const token = signToken({ sub: 'client-1', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				paymentId: 'payment-missing-method',
+				orderId: createdOrder.id,
+			})
+			.expect(400)
+			.execute();
+	});
+
+	it('rejects unsupported payment methods', async () => {
+		const token = signToken({ sub: 'client-1', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				paymentId: 'payment-invalid-method',
+				orderId: createdOrder.id,
+				paymentMethod: 'cash',
+			})
+			.expect(400)
+			.execute();
+	});
+
 	it('rejects payment-confirmed webhook payloads missing eventId', async () => {
 		const token = signToken({ sub: 'client-2', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
@@ -149,16 +191,140 @@ describe('Payments (e2e)', () => {
 			.send({
 				paymentId: 'payment-1',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			})
 			.expect(201)
 			.execute();
 
 		await requestHttp(app)
 			.post('/payments/webhooks/payment-confirmed')
+			.set('x-request-id', 'request-1')
+			.set('x-signature', validWebhookSignature)
 			.send({
 				paymentId: 'payment-1',
 			})
 			.expect(400)
+			.execute();
+	});
+
+	it('rejects internal payment confirmation without the internal api key', async () => {
+		const token = signToken({ sub: 'client-1', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				paymentId: 'payment-internal-confirm',
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.post('/payments/internal/payment-internal-confirm/confirm')
+			.expect(401, {
+				message: 'Internal API key required.',
+				error: 'Unauthorized',
+				statusCode: 401,
+			})
+			.execute();
+	});
+
+	it('accepts internal payment confirmation with the configured internal api key', async () => {
+		const token = signToken({ sub: 'client-internal-ok', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				paymentId: 'payment-internal-confirm-ok',
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.post('/payments/internal/payment-internal-confirm-ok/confirm')
+			.set('x-internal-api-key', testInternalApiKey)
+			.expect(200, { success: true })
+			.execute();
+
+		await requestHttp(app)
+			.get('/payments/payment-internal-confirm-ok')
+			.set('Authorization', `Bearer ${token}`)
+			.expect(200, {
+				id: 'payment-internal-confirm-ok',
+				orderId: createdOrder.id,
+				status: 'held',
+				grossAmount: 25.2,
+				boosterAmount: 17.64,
+				paymentMethod: 'pix',
+			})
+			.execute();
+	});
+
+	it('rejects payment-confirmed webhooks without a valid signature', async () => {
+		const token = signToken({ sub: 'client-webhook', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				paymentId: 'payment-webhook-signature',
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.post(
+				'/payments/webhooks/payment-confirmed?data.id=payment-webhook-signature',
+			)
+			.set('x-request-id', 'request-invalid-signature')
+			.set('x-signature', 'ts=1710000000,v1=invalid')
+			.send({
+				eventId: 'event-invalid-signature',
+				paymentId: 'payment-webhook-signature',
+			})
+			.expect(401, {
+				message: 'Invalid payment webhook signature.',
+				error: 'Unauthorized',
+				statusCode: 401,
+			})
+			.execute();
+	});
+
+	it('accepts webhook confirmations only with a valid Mercado Pago signature', async () => {
+		const token = signToken({ sub: 'client-webhook-ok', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				paymentId: 'payment-webhook-valid',
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.post(
+				'/payments/webhooks/payment-confirmed?data.id=payment-webhook-valid',
+			)
+			.set('x-request-id', 'request-valid-signature')
+			.set('x-signature', validWebhookSignature)
+			.send({
+				eventId: 'event-valid-signature',
+				paymentId: 'payment-webhook-valid',
+			})
+			.expect(200, { processed: true })
 			.execute();
 	});
 
@@ -171,6 +337,7 @@ describe('Payments (e2e)', () => {
 			.send({
 				paymentId: 'payment-missing-order',
 				orderId: 'missing-order',
+				paymentMethod: 'pix',
 			})
 			.expect(404, {
 				message: 'Order not found.',
@@ -191,6 +358,7 @@ describe('Payments (e2e)', () => {
 			.send({
 				paymentId: 'payment-cross-client',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			})
 			.expect(404, {
 				message: 'Order not found.',
@@ -211,6 +379,7 @@ describe('Payments (e2e)', () => {
 			.send({
 				paymentId: 'payment-owned',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			})
 			.expect(201)
 			.execute();
@@ -226,7 +395,7 @@ describe('Payments (e2e)', () => {
 			.execute();
 	});
 
-	it('returns 400 when releasing a payment hold before order completion', async () => {
+	it('returns 401 when releasing a payment hold without internal authentication', async () => {
 		const quote = await ordersController.quote(
 			{
 				serviceType: 'elo_boost',
@@ -252,17 +421,18 @@ describe('Payments (e2e)', () => {
 			{
 				paymentId: 'payment-1',
 				orderId: order.id,
+				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
 		await paymentsController.confirm('payment-1');
 
 		await requestHttp(app)
-			.post('/payments/payment-1/release')
-			.expect(400, {
-				message: 'Payment hold can only be released after order completion.',
-				error: 'Bad Request',
-				statusCode: 400,
+			.post('/payments/internal/payment-1/release')
+			.expect(401, {
+				message: 'Internal API key required.',
+				error: 'Unauthorized',
+				statusCode: 401,
 			})
 			.execute();
 	});

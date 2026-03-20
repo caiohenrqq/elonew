@@ -59,6 +59,7 @@ describe('ConfirmPaymentUseCase', () => {
 			id: 'payment-1',
 			orderId: 'order-1',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		repository.insert(payment);
 
@@ -96,6 +97,7 @@ describe('ConfirmPaymentUseCase', () => {
 			id: 'payment-2',
 			orderId: 'order-2',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.confirm();
 		repository.insert(payment);
@@ -121,6 +123,7 @@ describe('ConfirmPaymentUseCase', () => {
 			id: 'payment-3',
 			orderId: 'order-3',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		repository.insert(payment);
 		repository.setFailOnSave('payment-3');

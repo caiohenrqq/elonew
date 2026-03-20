@@ -13,7 +13,9 @@ import {
 	AuthRefreshTokenRevokedError,
 	AuthUserInactiveError,
 	InsufficientPermissionsError,
+	InternalApiKeyRequiredError,
 	InvalidAccessTokenError,
+	InvalidInternalApiKeyError,
 } from '@modules/auth/domain/auth.errors';
 import {
 	OrderAlreadyExistsError,
@@ -45,6 +47,8 @@ import {
 	PaymentInvalidTransitionError,
 	PaymentNotFoundError,
 	PaymentOrderNotFoundError,
+	PaymentWebhookNotificationMismatchError,
+	PaymentWebhookSignatureInvalidError,
 } from '@modules/payments/domain/payment.errors';
 import {
 	UserEmailAlreadyInUseError,
@@ -94,9 +98,13 @@ export function mapApiDomainErrorToHttpException(
 		mapAsUnauthorized(
 			AuthenticationRequiredError,
 			InvalidAccessTokenError,
+			InternalApiKeyRequiredError,
+			InvalidInternalApiKeyError,
 			AuthInvalidCredentialsError,
 			AuthRefreshTokenInvalidError,
 			AuthRefreshTokenRevokedError,
+			PaymentWebhookSignatureInvalidError,
+			PaymentWebhookNotificationMismatchError,
 		),
 		mapAsForbidden(AuthUserInactiveError),
 		mapAsForbidden(InsufficientPermissionsError),

@@ -3,6 +3,8 @@ import type { PaymentRepositoryPort } from '@modules/payments/application/ports/
 import { Payment } from '@modules/payments/domain/payment.entity';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Injectable } from '@nestjs/common';
+import { PaymentMethod as PrismaPaymentMethod } from '@prisma/client';
+import { PaymentMethod } from '@shared/payments/payment-method';
 import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type PaymentRecord = {
@@ -11,7 +13,36 @@ type PaymentRecord = {
 	status: string;
 	grossAmount: number;
 	boosterAmount: number;
+	paymentMethod: PrismaPaymentMethod;
 };
+
+function mapDomainPaymentMethodToPersisted(
+	paymentMethod: PaymentMethod,
+): PrismaPaymentMethod {
+	switch (paymentMethod) {
+		case PaymentMethod.CREDIT_CARD:
+			return PrismaPaymentMethod.CREDIT_CARD;
+		case PaymentMethod.PIX:
+			return PrismaPaymentMethod.PIX;
+		case PaymentMethod.BOLETO:
+			return PrismaPaymentMethod.BOLETO;
+	}
+}
+
+function mapPersistedPaymentMethodToDomain(
+	value: PrismaPaymentMethod,
+): PaymentMethod {
+	switch (value) {
+		case PrismaPaymentMethod.CREDIT_CARD:
+			return PaymentMethod.CREDIT_CARD;
+		case PrismaPaymentMethod.PIX:
+			return PaymentMethod.PIX;
+		case PrismaPaymentMethod.BOLETO:
+			return PaymentMethod.BOLETO;
+		default:
+			throw new Error(`Invalid payment method persisted: ${value}`);
+	}
+}
 
 type PaymentDelegate = {
 	findUnique(args: { where: { id: string } }): Promise<PaymentRecord | null>;
@@ -76,11 +107,13 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				status: payment.status,
 				grossAmount: payment.grossAmount,
 				boosterAmount: payment.boosterAmount,
+				paymentMethod: mapDomainPaymentMethodToPersisted(payment.paymentMethod),
 			},
 			update: {
 				status: payment.status,
 				grossAmount: payment.grossAmount,
 				boosterAmount: payment.boosterAmount,
+				paymentMethod: mapDomainPaymentMethodToPersisted(payment.paymentMethod),
 			},
 		});
 	}
@@ -94,6 +127,7 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				record.status,
 				'payment status',
 			),
+			paymentMethod: mapPersistedPaymentMethodToDomain(record.paymentMethod),
 			grossAmount: record.grossAmount,
 			boosterAmount: record.boosterAmount,
 		});

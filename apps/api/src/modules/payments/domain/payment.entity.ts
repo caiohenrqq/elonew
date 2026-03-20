@@ -5,6 +5,7 @@ import {
 	PaymentInvalidTransitionError,
 } from '@modules/payments/domain/payment.errors';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
+import type { PaymentMethod } from '@shared/payments/payment-method';
 
 type AllowedTransitionMap = Record<PaymentStatus, readonly PaymentStatus[]>;
 
@@ -24,6 +25,7 @@ export class Payment {
 		public readonly orderId: string,
 		public readonly grossAmount: number,
 		public readonly boosterAmount: number,
+		public readonly paymentMethod: PaymentMethod,
 		private currentStatus: PaymentStatus,
 	) {}
 
@@ -31,6 +33,7 @@ export class Payment {
 		id: string;
 		orderId: string;
 		grossAmount: number;
+		paymentMethod: PaymentMethod;
 	}): Payment {
 		if (!Number.isFinite(input.grossAmount) || input.grossAmount <= 0)
 			throw new PaymentAmountInvalidError();
@@ -41,6 +44,7 @@ export class Payment {
 			input.orderId,
 			input.grossAmount,
 			boosterAmount,
+			input.paymentMethod,
 			PaymentStatus.AWAITING_CONFIRMATION,
 		);
 	}
@@ -50,6 +54,7 @@ export class Payment {
 		orderId: string;
 		grossAmount: number;
 		boosterAmount: number;
+		paymentMethod: PaymentMethod;
 		status: PaymentStatus;
 	}): Payment {
 		return new Payment(
@@ -57,6 +62,7 @@ export class Payment {
 			input.orderId,
 			input.grossAmount,
 			input.boosterAmount,
+			input.paymentMethod,
 			input.status,
 		);
 	}

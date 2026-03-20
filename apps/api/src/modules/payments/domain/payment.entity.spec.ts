@@ -12,10 +12,12 @@ describe('Payment', () => {
 			id: 'payment-1',
 			orderId: 'order-1',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 
 		expect(payment.status).toBe('awaiting_confirmation');
 		expect(payment.boosterAmount).toBe(70);
+		expect(payment.paymentMethod).toBe('pix');
 	});
 
 	it('rejects non-positive payment amount', () => {
@@ -24,6 +26,7 @@ describe('Payment', () => {
 				id: 'payment-invalid',
 				orderId: 'order-invalid',
 				grossAmount: 0,
+				paymentMethod: 'pix',
 			}),
 		).toThrow(PaymentAmountInvalidError);
 	});
@@ -34,6 +37,7 @@ describe('Payment', () => {
 				id: 'payment-invalid-nan',
 				orderId: 'order-invalid-nan',
 				grossAmount: Number.NaN,
+				paymentMethod: 'pix',
 			}),
 		).toThrow(PaymentAmountInvalidError);
 	});
@@ -43,6 +47,7 @@ describe('Payment', () => {
 			id: 'payment-2',
 			orderId: 'order-2',
 			grossAmount: 85,
+			paymentMethod: 'pix',
 		});
 
 		payment.confirm();
@@ -54,6 +59,7 @@ describe('Payment', () => {
 			id: 'payment-4',
 			orderId: 'order-4',
 			grossAmount: 120,
+			paymentMethod: 'pix',
 		});
 
 		payment.confirm();
@@ -66,6 +72,7 @@ describe('Payment', () => {
 			id: 'payment-3',
 			orderId: 'order-3',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.confirm();
 
@@ -82,6 +89,7 @@ describe('Payment', () => {
 			id: 'payment-5',
 			orderId: 'order-5',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.confirm();
 		payment.releaseHold(OrderStatus.COMPLETED);
@@ -95,6 +103,7 @@ describe('Payment', () => {
 			id: 'payment-6',
 			orderId: 'order-6',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 
 		payment.fail();
@@ -107,6 +116,7 @@ describe('Payment', () => {
 			id: 'payment-7',
 			orderId: 'order-7',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 
 		payment.fail();
@@ -120,6 +130,7 @@ describe('Payment', () => {
 			id: 'payment-8',
 			orderId: 'order-8',
 			grossAmount: 100,
+			paymentMethod: 'pix',
 		});
 		payment.confirm();
 		payment.releaseHold(OrderStatus.COMPLETED);

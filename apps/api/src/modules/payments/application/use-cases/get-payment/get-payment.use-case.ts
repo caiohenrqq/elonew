@@ -5,6 +5,7 @@ import {
 import { PaymentNotFoundError } from '@modules/payments/domain/payment.errors';
 import type { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable } from '@nestjs/common';
+import type { PaymentMethod } from '@shared/payments/payment-method';
 
 type GetPaymentInput = {
 	paymentId: string;
@@ -17,6 +18,7 @@ type GetPaymentOutput = {
 	status: PaymentStatus;
 	grossAmount: number;
 	boosterAmount: number;
+	paymentMethod: PaymentMethod;
 };
 
 @Injectable()
@@ -39,6 +41,7 @@ export class GetPaymentUseCase {
 			status: payment.status,
 			grossAmount: payment.grossAmount,
 			boosterAmount: payment.boosterAmount,
+			paymentMethod: payment.paymentMethod,
 		};
 	}
 }

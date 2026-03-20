@@ -207,6 +207,8 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
+- Secured payment mutation and webhook boundaries by moving confirm/fail/release routes behind internal API-key auth, requiring verified Mercado Pago webhook signatures before payment confirmation, and adding auth/webhook regression coverage across unit, integration, e2e, and DB-backed tests.
+- Added enum-backed payment-method selection to payment creation/get flows, with shared payment-method contracts, Zod validation, payment aggregate persistence, and regression coverage across unit, integration, and e2e tests pending Prisma migration generation.
 - Added a strict agent rule that pull request titles, bodies, and labels must always follow the repository PR template exactly when creating or updating PRs.
 - Hardened coupon checkout by aligning the in-memory path with checkout-time coupon revalidation, adding concurrent first-order coupon redemption coverage, and making the generated coupon migration safe for non-empty coupon tables.
 - Revalidated coupon eligibility during quote consumption to stop first-order coupon stockpiling, and normalized all coupon validation failures to the same generic bad-request response with DB/e2e regression coverage.

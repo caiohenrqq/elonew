@@ -1,4 +1,5 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
+import { MERCADO_PAGO_SDK_PORT_KEY } from '@integrations/mercadopago/mercadopago-sdk.port';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { PaymentsModule } from '@modules/payments/payments.module';
@@ -50,7 +51,13 @@ describe('Payments module integration (db)', () => {
 	beforeEach(async () => {
 		moduleRef = await Test.createTestingModule({
 			imports: [PaymentsModule],
-		}).compile();
+		})
+			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
+			.useValue({
+				createPayment: jest.fn(),
+				verifyWebhookSignature: jest.fn().mockResolvedValue(true),
+			})
+			.compile();
 
 		ordersController = moduleRef.get(OrdersController);
 		paymentsController = moduleRef.get(PaymentsController);
@@ -87,6 +94,7 @@ describe('Payments module integration (db)', () => {
 				{
 					paymentId: 'payment-db-1',
 					orderId: createdOrder.id,
+					paymentMethod: 'pix',
 				},
 				clientUser,
 			),
@@ -96,6 +104,7 @@ describe('Payments module integration (db)', () => {
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
+			paymentMethod: 'pix',
 		});
 
 		await expect(
@@ -106,6 +115,7 @@ describe('Payments module integration (db)', () => {
 			status: 'awaiting_confirmation',
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
+			paymentMethod: 'pix',
 		});
 	});
 
@@ -149,6 +159,7 @@ describe('Payments module integration (db)', () => {
 				{
 					paymentId: 'payment-db-coupon-1',
 					orderId: createdOrder.id,
+					paymentMethod: 'boleto',
 				},
 				clientUser,
 			),
@@ -158,6 +169,7 @@ describe('Payments module integration (db)', () => {
 			status: 'awaiting_confirmation',
 			grossAmount: 22.68,
 			boosterAmount: 15.88,
+			paymentMethod: 'boleto',
 		});
 	});
 
@@ -167,6 +179,7 @@ describe('Payments module integration (db)', () => {
 			{
 				paymentId: 'payment-db-2',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
@@ -183,6 +196,7 @@ describe('Payments module integration (db)', () => {
 			{
 				paymentId: 'payment-db-3',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
@@ -201,22 +215,33 @@ describe('Payments module integration (db)', () => {
 			{
 				paymentId: 'payment-db-4',
 				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
 
 		await expect(
-			paymentsController.handlePaymentConfirmedWebhook({
-				eventId: 'event-db-1',
-				paymentId: 'payment-db-4',
-			}),
+			paymentsController.handlePaymentConfirmedWebhook(
+				{
+					eventId: 'event-db-1',
+					paymentId: 'payment-db-4',
+				},
+				{ 'data.id': 'payment-db-4' },
+				'signature-db-1',
+				'request-db-1',
+			),
 		).resolves.toEqual({ processed: true });
 
 		await expect(
-			paymentsController.handlePaymentConfirmedWebhook({
-				eventId: 'event-db-1',
-				paymentId: 'payment-db-4',
-			}),
+			paymentsController.handlePaymentConfirmedWebhook(
+				{
+					eventId: 'event-db-1',
+					paymentId: 'payment-db-4',
+				},
+				{ 'data.id': 'payment-db-4' },
+				'signature-db-1',
+				'request-db-1',
+			),
 		).resolves.toEqual({ processed: false });
 
 		await expect(
@@ -233,6 +258,7 @@ describe('Payments module integration (db)', () => {
 			{
 				paymentId: 'payment-db-5',
 				orderId: createdOrder.id,
+				paymentMethod: 'credit_card',
 			},
 			clientUser,
 		);
