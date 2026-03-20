@@ -14,6 +14,9 @@ type PaymentRecord = {
 	grossAmount: number;
 	boosterAmount: number;
 	paymentMethod: PrismaPaymentMethod;
+	gateway: string;
+	gatewayId: string | null;
+	gatewayStatus: string | null;
 };
 
 function mapDomainPaymentMethodToPersisted(
@@ -49,6 +52,7 @@ type PaymentDelegate = {
 	findFirst(args: {
 		where:
 			| { orderId: string }
+			| { gatewayId: string }
 			| {
 					id: string;
 					order: { clientId: string };
@@ -98,6 +102,15 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 		return this.mapRecordToDomain(record);
 	}
 
+	async findByGatewayId(gatewayId: string): Promise<Payment | null> {
+		const record = await this.getDelegate().findFirst({
+			where: { gatewayId },
+		});
+		if (!record) return null;
+
+		return this.mapRecordToDomain(record);
+	}
+
 	async save(payment: Payment): Promise<void> {
 		await this.getDelegate().upsert({
 			where: { id: payment.id },
@@ -108,12 +121,18 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				grossAmount: payment.grossAmount,
 				boosterAmount: payment.boosterAmount,
 				paymentMethod: mapDomainPaymentMethodToPersisted(payment.paymentMethod),
+				gateway: payment.gateway,
+				gatewayId: payment.gatewayId,
+				gatewayStatus: payment.gatewayStatus,
 			},
 			update: {
 				status: payment.status,
 				grossAmount: payment.grossAmount,
 				boosterAmount: payment.boosterAmount,
 				paymentMethod: mapDomainPaymentMethodToPersisted(payment.paymentMethod),
+				gateway: payment.gateway,
+				gatewayId: payment.gatewayId,
+				gatewayStatus: payment.gatewayStatus,
 			},
 		});
 	}
@@ -128,9 +147,18 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				'payment status',
 			),
 			paymentMethod: mapPersistedPaymentMethodToDomain(record.paymentMethod),
+			gateway: this.mapPersistedGateway(record.gateway),
+			gatewayId: record.gatewayId,
+			gatewayStatus: record.gatewayStatus,
 			grossAmount: record.grossAmount,
 			boosterAmount: record.boosterAmount,
 		});
+	}
+
+	private mapPersistedGateway(value: string): 'MERCADO_PAGO' {
+		if (value === 'MERCADO_PAGO') return value;
+
+		throw new Error(`Invalid payment gateway persisted: ${value}`);
 	}
 
 	private getDelegate(): PaymentDelegate {

@@ -136,15 +136,15 @@ describe('Payments (e2e)', () => {
 		if (app) await app.close();
 	});
 
-	it('rejects create-payment payloads missing paymentId', async () => {
+	it('rejects create-payment payloads missing orderId', async () => {
 		const token = signToken({ sub: 'client-1', role: 'CLIENT' });
-		const createdOrder = await createQuotedOrder(token);
+		await createQuotedOrder(token);
 
 		await requestHttp(app)
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				orderId: createdOrder.id,
+				paymentMethod: 'pix',
 			})
 			.expect(400)
 			.execute();
@@ -158,7 +158,6 @@ describe('Payments (e2e)', () => {
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				paymentId: 'payment-missing-method',
 				orderId: createdOrder.id,
 			})
 			.expect(400)
@@ -173,11 +172,42 @@ describe('Payments (e2e)', () => {
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				paymentId: 'payment-invalid-method',
 				orderId: createdOrder.id,
 				paymentMethod: 'cash',
 			})
 			.expect(400)
+			.execute();
+	});
+
+	it('rejects creating a second payment for the same order', async () => {
+		const token = signToken({
+			sub: 'client-duplicate-payment',
+			role: 'CLIENT',
+		});
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(400, {
+				message: 'Payment already exists.',
+				error: 'Bad Request',
+				statusCode: 400,
+			})
 			.execute();
 	});
 
@@ -189,7 +219,6 @@ describe('Payments (e2e)', () => {
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				paymentId: 'payment-1',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			})
@@ -215,7 +244,6 @@ describe('Payments (e2e)', () => {
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				paymentId: 'payment-internal-confirm',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			})
@@ -235,34 +263,40 @@ describe('Payments (e2e)', () => {
 	it('accepts internal payment confirmation with the configured internal api key', async () => {
 		const token = signToken({ sub: 'client-internal-ok', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
+		let paymentId = '';
 
 		await requestHttp(app)
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				paymentId: 'payment-internal-confirm-ok',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			})
 			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
 			.execute();
 
 		await requestHttp(app)
-			.post('/payments/internal/payment-internal-confirm-ok/confirm')
+			.post(`/payments/internal/${paymentId}/confirm`)
 			.set('x-internal-api-key', testInternalApiKey)
 			.expect(200, { success: true })
 			.execute();
 
 		await requestHttp(app)
-			.get('/payments/payment-internal-confirm-ok')
+			.get(`/payments/${paymentId}`)
 			.set('Authorization', `Bearer ${token}`)
-			.expect(200, {
-				id: 'payment-internal-confirm-ok',
-				orderId: createdOrder.id,
-				status: 'held',
-				grossAmount: 25.2,
-				boosterAmount: 17.64,
-				paymentMethod: 'pix',
+			.expect(200)
+			.expect(({ body }) => {
+				expect(body).toMatchObject({
+					id: paymentId,
+					orderId: createdOrder.id,
+					status: 'held',
+					grossAmount: 25.2,
+					boosterAmount: 17.64,
+					paymentMethod: 'pix',
+				});
 			})
 			.execute();
 	});
@@ -270,27 +304,28 @@ describe('Payments (e2e)', () => {
 	it('rejects payment-confirmed webhooks without a valid signature', async () => {
 		const token = signToken({ sub: 'client-webhook', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
+		let paymentId = '';
 
 		await requestHttp(app)
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				paymentId: 'payment-webhook-signature',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			})
 			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
 			.execute();
 
 		await requestHttp(app)
-			.post(
-				'/payments/webhooks/payment-confirmed?data.id=payment-webhook-signature',
-			)
+			.post(`/payments/webhooks/payment-confirmed?data.id=${paymentId}`)
 			.set('x-request-id', 'request-invalid-signature')
 			.set('x-signature', 'ts=1710000000,v1=invalid')
 			.send({
 				eventId: 'event-invalid-signature',
-				paymentId: 'payment-webhook-signature',
+				paymentId,
 			})
 			.expect(401, {
 				message: 'Invalid payment webhook signature.',
@@ -303,26 +338,27 @@ describe('Payments (e2e)', () => {
 	it('accepts webhook confirmations only with a valid Mercado Pago signature', async () => {
 		const token = signToken({ sub: 'client-webhook-ok', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
+		let paymentId = '';
 		await requestHttp(app)
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				paymentId: 'payment-webhook-valid',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			})
 			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
 			.execute();
 
 		await requestHttp(app)
-			.post(
-				'/payments/webhooks/payment-confirmed?data.id=payment-webhook-valid',
-			)
+			.post(`/payments/webhooks/payment-confirmed?data.id=${paymentId}`)
 			.set('x-request-id', 'request-valid-signature')
 			.set('x-signature', validWebhookSignature)
 			.send({
 				eventId: 'event-valid-signature',
-				paymentId: 'payment-webhook-valid',
+				paymentId,
 			})
 			.expect(200, { processed: true })
 			.execute();
@@ -335,7 +371,6 @@ describe('Payments (e2e)', () => {
 			.post('/payments')
 			.set('Authorization', `Bearer ${token}`)
 			.send({
-				paymentId: 'payment-missing-order',
 				orderId: 'missing-order',
 				paymentMethod: 'pix',
 			})
@@ -356,7 +391,6 @@ describe('Payments (e2e)', () => {
 			.post('/payments')
 			.set('Authorization', `Bearer ${otherToken}`)
 			.send({
-				paymentId: 'payment-cross-client',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			})
@@ -372,20 +406,23 @@ describe('Payments (e2e)', () => {
 		const ownerToken = signToken({ sub: 'client-owner', role: 'CLIENT' });
 		const otherToken = signToken({ sub: 'client-other', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(ownerToken);
+		let paymentId = '';
 
 		await requestHttp(app)
 			.post('/payments')
 			.set('Authorization', `Bearer ${ownerToken}`)
 			.send({
-				paymentId: 'payment-owned',
 				orderId: createdOrder.id,
 				paymentMethod: 'pix',
 			})
 			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
 			.execute();
 
 		await requestHttp(app)
-			.get('/payments/payment-owned')
+			.get(`/payments/${paymentId}`)
 			.set('Authorization', `Bearer ${otherToken}`)
 			.expect(404, {
 				message: 'Payment not found.',
@@ -417,18 +454,17 @@ describe('Payments (e2e)', () => {
 			},
 			clientUser,
 		);
-		await paymentsController.create(
+		const payment = await paymentsController.create(
 			{
-				paymentId: 'payment-1',
 				orderId: order.id,
 				paymentMethod: 'pix',
 			},
 			clientUser,
 		);
-		await paymentsController.confirm('payment-1');
+		await paymentsController.confirm(payment.id);
 
 		await requestHttp(app)
-			.post('/payments/internal/payment-1/release')
+			.post(`/payments/internal/${payment.id}/release`)
 			.expect(401, {
 				message: 'Internal API key required.',
 				error: 'Unauthorized',

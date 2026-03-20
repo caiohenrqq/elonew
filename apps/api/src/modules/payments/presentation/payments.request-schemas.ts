@@ -2,7 +2,6 @@ import { paymentMethodValues } from '@shared/payments/payment-method';
 import { z } from 'zod';
 
 export const createPaymentSchema = z.object({
-	paymentId: z.string().trim().min(1),
 	orderId: z.string().trim().min(1),
 	paymentMethod: z.enum(paymentMethodValues),
 });

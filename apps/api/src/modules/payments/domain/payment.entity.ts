@@ -26,6 +26,9 @@ export class Payment {
 		public readonly grossAmount: number,
 		public readonly boosterAmount: number,
 		public readonly paymentMethod: PaymentMethod,
+		public readonly gateway: 'MERCADO_PAGO',
+		private attachedGatewayId: string | null,
+		private attachedGatewayStatus: string | null,
 		private currentStatus: PaymentStatus,
 	) {}
 
@@ -45,6 +48,9 @@ export class Payment {
 			input.grossAmount,
 			boosterAmount,
 			input.paymentMethod,
+			'MERCADO_PAGO',
+			null,
+			null,
 			PaymentStatus.AWAITING_CONFIRMATION,
 		);
 	}
@@ -55,6 +61,9 @@ export class Payment {
 		grossAmount: number;
 		boosterAmount: number;
 		paymentMethod: PaymentMethod;
+		gateway: 'MERCADO_PAGO';
+		gatewayId: string | null;
+		gatewayStatus: string | null;
 		status: PaymentStatus;
 	}): Payment {
 		return new Payment(
@@ -63,12 +72,31 @@ export class Payment {
 			input.grossAmount,
 			input.boosterAmount,
 			input.paymentMethod,
+			input.gateway,
+			input.gatewayId,
+			input.gatewayStatus,
 			input.status,
 		);
 	}
 
 	get status(): PaymentStatus {
 		return this.currentStatus;
+	}
+
+	get gatewayId(): string | null {
+		return this.attachedGatewayId;
+	}
+
+	get gatewayStatus(): string | null {
+		return this.attachedGatewayStatus;
+	}
+
+	attachGatewayDetails(input: {
+		gatewayId: string | null;
+		gatewayStatus: string | null;
+	}): void {
+		this.attachedGatewayId = input.gatewayId;
+		this.attachedGatewayStatus = input.gatewayStatus;
 	}
 
 	confirm(): void {

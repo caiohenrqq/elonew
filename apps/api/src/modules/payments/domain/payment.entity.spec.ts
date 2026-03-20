@@ -18,6 +18,28 @@ describe('Payment', () => {
 		expect(payment.status).toBe('awaiting_confirmation');
 		expect(payment.boosterAmount).toBe(70);
 		expect(payment.paymentMethod).toBe('pix');
+		expect(payment.gateway).toBe('MERCADO_PAGO');
+		expect(payment.gatewayId).toBeNull();
+		expect(payment.gatewayStatus).toBeNull();
+	});
+
+	it('stores gateway metadata without changing payment status', () => {
+		const payment = Payment.create({
+			id: 'payment-gateway-1',
+			orderId: 'order-gateway-1',
+			grossAmount: 100,
+			paymentMethod: 'pix',
+		});
+
+		payment.attachGatewayDetails({
+			gatewayId: 'mp-payment-1',
+			gatewayStatus: 'pending',
+		});
+
+		expect(payment.gateway).toBe('MERCADO_PAGO');
+		expect(payment.gatewayId).toBe('mp-payment-1');
+		expect(payment.gatewayStatus).toBe('pending');
+		expect(payment.status).toBe('awaiting_confirmation');
 	});
 
 	it('rejects non-positive payment amount', () => {

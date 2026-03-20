@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
 	ORDER_PAYMENT_AMOUNT_PORT_KEY,
 	type OrderPaymentAmountPort,
@@ -21,7 +22,6 @@ import type { PaymentMethod } from '@shared/payments/payment-method';
 
 type CreatePaymentInput = {
 	clientId: string;
-	paymentId: string;
 	orderId: string;
 	paymentMethod: PaymentMethod;
 };
@@ -47,10 +47,11 @@ export class CreatePaymentUseCase {
 	) {}
 
 	async execute(input: CreatePaymentInput): Promise<CreatePaymentOutput> {
-		const existingPayment = await this.paymentRepository.findById(
-			input.paymentId,
+		const existingPayment = await this.paymentRepository.findByOrderId(
+			input.orderId,
 		);
 		if (existingPayment) throw new PaymentAlreadyExistsError();
+
 		const orderStatus = await this.orderStatusPort.findByOrderIdForClient(
 			input.orderId,
 			input.clientId,
@@ -64,7 +65,7 @@ export class CreatePaymentUseCase {
 		if (grossAmount === null) throw new PaymentOrderNotFoundError();
 
 		const payment = Payment.create({
-			id: input.paymentId,
+			id: randomUUID(),
 			orderId: input.orderId,
 			grossAmount,
 			paymentMethod: input.paymentMethod,

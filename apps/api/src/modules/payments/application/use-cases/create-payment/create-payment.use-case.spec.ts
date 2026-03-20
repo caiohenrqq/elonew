@@ -28,7 +28,15 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return null;
 	}
 
+	async findByGatewayId(): Promise<Payment | null> {
+		throw new Error('not needed in this test');
+	}
+
 	async save(payment: Payment): Promise<void> {
+		this.payments.set(payment.id, payment);
+	}
+
+	insert(payment: Payment): void {
 		this.payments.set(payment.id, payment);
 	}
 }
@@ -95,12 +103,10 @@ describe('CreatePaymentUseCase', () => {
 		await expect(
 			useCase.execute({
 				clientId: 'client-1',
-				paymentId: 'payment-1',
 				paymentMethod: 'pix',
 				orderId: 'order-1',
 			}),
-		).resolves.toEqual({
-			id: 'payment-1',
+		).resolves.toMatchObject({
 			orderId: 'order-1',
 			status: 'awaiting_confirmation',
 			grossAmount: 100,
@@ -124,39 +130,67 @@ describe('CreatePaymentUseCase', () => {
 		await expect(
 			useCase.execute({
 				clientId: 'client-1',
-				paymentId: 'payment-1',
 				paymentMethod: 'pix',
 				orderId: 'order-1',
 			}),
 		).rejects.toThrow(PaymentOrderNotFoundError);
 	});
 
-	it('throws when payment id already exists', async () => {
+	it('generates the payment id on the server', async () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
 		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
-		orderStatusPort.set('order-2', 'client-1', OrderStatus.AWAITING_PAYMENT);
-		orderPaymentAmountPort.set('order-2', 'client-1', 40);
-		await repository.save(
-			Payment.create({
-				id: 'payment-1',
-				orderId: 'order-1',
-				grossAmount: 100,
-				paymentMethod: 'credit_card',
-			}),
+		orderStatusPort.set(
+			'order-generated-id',
+			'client-1',
+			OrderStatus.AWAITING_PAYMENT,
 		);
-
+		orderPaymentAmountPort.set('order-generated-id', 'client-1', 100);
 		const useCase = new CreatePaymentUseCase(
 			repository,
 			orderStatusPort,
 			orderPaymentAmountPort,
 		);
+
+		const payment = await useCase.execute({
+			clientId: 'client-1',
+			paymentMethod: 'pix',
+			orderId: 'order-generated-id',
+		});
+
+		expect(payment.id).toEqual(expect.any(String));
+		expect(payment.id).not.toHaveLength(0);
+	});
+
+	it('rejects creating a second payment for the same order', async () => {
+		const repository = new InMemoryPaymentRepository();
+		const orderStatusPort = new InMemoryOrderStatusPort();
+		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		orderStatusPort.set(
+			'order-duplicate',
+			'client-1',
+			OrderStatus.AWAITING_PAYMENT,
+		);
+		orderPaymentAmountPort.set('order-duplicate', 'client-1', 100);
+		repository.insert(
+			Payment.create({
+				id: 'payment-existing',
+				orderId: 'order-duplicate',
+				grossAmount: 100,
+				paymentMethod: 'pix',
+			}),
+		);
+		const useCase = new CreatePaymentUseCase(
+			repository,
+			orderStatusPort,
+			orderPaymentAmountPort,
+		);
+
 		await expect(
 			useCase.execute({
 				clientId: 'client-1',
-				paymentId: 'payment-1',
 				paymentMethod: 'pix',
-				orderId: 'order-2',
+				orderId: 'order-duplicate',
 			}),
 		).rejects.toThrow(PaymentAlreadyExistsError);
 	});
@@ -174,7 +208,6 @@ describe('CreatePaymentUseCase', () => {
 		await expect(
 			useCase.execute({
 				clientId: 'client-1',
-				paymentId: 'payment-missing-order',
 				paymentMethod: 'pix',
 				orderId: 'missing-order',
 			}),

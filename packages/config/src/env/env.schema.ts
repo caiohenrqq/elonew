@@ -30,11 +30,7 @@ export const envSchema = z.object({
 		.int()
 		.positive()
 		.default(30),
-	MERCADO_PAGO_WEBHOOK_SECRET: z
-		.string()
-		.trim()
-		.min(1)
-		.default('dev-mercado-pago-webhook-secret'),
+	MERCADO_PAGO_WEBHOOK_SECRET: z.string().trim().min(1),
 	ORDER_QUOTE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
 	USERS_SIGN_UP_THROTTLE_LIMIT: z.coerce.number().int().positive().default(3),
 	USERS_SIGN_UP_THROTTLE_TTL_SECONDS: z.coerce

@@ -1,7 +1,11 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { AUTH_SESSION_REPOSITORY_KEY } from '@modules/auth/application/ports/auth-session-repository.port';
+import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
+import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
+import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import { InMemoryUserRepository } from '@modules/users/infrastructure/repositories/in-memory-user.repository';
 import { Test } from '@nestjs/testing';
@@ -78,6 +82,10 @@ describe('Auth (e2e)', () => {
 			.useClass(InMemoryUserRepository)
 			.overrideProvider(ORDER_REPOSITORY_KEY)
 			.useClass(InMemoryOrderRepository)
+			.overrideProvider(ORDER_CHECKOUT_PORT_KEY)
+			.useClass(InMemoryOrderCheckoutRepository)
+			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
+			.useClass(InMemoryOrderQuoteRepository)
 			.overrideProvider(AUTH_SESSION_REPOSITORY_KEY)
 			.useClass(InMemoryAuthSessionRepository)
 			.overrideProvider(AppSettingsService)
@@ -94,6 +102,7 @@ describe('Auth (e2e)', () => {
 				usersSignUpThrottleTtlSeconds: 60,
 				usersConfirmEmailThrottleLimit: 10,
 				usersConfirmEmailThrottleTtlSeconds: 60,
+				orderQuoteTtlMinutes: 60,
 				walletLockPeriodInHours: 72,
 				isDevelopment: false,
 				isTest: true,
@@ -125,6 +134,33 @@ describe('Auth (e2e)', () => {
 			lpGain: 20,
 			deadline: '2026-03-31T00:00:00.000Z',
 		};
+	}
+
+	async function createQuotedOrder(token: string): Promise<{ id: string }> {
+		let quoteId = '';
+		let orderId = '';
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeOrderPayload())
+			.expect(201)
+			.expect<{ quoteId: string }>(({ body }) => {
+				quoteId = body.quoteId;
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post('/orders')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ quoteId })
+			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				orderId = body.id;
+			})
+			.execute();
+
+		return { id: orderId };
 	}
 
 	it('logs in an active user and allows access to a protected route with the issued access token', async () => {
@@ -169,11 +205,15 @@ describe('Auth (e2e)', () => {
 			.execute();
 
 		await requestHttp(app)
-			.post('/orders')
+			.post('/orders/quote')
 			.set('Authorization', `Bearer ${accessToken}`)
 			.send(makeOrderPayload())
 			.expect(201)
 			.execute();
+
+		await expect(createQuotedOrder(accessToken)).resolves.toMatchObject({
+			id: expect.any(String),
+		});
 	});
 
 	it('rejects login for inactive accounts', async () => {
