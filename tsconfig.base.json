@@ -20,6 +20,7 @@
 			"@database/*": ["packages/database/src/*"],
 			"@config/*": ["packages/config/src/*"],
 			"@auth/*": ["packages/auth/src/*"],
+			"@packages/integrations/*": ["packages/integrations/src/*"],
 			"@ui/*": ["packages/ui/src/*"],
 			"@testing/*": ["packages/testing/src/*"],
 			"@integrations/*": ["packages/integrations/src/*"]
