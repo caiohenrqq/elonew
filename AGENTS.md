@@ -284,8 +284,8 @@ A task is done when:
 - [x] Implement `CompleteOrder` with automated credential deletion logic.
 
 ### 4. Payments Integration (Mercado Pago)
-- [ ] Build `@packages/integrations/mercadopago` wrapper.
-- [ ] Implement `HandleWebhook` use-case with idempotency (using `ProcessedWebhookEvent`).
+- [x] Build `@packages/integrations/mercadopago` wrapper.
+- [x] Implement `HandleWebhook` use-case with idempotency (using `ProcessedWebhookEvent`).
 - [ ] Map Mercado Pago states to internal `PaymentStatus` and trigger order transitions.
 
 ### 5. Booster Wallet & Finances
