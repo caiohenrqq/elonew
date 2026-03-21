@@ -1,6 +1,7 @@
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import type { OrderPaymentAmountPort } from '@modules/payments/application/ports/order-payment-amount.port';
 import type { OrderStatusPort } from '@modules/payments/application/ports/order-status.port';
+import type { PaymentGatewayPort } from '@modules/payments/application/ports/payment-gateway.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
@@ -87,17 +88,59 @@ class InMemoryOrderPaymentAmountPort implements OrderPaymentAmountPort {
 	}
 }
 
+class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
+	lastInput:
+		| {
+				paymentId: string;
+				orderId: string;
+				amount: number;
+				paymentMethod: 'pix' | 'credit_card' | 'boleto';
+		  }
+		| undefined;
+
+	async initiatePayment(input: {
+		paymentId: string;
+		orderId: string;
+		amount: number;
+		paymentMethod: 'pix' | 'credit_card' | 'boleto';
+	}): Promise<{
+		checkoutUrl: string;
+		gatewayReferenceId: string;
+		gatewayStatus: string | null;
+	}> {
+		this.lastInput = input;
+
+		return {
+			checkoutUrl: `https://mercadopago.test/checkout/${input.paymentId}`,
+			gatewayReferenceId: `pref-${input.paymentId}`,
+			gatewayStatus: 'pending',
+		};
+	}
+
+	async fetchPaymentNotification(): Promise<{
+		internalPaymentId: string;
+		gatewayPaymentId: string;
+		gatewayStatus: string;
+		gatewayStatusDetail: string | null;
+		isApproved: boolean;
+	}> {
+		throw new Error('not needed in this test');
+	}
+}
+
 describe('CreatePaymentUseCase', () => {
-	it('creates a payment from the owned order total amount', async () => {
+	it('creates a payment from the owned order total amount and returns the checkout url', async () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
 		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
 		orderStatusPort.set('order-1', 'client-1', OrderStatus.AWAITING_PAYMENT);
 		orderPaymentAmountPort.set('order-1', 'client-1', 100);
 		const useCase = new CreatePaymentUseCase(
 			repository,
 			orderStatusPort,
 			orderPaymentAmountPort,
+			paymentGatewayPort,
 		);
 
 		await expect(
@@ -112,6 +155,13 @@ describe('CreatePaymentUseCase', () => {
 			grossAmount: 100,
 			boosterAmount: 70,
 			paymentMethod: 'pix',
+			checkoutUrl: expect.stringContaining('/checkout/'),
+		});
+
+		expect(paymentGatewayPort.lastInput).toMatchObject({
+			orderId: 'order-1',
+			amount: 100,
+			paymentMethod: 'pix',
 		});
 	});
 
@@ -119,12 +169,14 @@ describe('CreatePaymentUseCase', () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
 		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
 		orderStatusPort.set('order-1', 'client-2', OrderStatus.AWAITING_PAYMENT);
 		orderPaymentAmountPort.set('order-1', 'client-2', 100);
 		const useCase = new CreatePaymentUseCase(
 			repository,
 			orderStatusPort,
 			orderPaymentAmountPort,
+			paymentGatewayPort,
 		);
 
 		await expect(
@@ -140,6 +192,7 @@ describe('CreatePaymentUseCase', () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
 		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
 		orderStatusPort.set(
 			'order-generated-id',
 			'client-1',
@@ -150,6 +203,7 @@ describe('CreatePaymentUseCase', () => {
 			repository,
 			orderStatusPort,
 			orderPaymentAmountPort,
+			paymentGatewayPort,
 		);
 
 		const payment = await useCase.execute({
@@ -166,6 +220,7 @@ describe('CreatePaymentUseCase', () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
 		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
 		orderStatusPort.set(
 			'order-duplicate',
 			'client-1',
@@ -184,6 +239,7 @@ describe('CreatePaymentUseCase', () => {
 			repository,
 			orderStatusPort,
 			orderPaymentAmountPort,
+			paymentGatewayPort,
 		);
 
 		await expect(
@@ -199,10 +255,12 @@ describe('CreatePaymentUseCase', () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
 		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
 		const useCase = new CreatePaymentUseCase(
 			repository,
 			orderStatusPort,
 			orderPaymentAmountPort,
+			paymentGatewayPort,
 		);
 
 		await expect(
@@ -212,5 +270,35 @@ describe('CreatePaymentUseCase', () => {
 				orderId: 'missing-order',
 			}),
 		).rejects.toThrow(PaymentOrderNotFoundError);
+	});
+
+	it('persists Mercado Pago reference details on the created payment', async () => {
+		const repository = new InMemoryPaymentRepository();
+		const orderStatusPort = new InMemoryOrderStatusPort();
+		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
+		orderStatusPort.set(
+			'order-reference',
+			'client-1',
+			OrderStatus.AWAITING_PAYMENT,
+		);
+		orderPaymentAmountPort.set('order-reference', 'client-1', 100);
+		const useCase = new CreatePaymentUseCase(
+			repository,
+			orderStatusPort,
+			orderPaymentAmountPort,
+			paymentGatewayPort,
+		);
+
+		const createdPayment = await useCase.execute({
+			clientId: 'client-1',
+			paymentMethod: 'pix',
+			orderId: 'order-reference',
+		});
+
+		const savedPayment = await repository.findById(createdPayment.id);
+		expect(savedPayment?.gatewayReferenceId).toBe(`pref-${createdPayment.id}`);
+		expect(savedPayment?.gatewayStatus).toBe('pending');
+		expect(savedPayment?.gatewayId).toBeNull();
 	});
 });

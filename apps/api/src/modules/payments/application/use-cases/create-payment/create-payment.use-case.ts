@@ -8,6 +8,10 @@ import {
 	type OrderStatusPort,
 } from '@modules/payments/application/ports/order-status.port';
 import {
+	PAYMENT_GATEWAY_PORT_KEY,
+	type PaymentGatewayPort,
+} from '@modules/payments/application/ports/payment-gateway.port';
+import {
 	PAYMENT_REPOSITORY_KEY,
 	type PaymentRepositoryPort,
 } from '@modules/payments/application/ports/payment-repository.port';
@@ -33,6 +37,7 @@ type CreatePaymentOutput = {
 	grossAmount: number;
 	boosterAmount: number;
 	paymentMethod: PaymentMethod;
+	checkoutUrl: string;
 };
 
 @Injectable()
@@ -44,6 +49,8 @@ export class CreatePaymentUseCase {
 		private readonly orderStatusPort: OrderStatusPort,
 		@Inject(ORDER_PAYMENT_AMOUNT_PORT_KEY)
 		private readonly orderPaymentAmountPort: OrderPaymentAmountPort,
+		@Inject(PAYMENT_GATEWAY_PORT_KEY)
+		private readonly paymentGatewayPort: PaymentGatewayPort,
 	) {}
 
 	async execute(input: CreatePaymentInput): Promise<CreatePaymentOutput> {
@@ -70,6 +77,18 @@ export class CreatePaymentUseCase {
 			grossAmount,
 			paymentMethod: input.paymentMethod,
 		});
+		const gatewayPayment = await this.paymentGatewayPort.initiatePayment({
+			paymentId: payment.id,
+			orderId: input.orderId,
+			amount: grossAmount,
+			paymentMethod: input.paymentMethod,
+		});
+		payment.attachGatewayDetails({
+			gatewayReferenceId: gatewayPayment.gatewayReferenceId,
+			gatewayId: null,
+			gatewayStatus: gatewayPayment.gatewayStatus,
+			gatewayStatusDetail: null,
+		});
 
 		await this.paymentRepository.save(payment);
 
@@ -80,6 +99,7 @@ export class CreatePaymentUseCase {
 			grossAmount: payment.grossAmount,
 			boosterAmount: payment.boosterAmount,
 			paymentMethod: payment.paymentMethod,
+			checkoutUrl: gatewayPayment.checkoutUrl,
 		};
 	}
 }

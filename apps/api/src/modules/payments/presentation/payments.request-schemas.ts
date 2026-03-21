@@ -8,21 +8,17 @@ export const createPaymentSchema = z.object({
 
 export type CreatePaymentSchemaInput = z.infer<typeof createPaymentSchema>;
 
-export const handlePaymentConfirmedWebhookSchema = z.object({
-	eventId: z.string().trim().min(1),
-	paymentId: z.string().trim().min(1),
+export const mercadoPagoWebhookSchema = z.object({
+	action: z.string().trim().min(1),
+	data: z.object({
+		id: z.string().trim().min(1),
+	}),
+	id: z.string().trim().min(1),
+	type: z.string().trim().min(1),
 });
 
-export type HandlePaymentConfirmedWebhookSchemaInput = z.infer<
-	typeof handlePaymentConfirmedWebhookSchema
->;
-
-export const handlePaymentConfirmedWebhookQuerySchema = z.object({
-	'data.id': z.string().trim().min(1),
-});
-
-export type HandlePaymentConfirmedWebhookQuerySchemaInput = z.infer<
-	typeof handlePaymentConfirmedWebhookQuerySchema
+export type MercadoPagoWebhookSchemaInput = z.infer<
+	typeof mercadoPagoWebhookSchema
 >;
 
 export const paymentIdParamSchema = z.string().trim().min(1);

@@ -1,5 +1,4 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
-import { MERCADO_PAGO_SDK_PORT_KEY } from '@integrations/mercadopago/mercadopago-sdk.port';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { PaymentsModule } from '@modules/payments/payments.module';
@@ -7,6 +6,7 @@ import { PaymentsController } from '@modules/payments/presentation/payments.cont
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
+import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
 
 describe('Payments module integration (db)', () => {
@@ -54,7 +54,18 @@ describe('Payments module integration (db)', () => {
 		})
 			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
 			.useValue({
-				createPayment: jest.fn(),
+				createPayment: jest.fn(async ({ paymentId }) => ({
+					checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
+					gatewayReferenceId: `pref-${paymentId}`,
+					gatewayStatus: 'pending',
+				})),
+				fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
+					internalPaymentId: notificationId,
+					gatewayPaymentId: `mp-${notificationId}`,
+					gatewayStatus: 'approved',
+					gatewayStatusDetail: 'accredited',
+					isApproved: true,
+				})),
 				verifyWebhookSignature: jest.fn().mockResolvedValue(true),
 			})
 			.compile();
@@ -103,6 +114,7 @@ describe('Payments module integration (db)', () => {
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
 			paymentMethod: 'pix',
+			checkoutUrl: expect.stringContaining('/checkout/'),
 		});
 		expect(createdPayment.id).toEqual(expect.any(String));
 
@@ -187,8 +199,10 @@ describe('Payments module integration (db)', () => {
 		).resolves.toMatchObject({
 			id: createdPayment.id,
 			gateway: 'MERCADO_PAGO',
+			gatewayReferenceId: `pref-${createdPayment.id}`,
 			gatewayId: null,
-			gatewayStatus: null,
+			gatewayStatus: 'pending',
+			gatewayStatusDetail: null,
 		});
 	});
 
@@ -265,24 +279,26 @@ describe('Payments module integration (db)', () => {
 		);
 
 		await expect(
-			paymentsController.handlePaymentConfirmedWebhook(
+			paymentsController.handleMercadoPagoWebhook(
 				{
-					eventId: 'event-db-1',
-					paymentId: payment.id,
+					id: 'event-db-1',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
 				},
-				{ 'data.id': payment.id },
 				'signature-db-1',
 				'request-db-1',
 			),
 		).resolves.toEqual({ processed: true });
 
 		await expect(
-			paymentsController.handlePaymentConfirmedWebhook(
+			paymentsController.handleMercadoPagoWebhook(
 				{
-					eventId: 'event-db-1',
-					paymentId: payment.id,
+					id: 'event-db-1',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
 				},
-				{ 'data.id': payment.id },
 				'signature-db-1',
 				'request-db-1',
 			),

@@ -7,8 +7,12 @@ describe('AppSettingsService', () => {
 		const config = {
 			getOrThrow: jest.fn((key: keyof AppEnv) => {
 				switch (key) {
+					case 'MERCADO_PAGO_ACCESS_TOKEN':
+						return 'mp-access-token';
 					case 'MERCADO_PAGO_WEBHOOK_SECRET':
 						return 'webhook-secret';
+					case 'MERCADO_PAGO_WEBHOOK_URL':
+						return 'https://example.com/payments/webhooks/mercadopago';
 					default:
 						throw new Error(`Unexpected config key: ${key}`);
 				}
@@ -16,7 +20,11 @@ describe('AppSettingsService', () => {
 		} as unknown as ConfigService<AppEnv, true>;
 		const appSettings = new AppSettingsService(config);
 
+		expect(appSettings.mercadoPagoAccessToken).toBe('mp-access-token');
 		expect(appSettings.mercadoPagoWebhookSecret).toBe('webhook-secret');
+		expect(appSettings.mercadoPagoWebhookUrl).toBe(
+			'https://example.com/payments/webhooks/mercadopago',
+		);
 	});
 
 	it('requires Mercado Pago webhook secret in env parsing', () => {
@@ -32,7 +40,9 @@ describe('AppSettingsService', () => {
 			JWT_REFRESH_TOKEN_TTL_DAYS: 7,
 			EMAIL_CONFIRMATION_TOKEN_SECRET: 'email-secret',
 			EMAIL_CONFIRMATION_TOKEN_TTL_MINUTES: 30,
+			MERCADO_PAGO_ACCESS_TOKEN: '',
 			MERCADO_PAGO_WEBHOOK_SECRET: '',
+			MERCADO_PAGO_WEBHOOK_URL: 'not-a-url',
 			ORDER_QUOTE_TTL_MINUTES: 60,
 			USERS_SIGN_UP_THROTTLE_LIMIT: 3,
 			USERS_SIGN_UP_THROTTLE_TTL_SECONDS: 60,

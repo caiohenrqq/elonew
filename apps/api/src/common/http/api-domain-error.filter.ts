@@ -49,6 +49,7 @@ import {
 	PaymentOrderNotFoundError,
 	PaymentWebhookNotificationMismatchError,
 	PaymentWebhookSignatureInvalidError,
+	PaymentWebhookTopicNotSupportedError,
 } from '@modules/payments/domain/payment.errors';
 import {
 	UserEmailAlreadyInUseError,
@@ -105,6 +106,7 @@ export function mapApiDomainErrorToHttpException(
 			AuthRefreshTokenRevokedError,
 			PaymentWebhookSignatureInvalidError,
 			PaymentWebhookNotificationMismatchError,
+			PaymentWebhookTopicNotSupportedError,
 		),
 		mapAsForbidden(AuthUserInactiveError),
 		mapAsForbidden(InsufficientPermissionsError),

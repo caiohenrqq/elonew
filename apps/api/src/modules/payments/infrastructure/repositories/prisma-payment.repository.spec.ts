@@ -12,8 +12,10 @@ describe('PrismaPaymentRepository', () => {
 			boosterAmount: 70,
 			paymentMethod: PrismaPaymentMethod.PIX,
 			gateway: 'MERCADO_PAGO',
+			gatewayReferenceId: null,
 			gatewayId: 'mp-payment-1',
 			gatewayStatus: 'approved',
+			gatewayStatusDetail: null,
 		});
 		const upsert = jest.fn().mockResolvedValue(undefined);
 		const prisma = {
@@ -46,8 +48,10 @@ describe('PrismaPaymentRepository', () => {
 			boosterAmount: 70,
 			paymentMethod: 'pix',
 			gateway: 'MERCADO_PAGO',
+			gatewayReferenceId: null,
 			gatewayId: 'mp-payment-1',
 			gatewayStatus: 'approved',
+			gatewayStatusDetail: null,
 		});
 		expect(upsert).toHaveBeenCalledWith({
 			where: { id: 'payment-1' },
@@ -59,8 +63,10 @@ describe('PrismaPaymentRepository', () => {
 				boosterAmount: 70,
 				paymentMethod: PrismaPaymentMethod.PIX,
 				gateway: 'MERCADO_PAGO',
+				gatewayReferenceId: null,
 				gatewayId: 'mp-payment-1',
 				gatewayStatus: 'approved',
+				gatewayStatusDetail: null,
 			},
 			update: {
 				status: 'held',
@@ -68,8 +74,10 @@ describe('PrismaPaymentRepository', () => {
 				boosterAmount: 70,
 				paymentMethod: PrismaPaymentMethod.PIX,
 				gateway: 'MERCADO_PAGO',
+				gatewayReferenceId: null,
 				gatewayId: 'mp-payment-1',
 				gatewayStatus: 'approved',
+				gatewayStatusDetail: null,
 			},
 		});
 	});
@@ -108,8 +116,10 @@ describe('PrismaPaymentRepository', () => {
 				boosterAmount: 70,
 				paymentMethod: persistedPaymentMethod,
 				gateway: 'MERCADO_PAGO',
+				gatewayReferenceId: null,
 				gatewayId: null,
 				gatewayStatus: null,
+				gatewayStatusDetail: null,
 			},
 			update: {
 				status: 'awaiting_confirmation',
@@ -117,8 +127,10 @@ describe('PrismaPaymentRepository', () => {
 				boosterAmount: 70,
 				paymentMethod: persistedPaymentMethod,
 				gateway: 'MERCADO_PAGO',
+				gatewayReferenceId: null,
 				gatewayId: null,
 				gatewayStatus: null,
+				gatewayStatusDetail: null,
 			},
 		});
 	});
@@ -132,8 +144,10 @@ describe('PrismaPaymentRepository', () => {
 			boosterAmount: 70,
 			paymentMethod: PrismaPaymentMethod.PIX,
 			gateway: 'MERCADO_PAGO',
+			gatewayReferenceId: null,
 			gatewayId: 'mp-gateway-lookup',
 			gatewayStatus: 'pending',
+			gatewayStatusDetail: null,
 		});
 		const prisma = {
 			payment: {
@@ -180,8 +194,10 @@ describe('PrismaPaymentRepository', () => {
 					boosterAmount: 70,
 					paymentMethod: PrismaPaymentMethod.PIX,
 					gateway: 'MERCADO_PAGO',
+					gatewayReferenceId: null,
 					gatewayId: null,
 					gatewayStatus: null,
+					gatewayStatusDetail: null,
 				}),
 				findFirst: jest.fn(),
 				upsert: jest.fn(),
@@ -205,8 +221,10 @@ describe('PrismaPaymentRepository', () => {
 					boosterAmount: 70,
 					paymentMethod: PrismaPaymentMethod.PIX,
 					gateway: 'MERCADO_PAGO',
+					gatewayReferenceId: null,
 					gatewayId: null,
 					gatewayStatus: null,
+					gatewayStatusDetail: null,
 				}),
 				findFirst: jest.fn(),
 				upsert: jest.fn(),
@@ -234,8 +252,10 @@ describe('PrismaPaymentRepository', () => {
 					boosterAmount: 70,
 					paymentMethod: 'pix',
 					gateway: 'MERCADO_PAGO',
+					gatewayReferenceId: null,
 					gatewayId: null,
 					gatewayStatus: null,
+					gatewayStatusDetail: null,
 				}),
 				findFirst: jest.fn(),
 				upsert: jest.fn(),
