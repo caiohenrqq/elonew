@@ -20,6 +20,7 @@
 - 2026-03-21T08:46:08-04:00 [TOOL] Created and pushed branch `22-mercadopago-wrapper-webhooks`; draft PR creation was attempted first but GitHub rejected it until the branch has at least one commit ahead of `main`.
 - 2026-03-21T08:46:08-04:00 [TOOL] Implemented the non-DB portion of issue `#22`, ran `pnpm biome:fix:all`, ran `pnpm --filter api exec tsc --noEmit -p tsconfig.json`, reran targeted unit/integration tests, and reran `pnpm --filter api test:e2e -- payments.e2e-spec.ts`.
 - 2026-03-21T12:50Z [TOOL] Reproduced the DB-backed payments failure, regenerated Prisma with `pnpm -w db:generate`, and reran `pnpm --filter api test:integration:db -- payments.db.integration.spec.ts` to green.
+- 2026-03-21T09:16:13-04:00 [TOOL] Installed the external `nestjs-doctor` skill from `RoloBits/nestjs-doctor` path `packages/nestjs-doctor/skill` into `~/.codex/skills/nestjs-doctor`.
 - 2026-03-21T13:03Z [TOOL] Hardened the Mercado Pago webhook path against replay-by-body-id and unsupported topics, then reran webhook-focused unit/integration/e2e coverage plus `pnpm biome:fix:all`, API typecheck, and the DB-backed payments lane.
 - 2026-03-21T13:07Z [TOOL] Closed the remaining alias-replay gap by removing topic from the processed webhook key, added alias-replay regressions, and reran the webhook-focused, e2e, formatting, typecheck, and DB-backed payments verification lanes.
 
@@ -38,5 +39,6 @@
 - 2026-03-21T08:23:58-04:00 [TOOL] Verification result: PR `#42` does satisfy issue `#40` as written; it should not be interpreted as completing the full `FR-025` product requirement or issue `#22`.
 - 2026-03-21T08:46:08-04:00 [CODE] Issue `#22` non-DB implementation is in place: payment creation now returns a Mercado Pago checkout URL, webhooks reconcile through provider data instead of trusting internal IDs from transport input, and the new gateway reference/status detail fields are wired through the payment aggregate and repository contracts.
 - 2026-03-21T12:50Z [TOOL] Issue `#22` now has green targeted verification across unit, integration, e2e, and DB-backed payments lanes after Prisma Client regeneration.
+- 2026-03-21T09:16:13-04:00 [TOOL] `nestjs-doctor` is now available as a local Codex skill for future turns after client restart.
 - 2026-03-21T13:03Z [CODE] The webhook route now rejects unsupported Mercado Pago topics before provider fetch and ignores replayed deliveries even when the unsigned body event id changes.
 - 2026-03-21T13:07Z [CODE] The webhook route now also ignores alias-based replays where the same Mercado Pago notification is delivered once as `payment` and once as `payment.updated`.
