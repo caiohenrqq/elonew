@@ -69,6 +69,18 @@ export class AppSettingsService {
 		});
 	}
 
+	get mercadoPagoAccessToken() {
+		return this.config.getOrThrow('MERCADO_PAGO_ACCESS_TOKEN', {
+			infer: true,
+		});
+	}
+
+	get mercadoPagoWebhookUrl() {
+		return this.config.getOrThrow('MERCADO_PAGO_WEBHOOK_URL', {
+			infer: true,
+		});
+	}
+
 	get orderQuoteTtlMinutes() {
 		return this.config.getOrThrow('ORDER_QUOTE_TTL_MINUTES', {
 			infer: true,

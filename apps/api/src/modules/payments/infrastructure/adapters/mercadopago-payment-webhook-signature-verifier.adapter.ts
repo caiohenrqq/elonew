@@ -1,12 +1,12 @@
-import {
-	MERCADO_PAGO_SDK_PORT_KEY,
-	type MercadoPagoSdkPort,
-} from '@integrations/mercadopago/mercadopago-sdk.port';
 import type {
 	PaymentWebhookSignatureVerifierPort,
 	VerifyPaymentWebhookSignatureInput,
 } from '@modules/payments/application/ports/payment-webhook-signature-verifier.port';
 import { Inject, Injectable } from '@nestjs/common';
+import {
+	MERCADO_PAGO_SDK_PORT_KEY,
+	type MercadoPagoSdkPort,
+} from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 
 @Injectable()
 export class MercadoPagoPaymentWebhookSignatureVerifierAdapter
@@ -21,7 +21,7 @@ export class MercadoPagoPaymentWebhookSignatureVerifierAdapter
 		return await this.mercadoPagoSdk.verifyWebhookSignature({
 			payload: {
 				eventId: input.eventId,
-				topic: 'payment',
+				topic: input.topic,
 				resourceId: input.notificationResourceId,
 			},
 			signature: input.signature,

@@ -27,8 +27,10 @@ export class Payment {
 		public readonly boosterAmount: number,
 		public readonly paymentMethod: PaymentMethod,
 		public readonly gateway: 'MERCADO_PAGO',
+		private attachedGatewayReferenceId: string | null,
 		private attachedGatewayId: string | null,
 		private attachedGatewayStatus: string | null,
+		private attachedGatewayStatusDetail: string | null,
 		private currentStatus: PaymentStatus,
 	) {}
 
@@ -51,6 +53,8 @@ export class Payment {
 			'MERCADO_PAGO',
 			null,
 			null,
+			null,
+			null,
 			PaymentStatus.AWAITING_CONFIRMATION,
 		);
 	}
@@ -62,8 +66,10 @@ export class Payment {
 		boosterAmount: number;
 		paymentMethod: PaymentMethod;
 		gateway: 'MERCADO_PAGO';
+		gatewayReferenceId: string | null;
 		gatewayId: string | null;
 		gatewayStatus: string | null;
+		gatewayStatusDetail: string | null;
 		status: PaymentStatus;
 	}): Payment {
 		return new Payment(
@@ -73,8 +79,10 @@ export class Payment {
 			input.boosterAmount,
 			input.paymentMethod,
 			input.gateway,
+			input.gatewayReferenceId,
 			input.gatewayId,
 			input.gatewayStatus,
+			input.gatewayStatusDetail,
 			input.status,
 		);
 	}
@@ -87,16 +95,31 @@ export class Payment {
 		return this.attachedGatewayId;
 	}
 
+	get gatewayReferenceId(): string | null {
+		return this.attachedGatewayReferenceId;
+	}
+
 	get gatewayStatus(): string | null {
 		return this.attachedGatewayStatus;
 	}
 
+	get gatewayStatusDetail(): string | null {
+		return this.attachedGatewayStatusDetail;
+	}
+
 	attachGatewayDetails(input: {
+		gatewayReferenceId?: string | null;
 		gatewayId: string | null;
 		gatewayStatus: string | null;
+		gatewayStatusDetail?: string | null;
 	}): void {
+		if (input.gatewayReferenceId !== undefined)
+			this.attachedGatewayReferenceId = input.gatewayReferenceId;
+
 		this.attachedGatewayId = input.gatewayId;
 		this.attachedGatewayStatus = input.gatewayStatus;
+		if (input.gatewayStatusDetail !== undefined)
+			this.attachedGatewayStatusDetail = input.gatewayStatusDetail;
 	}
 
 	confirm(): void {

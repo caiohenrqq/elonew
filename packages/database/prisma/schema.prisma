@@ -195,8 +195,10 @@ model Payment {
   boosterAmount Float
   paymentMethod PaymentMethod
   gateway       String        @default("MERCADO_PAGO")
+  gatewayReferenceId String?
   gatewayId     String?       @unique
   gatewayStatus String?
+  gatewayStatusDetail String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

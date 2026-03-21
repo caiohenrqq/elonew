@@ -45,3 +45,9 @@ export class PaymentWebhookNotificationMismatchError extends Error {
 		super('Payment webhook notification is invalid.');
 	}
 }
+
+export class PaymentWebhookTopicNotSupportedError extends Error {
+	constructor() {
+		super('Payment webhook topic is not supported.');
+	}
+}

@@ -15,8 +15,10 @@ type PaymentRecord = {
 	boosterAmount: number;
 	paymentMethod: PrismaPaymentMethod;
 	gateway: string;
+	gatewayReferenceId: string | null;
 	gatewayId: string | null;
 	gatewayStatus: string | null;
+	gatewayStatusDetail: string | null;
 };
 
 function mapDomainPaymentMethodToPersisted(
@@ -122,8 +124,10 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				boosterAmount: payment.boosterAmount,
 				paymentMethod: mapDomainPaymentMethodToPersisted(payment.paymentMethod),
 				gateway: payment.gateway,
+				gatewayReferenceId: payment.gatewayReferenceId,
 				gatewayId: payment.gatewayId,
 				gatewayStatus: payment.gatewayStatus,
+				gatewayStatusDetail: payment.gatewayStatusDetail,
 			},
 			update: {
 				status: payment.status,
@@ -131,8 +135,10 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				boosterAmount: payment.boosterAmount,
 				paymentMethod: mapDomainPaymentMethodToPersisted(payment.paymentMethod),
 				gateway: payment.gateway,
+				gatewayReferenceId: payment.gatewayReferenceId,
 				gatewayId: payment.gatewayId,
 				gatewayStatus: payment.gatewayStatus,
+				gatewayStatusDetail: payment.gatewayStatusDetail,
 			},
 		});
 	}
@@ -148,8 +154,10 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 			),
 			paymentMethod: mapPersistedPaymentMethodToDomain(record.paymentMethod),
 			gateway: this.mapPersistedGateway(record.gateway),
+			gatewayReferenceId: record.gatewayReferenceId,
 			gatewayId: record.gatewayId,
 			gatewayStatus: record.gatewayStatus,
+			gatewayStatusDetail: record.gatewayStatusDetail,
 			grossAmount: record.grossAmount,
 			boosterAmount: record.boosterAmount,
 		});

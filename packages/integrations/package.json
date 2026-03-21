@@ -1,0 +1,21 @@
+{
+	"name": "@packages/integrations",
+	"private": true,
+	"version": "0.0.0",
+	"exports": {
+		"./mercadopago/mercadopago-sdk.adapter": {
+			"types": "./dist/mercadopago/mercadopago-sdk.adapter.d.ts",
+			"default": "./dist/mercadopago/mercadopago-sdk.adapter.js"
+		},
+		"./mercadopago/mercadopago-sdk.port": {
+			"types": "./dist/mercadopago/mercadopago-sdk.port.d.ts",
+			"default": "./dist/mercadopago/mercadopago-sdk.port.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json"
+	},
+	"dependencies": {
+		"mercadopago": "^2.12.0"
+	}
+}

@@ -1,11 +1,28 @@
+type MercadoPagoSelectedPaymentMethod = 'credit_card' | 'pix' | 'boleto';
+
 export type MercadoPagoCreatePaymentInput = {
+	paymentId: string;
 	orderId: string;
 	amount: number;
+	paymentMethod: MercadoPagoSelectedPaymentMethod;
 };
 
 export type MercadoPagoCreatePaymentOutput = {
-	providerPaymentId: string;
 	checkoutUrl: string;
+	gatewayReferenceId: string;
+	gatewayStatus: string | null;
+};
+
+export type MercadoPagoFetchPaymentNotificationInput = {
+	notificationId: string;
+};
+
+export type MercadoPagoFetchPaymentNotificationOutput = {
+	internalPaymentId: string;
+	gatewayPaymentId: string;
+	gatewayStatus: string;
+	gatewayStatusDetail: string | null;
+	isApproved: boolean;
 };
 
 export type MercadoPagoWebhookPayload = {
@@ -18,6 +35,9 @@ export interface MercadoPagoSdkPort {
 	createPayment(
 		input: MercadoPagoCreatePaymentInput,
 	): Promise<MercadoPagoCreatePaymentOutput>;
+	fetchPaymentNotification(
+		input: MercadoPagoFetchPaymentNotificationInput,
+	): Promise<MercadoPagoFetchPaymentNotificationOutput>;
 	verifyWebhookSignature(input: {
 		payload: MercadoPagoWebhookPayload;
 		signature?: string;

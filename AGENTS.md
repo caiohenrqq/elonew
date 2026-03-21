@@ -1,6 +1,6 @@
 # AGENTS
 
-Global working agreements for Codex CLI in `/home/henrqq/Code/elonew`.
+Global working agreements for Codex CLI in this repository workspace.
 
 ## Project summary
 Monorepo for a League of Legends boosting platform with:
@@ -98,6 +98,7 @@ Maintain a single continuity file for the current workspace: `.agent/CONTINUITY.
   - a provenance tag: `[USER]`, `[CODE]`, `[TOOL]`, or `[ASSUMPTION]`
 - If something is unknown, write `UNCONFIRMED`.
 - If something changes, supersede it explicitly instead of silently rewriting history.
+- Do not record user-specific absolute filesystem paths in `.agent/CONTINUITY.md` (for example `/home/<user>`); prefer repo-relative paths or generic forms such as `~/.codex/...` when a path is necessary.
 
 ### Anti-drift / anti-bloat rules
 - Facts only. No transcripts and no raw logs.
@@ -284,8 +285,8 @@ A task is done when:
 - [x] Implement `CompleteOrder` with automated credential deletion logic.
 
 ### 4. Payments Integration (Mercado Pago)
-- [ ] Build `@packages/integrations/mercadopago` wrapper.
-- [ ] Implement `HandleWebhook` use-case with idempotency (using `ProcessedWebhookEvent`).
+- [x] Build `@packages/integrations/mercadopago` wrapper.
+- [x] Implement `HandleWebhook` use-case with idempotency (using `ProcessedWebhookEvent`).
 - [ ] Map Mercado Pago states to internal `PaymentStatus` and trigger order transitions.
 
 ### 5. Booster Wallet & Finances
