@@ -1,5 +1,7 @@
 # AGENTS
 
+Global working agreements for Codex CLI in `/home/henrqq/Code/elonew`.
+
 ## Project summary
 Monorepo for a League of Legends boosting platform with:
 - `apps/api` for NestJS backend
@@ -14,146 +16,246 @@ Monorepo for a League of Legends boosting platform with:
 - Stack decisions: `docs/stack.md`
 - Package management: `docs/packages.md`
 
-## Documentation rule for AI agents
-When documentation is needed, always use the official latest documentation.
+## Accuracy, recency, and sourcing (REQUIRED)
 
-## Dependency version rule for AI agents
-- Do not modify auto-generated `package.json` dependency versions from framework scaffolds (Nest/Next generators).
-- Use `@latest`/`latest` only when manually adding a new dependency or explicitly updating dependencies by hand.
+When a request depends on recency (for example: "latest", "current", "today", "as of now"):
 
-## Prisma migration rule for AI agents
+1. Establish the current date/time and state it explicitly in ISO format.
+   - Preferred command: `date -Is`
+2. Prefer official or primary sources when researching.
+   - Upstream vendor docs for any dependency, runtime, framework, cloud provider, or integration.
+3. Prefer the most recent authoritative information.
+   - Use the newest versioned docs, release notes, or changelogs.
+   - Cross-check at least two reputable sources when details are safety-sensitive or compatibility-sensitive.
+
+### Context7 MCP
+- Use Context7 when you need library or API docs.
+- If known, pin the library with slash syntax (for example `use library /supabase/supabase`).
+- Mention the target version.
+- Fetch only the minimal targeted docs needed and summarize them instead of dumping large excerpts.
+
+### Web search policy
+- Use web search only when it materially improves correctness.
+- Prefer official docs and primary sources first; otherwise use Context7 MCP or reputable widely cited references.
+- Record source dates when publish or release timing matters.
+
+## Default autonomy and safety
+- Default to read-only exploration and analysis first.
+- When edits are needed, prefer workspace-scoped write access and keep changes inside the repo.
+- When interacting with remote APIs, use read-only calls unless the user explicitly instructs otherwise.
+- If the user requests a remote API write action, perform a dry run first when feasible.
+- Never make destructive calls to remote APIs or production data sources.
+
+### Editing files
+- Make the smallest safe change that solves the issue.
+- Preserve existing style and conventions.
+- Prefer patch-style edits with small reviewable diffs over full-file rewrites.
+- After making changes, run the project’s standard checks when feasible: format or lint, tests, build or typecheck.
+
+### Reading project documents
+- Read the full source document before responding.
+- Draft the output.
+- Before finalizing, re-read the original source and verify factual accuracy, no invented details, and style preservation unless the user explicitly asked for rewriting.
+- If paraphrasing is required, label it explicitly as a paraphrase.
+
+### Container-first policy (REQUIRED)
+- Never install system packages on the host unless the user explicitly instructs it.
+- Prefer container images to supply project tooling.
+- For code projects and dependencies, use containers by default.
+- If the repo already has a container workflow, follow it.
+- If the repo has no container workflow, create a minimal one.
+- Keep repo-specific container details in this file.
+
+### Secrets and sensitive data
+- Never print secrets such as tokens, private keys, or credentials to terminal output.
+- Do not ask users to paste secrets.
+- Avoid commands that may expose secrets, such as broad env dumps.
+- Prefer existing authenticated CLIs and redact sensitive strings in displayed output.
+
+## Baseline workflow
+Start every task by determining:
+1. Goal and acceptance criteria.
+2. Constraints such as time, safety, and scope.
+3. What must be inspected: files, commands, tests, docs.
+4. Whether the request depends on recency. If yes, apply the rules above.
+5. If requirements are ambiguous, ask targeted clarifying questions before making irreversible changes.
+
+## CONTINUITY.md (REQUIRED)
+Maintain a single continuity file for the current workspace: `.agent/CONTINUITY.md`.
+
+- Read `.agent/CONTINUITY.md` at the start of each assistant turn before acting.
+- Treat `.agent/CONTINUITY.md` as the canonical surviving briefing; do not rely on earlier chat or tool output unless it is reflected there.
+- Update `.agent/CONTINUITY.md` only when there is a meaningful delta in one of these sections:
+  - `[PLANS]`
+  - `[DECISIONS]`
+  - `[PROGRESS]`
+  - `[DISCOVERIES]`
+  - `[OUTCOMES]`
+
+### File format
+- Every entry must include:
+  - an ISO timestamp
+  - a provenance tag: `[USER]`, `[CODE]`, `[TOOL]`, or `[ASSUMPTION]`
+- If something is unknown, write `UNCONFIRMED`.
+- If something changes, supersede it explicitly instead of silently rewriting history.
+
+### Anti-drift / anti-bloat rules
+- Facts only. No transcripts and no raw logs.
+- Keep the file short, bounded, and high-signal.
+- If sections become bloated, compress older items into `[MILESTONE]` bullets.
+
+### Continuity vs changelog
+- Use `.agent/CONTINUITY.md` for the current working state only: active plans, decisions, progress, discoveries, and outcomes that help the next agent continue the task safely.
+- Use `.agent/CHANGELOG.md` for durable project history: meaningful landed changes that should remain discoverable after the current task is no longer active.
+- Do not use `.agent/CONTINUITY.md` as a long-term project history file, and do not use `.agent/CHANGELOG.md` as a substitute for the current task brief.
+
+## Repo-specific execution rules
+
+### Documentation and dependency rules
+- When documentation is needed, always use the official latest documentation.
+- Do not modify auto-generated `package.json` dependency versions from framework scaffolds.
+- Use `@latest` or `latest` only when manually adding or explicitly updating a dependency.
+
+### Prisma migration rules
 - Do not hand-write standalone SQL migration files by default.
 - When a Prisma schema change requires a migration, update `schema.prisma` first and then ask the user to run `pnpm db:migrate:dev --name <migration_name>` manually.
 - If a generated migration needs review, inspect the produced `migration.sql` after generation instead of prewriting it by hand.
 
-## Command execution rule for AI agents
-- Prefer `pnpx` instead of `pnpm dlx` for one-off CLI execution in general.
-- Prefer `gh` for GitHub operations whenever possible instead of manual browser-based or raw API flows.
-- If execution is blocked by network/sandbox/permission issues, explicitly ask for human intervention and wait for guidance/approval before retrying repeatedly.
-- If a verification command is blocked by sandbox or permissions, ask the operator/human for approval to run that command outside the sandbox instead of assuming the verification is unnecessary.
-- Dependency installation commands (for example `pnpm add`, `pnpm install`, `pnpm remove`) are allowed only after explicit user permission in the current task.
-- `pnpm install` must be run by the human/operator; agents should only provide the exact command and wait for confirmation that installation is complete.
+### Command execution rules
+- Prefer `pnpx` instead of `pnpm dlx` for one-off CLI execution.
+- Prefer `gh` for GitHub operations whenever possible.
+- If execution is blocked by network, sandbox, or permissions, ask for human intervention and wait for approval or guidance instead of retrying repeatedly.
+- If a verification command is blocked by sandbox or permissions, ask the operator for approval to run it outside the sandbox.
+- Dependency installation commands such as `pnpm add`, `pnpm install`, and `pnpm remove` require explicit user permission in the current task.
+- `pnpm install` must be run by the human operator; agents should only provide the exact command and wait for confirmation.
 - After every medium or large code change, run `pnpm biome:fix:all` and typecheck before finalizing.
-- Never state or imply that everything is correct without running the relevant tests; if verification is blocked, say exactly which tests were not run and why.
-- For any agent-created commit, always follow `docs/commits.md` without exception; this rule applies to every commit message, commit split, and history rewrite performed by the agent.
-- Always ask for explicit user permission before running Git write actions (for example `git commit`, `git rebase`, `git merge`, `git tag`).
-- Never run `git push` unless the user explicitly asks for it; even when explicitly asked, ask for confirmation immediately before executing it.
+- Never imply correctness without running the relevant verification. If verification is blocked, state exactly what was not run and why.
+- For any agent-created commit, always follow `docs/commits.md`.
+- Always ask for explicit user permission before Git write actions such as `git commit`, `git rebase`, `git merge`, and `git tag`.
+- Never run `git push` unless the user explicitly asks for it. Even then, ask for confirmation immediately before executing it.
 
-## Code style rule for AI agents
+### Code style and architecture rules
 - Use indentation equivalent to 4 spaces (2 tabs).
-- Do not add code comments unless strictly necessary (for example, temporary placeholders).
-- YAML files must use spaces for indentation (never tabs).
-- Do not prefer quick fixes just because they are faster; choose the solution that best fits the documented architecture and improves long-term maintainability unless the user explicitly asks for a temporary workaround.
-- Prefer ready seams over speculative wiring: do not add future provider config, adapter methods, or abstractions unless the current issue explicitly needs them or the next committed step will consume them immediately.
-- Prefer one-line `if` statements when there is only a single throw statement (for example: `if (!order) throw new OrderNotFoundError();`).
-- In domain-driven backend flows, prefer typed domain errors from `*.errors.ts` instead of inline/manual string errors, throw them from the domain/application layer, and map them to HTTP exceptions only at the presentation boundary.
-- When a new business error appears, extend the module's domain `*.errors.ts` and reuse that type consistently across use-cases, controllers, and tests.
-- Reusable auth failures (for example missing auth, invalid access token, insufficient permissions) must also use typed module errors and central HTTP mapping; keep direct Nest HTTP exceptions only for transport-boundary concerns such as schema/request validation.
-- Avoid quick-fix type directives such as `/// <reference types=\"...\" />` for missing global types; prefer a proper project/package `tsconfig` fix (for example, `compilerOptions.types`) or explicit dependency configuration.
-- Before adding new functions or utilities, first search the codebase for existing implementations and reuse/extend them when appropriate.
-- Avoid bypassing existing abstractions with manual implementations (for example, do not read `process.env` directly in app/runtime code when `AppSettingsService`/config service is the project standard).
-- Shared workspace packages must be consumed via package dependency + package exports entrypoints (for example `@packages/config/...`), never by importing `packages/*/src/*` from app code.
-- Controller unit tests are not the default; keep them only when they protect controller-specific behavior that is not already covered by use-case plus integration/e2e tests, and prefer moving cross-layer behavior checks into integration/e2e coverage instead of mocked controller specs.
+- Do not add code comments unless strictly necessary.
+- YAML files must use spaces for indentation.
+- Do not choose a quick fix just because it is faster; prefer the solution that best fits the documented architecture and long-term maintainability unless the user explicitly asks for a temporary workaround.
+- Prefer ready seams over speculative wiring. Do not add future provider config, adapter methods, or abstractions unless the current issue needs them or the next committed step uses them immediately.
+- Prefer one-line `if` statements when there is only a single throw statement.
+- In domain-driven backend flows, prefer typed domain errors from `*.errors.ts` instead of inline or manual string errors.
+- When a new business error appears, extend the module’s domain `*.errors.ts` and reuse that type consistently across use-cases, controllers, and tests.
+- Reusable auth failures must also use typed module errors and central HTTP mapping. Keep direct Nest HTTP exceptions only for transport-boundary concerns such as schema or request validation.
+- Avoid quick-fix type directives such as `/// <reference types=\"...\" />`; fix the relevant project or package `tsconfig` or dependency setup properly.
+- Before adding new functions or utilities, search the codebase for existing implementations and reuse or extend them where appropriate.
+- Avoid bypassing existing abstractions with manual implementations. For example, do not read `process.env` directly in runtime code when the project standard is `AppSettingsService` or shared config services.
+- Shared workspace packages must be consumed via declared package dependency plus package exports entrypoints, never by importing `packages/*/src/*` from app code.
+- Controller unit tests are not the default. Keep them only when they protect controller-specific behavior that is not already covered by use-case plus integration or e2e tests.
 
-## HTTP validation rule for AI agents
-- In `apps/api`, prefer request-boundary validation with Zod schemas plus `ZodValidationPipe` over TypeScript-only body/param/query types.
-- Treat plain controller `type`/`interface` request bodies as compile-time only; they do not validate runtime input in Nest by themselves.
+### HTTP validation rules
+- In `apps/api`, prefer request-boundary validation with Zod schemas plus `ZodValidationPipe` over TypeScript-only body, param, or query types.
+- Plain controller `type` or `interface` request bodies are compile-time only and do not validate runtime input in Nest.
 - For new or changed controller endpoints that accept `@Body()`, `@Param()`, or `@Query()`, add or reuse a Zod schema and apply it through `ZodValidationPipe` unless the endpoint truly has no input shape to validate.
 - Prefer placing reusable request schemas in shared workspace packages when the contract is domain-level or reused across apps; otherwise keep them close to the API module boundary while still using package exports.
-- Prioritize Zod boundary validation when the payload includes dates, numeric fields, enums/IDs, credentials, or other user-provided values that are later transformed or drive business decisions.
-- Keep responsibility separation clear: `ZodValidationPipe` validates transport shape/basic field constraints; use-cases and domain entities enforce business rules and state transitions.
-- Existing reference implementation: `apps/api/src/common/http/zod-validation.pipe.ts` used by `apps/api/src/modules/orders/presentation/orders.controller.ts` with `packages/shared/src/orders/create-order.schema.ts`.
-
-## Documentation maintenance rule for AI agents
-- After every medium or large change, add a brief summary entry to the `## Changelog` section in this file.
-- **Development Roadmap:** When a task in the `## Development Roadmap` is completed, mark it with an `[x]`.
+- Prioritize Zod boundary validation when payloads include dates, numeric fields, enums or IDs, credentials, or other user-provided values that later drive business decisions.
+- Keep responsibility separation clear: `ZodValidationPipe` validates transport shape and basic field constraints, while use-cases and domain entities enforce business rules and state transitions.
+- Reference implementation: `apps/api/src/common/http/zod-validation.pipe.ts` used by `apps/api/src/modules/orders/presentation/orders.controller.ts` with `packages/shared/src/orders/create-order.schema.ts`.
 
 ## Issue execution workflow for AI agents
-When the user says "let's start" on a GitHub issue or asks to begin issue work, follow this workflow by default:
+When the user says "let's start" on a GitHub issue or asks to begin issue work, follow this workflow by default.
 
-1. Read the issue and confirm the real scope before coding.
+### Phase 1: Inspect the issue before branching
+1. Get the issue first and confirm the actual scope before any branch, worktree, or PR work.
    - Check the GitHub issue body.
    - Check `AGENTS.md` and the relevant docs under `docs/`.
-   - Call out if the issue scope conflicts with roadmap/docs.
+   - Call out any conflict between the issue and the roadmap, architecture docs, or existing repo rules.
+2. Review implementation overlap before committing to the approach.
+   - Identify the main modules, controllers, shared packages, and infrastructure points the issue is likely to touch.
+   - Check open issues and active branches or PRs for overlap in those same areas.
+   - If overlap is substantial, call out the risk and propose an execution order or dependency.
+3. Prepare the implementation plan before branch creation.
+   - The plan should match codebase standards and current architecture.
+   - Keep it practical and decision-complete enough for implementation.
+   - Keep implementation aligned with the tracked issue body, not only with local architectural preference.
 
-2. Create or switch to the issue branch before implementation.
-   - Before creating or switching to the issue branch, run `git fetch && git pull` to make sure the local base branch is up to date.
+### Phase 2: Create the isolated working area
+4. Create or switch to the issue branch only after the issue scope and plan are clear.
+   - Before creating or switching to the issue branch, run `git fetch && git pull` so the local base branch is up to date.
    - Prefer a descriptive branch name tied to the issue number.
    - Do not start implementation on `main` unless the user explicitly asks for it.
-   - After switching, keep all issue-related code changes on that active issue branch only; do not create or edit issue code from a different local branch.
+   - After switching, keep all issue-related code changes on that active issue branch only.
+5. For parallel issue work, prefer one `git worktree` per issue or agent.
+   - Keep the main repository as the coordination root, then create sibling worktrees for each active issue branch.
+   - Recommended naming pattern:
+     - worktree path: `../workspaces/<issue-number>-<short-name>`
+     - branch name: `<issue-number>-<short-name>`
+   - Preferred setup flow from the main repository root:
+     1. Create or switch to the issue branch in a new worktree with `git worktree add <path> -b <branch>` when the branch does not exist yet.
+     2. If the branch already exists, use `git worktree add <path> <branch>`.
+     3. Prepare the worktree environment before coding or testing:
+        - Have the human run `pnpm install` inside the new worktree.
+        - Ensure required local env files exist in the worktree. For the current test bootstrap, verify `apps/api/.env`, `apps/api/.env.test`, `apps/web/.env`, and `apps/workers/.env`.
+        - Use `pnpm --filter api test:e2e -- <file>` for e2e files and `pnpm --filter api test:integration:db -- <file>` for DB-backed integration files instead of the generic `pnpm --filter api test -- <file>` entrypoint.
+        - Run `pnpm -w db:generate` only if Prisma client artifacts are actually missing in the worktree.
+        - Verify the worktree can execute at least one relevant narrow command before starting implementation.
+     4. Run all coding, tests, and issue-specific commands from inside that worktree.
+   - Do not have multiple agents use the same worktree or the same checked-out branch at the same time.
+   - After the issue is merged or no longer active, remove the worktree with `git worktree remove <path>`.
 
-3. Create a Draft PR linked to the issue before implementation.
+### Phase 3: Open and maintain the issue PR
+6. Create a Draft PR linked to the issue before implementation.
    - Open it as soon as the branch exists and the issue scope is confirmed.
-   - Link it to the issue using GitHub-closing syntax or the repository's preferred linked-issue format.
-   - Assign it to `caiohenrqq` unless the user explicitly asks for a different assignee.
+   - Link it to the issue using GitHub-closing syntax or the repository’s preferred linked-issue format.
+   - Assign it to `caiohenrqq` unless the user explicitly asks for someone else.
    - Add the relevant labels as soon as the scope is clear.
-   - Keep the PR in draft until the implementation is ready for review and keep it scoped to the issue.
-
-4. Create an implementation plan before coding.
-   - The plan should match codebase standards and the current architecture.
-   - Keep it practical and decision-complete enough for implementation.
-
-5. Use TDD with focus on core behavior first.
-   - Start with fail-first tests for the decision-heavy/core feature behavior.
-   - Do not force micro-TDD for every trivial wiring change; prefer TDD around the core business rules and critical flows.
-   - After fail-first tests, implement the minimum needed to pass.
-   - Refactor after the core behavior is green.
-
-6. Verify after coding.
-   - Run targeted tests during implementation.
-   - After every medium or large code change, run `pnpm biome:fix:all`.
-   - Verify TypeScript/TSX syntax and type correctness before finalizing. If there is no dedicated typecheck script, run project-appropriate `tsc --noEmit` checks.
-
-7. Update issue progress as work advances.
-   - Do not leave issue checkboxes only for the end.
-   - When a checklist item or done-when item is actually complete, update the GitHub issue and mark it checked.
-   - If follow-up debt is discovered that should not block the issue, create or update a separate issue for it.
-
-8. Maintain the PR using the repository template and keep unrelated local changes out of the issue PR unless the user explicitly asks.
+   - Keep it in draft until implementation is ready for review and keep it scoped to the issue.
+7. Maintain the PR using the repository template and keep unrelated local changes out of the issue PR unless the user explicitly asks.
    - PR title must follow the exact Conventional Commit-style pattern: `<type>(<scope>): <description>`.
    - PR body must follow `.github/PULL_REQUEST_TEMPLATE/pull_request_template.md` exactly, preserving the same section headings, order, checklist items, and `Closes: <issue link>` line.
-   - PR labels must be set explicitly from the repository’s existing label set; do not leave relevant PRs unlabeled.
-   - When updating an existing PR, normalize its title, body, and labels to the same exact standard instead of using ad hoc formats.
+   - PR labels must be set explicitly from the repository’s existing label set.
+   - When updating an existing PR, normalize its title, body, and labels to the same standard instead of using ad hoc formats.
 
-9. Ask for confirmation at the right moments.
+### Phase 4: Implement with TDD and keep issue state accurate
+8. Use TDD with focus on core behavior first.
+   - Start with fail-first tests for the decision-heavy or core feature behavior.
+   - Do not force micro-TDD for every trivial wiring change.
+   - After fail-first tests, implement the minimum needed to pass.
+   - Refactor after the core behavior is green.
+9. Keep issue progress and scope updated as work advances.
+   - Do not leave issue checkboxes only for the end.
+   - When a checklist item or done-when item is actually complete, update the GitHub issue and mark it checked.
+   - If implementation choices narrow or expand the effective scope, update the GitHub issue text or checklists immediately.
+   - If follow-up debt is discovered that should not block the issue, create or update a separate issue for it.
+10. In payment, order, and auth flows, prioritize behavioral safety first.
+   - Preserve or strengthen idempotency, duplicate protection, and ownership checks before adding future-facing scaffolding.
+   - Add regression tests for the business rule being changed, not only for the new structure around it.
+
+### Phase 5: Verify and close the loop
+11. Verify after coding.
+   - Run targeted tests during implementation.
+   - After every medium or large code change, run `pnpm biome:fix:all`.
+   - Verify TypeScript or TSX syntax and type correctness before finalizing. If there is no dedicated typecheck script, run an appropriate `tsc --noEmit` check.
+12. Ask for confirmation at the right moments.
    - Ask before Git write actions that require user permission by project rule.
-   - During TDD-driven issue work, ask for confirmation after each major phase when the user requested that workflow (for example: fail-first tests added, core implementation green, refactor/verification complete).
+   - During TDD-driven issue work, ask for confirmation after each major phase when the user explicitly requested that workflow.
 
-10. Check issue overlap before implementation when other issue work is active.
-   - Identify the main modules, controllers, shared packages, and infrastructure points the issue is likely to touch before coding.
-   - Check open issues and active branches/PRs for overlap in those same areas.
-   - If overlap is substantial, call out the conflict risk, propose an execution order or dependency, and avoid parallel implementation in separate branches unless the user explicitly wants that risk.
-   - Prefer landing refactors or shared-architecture changes before dependent feature work that would otherwise duplicate or conflict with those changes.
+## Documentation maintenance rules
+- After every medium or large change, add a brief summary entry to `.agent/CHANGELOG.md`.
+- When a task in `## Development Roadmap` is completed, mark it with `[x]`.
+- Documentation updates should be exhaustive for impacted areas before a task is considered done.
 
-11. Keep implementation aligned with the tracked issue body, not only with local architectural preference.
-   - If implementation choices narrow or expand the effective scope, update the GitHub issue text/checklists immediately instead of leaving the issue claiming work that the branch no longer contains.
-   - In payment/order/auth flows, prioritize behavioral safety first: preserve or strengthen idempotency, duplicate protection, and ownership checks before adding future-facing scaffolding.
-   - Add regression tests for the business rule being changed, not only for the new structure or abstraction added around it.
+## Definition of done
+A task is done when:
+- the requested change is implemented or the question is answered
+- verification is provided
+- build is attempted when source code changed
+- linting is run when source code changed
+- errors or warnings are addressed, or explicitly listed and agreed as out of scope
+- tests and typecheck are run as applicable
+- documentation is updated for impacted areas
+- impact is explained: what changed, where, and why
+- follow-ups are listed if anything was intentionally left out
+- `.agent/CONTINUITY.md` is updated if the change materially affected goal, state, or decisions
 
-## Multi-agent issue workflow for AI agents
-- When parallel issue work is needed, prefer one `git worktree` per issue/agent instead of sharing the same working directory across multiple agents.
-- Keep the main repository as the coordination root, then create sibling worktrees for each active issue branch.
-- Never create or edit issue code outside the worktree/branch currently assigned to that issue.
-- Recommended naming pattern:
-  - worktree path: `../workspaces/<issue-number>-<short-name>`
-  - branch name: `<issue-number>-<short-name>`
-- Preferred setup flow from the main repository root:
-  1. Create or switch to the issue branch in a new worktree with `git worktree add <path> -b <branch>` when the branch does not exist yet.
-  2. If the branch already exists, use `git worktree add <path> <branch>`.
-  3. Prepare the worktree environment before coding or testing:
-     - have the human run `pnpm install` inside the new worktree
-     - ensure required local env files exist in the worktree; if they are local-only and missing, copy them from the main repository checkout before running commands
-     - for the current test bootstrap, verify `apps/api/.env`, `apps/api/.env.test`, `apps/web/.env`, and `apps/workers/.env`
-     - use `pnpm --filter api test:e2e -- <file>` for e2e files and `pnpm --filter api test:integration:db -- <file>` for DB-backed integration files instead of the generic `pnpm --filter api test -- <file>` entrypoint
-     - run `pnpm -w db:generate` only if Prisma client artifacts are actually missing in the worktree
-     - verify the worktree can execute at least one relevant narrow command before starting implementation
-  4. Run all coding, tests, and issue-specific commands from inside that worktree, not from the main repository directory.
-- Use the normal issue workflow above inside each worktree; `gh` remains the default tool for issue reading, Draft PR creation, issue linking, assignment, and labeling.
-- Do not have multiple agents use the same worktree or the same checked-out branch at the same time.
-- After the issue is merged or no longer active, remove the worktree with `git worktree remove <path>` instead of deleting the directory manually.
-- If a branch is no longer needed after merge, delete it with the normal non-destructive Git flow only after confirming it is safe to do so.
-
-Official docs to use:
+## Official docs
 - NestJS: https://docs.nestjs.com/
 - Next.js: https://nextjs.org/docs
 - Prisma: https://www.prisma.io/docs
@@ -213,42 +315,4 @@ Official docs to use:
 - [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
 
 ## Changelog
-- Narrowed issue `#40` to the actual landed prerequisite scope, and added agent guidance to avoid speculative feature scaffolding, keep issues aligned with implementation, and prioritize behavioral safety plus regression coverage in future feature work.
-- Prepared the payments module for future Mercado Pago integration by moving local payment-id generation server-side, persisting gateway metadata defaults/lookups, extending Mercado Pago runtime config, and adding regression coverage without implementing real provider calls or webhook reconciliation yet.
-- Secured payment mutation and webhook boundaries by moving confirm/fail/release routes behind internal API-key auth, requiring verified Mercado Pago webhook signatures before payment confirmation, and adding auth/webhook regression coverage across unit, integration, e2e, and DB-backed tests.
-- Added enum-backed payment-method selection to payment creation/get flows, with shared payment-method contracts, Zod validation, payment aggregate persistence, and regression coverage across unit, integration, and e2e tests pending Prisma migration generation.
-- Added a strict agent rule that pull request titles, bodies, and labels must always follow the repository PR template exactly when creating or updating PRs.
-- Hardened coupon checkout by aligning the in-memory path with checkout-time coupon revalidation, adding concurrent first-order coupon redemption coverage, and making the generated coupon migration safe for non-empty coupon tables.
-- Revalidated coupon eligibility during quote consumption to stop first-order coupon stockpiling, and normalized all coupon validation failures to the same generic bad-request response with DB/e2e regression coverage.
-- Added coupon-aware quote checkout with typed coupon validation, quote-to-order coupon persistence, discounted payment amount coverage, and support for fixed or percentage coupon discounts including first-order-only enforcement.
-- Added DB-backed concurrency coverage proving same-quote double-submit creates exactly one order, consumes the quote once, and fails the loser with the expected quote-used error without requiring checkout implementation changes.
-- Added a dedicated order-checkout boundary so quote consumption and order creation are linked transactionally in Prisma, while tests now cover quote rollback on create failure and cross-client payment reads with ownership-aware in-memory payment lookup.
-- Replaced stateless order quote tokens with persisted one-time client-owned quotes, enforced client ownership on order/payment reads and payment creation, and added security regression coverage for quote reuse and cross-client checkout access.
-- Added quote-driven subtotal calculation for orders, persisted quote-derived pricing on created orders, and changed payment creation to derive the charge amount from the persisted order total so checkout pays the amount the user saw.
-- Replaced the wallet-release BullMQ job id delimiter from `:` to a BullMQ-safe format and added direct scheduler coverage so containerized enqueue paths can succeed without runtime job-id validation failures.
-- Fixed the Docker API dev watch runner to start the emitted `apps/api/dist/apps/api/src/main.js` entrypoint so the API container actually serves requests after the watch build completes.
-- Pointed the Dockerized workers runtime at `http://api:3000` for internal wallet-release API calls so consumed BullMQ jobs resolve the API container instead of container-local `localhost`.
-- Added a dedicated Redis service to the dev Docker Compose stack and switched containerized API/workers `REDIS_URL` wiring from `localhost` to the compose `redis` hostname so BullMQ-based flows boot correctly in Docker.
-- Refined the workers wallet-release flow to map shared queue payloads at the infrastructure boundary, use a worker-local typed processing input internally, and standardize executor/invalid-job failures with typed module errors plus targeted tests.
-- Centralized workers env validation and BullMQ Redis connection parsing in `@packages/config`, then expanded worker/runtime coverage for test-mode bootstrap and shared Redis connection parsing to reduce duplication drift across API and workers.
-- Centralized wallet release defaults in `@packages/config` and the internal wallet-release route contract in `@packages/shared` to remove duplicated runtime sources of truth across API and workers.
-- Refactored the workers wallet-release runtime into a Nest-based feature module with explicit application ports/use-cases, a broker-agnostic API job-scheduler port, and BullMQ isolated to infrastructure adapters on both publishing and consuming sides.
-- Replaced the workers wallet-release interval polling plan with a BullMQ/Redis issue plan centered on delayed per-order release jobs and a targeted internal wallet-release endpoint contract.
-- Implemented email-based auth login with JWT access tokens, DB-backed refresh-token rotation, explicit logout revocation, auth session persistence, and auth unit/integration/e2e coverage.
-- Removed redundant API controller unit tests in favor of integration/e2e coverage and documented that controller specs should exist only for uniquely controller-specific behavior.
-- Added explicit branch-discipline rules requiring `git fetch && git pull` before starting issue branches and forbidding issue code changes outside the active branch/worktree.
-- Standardized reusable auth guard failures around typed auth errors with shared `401`/`403` HTTP mapping, while keeping transport-boundary validation exceptions explicit.
-- Migrated the API transport bootstrap from Nest Express to Fastify, centralized app creation in a shared HTTP factory, and updated API e2e setup to build Fastify-backed test apps.
-- Implemented the foundational Users module with pending-account sign-up, email-confirmation placeholder activation, Prisma-backed persistence, typed user errors, and API/e2e/DB coverage for the new auth entry flow.
-- Clarified worktree bootstrap with the full env-file set currently needed for test setup and the correct API test commands for e2e and DB-backed integration files.
-- Added an explicit rule that `pnpm install` must be run by the human/operator and agents should only provide the command.
-- Added explicit worktree bootstrap instructions so new agent workspaces are prepared for install, env setup, Prisma generation, and test execution before coding starts.
-- Added a conflict-prevention rule requiring issue overlap checks before implementation when other active issue work exists.
-- Added a strict agent rule to prefer `gh` for GitHub operations whenever possible.
-- Enforced a strict agent rule that all agent-created commits, including rewritten history, must always follow `docs/commits.md`.
-- Bootstrapped the monorepo, core docs, Docker/dev scripts, and workspace-wide tooling (`pnpm`, Biome, env conventions, aliases, package boundaries).
-- Built out the API modular structure across Orders, Payments, Wallet, Health, Config/Settings, Prisma persistence, and shared controller/error-mapping patterns with TDD-first coverage.
-- Stabilized local/dev/runtime behavior around Docker watch mode, API bootstrap/restart flow, Prisma 7 runtime configuration, DB-backed test lanes, and test bootstrap scripts.
-- Added roadmap-aligned backend features including order lifecycle completion, payment hold/webhook flows, wallet lock/withdrawal flows, authenticated order creation groundwork, and typed domain errors for business failures.
-- Standardized agent workflow guidance around architecture-first changes, typed domain errors, Zod boundary validation, early Draft PR creation/linking/assignment, and multi-agent `git worktree` usage with `gh`.
-- Tightened agent verification rules so sandbox-blocked test commands must be escalated to the operator/human for approval, and agents must never claim correctness without running the relevant tests or explicitly naming the blocked verification.
+Moved to `.agent/CHANGELOG.md`.

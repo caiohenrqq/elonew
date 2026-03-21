@@ -1,0 +1,43 @@
+# CHANGELOG
+
+- Reworked `AGENTS.md` into a consolidated operating guide: added the new global accuracy, sourcing, safety, continuity, container, and definition-of-done baseline; removed overlap; and reordered issue handling so agents inspect the issue, validate overlap, and prepare a plan before branch or worktree creation.
+- Moved the workspace changelog out of `AGENTS.md` into `.agent/CHANGELOG.md` so operating instructions stay compact while historical guidance remains available.
+- Narrowed issue `#40` to the actual landed prerequisite scope, and added agent guidance to avoid speculative feature scaffolding, keep issues aligned with implementation, and prioritize behavioral safety plus regression coverage in future feature work.
+- Prepared the payments module for future Mercado Pago integration by moving local payment-id generation server-side, persisting gateway metadata defaults/lookups, extending Mercado Pago runtime config, and adding regression coverage without implementing real provider calls or webhook reconciliation yet.
+- Secured payment mutation and webhook boundaries by moving confirm/fail/release routes behind internal API-key auth, requiring verified Mercado Pago webhook signatures before payment confirmation, and adding auth/webhook regression coverage across unit, integration, e2e, and DB-backed tests.
+- Added enum-backed payment-method selection to payment creation/get flows, with shared payment-method contracts, Zod validation, payment aggregate persistence, and regression coverage across unit, integration, and e2e tests pending Prisma migration generation.
+- Added a strict agent rule that pull request titles, bodies, and labels must always follow the repository PR template exactly when creating or updating PRs.
+- Hardened coupon checkout by aligning the in-memory path with checkout-time coupon revalidation, adding concurrent first-order coupon redemption coverage, and making the generated coupon migration safe for non-empty coupon tables.
+- Revalidated coupon eligibility during quote consumption to stop first-order coupon stockpiling, and normalized all coupon validation failures to the same generic bad-request response with DB/e2e regression coverage.
+- Added coupon-aware quote checkout with typed coupon validation, quote-to-order coupon persistence, discounted payment amount coverage, and support for fixed or percentage coupon discounts including first-order-only enforcement.
+- Added DB-backed concurrency coverage proving same-quote double-submit creates exactly one order, consumes the quote once, and fails the loser with the expected quote-used error without requiring checkout implementation changes.
+- Added a dedicated order-checkout boundary so quote consumption and order creation are linked transactionally in Prisma, while tests now cover quote rollback on create failure and cross-client payment reads with ownership-aware in-memory payment lookup.
+- Replaced stateless order quote tokens with persisted one-time client-owned quotes, enforced client ownership on order/payment reads and payment creation, and added security regression coverage for quote reuse and cross-client checkout access.
+- Added quote-driven subtotal calculation for orders, persisted quote-derived pricing on created orders, and changed payment creation to derive the charge amount from the persisted order total so checkout pays the amount the user saw.
+- Replaced the wallet-release BullMQ job id delimiter from `:` to a BullMQ-safe format and added direct scheduler coverage so containerized enqueue paths can succeed without runtime job-id validation failures.
+- Fixed the Docker API dev watch runner to start the emitted `apps/api/dist/apps/api/src/main.js` entrypoint so the API container actually serves requests after the watch build completes.
+- Pointed the Dockerized workers runtime at `http://api:3000` for internal wallet-release API calls so consumed BullMQ jobs resolve the API container instead of container-local `localhost`.
+- Added a dedicated Redis service to the dev Docker Compose stack and switched containerized API/workers `REDIS_URL` wiring from `localhost` to the compose `redis` hostname so BullMQ-based flows boot correctly in Docker.
+- Refined the workers wallet-release flow to map shared queue payloads at the infrastructure boundary, use a worker-local typed processing input internally, and standardize executor/invalid-job failures with typed module errors plus targeted tests.
+- Centralized workers env validation and BullMQ Redis connection parsing in `@packages/config`, then expanded worker/runtime coverage for test-mode bootstrap and shared Redis connection parsing to reduce duplication drift across API and workers.
+- Centralized wallet release defaults in `@packages/config` and the internal wallet-release route contract in `@packages/shared` to remove duplicated runtime sources of truth across API and workers.
+- Refactored the workers wallet-release runtime into a Nest-based feature module with explicit application ports/use-cases, a broker-agnostic API job-scheduler port, and BullMQ isolated to infrastructure adapters on both publishing and consuming sides.
+- Replaced the workers wallet-release interval polling plan with a BullMQ/Redis issue plan centered on delayed per-order release jobs and a targeted internal wallet-release endpoint contract.
+- Implemented email-based auth login with JWT access tokens, DB-backed refresh-token rotation, explicit logout revocation, auth session persistence, and auth unit/integration/e2e coverage.
+- Removed redundant API controller unit tests in favor of integration/e2e coverage and documented that controller specs should exist only for uniquely controller-specific behavior.
+- Added explicit branch-discipline rules requiring `git fetch && git pull` before starting issue branches and forbidding issue code changes outside the active branch/worktree.
+- Standardized reusable auth guard failures around typed auth errors with shared `401`/`403` HTTP mapping, while keeping transport-boundary validation exceptions explicit.
+- Migrated the API transport bootstrap from Nest Express to Fastify, centralized app creation in a shared HTTP factory, and updated API e2e setup to build Fastify-backed test apps.
+- Implemented the foundational Users module with pending-account sign-up, email-confirmation placeholder activation, Prisma-backed persistence, typed user errors, and API/e2e/DB coverage for the new auth entry flow.
+- Clarified worktree bootstrap with the full env-file set currently needed for test setup and the correct API test commands for e2e and DB-backed integration files.
+- Added an explicit rule that `pnpm install` must be run by the human/operator and agents should only provide the command.
+- Added explicit worktree bootstrap instructions so new agent workspaces are prepared for install, env setup, Prisma generation, and test execution before coding starts.
+- Added a conflict-prevention rule requiring issue overlap checks before implementation when other active issue work exists.
+- Added a strict agent rule to prefer `gh` for GitHub operations whenever possible.
+- Enforced a strict agent rule that all agent-created commits, including rewritten history, must always follow `docs/commits.md`.
+- Bootstrapped the monorepo, core docs, Docker/dev scripts, and workspace-wide tooling (`pnpm`, Biome, env conventions, aliases, package boundaries).
+- Built out the API modular structure across Orders, Payments, Wallet, Health, Config/Settings, Prisma persistence, and shared controller/error-mapping patterns with TDD-first coverage.
+- Stabilized local/dev/runtime behavior around Docker watch mode, API bootstrap/restart flow, Prisma 7 runtime configuration, DB-backed test lanes, and test bootstrap scripts.
+- Added roadmap-aligned backend features including order lifecycle completion, payment hold/webhook flows, wallet lock/withdrawal flows, authenticated order creation groundwork, and typed domain errors for business failures.
+- Standardized agent workflow guidance around architecture-first changes, typed domain errors, Zod boundary validation, early Draft PR creation/linking/assignment, and multi-agent `git worktree` usage with `gh`.
+- Tightened agent verification rules so sandbox-blocked test commands must be escalated to the operator/human for approval, and agents must never claim correctness without running the relevant tests or explicitly naming the blocked verification.
