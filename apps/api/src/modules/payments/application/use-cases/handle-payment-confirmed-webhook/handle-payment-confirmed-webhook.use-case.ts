@@ -3,6 +3,10 @@ import {
 	type OrderPaymentConfirmationPort,
 } from '@modules/payments/application/ports/order-payment-confirmation.port';
 import {
+	PAYMENT_GATEWAY_PORT_KEY,
+	type PaymentGatewayPort,
+} from '@modules/payments/application/ports/payment-gateway.port';
+import {
 	PAYMENT_REPOSITORY_KEY,
 	type PaymentRepositoryPort,
 } from '@modules/payments/application/ports/payment-repository.port';
@@ -18,12 +22,13 @@ import {
 	PaymentNotFoundError,
 	PaymentWebhookNotificationMismatchError,
 	PaymentWebhookSignatureInvalidError,
+	PaymentWebhookTopicNotSupportedError,
 } from '@modules/payments/domain/payment.errors';
 import { Inject, Injectable } from '@nestjs/common';
 
 type HandlePaymentConfirmedWebhookInput = {
 	eventId: string;
-	paymentId: string;
+	topic: string;
 	notificationResourceId: string;
 	requestId?: string;
 	signature?: string;
@@ -44,6 +49,8 @@ export class HandlePaymentConfirmedWebhookUseCase {
 		private readonly orderPaymentConfirmationPort: OrderPaymentConfirmationPort,
 		@Inject(PAYMENT_WEBHOOK_SIGNATURE_VERIFIER_PORT_KEY)
 		private readonly paymentWebhookSignatureVerifier: PaymentWebhookSignatureVerifierPort,
+		@Inject(PAYMENT_GATEWAY_PORT_KEY)
+		private readonly paymentGatewayPort: PaymentGatewayPort,
 	) {}
 
 	async execute(
@@ -52,22 +59,48 @@ export class HandlePaymentConfirmedWebhookUseCase {
 		const isSignatureValid =
 			await this.paymentWebhookSignatureVerifier.verify(input);
 		if (!isSignatureValid) throw new PaymentWebhookSignatureInvalidError();
-		if (input.notificationResourceId !== input.paymentId)
-			throw new PaymentWebhookNotificationMismatchError();
+		if (!this.isSupportedTopic(input.topic))
+			throw new PaymentWebhookTopicNotSupportedError();
 
-		const alreadyProcessed = await this.processedWebhookEventPort.has(
-			input.eventId,
+		const processedEventKey = this.buildProcessedEventKey(
+			input.notificationResourceId,
 		);
+		const alreadyProcessed =
+			await this.processedWebhookEventPort.has(processedEventKey);
 		if (alreadyProcessed) return { processed: false };
 
-		const payment = await this.paymentRepository.findById(input.paymentId);
+		const notification = await this.paymentGatewayPort.fetchPaymentNotification(
+			{
+				notificationId: input.notificationResourceId,
+			},
+		);
+		if (!notification.internalPaymentId)
+			throw new PaymentWebhookNotificationMismatchError();
+
+		const payment = await this.paymentRepository.findById(
+			notification.internalPaymentId,
+		);
 		if (!payment) throw new PaymentNotFoundError();
 
-		payment.confirm();
+		payment.attachGatewayDetails({
+			gatewayId: notification.gatewayPaymentId,
+			gatewayStatus: notification.gatewayStatus,
+			gatewayStatusDetail: notification.gatewayStatusDetail,
+		});
+		if (notification.isApproved) payment.confirm();
 		await this.paymentRepository.save(payment);
-		await this.orderPaymentConfirmationPort.markAsPaid(payment.orderId);
-		await this.processedWebhookEventPort.markProcessed(input.eventId);
+		if (notification.isApproved)
+			await this.orderPaymentConfirmationPort.markAsPaid(payment.orderId);
+		await this.processedWebhookEventPort.markProcessed(processedEventKey);
 
 		return { processed: true };
+	}
+
+	private isSupportedTopic(topic: string): boolean {
+		return topic === 'payment' || topic === 'payment.updated';
+	}
+
+	private buildProcessedEventKey(notificationResourceId: string): string {
+		return `mercadopago:${notificationResourceId}`;
 	}
 }

@@ -1,5 +1,4 @@
 import { createHmac } from 'node:crypto';
-import { MERCADO_PAGO_SDK_PORT_KEY } from '@integrations/mercadopago/mercadopago-sdk.port';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
@@ -19,6 +18,7 @@ import { InMemoryProcessedWebhookEventRepository } from '@modules/payments/infra
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
+import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
@@ -116,7 +116,18 @@ describe('Payments (e2e)', () => {
 			.useClass(InMemoryProcessedWebhookEventRepository)
 			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
 			.useValue({
-				createPayment: jest.fn(),
+				createPayment: jest.fn(async ({ paymentId }) => ({
+					checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
+					gatewayReferenceId: `pref-${paymentId}`,
+					gatewayStatus: 'pending',
+				})),
+				fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
+					internalPaymentId: notificationId,
+					gatewayPaymentId: `mp-${notificationId}`,
+					gatewayStatus: 'approved',
+					gatewayStatusDetail: 'accredited',
+					isApproved: true,
+				})),
 				verifyWebhookSignature: jest.fn(async ({ signature }) => {
 					return signature === validWebhookSignature;
 				}),
@@ -211,7 +222,7 @@ describe('Payments (e2e)', () => {
 			.execute();
 	});
 
-	it('rejects payment-confirmed webhook payloads missing eventId', async () => {
+	it('rejects Mercado Pago webhook payloads missing the provider event id', async () => {
 		const token = signToken({ sub: 'client-2', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
 
@@ -226,13 +237,50 @@ describe('Payments (e2e)', () => {
 			.execute();
 
 		await requestHttp(app)
-			.post('/payments/webhooks/payment-confirmed')
+			.post('/payments/webhooks/mercadopago')
 			.set('x-request-id', 'request-1')
 			.set('x-signature', validWebhookSignature)
 			.send({
-				paymentId: 'payment-1',
+				type: 'payment.updated',
+				action: 'payment.updated',
+				data: { id: 'payment-1' },
 			})
 			.expect(400)
+			.execute();
+	});
+
+	it('rejects Mercado Pago webhook payloads for unsupported topics', async () => {
+		const token = signToken({
+			sub: 'client-unsupported-topic',
+			role: 'CLIENT',
+		});
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.post('/payments/webhooks/mercadopago')
+			.set('x-request-id', 'request-unsupported-topic')
+			.set('x-signature', validWebhookSignature)
+			.send({
+				id: 'event-unsupported-topic',
+				type: 'merchant_order',
+				action: 'merchant_order.updated',
+				data: { id: 'payment-unsupported-topic' },
+			})
+			.expect(401, {
+				message: 'Payment webhook topic is not supported.',
+				error: 'Unauthorized',
+				statusCode: 401,
+			})
 			.execute();
 	});
 
@@ -301,7 +349,7 @@ describe('Payments (e2e)', () => {
 			.execute();
 	});
 
-	it('rejects payment-confirmed webhooks without a valid signature', async () => {
+	it('rejects Mercado Pago webhooks without a valid signature', async () => {
 		const token = signToken({ sub: 'client-webhook', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
 		let paymentId = '';
@@ -320,12 +368,14 @@ describe('Payments (e2e)', () => {
 			.execute();
 
 		await requestHttp(app)
-			.post(`/payments/webhooks/payment-confirmed?data.id=${paymentId}`)
+			.post('/payments/webhooks/mercadopago')
 			.set('x-request-id', 'request-invalid-signature')
 			.set('x-signature', 'ts=1710000000,v1=invalid')
 			.send({
-				eventId: 'event-invalid-signature',
-				paymentId,
+				id: 'event-invalid-signature',
+				type: 'payment.updated',
+				action: 'payment.updated',
+				data: { id: paymentId },
 			})
 			.expect(401, {
 				message: 'Invalid payment webhook signature.',
@@ -335,7 +385,7 @@ describe('Payments (e2e)', () => {
 			.execute();
 	});
 
-	it('accepts webhook confirmations only with a valid Mercado Pago signature', async () => {
+	it('accepts Mercado Pago webhook confirmations only with a valid signature', async () => {
 		const token = signToken({ sub: 'client-webhook-ok', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
 		let paymentId = '';
@@ -353,14 +403,104 @@ describe('Payments (e2e)', () => {
 			.execute();
 
 		await requestHttp(app)
-			.post(`/payments/webhooks/payment-confirmed?data.id=${paymentId}`)
+			.post('/payments/webhooks/mercadopago')
 			.set('x-request-id', 'request-valid-signature')
 			.set('x-signature', validWebhookSignature)
 			.send({
-				eventId: 'event-valid-signature',
-				paymentId,
+				id: 'event-valid-signature',
+				type: 'payment.updated',
+				action: 'payment.updated',
+				data: { id: paymentId },
 			})
 			.expect(200, { processed: true })
+			.execute();
+	});
+
+	it('ignores replayed Mercado Pago webhooks even when the body event id changes', async () => {
+		const token = signToken({ sub: 'client-webhook-replay', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+		let paymentId = '';
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post('/payments/webhooks/mercadopago')
+			.set('x-request-id', 'request-replay')
+			.set('x-signature', validWebhookSignature)
+			.send({
+				id: 'event-replay-original',
+				type: 'payment.updated',
+				action: 'payment.updated',
+				data: { id: paymentId },
+			})
+			.expect(200, { processed: true })
+			.execute();
+
+		await requestHttp(app)
+			.post('/payments/webhooks/mercadopago')
+			.set('x-request-id', 'request-replay')
+			.set('x-signature', validWebhookSignature)
+			.send({
+				id: 'event-replay-forged',
+				type: 'payment.updated',
+				action: 'payment.updated',
+				data: { id: paymentId },
+			})
+			.expect(200, { processed: false })
+			.execute();
+	});
+
+	it('ignores replayed Mercado Pago webhooks when the topic alias changes', async () => {
+		const token = signToken({ sub: 'client-webhook-alias', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+		let paymentId = '';
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post('/payments/webhooks/mercadopago')
+			.set('x-request-id', 'request-alias')
+			.set('x-signature', validWebhookSignature)
+			.send({
+				id: 'event-alias-original',
+				type: 'payment',
+				action: 'payment.updated',
+				data: { id: paymentId },
+			})
+			.expect(200, { processed: true })
+			.execute();
+
+		await requestHttp(app)
+			.post('/payments/webhooks/mercadopago')
+			.set('x-request-id', 'request-alias')
+			.set('x-signature', validWebhookSignature)
+			.send({
+				id: 'event-alias-replay',
+				type: 'payment.updated',
+				action: 'payment.updated',
+				data: { id: paymentId },
+			})
+			.expect(200, { processed: false })
 			.execute();
 	});
 

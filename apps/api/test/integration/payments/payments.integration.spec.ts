@@ -1,4 +1,3 @@
-import { MERCADO_PAGO_SDK_PORT_KEY } from '@integrations/mercadopago/mercadopago-sdk.port';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
@@ -19,6 +18,7 @@ import { PaymentsModule } from '@modules/payments/payments.module';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
+import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
 
 describe('Payments module integration', () => {
@@ -77,7 +77,18 @@ describe('Payments module integration', () => {
 			.useClass(InMemoryProcessedWebhookEventRepository)
 			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
 			.useValue({
-				createPayment: jest.fn(),
+				createPayment: jest.fn(async ({ paymentId }) => ({
+					checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
+					gatewayReferenceId: `pref-${paymentId}`,
+					gatewayStatus: 'pending',
+				})),
+				fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
+					internalPaymentId: notificationId,
+					gatewayPaymentId: `mp-${notificationId}`,
+					gatewayStatus: 'approved',
+					gatewayStatusDetail: 'accredited',
+					isApproved: true,
+				})),
 				verifyWebhookSignature: jest.fn().mockResolvedValue(true),
 			})
 			.overrideProvider(ORDER_STATUS_PORT_KEY)
@@ -107,6 +118,7 @@ describe('Payments module integration', () => {
 			grossAmount: 25.2,
 			boosterAmount: 17.64,
 			paymentMethod: 'pix',
+			checkoutUrl: expect.stringContaining('/checkout/'),
 		});
 		expect(createdPayment.id).toEqual(expect.any(String));
 
@@ -195,12 +207,13 @@ describe('Payments module integration', () => {
 		);
 
 		await expect(
-			paymentsController.handlePaymentConfirmedWebhook(
+			paymentsController.handleMercadoPagoWebhook(
 				{
-					eventId: 'event-1',
-					paymentId: payment.id,
+					id: 'event-1',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
 				},
-				{ 'data.id': payment.id },
 				'signature-1',
 				'request-1',
 			),
@@ -213,12 +226,13 @@ describe('Payments module integration', () => {
 		});
 
 		await expect(
-			paymentsController.handlePaymentConfirmedWebhook(
+			paymentsController.handleMercadoPagoWebhook(
 				{
-					eventId: 'event-1',
-					paymentId: payment.id,
+					id: 'event-1',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
 				},
-				{ 'data.id': payment.id },
 				'signature-1',
 				'request-1',
 			),

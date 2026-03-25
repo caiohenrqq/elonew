@@ -1,6 +1,6 @@
 export type VerifyPaymentWebhookSignatureInput = {
 	eventId: string;
-	paymentId: string;
+	topic: string;
 	notificationResourceId: string;
 	requestId?: string;
 	signature?: string;

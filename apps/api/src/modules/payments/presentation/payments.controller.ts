@@ -19,7 +19,6 @@ import {
 	HttpCode,
 	Param,
 	Post,
-	Query,
 	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
@@ -27,10 +26,8 @@ import type { PaymentMethod } from '@shared/payments/payment-method';
 import {
 	type CreatePaymentSchemaInput,
 	createPaymentSchema,
-	type HandlePaymentConfirmedWebhookQuerySchemaInput,
-	type HandlePaymentConfirmedWebhookSchemaInput,
-	handlePaymentConfirmedWebhookQuerySchema,
-	handlePaymentConfirmedWebhookSchema,
+	type MercadoPagoWebhookSchemaInput,
+	mercadoPagoWebhookSchema,
 	type PaymentIdParamSchemaInput,
 	paymentIdParamSchema,
 } from './payments.request-schemas';
@@ -60,6 +57,7 @@ export class PaymentsController {
 		grossAmount: number;
 		boosterAmount: number;
 		paymentMethod: PaymentMethod;
+		checkoutUrl: string;
 	}> {
 		return await this.createPaymentUseCase.execute({
 			clientId: currentUser.id,
@@ -110,19 +108,18 @@ export class PaymentsController {
 		return { success: true };
 	}
 
-	@Post('webhooks/payment-confirmed')
+	@Post('webhooks/mercadopago')
 	@HttpCode(200)
-	async handlePaymentConfirmedWebhook(
-		@Body(new ZodValidationPipe(handlePaymentConfirmedWebhookSchema))
-		body: HandlePaymentConfirmedWebhookSchemaInput,
-		@Query(new ZodValidationPipe(handlePaymentConfirmedWebhookQuerySchema))
-		query: HandlePaymentConfirmedWebhookQuerySchemaInput,
+	async handleMercadoPagoWebhook(
+		@Body(new ZodValidationPipe(mercadoPagoWebhookSchema))
+		body: MercadoPagoWebhookSchemaInput,
 		@Headers('x-signature') signature?: string,
 		@Headers('x-request-id') requestId?: string,
 	): Promise<{ processed: boolean }> {
 		return await this.handlePaymentConfirmedWebhookUseCase.execute({
-			...body,
-			notificationResourceId: query['data.id'],
+			eventId: body.id,
+			topic: body.type,
+			notificationResourceId: body.data.id,
 			signature,
 			requestId,
 		});
