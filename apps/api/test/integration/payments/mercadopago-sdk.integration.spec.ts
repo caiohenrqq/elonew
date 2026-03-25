@@ -32,6 +32,144 @@ describe('MercadoPagoSdkAdapter', () => {
 		});
 	});
 
+	it('creates a credit-card checkout preference with only card-compatible payment types enabled', async () => {
+		const create = jest.fn().mockResolvedValue({
+			id: 'pref-credit-card',
+			init_point: 'https://mercadopago.test/checkout/pref-credit-card',
+		});
+		const adapter = new MercadoPagoSdkAdapter({
+			accessToken: 'mp-access-token',
+			webhookSecret: 'webhook-secret',
+			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			preferenceClient: {
+				create,
+			},
+			paymentClient: {
+				get: jest.fn(),
+			},
+		});
+
+		await adapter.createPayment({
+			paymentId: 'payment-credit-card',
+			orderId: 'order-credit-card',
+			amount: 100,
+			paymentMethod: 'credit_card',
+		});
+
+		expect(create).toHaveBeenCalledWith({
+			body: expect.objectContaining({
+				payment_methods: {
+					excluded_payment_types: [
+						{ id: 'ticket' },
+						{ id: 'bank_transfer' },
+						{ id: 'atm' },
+					],
+				},
+			}),
+		});
+	});
+
+	it('creates a pix checkout preference with only pix-compatible payment types enabled', async () => {
+		const create = jest.fn().mockResolvedValue({
+			id: 'pref-pix',
+			init_point: 'https://mercadopago.test/checkout/pref-pix',
+		});
+		const adapter = new MercadoPagoSdkAdapter({
+			accessToken: 'mp-access-token',
+			webhookSecret: 'webhook-secret',
+			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			preferenceClient: {
+				create,
+			},
+			paymentClient: {
+				get: jest.fn(),
+			},
+		});
+
+		await adapter.createPayment({
+			paymentId: 'payment-pix',
+			orderId: 'order-pix',
+			amount: 100,
+			paymentMethod: 'pix',
+		});
+
+		expect(create).toHaveBeenCalledWith({
+			body: expect.objectContaining({
+				payment_methods: {
+					excluded_payment_types: [
+						{ id: 'credit_card' },
+						{ id: 'debit_card' },
+						{ id: 'ticket' },
+						{ id: 'atm' },
+					],
+				},
+			}),
+		});
+	});
+
+	it('creates a boleto checkout preference with only boleto-compatible payment types enabled', async () => {
+		const create = jest.fn().mockResolvedValue({
+			id: 'pref-boleto',
+			init_point: 'https://mercadopago.test/checkout/pref-boleto',
+		});
+		const adapter = new MercadoPagoSdkAdapter({
+			accessToken: 'mp-access-token',
+			webhookSecret: 'webhook-secret',
+			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			preferenceClient: {
+				create,
+			},
+			paymentClient: {
+				get: jest.fn(),
+			},
+		});
+
+		await adapter.createPayment({
+			paymentId: 'payment-boleto',
+			orderId: 'order-boleto',
+			amount: 100,
+			paymentMethod: 'boleto',
+		});
+
+		expect(create).toHaveBeenCalledWith({
+			body: expect.objectContaining({
+				payment_methods: {
+					excluded_payment_types: [
+						{ id: 'credit_card' },
+						{ id: 'debit_card' },
+						{ id: 'bank_transfer' },
+						{ id: 'atm' },
+					],
+				},
+			}),
+		});
+	});
+
+	it('rejects unsupported payment methods before calling Mercado Pago', async () => {
+		const create = jest.fn();
+		const adapter = new MercadoPagoSdkAdapter({
+			accessToken: 'mp-access-token',
+			webhookSecret: 'webhook-secret',
+			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			preferenceClient: {
+				create,
+			},
+			paymentClient: {
+				get: jest.fn(),
+			},
+		});
+
+		await expect(
+			adapter.createPayment({
+				paymentId: 'payment-invalid',
+				orderId: 'order-invalid',
+				amount: 100,
+				paymentMethod: 'cash' as 'pix',
+			}),
+		).rejects.toThrow('Unsupported Mercado Pago payment method: cash');
+		expect(create).not.toHaveBeenCalled();
+	});
+
 	it('fetches a payment notification and maps provider fields to the internal contract', async () => {
 		const adapter = new MercadoPagoSdkAdapter({
 			accessToken: 'mp-access-token',

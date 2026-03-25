@@ -55,6 +55,10 @@ function buildExcludedPaymentTypes(
 				{ id: 'bank_transfer' },
 				{ id: 'atm' },
 			];
+		default:
+			throw new Error(
+				`Unsupported Mercado Pago payment method: ${input.paymentMethod}`,
+			);
 	}
 }
 

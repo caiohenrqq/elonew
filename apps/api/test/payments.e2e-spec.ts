@@ -190,6 +190,52 @@ describe('Payments (e2e)', () => {
 			.execute();
 	});
 
+	it('creates a Mercado Pago checkout for credit-card payments', async () => {
+		const token = signToken({ sub: 'client-credit-card', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'credit_card',
+			})
+			.expect(201)
+			.expect(({ body }) => {
+				expect(body).toMatchObject({
+					orderId: createdOrder.id,
+					status: 'awaiting_confirmation',
+					paymentMethod: 'credit_card',
+					checkoutUrl: expect.stringContaining('/checkout/'),
+				});
+			})
+			.execute();
+	});
+
+	it('creates a Mercado Pago checkout for boleto payments', async () => {
+		const token = signToken({ sub: 'client-boleto', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'boleto',
+			})
+			.expect(201)
+			.expect(({ body }) => {
+				expect(body).toMatchObject({
+					orderId: createdOrder.id,
+					status: 'awaiting_confirmation',
+					paymentMethod: 'boleto',
+					checkoutUrl: expect.stringContaining('/checkout/'),
+				});
+			})
+			.execute();
+	});
+
 	it('rejects creating a second payment for the same order', async () => {
 		const token = signToken({
 			sub: 'client-duplicate-payment',

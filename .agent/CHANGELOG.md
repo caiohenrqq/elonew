@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Hardened the Mercado Pago Checkout Pro adapter against unsupported runtime payment methods and added explicit backend coverage proving `credit_card`, `pix`, and `boleto` are intentionally supported through adapter configuration and payment e2e flows without introducing frontend scope.
 - Removed the remaining webhook dedupe redundancy by keying processed Mercado Pago notifications only by provider notification resource id, then added alias-replay regressions proving the same notification cannot be reprocessed by switching between `payment` and `payment.updated`.
 - Hardened the Mercado Pago webhook path by rejecting unsupported topics before provider reconciliation and switching replay/idempotency tracking from the unsigned body event id to a provider-bound key derived from topic plus notification resource id, with unit, integration, e2e, and DB-backed verification rerun afterward.
 - Completed issue `#22` verification by regenerating Prisma Client after the gateway-field migration, then rerunning the DB-backed payments lane so Mercado Pago checkout creation, webhook reconciliation, and persisted gateway metadata are now covered across unit, integration, e2e, and DB tests.
