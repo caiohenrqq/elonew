@@ -85,6 +85,7 @@
 		"moduleNameMapper": {
 			"^@app/(.*)$": "<rootDir>/src/$1",
 			"^@modules/(.*)$": "<rootDir>/src/modules/$1",
+			"^@packages/config/(.*)$": "<rootDir>/../../packages/config/src/$1",
 			"^@shared/(.*)$": "<rootDir>/../../packages/shared/src/$1",
 			"^@database/(.*)$": "<rootDir>/../../packages/database/src/$1",
 			"^@ui/(.*)$": "<rootDir>/../../packages/ui/src/$1",

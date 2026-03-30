@@ -12,6 +12,7 @@ import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { createTestAppSettings } from './test-app-settings';
 
 class InMemoryAuthSessionRepository {
 	private readonly sessions = new Map<
@@ -74,7 +75,9 @@ class InMemoryAuthSessionRepository {
 describe('Auth (e2e)', () => {
 	let app: ApiHttpApp;
 
-	async function createApp() {
+	async function createApp(
+		settingsOverride: Partial<Record<string, unknown>> = {},
+	) {
 		const testingModule = Test.createTestingModule({
 			imports: [AppModule],
 		})
@@ -89,25 +92,7 @@ describe('Auth (e2e)', () => {
 			.overrideProvider(AUTH_SESSION_REPOSITORY_KEY)
 			.useClass(InMemoryAuthSessionRepository)
 			.overrideProvider(AppSettingsService)
-			.useValue({
-				port: 3000,
-				databaseUrl: 'postgresql://test',
-				jwtAccessTokenSecret: 'test-secret',
-				jwtAccessTokenTtlMinutes: 15,
-				jwtRefreshTokenSecret: 'test-refresh-secret',
-				jwtRefreshTokenTtlDays: 7,
-				emailConfirmationTokenSecret: 'test-email-confirmation-secret',
-				emailConfirmationTokenTtlMinutes: 30,
-				usersSignUpThrottleLimit: 10,
-				usersSignUpThrottleTtlSeconds: 60,
-				usersConfirmEmailThrottleLimit: 10,
-				usersConfirmEmailThrottleTtlSeconds: 60,
-				orderQuoteTtlMinutes: 60,
-				walletLockPeriodInHours: 72,
-				isDevelopment: false,
-				isTest: true,
-				isProduction: false,
-			});
+			.useValue(createTestAppSettings(settingsOverride));
 
 		const moduleRef = await testingModule.compile();
 		app = await createTestHttpApp(moduleRef);
@@ -237,6 +222,48 @@ describe('Auth (e2e)', () => {
 			.execute();
 	});
 
+	it('applies baseline security headers on API responses', async () => {
+		await requestHttp(app)
+			.post('/auth/login')
+			.send({
+				email: 'missing@example.com',
+				password: 'wrong-password',
+			})
+			.expect(401)
+			.expect(({ headers }) => {
+				expect(headers['x-content-type-options']).toBe('nosniff');
+				expect(headers['x-frame-options']).toBe('DENY');
+				expect(headers['referrer-policy']).toBe('no-referrer');
+			})
+			.execute();
+	});
+
+	it('rate limits repeated login attempts', async () => {
+		await app.close();
+		await createApp({
+			authLoginThrottleLimit: 1,
+			authLoginThrottleTtlSeconds: 60,
+		});
+
+		await requestHttp(app)
+			.post('/auth/login')
+			.send({
+				email: 'missing@example.com',
+				password: 'wrong-password',
+			})
+			.expect(401)
+			.execute();
+
+		await requestHttp(app)
+			.post('/auth/login')
+			.send({
+				email: 'missing@example.com',
+				password: 'wrong-password',
+			})
+			.expect(429)
+			.execute();
+	});
+
 	it('rotates refresh tokens and revokes them on logout', async () => {
 		let confirmationToken = '';
 		let refreshToken = '';
@@ -299,6 +326,64 @@ describe('Auth (e2e)', () => {
 			.post('/auth/refresh')
 			.send({ refreshToken: rotatedRefreshToken })
 			.expect(401)
+			.execute();
+	});
+
+	it('rate limits repeated refresh attempts', async () => {
+		await app.close();
+		await createApp({
+			authRefreshThrottleLimit: 1,
+			authRefreshThrottleTtlSeconds: 60,
+		});
+
+		let confirmationToken = '';
+		let refreshToken = '';
+		let rotatedRefreshToken = '';
+
+		await requestHttp(app)
+			.post('/users/sign-up')
+			.send({
+				username: 'summoner4',
+				email: 'summoner4@example.com',
+				password: 'Secret123456!',
+			})
+			.expect(201)
+			.expect<{ emailConfirmationPreviewToken: string }>(({ body }) => {
+				confirmationToken = body.emailConfirmationPreviewToken;
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post('/users/confirm-email')
+			.send({ token: confirmationToken })
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.post('/auth/login')
+			.send({
+				email: 'summoner4@example.com',
+				password: 'Secret123456!',
+			})
+			.expect(201)
+			.expect<{ refreshToken: string }>(({ body }) => {
+				refreshToken = body.refreshToken;
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post('/auth/refresh')
+			.send({ refreshToken })
+			.expect(201)
+			.expect<{ refreshToken: string }>(({ body }) => {
+				rotatedRefreshToken = body.refreshToken;
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post('/auth/refresh')
+			.send({ refreshToken: rotatedRefreshToken })
+			.expect(429)
 			.execute();
 	});
 });

@@ -1,3 +1,4 @@
+import { HttpThrottlingModule } from '@app/common/http/http-throttling.module';
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import { AppSettingsModule } from '@app/common/settings/app-settings.module';
 import { AUTH_SESSION_REPOSITORY_KEY } from '@modules/auth/application/ports/auth-session-repository.port';
@@ -12,6 +13,7 @@ import { PrismaAuthSessionRepository } from '@modules/auth/infrastructure/reposi
 import { HmacAccessTokenService } from '@modules/auth/infrastructure/security/hmac-access-token.service';
 import { HmacRefreshTokenService } from '@modules/auth/infrastructure/security/hmac-refresh-token.service';
 import { AuthController } from '@modules/auth/presentation/auth.controller';
+import { AuthThrottlerGuard } from '@modules/auth/presentation/guards/auth-throttler.guard';
 import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
@@ -19,7 +21,7 @@ import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [AppSettingsModule, UsersModule],
+	imports: [AppSettingsModule, HttpThrottlingModule, UsersModule],
 	controllers: [AuthController],
 	providers: [
 		PrismaService,
@@ -41,6 +43,7 @@ import { Module } from '@nestjs/common';
 		LoginUseCase,
 		RefreshSessionUseCase,
 		LogoutUseCase,
+		AuthThrottlerGuard,
 		InternalApiKeyGuard,
 		JwtAuthGuard,
 		RolesGuard,

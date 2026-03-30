@@ -1,7 +1,11 @@
 import { defineConfig } from 'prisma/config';
-import { envSchema } from '../config/src/env/env.schema';
+import { z } from 'zod';
 
-const validated = envSchema.pick({ DATABASE_URL: true }).parse(process.env);
+const validated = z
+	.object({
+		DATABASE_URL: z.string().trim().min(1),
+	})
+	.parse(process.env);
 
 export default defineConfig({
 	schema: 'prisma/schema.prisma',
