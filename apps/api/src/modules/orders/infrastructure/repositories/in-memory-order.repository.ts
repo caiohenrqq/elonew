@@ -11,6 +11,7 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 			clientId: order.clientId,
 			boosterId: order.boosterId,
 			couponId: order.couponId,
+			pricingVersionId: order.pricingVersionId,
 			status: order.status,
 			credentials: order.credentials,
 			requestDetails: order.requestDetails,

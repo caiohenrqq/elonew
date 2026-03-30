@@ -2,16 +2,21 @@ import type {
 	OrderPricingSnapshot,
 	OrderQuoteRequestDetails,
 } from '@modules/orders/application/order-pricing';
+import type { OrderPricingVersionSnapshot } from '@modules/orders/application/order-pricing-version';
+import {
+	ORDER_PRICING_VERSION_REPOSITORY_KEY,
+	type OrderPricingVersionRepositoryPort,
+} from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import type { OrderPricingService } from '@modules/orders/application/services/order-pricing.service';
 import {
+	OrderPricingVersionIncompleteError,
+	OrderPricingVersionNotActiveError,
 	OrderRankNotPricedError,
 	OrderRankProgressionInvalidError,
 	OrderUnsupportedPricingServiceTypeError,
 } from '@modules/orders/domain/order-pricing.errors';
-import { Injectable } from '@nestjs/common';
-import { duoBoostPriceTable } from '@packages/config/orders/duo-boost-price-table';
-import { eloBoostPriceTable } from '@packages/config/orders/elo-boost-price-table';
-import { orderExtraDefinitions } from '@shared/orders/order-extra';
+import { Inject, Injectable } from '@nestjs/common';
+import { isOrderExtraType } from '@shared/orders/order-extra';
 
 type PriceEntry = {
 	league: string;
@@ -20,17 +25,22 @@ type PriceEntry = {
 };
 
 @Injectable()
-export class StaticOrderPricingService implements OrderPricingService {
+export class VersionedOrderPricingService implements OrderPricingService {
+	constructor(
+		@Inject(ORDER_PRICING_VERSION_REPOSITORY_KEY)
+		private readonly pricingVersions: OrderPricingVersionRepositoryPort,
+	) {}
+
 	async calculate(
 		input: OrderQuoteRequestDetails,
 	): Promise<OrderPricingSnapshot> {
 		if (input.serviceType !== 'elo_boost' && input.serviceType !== 'duo_boost')
 			throw new OrderUnsupportedPricingServiceTypeError(input.serviceType);
 
-		const priceTable =
-			input.serviceType === 'elo_boost'
-				? eloBoostPriceTable
-				: duoBoostPriceTable;
+		const activeVersion = await this.pricingVersions.findActive();
+		if (!activeVersion) throw new OrderPricingVersionNotActiveError();
+
+		const priceTable = this.getPriceTable(activeVersion, input.serviceType);
 		const currentEntry = this.findEntry(
 			priceTable,
 			input.currentLeague,
@@ -41,21 +51,21 @@ export class StaticOrderPricingService implements OrderPricingService {
 			input.desiredLeague,
 			input.desiredDivision,
 		);
-
 		const currentValue =
 			this.getCumulativeValue(priceTable, currentEntry) +
 			(currentEntry.priceToNext * input.currentLp) / 100;
 		const desiredValue = this.getCumulativeValue(priceTable, desiredEntry);
 		const baseSubtotal = Number((desiredValue - currentValue).toFixed(2));
-
 		if (baseSubtotal <= 0) throw new OrderRankProgressionInvalidError();
 
 		const extras = (input.extras ?? []).map((extraType) => {
-			const extraDefinition = orderExtraDefinitions.find(
+			if (!isOrderExtraType(extraType))
+				throw new OrderPricingVersionIncompleteError();
+
+			const extraDefinition = activeVersion.extras.find(
 				(candidate) => candidate.type === extraType,
 			);
-			if (!extraDefinition)
-				throw new Error(`Unsupported order extra type: ${extraType}`);
+			if (!extraDefinition) throw new OrderPricingVersionIncompleteError();
 
 			return {
 				type: extraType,
@@ -68,12 +78,28 @@ export class StaticOrderPricingService implements OrderPricingService {
 		const subtotal = Number((baseSubtotal + extrasTotal).toFixed(2));
 
 		return {
-			pricingVersionId: 'static-pricing',
+			pricingVersionId: activeVersion.id,
 			subtotal,
 			totalAmount: subtotal,
 			discountAmount: 0,
 			extras,
 		};
+	}
+
+	private getPriceTable(
+		version: OrderPricingVersionSnapshot,
+		serviceType: 'elo_boost' | 'duo_boost',
+	): PriceEntry[] {
+		const priceTable = version.steps
+			.filter((step) => step.serviceType === serviceType)
+			.map((step) => ({
+				league: step.league,
+				division: step.division,
+				priceToNext: step.priceToNext,
+			}));
+		if (priceTable.length === 0) throw new OrderRankNotPricedError();
+
+		return priceTable;
 	}
 
 	private findEntry(
@@ -101,6 +127,7 @@ export class StaticOrderPricingService implements OrderPricingService {
 			(item) =>
 				item.league === entry.league && item.division === entry.division,
 		);
+		if (targetIndex < 0) throw new OrderRankNotPricedError();
 
 		return Number(
 			priceTable

@@ -2,20 +2,28 @@ import { createHmac } from 'node:crypto';
 import type { StoredCoupon } from '@modules/orders/application/ports/coupon-lookup.port';
 import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import {
+	ORDER_PRICING_VERSION_REPOSITORY_KEY,
+	type OrderPricingVersionRepositoryPort,
+} from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
+import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
 import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { Test } from '@nestjs/testing';
+import { Role } from '@packages/auth/roles/role';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
 
 describe('Orders (e2e)', () => {
 	let app: ApiHttpApp;
 	let couponLookup: CouponLookupStub;
 	let orderRepository: InMemoryOrderRepository;
+	let pricingVersions: OrderPricingVersionRepositoryPort;
 
 	class CouponLookupStub {
 		public coupons = new Map<string, StoredCoupon>();
@@ -109,12 +117,22 @@ describe('Orders (e2e)', () => {
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
 			.useClass(InMemoryOrderQuoteRepository)
+			.overrideProvider(ORDER_PRICING_VERSION_REPOSITORY_KEY)
+			.useClass(InMemoryOrderPricingVersionRepository)
 			.overrideProvider(COUPON_LOOKUP_PORT_KEY)
 			.useValue(couponLookup)
 			.compile();
 
 		app = await createTestHttpApp(moduleRef);
 		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
+		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		const version = await pricingVersions.createDraft(
+			makeDefaultOrderPricingVersionInput(),
+		);
+		await pricingVersions.activate({
+			versionId: version.id,
+			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+		});
 	});
 
 	afterEach(async () => {
@@ -251,6 +269,67 @@ describe('Orders (e2e)', () => {
 				error: 'Forbidden',
 				statusCode: 403,
 			})
+			.execute();
+	});
+
+	it('allows admins to create and activate a pricing version', async () => {
+		const token = signToken({ sub: 'admin-1', role: Role.ADMIN });
+		let createdVersionId = '';
+
+		await requestHttp(app)
+			.post('/admin/order-pricing/versions')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeDefaultOrderPricingVersionInput('Secondary pricing'))
+			.expect(201)
+			.expect(({ body }: { body: { id: string; status: string } }) => {
+				createdVersionId = body.id;
+				expect(body.status).toBe('draft');
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post(`/admin/order-pricing/versions/${createdVersionId}/activate`)
+			.set('Authorization', `Bearer ${token}`)
+			.expect(200)
+			.expect(({ body }: { body: { id: string; status: string } }) => {
+				expect(body.id).toBe(createdVersionId);
+				expect(body.status).toBe('active');
+			})
+			.execute();
+	});
+
+	it('rejects non-admin users from managing pricing versions', async () => {
+		const token = signToken({ sub: 'client-not-admin', role: Role.CLIENT });
+
+		await requestHttp(app)
+			.post('/admin/order-pricing/versions')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeDefaultOrderPricingVersionInput('Blocked pricing'))
+			.expect(403, {
+				message: 'Insufficient permissions.',
+				error: 'Forbidden',
+				statusCode: 403,
+			})
+			.execute();
+	});
+
+	it('rejects malformed pricing version ids with bad request', async () => {
+		const token = signToken({ sub: 'admin-invalid-param', role: Role.ADMIN });
+
+		await requestHttp(app)
+			.post('/admin/order-pricing/versions/%20/activate')
+			.set('Authorization', `Bearer ${token}`)
+			.expect(400)
+			.execute();
+	});
+
+	it('rejects malformed order ids with bad request', async () => {
+		const token = signToken({ sub: 'client-1', role: 'CLIENT' });
+
+		await requestHttp(app)
+			.get('/orders/%20')
+			.set('Authorization', `Bearer ${token}`)
+			.expect(400)
 			.execute();
 	});
 

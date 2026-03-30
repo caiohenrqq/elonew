@@ -6,5 +6,5 @@ import type {
 export const ORDER_PRICING_SERVICE_KEY = Symbol('ORDER_PRICING_SERVICE_KEY');
 
 export interface OrderPricingService {
-	calculate(input: OrderQuoteRequestDetails): OrderPricingSnapshot;
+	calculate(input: OrderQuoteRequestDetails): Promise<OrderPricingSnapshot>;
 }

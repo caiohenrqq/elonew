@@ -8,6 +8,7 @@ import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
+import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
 
 describe('Payments module integration (db)', () => {
 	let moduleRef: TestingModule;
@@ -20,6 +21,33 @@ describe('Payments module integration (db)', () => {
 		return {
 			quoteId: 'replace-in-test',
 		};
+	}
+
+	async function seedActivePricingVersion() {
+		const input = makeDefaultOrderPricingVersionInput();
+
+		await prisma.pricingVersion.create({
+			data: {
+				name: input.name,
+				status: 'ACTIVE',
+				activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+				steps: {
+					create: input.steps.map((step) => ({
+						serviceType:
+							step.serviceType === 'elo_boost' ? 'ELO_BOOST' : 'DUO_BOOST',
+						league: step.league,
+						division: step.division,
+						priceToNext: step.priceToNext,
+					})),
+				},
+				extras: {
+					create: input.extras.map((extra) => ({
+						type: extra.type,
+						modifierRate: extra.modifierRate,
+					})),
+				},
+			},
+		});
 	}
 
 	async function createQuotedOrder() {
@@ -78,6 +106,7 @@ describe('Payments module integration (db)', () => {
 		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
 		await prisma.coupon.deleteMany();
+		await prisma.pricingVersion.deleteMany();
 		const uniqueSuffix = Date.now().toString();
 		const createdUser = await prisma.user.create({
 			data: {
@@ -91,6 +120,7 @@ describe('Payments module integration (db)', () => {
 			id: createdUser.id,
 			role: Role.CLIENT,
 		};
+		await seedActivePricingVersion();
 	});
 
 	afterEach(async () => {

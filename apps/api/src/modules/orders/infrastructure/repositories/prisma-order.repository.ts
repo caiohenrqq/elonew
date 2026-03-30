@@ -20,6 +20,7 @@ type OrderRecord = {
 	clientId: string | null;
 	boosterId: string | null;
 	couponId: string | null;
+	pricingVersionId: string | null;
 	status: string;
 	serviceType: string | null;
 	currentLeague: string | null;
@@ -64,6 +65,7 @@ type OrderDelegate = {
 			clientId: string | null;
 			boosterId: string | null;
 			couponId: string | null;
+			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
 			currentLeague: string | null;
@@ -103,6 +105,7 @@ type OrderDelegate = {
 			clientId: string | null;
 			boosterId: string | null;
 			couponId: string | null;
+			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
 			currentLeague: string | null;
@@ -137,6 +140,7 @@ type OrderDelegate = {
 			clientId: string | null;
 			boosterId: string | null;
 			couponId: string | null;
+			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
 			currentLeague: string | null;
@@ -201,6 +205,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				clientId: order.clientId,
 				boosterId: order.boosterId,
 				couponId: order.couponId,
+				pricingVersionId: order.pricingVersionId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
@@ -258,6 +263,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				clientId: order.clientId,
 				boosterId: order.boosterId,
 				couponId: order.couponId,
+				pricingVersionId: order.pricingVersionId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
@@ -268,6 +274,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				clientId: order.clientId,
 				boosterId: order.boosterId,
 				couponId: order.couponId,
+				pricingVersionId: order.pricingVersionId,
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
@@ -291,6 +298,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 			clientId: record.clientId,
 			boosterId: record.boosterId,
 			couponId: record.couponId,
+			pricingVersionId: record.pricingVersionId,
 			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
 			credentials: this.mapCredentialsFromRecord(record.credentials),
 			requestDetails: this.mapRequestDetailsFromRecord(record),

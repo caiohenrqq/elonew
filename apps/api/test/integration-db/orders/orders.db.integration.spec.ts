@@ -1,6 +1,10 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import {
+	ORDER_PRICING_VERSION_REPOSITORY_KEY,
+	type OrderPricingVersionRepositoryPort,
+} from '@modules/orders/application/ports/order-pricing-version-repository.port';
+import {
 	ORDER_REPOSITORY_KEY,
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
@@ -12,6 +16,7 @@ import {
 } from '@modules/orders/domain/order.errors';
 import {
 	OrderCouponInvalidError,
+	OrderPricingVersionNotActiveError,
 	OrderQuoteAlreadyUsedError,
 } from '@modules/orders/domain/order-pricing.errors';
 import { OrdersModule } from '@modules/orders/orders.module';
@@ -20,18 +25,47 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
+import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
 
 describe('Orders module integration (db)', () => {
 	let moduleRef: TestingModule;
 	let controller: OrdersController;
 	let prisma: PrismaService;
 	let orderRepository: OrderRepositoryPort;
+	let pricingVersions: OrderPricingVersionRepositoryPort;
 	let clientUser: AuthenticatedUser;
 
 	function makeCreateOrderBody(): CreateOrderSchemaInput {
 		return {
 			quoteId: 'replace-in-test',
 		};
+	}
+
+	async function seedActivePricingVersion() {
+		const input = makeDefaultOrderPricingVersionInput();
+
+		await prisma.pricingVersion.create({
+			data: {
+				name: input.name,
+				status: 'ACTIVE',
+				activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+				steps: {
+					create: input.steps.map((step) => ({
+						serviceType:
+							step.serviceType === 'elo_boost' ? 'ELO_BOOST' : 'DUO_BOOST',
+						league: step.league,
+						division: step.division,
+						priceToNext: step.priceToNext,
+					})),
+				},
+				extras: {
+					create: input.extras.map((extra) => ({
+						type: extra.type,
+						modifierRate: extra.modifierRate,
+					})),
+				},
+			},
+		});
 	}
 
 	async function createQuotedOrder(input?: { boosterId?: string }) {
@@ -69,10 +103,12 @@ describe('Orders module integration (db)', () => {
 		controller = moduleRef.get(OrdersController);
 		prisma = moduleRef.get(PrismaService);
 		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
+		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
 		await prisma.payment.deleteMany();
 		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
 		await prisma.coupon.deleteMany();
+		await prisma.pricingVersion.deleteMany();
 		const uniqueSuffix = Date.now().toString();
 		const createdUser = await prisma.user.create({
 			data: {
@@ -86,6 +122,7 @@ describe('Orders module integration (db)', () => {
 			id: createdUser.id,
 			role: Role.CLIENT,
 		};
+		await seedActivePricingVersion();
 	});
 
 	afterEach(async () => {
@@ -108,6 +145,7 @@ describe('Orders module integration (db)', () => {
 		expect(persistedOrder).toMatchObject({
 			id: createdOrder.id,
 			clientId: clientUser.id,
+			pricingVersionId: expect.any(String),
 			serviceType: 'ELO_BOOST',
 			currentLeague: 'gold',
 			currentDivision: 'II',
@@ -193,6 +231,7 @@ describe('Orders module integration (db)', () => {
 		expect(persistedQuote).toMatchObject({
 			id: quote.quoteId,
 			couponId: coupon.id,
+			pricingVersionId: expect.any(String),
 			discountAmount: 2.52,
 			totalAmount: 22.68,
 		});
@@ -210,9 +249,32 @@ describe('Orders module integration (db)', () => {
 		expect(persistedOrder).toMatchObject({
 			id: createdOrder.id,
 			couponId: coupon.id,
+			pricingVersionId: expect.any(String),
 			discountAmount: 2.52,
 			totalAmount: 22.68,
 		});
+	});
+
+	it('fails quote creation cleanly when there is no active pricing version', async () => {
+		await prisma.pricingVersion.deleteMany();
+
+		await expect(
+			controller.quote(
+				{
+					serviceType: 'elo_boost',
+					currentLeague: 'gold',
+					currentDivision: 'II',
+					currentLp: 50,
+					desiredLeague: 'platinum',
+					desiredDivision: 'IV',
+					server: 'br',
+					desiredQueue: 'solo_duo',
+					lpGain: 20,
+					deadline: '2026-03-31T00:00:00.000Z',
+				},
+				clientUser,
+			),
+		).rejects.toBeInstanceOf(OrderPricingVersionNotActiveError);
 	});
 
 	it('keeps persisted extras unchanged through later order lifecycle transitions', async () => {
@@ -491,6 +553,40 @@ describe('Orders module integration (db)', () => {
 			orderId: successfulResults[0]?.value.id,
 		});
 		expect(persistedQuote?.consumedAt).toBeInstanceOf(Date);
+	});
+
+	it('keeps exactly one active pricing version after concurrent activation attempts', async () => {
+		await prisma.pricingVersion.deleteMany({
+			where: { status: 'ACTIVE' },
+		});
+
+		const firstDraft = await pricingVersions.createDraft(
+			makeDefaultOrderPricingVersionInput('Draft one'),
+		);
+		const secondDraft = await pricingVersions.createDraft(
+			makeDefaultOrderPricingVersionInput('Draft two'),
+		);
+
+		const results = await Promise.allSettled([
+			pricingVersions.activate({
+				versionId: firstDraft.id,
+				activatedAt: new Date('2026-03-18T11:00:00.000Z'),
+			}),
+			pricingVersions.activate({
+				versionId: secondDraft.id,
+				activatedAt: new Date('2026-03-18T11:00:01.000Z'),
+			}),
+		]);
+
+		expect(
+			results.filter((result) => result.status === 'fulfilled').length,
+		).toBeGreaterThanOrEqual(1);
+
+		const activeVersions = await prisma.pricingVersion.findMany({
+			where: { status: 'ACTIVE' },
+		});
+		expect(activeVersions).toHaveLength(1);
+		expect([firstDraft.id, secondDraft.id]).toContain(activeVersions[0]?.id);
 	});
 
 	it('applies payment confirmation and acceptance transitions', async () => {

@@ -2,7 +2,9 @@ import type { OrderQuoteSnapshot } from '@modules/orders/application/order-prici
 import type { OrderQuoteRepositoryPort } from '@modules/orders/application/ports/order-quote-repository.port';
 import type { OrderCouponService } from '@modules/orders/application/services/order-coupon.service';
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
-import { StaticOrderPricingService } from '@modules/orders/infrastructure/pricing/static-order-pricing.service';
+import { VersionedOrderPricingService } from '@modules/orders/infrastructure/pricing/versioned-order-pricing.service';
+import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
+import { makeDefaultOrderPricingVersionInput } from '../../../../../../test/order-pricing-version-test-data';
 
 class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 	lastCreated: {
@@ -50,6 +52,7 @@ class OrderCouponServiceStub implements OrderCouponService {
 			return {
 				couponId: 'coupon-1',
 				pricing: {
+					pricingVersionId: input.pricing.pricingVersionId,
 					subtotal: input.pricing.subtotal,
 					totalAmount: 22.68,
 					discountAmount: 2.52,
@@ -66,11 +69,24 @@ class OrderCouponServiceStub implements OrderCouponService {
 }
 
 describe('CreateOrderQuoteUseCase', () => {
+	async function makePricingService() {
+		const pricingVersions = new InMemoryOrderPricingVersionRepository();
+		const version = await pricingVersions.createDraft(
+			makeDefaultOrderPricingVersionInput(),
+		);
+		await pricingVersions.activate({
+			versionId: version.id,
+			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+		});
+
+		return new VersionedOrderPricingService(pricingVersions);
+	}
+
 	it('persists an owned quote with a 60-minute expiration and returns its id', async () => {
 		const quoteRepository = new InMemoryOrderQuoteRepository();
 		const couponService = new OrderCouponServiceStub();
 		const useCase = new CreateOrderQuoteUseCase(
-			new StaticOrderPricingService(),
+			await makePricingService(),
 			couponService,
 			quoteRepository,
 			{
@@ -104,6 +120,7 @@ describe('CreateOrderQuoteUseCase', () => {
 			clientId: 'client-1',
 			couponId: null,
 			pricing: {
+				pricingVersionId: expect.any(String),
 				subtotal: 25.2,
 				totalAmount: 25.2,
 				discountAmount: 0,
@@ -115,6 +132,7 @@ describe('CreateOrderQuoteUseCase', () => {
 			clientId: 'client-1',
 			couponCode: undefined,
 			pricing: {
+				pricingVersionId: expect.any(String),
 				subtotal: 25.2,
 				totalAmount: 25.2,
 				discountAmount: 0,
@@ -127,7 +145,7 @@ describe('CreateOrderQuoteUseCase', () => {
 		const quoteRepository = new InMemoryOrderQuoteRepository();
 		const couponService = new OrderCouponServiceStub();
 		const useCase = new CreateOrderQuoteUseCase(
-			new StaticOrderPricingService(),
+			await makePricingService(),
 			couponService,
 			quoteRepository,
 			{
@@ -162,6 +180,7 @@ describe('CreateOrderQuoteUseCase', () => {
 			clientId: 'client-1',
 			couponCode: 'WELCOME10',
 			pricing: {
+				pricingVersionId: expect.any(String),
 				subtotal: 25.2,
 				totalAmount: 25.2,
 				discountAmount: 0,
@@ -171,6 +190,7 @@ describe('CreateOrderQuoteUseCase', () => {
 		expect(quoteRepository.lastCreated).toMatchObject({
 			couponId: 'coupon-1',
 			pricing: {
+				pricingVersionId: expect.any(String),
 				subtotal: 25.2,
 				totalAmount: 22.68,
 				discountAmount: 2.52,
@@ -183,7 +203,7 @@ describe('CreateOrderQuoteUseCase', () => {
 		const quoteRepository = new InMemoryOrderQuoteRepository();
 		const couponService = new OrderCouponServiceStub();
 		const useCase = new CreateOrderQuoteUseCase(
-			new StaticOrderPricingService(),
+			await makePricingService(),
 			couponService,
 			quoteRepository,
 			{
@@ -216,6 +236,7 @@ describe('CreateOrderQuoteUseCase', () => {
 
 		expect(couponService.lastInput).toMatchObject({
 			pricing: {
+				pricingVersionId: expect.any(String),
 				subtotal: 36.54,
 				totalAmount: 36.54,
 				discountAmount: 0,
@@ -231,6 +252,7 @@ describe('CreateOrderQuoteUseCase', () => {
 				extras: ['mmr_buffed', 'priority_service', 'offline_chat'],
 			},
 			pricing: {
+				pricingVersionId: expect.any(String),
 				subtotal: 36.54,
 				totalAmount: 36.54,
 				discountAmount: 0,

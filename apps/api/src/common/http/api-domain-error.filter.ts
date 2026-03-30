@@ -1,5 +1,6 @@
 import {
 	mapAsBadRequest,
+	mapAsConflict,
 	mapAsForbidden,
 	mapAsNotFound,
 	mapAsUnauthorized,
@@ -33,6 +34,12 @@ import {
 	OrderCouponInactiveError,
 	OrderCouponInvalidError,
 	OrderCouponNotFoundError,
+	OrderPricingVersionActiveConflictError,
+	OrderPricingVersionImmutableError,
+	OrderPricingVersionIncompleteError,
+	OrderPricingVersionNameInvalidError,
+	OrderPricingVersionNotActiveError,
+	OrderPricingVersionNotFoundError,
 	OrderQuoteAlreadyUsedError,
 	OrderQuoteExpiredError,
 	OrderQuoteNotFoundError,
@@ -114,6 +121,7 @@ export function mapApiDomainErrorToHttpException(
 			OrderNotFoundError,
 			OrderBoosterNotFoundError,
 			OrderQuoteNotFoundError,
+			OrderPricingVersionNotFoundError,
 			PaymentNotFoundError,
 			PaymentOrderNotFoundError,
 			WalletNotFoundError,
@@ -130,6 +138,10 @@ export function mapApiDomainErrorToHttpException(
 			OrderRankProgressionInvalidError,
 			OrderQuoteExpiredError,
 			OrderQuoteAlreadyUsedError,
+			OrderPricingVersionImmutableError,
+			OrderPricingVersionIncompleteError,
+			OrderPricingVersionNameInvalidError,
+			OrderPricingVersionNotActiveError,
 			PaymentAlreadyExistsError,
 			PaymentAmountInvalidError,
 			PaymentInvalidTransitionError,
@@ -138,6 +150,7 @@ export function mapApiDomainErrorToHttpException(
 			WalletInsufficientWithdrawableBalanceError,
 			UserEmailConfirmationTokenInvalidError,
 		),
+		mapAsConflict(OrderPricingVersionActiveConflictError),
 	]);
 }
 

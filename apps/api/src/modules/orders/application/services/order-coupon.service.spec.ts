@@ -63,6 +63,7 @@ describe('ApplyOrderCouponService', () => {
 		const orderRepository = new OrderRepositoryStub();
 		const service = new ApplyOrderCouponService(couponLookup, orderRepository);
 		const basePricing: OrderPricingSnapshot = {
+			pricingVersionId: 'pricing-version-1',
 			subtotal: 100,
 			totalAmount: 100,
 			discountAmount: 0,
@@ -78,6 +79,7 @@ describe('ApplyOrderCouponService', () => {
 		).resolves.toEqual({
 			couponId: 'coupon-1',
 			pricing: {
+				pricingVersionId: 'pricing-version-1',
 				subtotal: 100,
 				totalAmount: 90,
 				discountAmount: 10,
@@ -106,6 +108,7 @@ describe('ApplyOrderCouponService', () => {
 				clientId: 'client-1',
 				couponCode: 'FLAT200',
 				pricing: {
+					pricingVersionId: 'pricing-version-1',
 					subtotal: 100,
 					totalAmount: 100,
 					discountAmount: 0,
@@ -115,6 +118,7 @@ describe('ApplyOrderCouponService', () => {
 		).resolves.toEqual({
 			couponId: 'coupon-2',
 			pricing: {
+				pricingVersionId: 'pricing-version-1',
 				subtotal: 100,
 				totalAmount: 0,
 				discountAmount: 100,
@@ -134,6 +138,7 @@ describe('ApplyOrderCouponService', () => {
 				clientId: 'client-1',
 				couponCode: 'MISSING',
 				pricing: {
+					pricingVersionId: 'pricing-version-1',
 					subtotal: 100,
 					totalAmount: 100,
 					discountAmount: 0,
@@ -163,6 +168,7 @@ describe('ApplyOrderCouponService', () => {
 				clientId: 'client-1',
 				couponCode: 'OFFLINE',
 				pricing: {
+					pricingVersionId: 'pricing-version-1',
 					subtotal: 100,
 					totalAmount: 100,
 					discountAmount: 0,
@@ -191,6 +197,7 @@ describe('ApplyOrderCouponService', () => {
 				clientId: 'client-1',
 				couponCode: 'FIRSTONLY',
 				pricing: {
+					pricingVersionId: 'pricing-version-1',
 					subtotal: 100,
 					totalAmount: 100,
 					discountAmount: 0,
