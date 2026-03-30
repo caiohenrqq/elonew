@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+export const orderIdParamSchema = z.string().trim().min(1);
+
+export type OrderIdParamSchemaInput = z.infer<typeof orderIdParamSchema>;
+
 export const acceptOrderSchema = z
 	.object({
 		boosterId: z.string().trim().min(1).optional(),

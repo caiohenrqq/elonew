@@ -34,6 +34,8 @@ import {
 import {
 	type AcceptOrderSchemaInput,
 	acceptOrderSchema,
+	type OrderIdParamSchemaInput,
+	orderIdParamSchema,
 	type SaveOrderCredentialsSchemaInput,
 	saveOrderCredentialsSchema,
 } from './orders.request-schemas';
@@ -109,7 +111,8 @@ export class OrdersController {
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async get(
-		@Param('orderId') orderId: string,
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{
 		id: string;
@@ -127,7 +130,8 @@ export class OrdersController {
 	@Post(':orderId/payment-confirmed')
 	@HttpCode(200)
 	async confirmPayment(
-		@Param('orderId') orderId: string,
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
 	): Promise<{ success: true }> {
 		await this.markOrderAsPaidUseCase.execute({ orderId });
 		return { success: true };
@@ -136,7 +140,8 @@ export class OrdersController {
 	@Post(':orderId/accept')
 	@HttpCode(200)
 	async accept(
-		@Param('orderId') orderId: string,
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
 		@Body(new ZodValidationPipe(acceptOrderSchema))
 		body?: AcceptOrderSchemaInput,
 	): Promise<{ success: true }> {
@@ -149,14 +154,20 @@ export class OrdersController {
 
 	@Post(':orderId/reject')
 	@HttpCode(200)
-	async reject(@Param('orderId') orderId: string): Promise<{ success: true }> {
+	async reject(
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
+	): Promise<{ success: true }> {
 		await this.rejectOrderUseCase.execute({ orderId });
 		return { success: true };
 	}
 
 	@Post(':orderId/cancel')
 	@HttpCode(200)
-	async cancel(@Param('orderId') orderId: string): Promise<{ success: true }> {
+	async cancel(
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
+	): Promise<{ success: true }> {
 		await this.cancelOrderUseCase.execute({ orderId });
 		return { success: true };
 	}
@@ -164,7 +175,8 @@ export class OrdersController {
 	@Post(':orderId/complete')
 	@HttpCode(200)
 	async complete(
-		@Param('orderId') orderId: string,
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
 	): Promise<{ success: true }> {
 		await this.completeOrderUseCase.execute({ orderId });
 		return { success: true };
@@ -173,7 +185,8 @@ export class OrdersController {
 	@Post(':orderId/credentials')
 	@HttpCode(200)
 	async saveCredentials(
-		@Param('orderId') orderId: string,
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
 		@Body(new ZodValidationPipe(saveOrderCredentialsSchema))
 		body: SaveOrderCredentialsSchemaInput,
 	): Promise<{ success: true }> {

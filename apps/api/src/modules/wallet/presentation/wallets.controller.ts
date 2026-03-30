@@ -6,6 +6,8 @@ import { RequestWithdrawalUseCase } from '@modules/wallet/application/use-cases/
 import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import { WALLET_FUNDS_RELEASE_INTERNAL_ROUTE } from '@shared/wallet/wallet-funds-release.contract';
 import {
+	type BoosterIdParamSchemaInput,
+	boosterIdParamSchema,
 	type CreditCompletedOrderEarningsSchemaInput,
 	creditCompletedOrderEarningsSchema,
 	type ReleaseMaturedWalletFundsSchemaInput,
@@ -24,7 +26,10 @@ export class WalletsController {
 	) {}
 
 	@Get(':boosterId')
-	async get(@Param('boosterId') boosterId: string): Promise<{
+	async get(
+		@Param('boosterId', new ZodValidationPipe(boosterIdParamSchema))
+		boosterId: BoosterIdParamSchemaInput,
+	): Promise<{
 		boosterId: string;
 		balanceLocked: number;
 		balanceWithdrawable: number;
@@ -65,7 +70,8 @@ export class WalletsController {
 	@Post(':boosterId/withdrawals')
 	@HttpCode(200)
 	async requestWithdrawal(
-		@Param('boosterId') boosterId: string,
+		@Param('boosterId', new ZodValidationPipe(boosterIdParamSchema))
+		boosterId: BoosterIdParamSchemaInput,
 		@Body(new ZodValidationPipe(requestWithdrawalSchema))
 		body: RequestWithdrawalSchemaInput,
 	): Promise<{ success: true }> {

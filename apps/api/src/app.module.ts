@@ -7,11 +7,13 @@ import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { ApiDomainErrorFilter } from './common/http/api-domain-error.filter';
+import { PrismaModule } from './common/prisma/prisma.module';
 import { AppSettingsModule } from './common/settings/app-settings.module';
 
 @Module({
 	imports: [
 		AppSettingsModule,
+		PrismaModule,
 		AuthModule,
 		OrdersModule,
 		PaymentsModule,

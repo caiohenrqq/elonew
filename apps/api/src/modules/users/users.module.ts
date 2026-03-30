@@ -1,6 +1,5 @@
 import { HttpThrottlingModule } from '@app/common/http/http-throttling.module';
-import { PrismaService } from '@app/common/prisma/prisma.service';
-import { AppSettingsModule } from '@app/common/settings/app-settings.module';
+import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY } from '@modules/users/application/ports/email-confirmation-token.port';
 import { PASSWORD_HASHER_KEY } from '@modules/users/application/ports/password-hasher.port';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
@@ -14,10 +13,9 @@ import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [AppSettingsModule, HttpThrottlingModule],
+	imports: [PrismaModule, HttpThrottlingModule],
 	controllers: [UsersController],
 	providers: [
-		PrismaService,
 		PrismaUserRepository,
 		Argon2PasswordHasher,
 		UsersThrottlerGuard,
