@@ -1,3 +1,4 @@
+import { HttpThrottlingModule } from '@app/common/http/http-throttling.module';
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import { AppSettingsModule } from '@app/common/settings/app-settings.module';
 import { EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY } from '@modules/users/application/ports/email-confirmation-token.port';
@@ -11,10 +12,9 @@ import { HmacEmailConfirmationTokenService } from '@modules/users/infrastructure
 import { UsersController } from '@modules/users/presentation/users.controller';
 import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler.guard';
 import { Module } from '@nestjs/common';
-import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
-	imports: [AppSettingsModule, ThrottlerModule.forRoot([])],
+	imports: [AppSettingsModule, HttpThrottlingModule],
 	controllers: [UsersController],
 	providers: [
 		PrismaService,

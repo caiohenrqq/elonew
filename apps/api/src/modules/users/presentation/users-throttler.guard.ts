@@ -1,23 +1,19 @@
+import {
+	ConfigurableThrottlerGuard,
+	type RouteThrottleConfig,
+} from '@app/common/http/configurable-throttler.guard';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { type ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
 	InjectThrottlerOptions,
 	InjectThrottlerStorage,
-	ThrottlerGuard,
 	type ThrottlerModuleOptions,
-	type ThrottlerOptions,
 	type ThrottlerStorage,
 } from '@nestjs/throttler';
 
-type UsersThrottleConfig = {
-	limit: number;
-	ttl: number;
-	name: string;
-};
-
 @Injectable()
-export class UsersThrottlerGuard extends ThrottlerGuard {
+export class UsersThrottlerGuard extends ConfigurableThrottlerGuard {
 	constructor(
 		@InjectThrottlerOptions()
 		options: ThrottlerModuleOptions,
@@ -29,29 +25,9 @@ export class UsersThrottlerGuard extends ThrottlerGuard {
 		super(options, storageService, reflector);
 	}
 
-	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const throttleConfig = this.getThrottleConfig(context);
-		if (!throttleConfig) return true;
-
-		const getTracker =
-			this.commonOptions.getTracker ?? this.getTracker.bind(this);
-		const generateKey =
-			this.commonOptions.generateKey ?? this.generateKey.bind(this);
-
-		return this.handleRequest({
-			context,
-			limit: throttleConfig.limit,
-			ttl: throttleConfig.ttl,
-			blockDuration: throttleConfig.ttl,
-			throttler: throttleConfig,
-			getTracker,
-			generateKey,
-		});
-	}
-
-	private getThrottleConfig(
+	protected getThrottleConfig(
 		context: ExecutionContext,
-	): (ThrottlerOptions & UsersThrottleConfig) | null {
+	): RouteThrottleConfig | null {
 		switch (context.getHandler().name) {
 			case 'signUp':
 				return {
