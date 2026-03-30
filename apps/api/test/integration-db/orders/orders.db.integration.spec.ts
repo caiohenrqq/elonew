@@ -1,6 +1,10 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import {
+	ORDER_REPOSITORY_KEY,
+	type OrderRepositoryPort,
+} from '@modules/orders/application/ports/order-repository.port';
+import {
 	OrderBoosterNotEligibleError,
 	OrderCredentialsStorageNotAllowedError,
 	OrderInvalidTransitionError,
@@ -21,6 +25,7 @@ describe('Orders module integration (db)', () => {
 	let moduleRef: TestingModule;
 	let controller: OrdersController;
 	let prisma: PrismaService;
+	let orderRepository: OrderRepositoryPort;
 	let clientUser: AuthenticatedUser;
 
 	function makeCreateOrderBody(): CreateOrderSchemaInput {
@@ -63,6 +68,7 @@ describe('Orders module integration (db)', () => {
 
 		controller = moduleRef.get(OrdersController);
 		prisma = moduleRef.get(PrismaService);
+		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 		await prisma.payment.deleteMany();
 		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
@@ -206,6 +212,56 @@ describe('Orders module integration (db)', () => {
 			couponId: coupon.id,
 			discountAmount: 2.52,
 			totalAmount: 22.68,
+		});
+	});
+
+	it('keeps persisted extras unchanged through later order lifecycle transitions', async () => {
+		const quote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+				extras: ['mmr_buffed', 'priority_service', 'offline_chat'],
+			},
+			clientUser,
+		);
+
+		const createdOrder = await controller.create(
+			{
+				quoteId: quote.quoteId,
+			},
+			clientUser,
+		);
+
+		await controller.confirmPayment(createdOrder.id);
+		await controller.saveCredentials(createdOrder.id, {
+			login: 'login',
+			summonerName: 'summoner',
+			password: 'secret',
+			confirmPassword: 'secret',
+		});
+		await controller.accept(createdOrder.id);
+		await controller.complete(createdOrder.id);
+
+		const persistedOrder = await prisma.order.findUnique({
+			where: { id: createdOrder.id },
+			include: { extras: true },
+		});
+		expect(persistedOrder).toMatchObject({
+			id: createdOrder.id,
+			status: 'completed',
+			extras: [
+				{ type: 'mmr_buffed', price: 8.82 },
+				{ type: 'priority_service', price: 2.52 },
+				{ type: 'offline_chat', price: 0 },
+			],
 		});
 	});
 
@@ -527,9 +583,20 @@ describe('Orders module integration (db)', () => {
 		});
 		expect(credentials).toMatchObject({
 			orderId: createdOrder.id,
-			login: 'login-db',
-			summonerName: 'summoner-db',
-			password: 'secret-db',
+		});
+		expect(credentials?.login).not.toBe('login-db');
+		expect(credentials?.summonerName).not.toBe('summoner-db');
+		expect(credentials?.password).not.toBe('secret-db');
+
+		await expect(
+			orderRepository.findById(createdOrder.id),
+		).resolves.toMatchObject({
+			id: createdOrder.id,
+			credentials: {
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+			},
 		});
 	});
 

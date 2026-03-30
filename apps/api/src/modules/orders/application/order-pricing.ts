@@ -1,7 +1,12 @@
+import type {
+	OrderExtraType,
+	OrderPricedExtra,
+} from '@shared/orders/order-extra';
 import type { OrderServiceType } from '@shared/orders/service-type';
 
 export type OrderQuoteRequestDetails = {
 	serviceType: OrderServiceType;
+	extras?: OrderExtraType[];
 	currentLeague: string;
 	currentDivision: string;
 	currentLp: number;
@@ -17,6 +22,7 @@ export type OrderPricingSnapshot = {
 	subtotal: number;
 	totalAmount: number;
 	discountAmount: number;
+	extras: OrderPricedExtra[];
 };
 
 export type OrderQuoteSnapshot = {

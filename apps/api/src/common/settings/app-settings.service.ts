@@ -63,6 +63,12 @@ export class AppSettingsService {
 		});
 	}
 
+	get orderCredentialsEncryptionKey() {
+		return this.config.getOrThrow('ORDER_CREDENTIALS_ENCRYPTION_KEY', {
+			infer: true,
+		});
+	}
+
 	get mercadoPagoWebhookSecret() {
 		return this.config.getOrThrow('MERCADO_PAGO_WEBHOOK_SECRET', {
 			infer: true,
@@ -83,6 +89,30 @@ export class AppSettingsService {
 
 	get orderQuoteTtlMinutes() {
 		return this.config.getOrThrow('ORDER_QUOTE_TTL_MINUTES', {
+			infer: true,
+		});
+	}
+
+	get authLoginThrottleLimit() {
+		return this.config.getOrThrow('AUTH_LOGIN_THROTTLE_LIMIT', {
+			infer: true,
+		});
+	}
+
+	get authLoginThrottleTtlSeconds() {
+		return this.config.getOrThrow('AUTH_LOGIN_THROTTLE_TTL_SECONDS', {
+			infer: true,
+		});
+	}
+
+	get authRefreshThrottleLimit() {
+		return this.config.getOrThrow('AUTH_REFRESH_THROTTLE_LIMIT', {
+			infer: true,
+		});
+	}
+
+	get authRefreshThrottleTtlSeconds() {
+		return this.config.getOrThrow('AUTH_REFRESH_THROTTLE_TTL_SECONDS', {
 			infer: true,
 		});
 	}

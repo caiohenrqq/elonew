@@ -4,6 +4,7 @@ import {
 	OrderInvalidTransitionError,
 } from '@modules/orders/domain/order.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
+import type { OrderPricedExtra } from '@shared/orders/order-extra';
 import type { OrderServiceType } from '@shared/orders/service-type';
 
 type AllowedTransitionMap = Record<OrderStatus, readonly OrderStatus[]>;
@@ -58,6 +59,7 @@ export class Order {
 		private readonly currentSubtotal: number | null,
 		private readonly currentTotalAmount: number | null,
 		private readonly currentDiscountAmount: number,
+		private readonly currentExtras: OrderPricedExtra[],
 	) {}
 
 	static create(
@@ -79,6 +81,7 @@ export class Order {
 			null,
 			null,
 			0,
+			[],
 		);
 	}
 
@@ -92,6 +95,7 @@ export class Order {
 			subtotal: number;
 			totalAmount: number;
 			discountAmount: number;
+			extras?: OrderPricedExtra[];
 		};
 	}): Order {
 		return new Order(
@@ -105,6 +109,7 @@ export class Order {
 			input.pricing.subtotal,
 			input.pricing.totalAmount,
 			input.pricing.discountAmount,
+			(input.pricing.extras ?? []).map((extra) => ({ ...extra })),
 		);
 	}
 
@@ -119,6 +124,7 @@ export class Order {
 		subtotal?: number | null;
 		totalAmount?: number | null;
 		discountAmount?: number;
+		extras?: OrderPricedExtra[];
 	}): Order {
 		return new Order(
 			input.id,
@@ -131,6 +137,7 @@ export class Order {
 			input.subtotal ?? null,
 			input.totalAmount ?? null,
 			input.discountAmount ?? 0,
+			(input.extras ?? []).map((extra) => ({ ...extra })),
 		);
 	}
 
@@ -168,6 +175,10 @@ export class Order {
 
 	get discountAmount(): number {
 		return this.currentDiscountAmount;
+	}
+
+	get extras(): OrderPricedExtra[] {
+		return this.currentExtras.map((extra) => ({ ...extra }));
 	}
 
 	confirmPayment(): void {

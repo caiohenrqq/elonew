@@ -2,7 +2,8 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { LoginUseCase } from '@modules/auth/application/use-cases/login/login.use-case';
 import { LogoutUseCase } from '@modules/auth/application/use-cases/logout/logout.use-case';
 import { RefreshSessionUseCase } from '@modules/auth/application/use-cases/refresh-session/refresh-session.use-case';
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { AuthThrottlerGuard } from '@modules/auth/presentation/guards/auth-throttler.guard';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import {
 	type LoginSchemaInput,
 	loginSchema,
@@ -19,6 +20,7 @@ export class AuthController {
 	) {}
 
 	@Post('login')
+	@UseGuards(AuthThrottlerGuard)
 	async login(
 		@Body(new ZodValidationPipe(loginSchema)) body: LoginSchemaInput,
 	) {
@@ -26,6 +28,7 @@ export class AuthController {
 	}
 
 	@Post('refresh')
+	@UseGuards(AuthThrottlerGuard)
 	async refresh(
 		@Body(new ZodValidationPipe(refreshSessionSchema))
 		body: RefreshSessionSchemaInput,

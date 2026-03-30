@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { createTestAppSettings } from './test-app-settings';
 
 describe('Users (e2e)', () => {
 	let app: ApiHttpApp;
@@ -19,23 +20,9 @@ describe('Users (e2e)', () => {
 			.useClass(InMemoryUserRepository);
 
 		if (settingsOverride) {
-			testingModule.overrideProvider(AppSettingsService).useValue({
-				port: 3000,
-				jwtAccessTokenSecret: 'test-secret',
-				jwtAccessTokenTtlMinutes: 15,
-				jwtRefreshTokenSecret: 'test-refresh-secret',
-				jwtRefreshTokenTtlDays: 7,
-				emailConfirmationTokenSecret: 'test-email-confirmation-secret',
-				emailConfirmationTokenTtlMinutes: 30,
-				usersSignUpThrottleLimit: 3,
-				usersSignUpThrottleTtlSeconds: 60,
-				usersConfirmEmailThrottleLimit: 5,
-				usersConfirmEmailThrottleTtlSeconds: 60,
-				walletLockPeriodInHours: 72,
-				isDevelopment: false,
-				isTest: true,
-				...settingsOverride,
-			});
+			testingModule
+				.overrideProvider(AppSettingsService)
+				.useValue(createTestAppSettings(settingsOverride));
 		}
 
 		const moduleRef = await testingModule.compile();

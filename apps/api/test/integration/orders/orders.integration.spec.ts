@@ -109,6 +109,92 @@ describe('Orders module integration', () => {
 		expect(persistedOrder?.requestDetails?.deadline).toBeInstanceOf(Date);
 	});
 
+	it('persists selected extras and their pricing impact from quote to order', async () => {
+		const quote = await controller.quote(
+			{
+				...makeQuotePayload(),
+				extras: ['mmr_buffed', 'priority_service', 'offline_chat'],
+			},
+			clientUser,
+		);
+
+		expect(quote).toMatchObject({
+			subtotal: 36.54,
+			totalAmount: 36.54,
+			discountAmount: 0,
+		});
+
+		const createdOrder = await controller.create(
+			{
+				quoteId: quote.quoteId,
+			},
+			clientUser,
+		);
+
+		expect(createdOrder).toMatchObject({
+			id: expect.any(String),
+			subtotal: 36.54,
+			totalAmount: 36.54,
+			discountAmount: 0,
+		});
+
+		await expect(
+			orderRepository.findById(createdOrder.id),
+		).resolves.toMatchObject({
+			extras: [
+				{ type: 'mmr_buffed', price: 8.82 },
+				{ type: 'priority_service', price: 2.52 },
+				{ type: 'offline_chat', price: 0 },
+			],
+		});
+	});
+
+	it('keeps order extras unchanged after creation through later lifecycle transitions', async () => {
+		const quote = await controller.quote(
+			{
+				...makeQuotePayload(),
+				extras: ['mmr_buffed', 'priority_service', 'offline_chat'],
+			},
+			clientUser,
+		);
+
+		const createdOrder = await controller.create(
+			{
+				quoteId: quote.quoteId,
+			},
+			clientUser,
+		);
+
+		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({
+			success: true,
+		});
+		await expect(
+			controller.saveCredentials(createdOrder.id, {
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+				confirmPassword: 'secret',
+			}),
+		).resolves.toEqual({ success: true });
+		await expect(controller.accept(createdOrder.id)).resolves.toEqual({
+			success: true,
+		});
+		await expect(controller.complete(createdOrder.id)).resolves.toEqual({
+			success: true,
+		});
+
+		await expect(
+			orderRepository.findById(createdOrder.id),
+		).resolves.toMatchObject({
+			status: 'completed',
+			extras: [
+				{ type: 'mmr_buffed', price: 8.82 },
+				{ type: 'priority_service', price: 2.52 },
+				{ type: 'offline_chat', price: 0 },
+			],
+		});
+	});
+
 	it('applies payment confirmation and acceptance transitions', async () => {
 		const createdOrder = await createQuotedOrder();
 		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({

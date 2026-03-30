@@ -66,6 +66,7 @@ describe('ApplyOrderCouponService', () => {
 			subtotal: 100,
 			totalAmount: 100,
 			discountAmount: 0,
+			extras: [],
 		};
 
 		await expect(
@@ -80,6 +81,7 @@ describe('ApplyOrderCouponService', () => {
 				subtotal: 100,
 				totalAmount: 90,
 				discountAmount: 10,
+				extras: [],
 			},
 		});
 		expect(couponLookup.lastCode).toBe('WELCOME10');
@@ -107,6 +109,7 @@ describe('ApplyOrderCouponService', () => {
 					subtotal: 100,
 					totalAmount: 100,
 					discountAmount: 0,
+					extras: [],
 				},
 			}),
 		).resolves.toEqual({
@@ -115,6 +118,7 @@ describe('ApplyOrderCouponService', () => {
 				subtotal: 100,
 				totalAmount: 0,
 				discountAmount: 100,
+				extras: [],
 			},
 		});
 	});
@@ -133,6 +137,7 @@ describe('ApplyOrderCouponService', () => {
 					subtotal: 100,
 					totalAmount: 100,
 					discountAmount: 0,
+					extras: [],
 				},
 			}),
 		).rejects.toThrow('Coupon is invalid.');
@@ -161,6 +166,7 @@ describe('ApplyOrderCouponService', () => {
 					subtotal: 100,
 					totalAmount: 100,
 					discountAmount: 0,
+					extras: [],
 				},
 			}),
 		).rejects.toThrow('Coupon is invalid.');
@@ -188,6 +194,7 @@ describe('ApplyOrderCouponService', () => {
 					subtotal: 100,
 					totalAmount: 100,
 					discountAmount: 0,
+					extras: [],
 				},
 			}),
 		).rejects.toThrow('Coupon is invalid.');

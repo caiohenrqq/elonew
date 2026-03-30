@@ -1,9 +1,16 @@
 import { z } from 'zod';
+import { orderExtraTypes } from './order-extra';
 import { orderServiceTypes } from './service-type';
 
 export const createOrderQuoteSchema = z.object({
 	serviceType: z.enum(orderServiceTypes),
 	couponCode: z.string().trim().min(1).optional(),
+	extras: z
+		.array(z.enum(orderExtraTypes))
+		.default([])
+		.refine((extras) => new Set(extras).size === extras.length, {
+			message: 'Duplicate extras are not allowed.',
+		}),
 	currentLeague: z.string().trim().min(1),
 	currentDivision: z.string().trim().min(1),
 	currentLp: z.number().int().min(0).max(99),
@@ -15,6 +22,6 @@ export const createOrderQuoteSchema = z.object({
 	deadline: z.string().datetime(),
 });
 
-export type CreateOrderQuoteSchemaInput = z.infer<
+export type CreateOrderQuoteSchemaInput = z.input<
 	typeof createOrderQuoteSchema
 >;

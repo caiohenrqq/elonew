@@ -17,6 +17,7 @@
 		"paths": {
 			"@app/*": ["src/*"],
 			"@modules/*": ["src/modules/*"],
+			"@packages/config/*": ["../../packages/config/src/*"],
 			"@shared/*": ["../../packages/shared/src/*"],
 			"@database/*": ["../../packages/database/src/*"],
 			"@auth/*": ["../../packages/auth/src/*"],

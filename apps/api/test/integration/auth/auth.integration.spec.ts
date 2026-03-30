@@ -7,6 +7,7 @@ import { InMemoryUserRepository } from '@modules/users/infrastructure/repositori
 import { UsersController } from '@modules/users/presentation/users.controller';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../../../src/app.module';
+import { createTestAppSettings } from '../../test-app-settings';
 
 describe('Auth module integration', () => {
 	let usersController: UsersController;
@@ -21,24 +22,7 @@ describe('Auth module integration', () => {
 			.overrideProvider(AUTH_SESSION_REPOSITORY_KEY)
 			.useClass(InMemoryAuthSessionRepository)
 			.overrideProvider(AppSettingsService)
-			.useValue({
-				port: 3000,
-				databaseUrl: 'postgresql://test',
-				jwtAccessTokenSecret: 'test-secret',
-				jwtAccessTokenTtlMinutes: 15,
-				jwtRefreshTokenSecret: 'test-refresh-secret',
-				jwtRefreshTokenTtlDays: 7,
-				emailConfirmationTokenSecret: 'test-email-confirmation-secret',
-				emailConfirmationTokenTtlMinutes: 30,
-				usersSignUpThrottleLimit: 10,
-				usersSignUpThrottleTtlSeconds: 60,
-				usersConfirmEmailThrottleLimit: 10,
-				usersConfirmEmailThrottleTtlSeconds: 60,
-				walletLockPeriodInHours: 72,
-				isDevelopment: false,
-				isTest: true,
-				isProduction: false,
-			})
+			.useValue(createTestAppSettings())
 			.compile();
 
 		usersController = moduleRef.get(UsersController);

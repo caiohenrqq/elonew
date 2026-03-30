@@ -13,7 +13,7 @@ import {
 } from '@nestjs/throttler';
 
 @Injectable()
-export class UsersThrottlerGuard extends ConfigurableThrottlerGuard {
+export class AuthThrottlerGuard extends ConfigurableThrottlerGuard {
 	constructor(
 		@InjectThrottlerOptions()
 		options: ThrottlerModuleOptions,
@@ -29,17 +29,17 @@ export class UsersThrottlerGuard extends ConfigurableThrottlerGuard {
 		context: ExecutionContext,
 	): RouteThrottleConfig | null {
 		switch (context.getHandler().name) {
-			case 'signUp':
+			case 'login':
 				return {
-					name: 'users-sign-up',
-					limit: this.appSettings.usersSignUpThrottleLimit,
-					ttl: this.appSettings.usersSignUpThrottleTtlSeconds * 1000,
+					name: 'auth-login',
+					limit: this.appSettings.authLoginThrottleLimit,
+					ttl: this.appSettings.authLoginThrottleTtlSeconds * 1000,
 				};
-			case 'confirmEmail':
+			case 'refresh':
 				return {
-					name: 'users-confirm-email',
-					limit: this.appSettings.usersConfirmEmailThrottleLimit,
-					ttl: this.appSettings.usersConfirmEmailThrottleTtlSeconds * 1000,
+					name: 'auth-refresh',
+					limit: this.appSettings.authRefreshThrottleLimit,
+					ttl: this.appSettings.authRefreshThrottleTtlSeconds * 1000,
 				};
 			default:
 				return null;

@@ -11,6 +11,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { duoBoostPriceTable } from '@packages/config/orders/duo-boost-price-table';
 import { eloBoostPriceTable } from '@packages/config/orders/elo-boost-price-table';
+import { orderExtraDefinitions } from '@shared/orders/order-extra';
 
 type PriceEntry = {
 	league: string;
@@ -43,14 +44,32 @@ export class StaticOrderPricingService implements OrderPricingService {
 			this.getCumulativeValue(priceTable, currentEntry) +
 			(currentEntry.priceToNext * input.currentLp) / 100;
 		const desiredValue = this.getCumulativeValue(priceTable, desiredEntry);
-		const subtotal = Number((desiredValue - currentValue).toFixed(2));
+		const baseSubtotal = Number((desiredValue - currentValue).toFixed(2));
 
-		if (subtotal <= 0) throw new OrderRankProgressionInvalidError();
+		if (baseSubtotal <= 0) throw new OrderRankProgressionInvalidError();
+
+		const extras = (input.extras ?? []).map((extraType) => {
+			const extraDefinition = orderExtraDefinitions.find(
+				(candidate) => candidate.type === extraType,
+			);
+			if (!extraDefinition)
+				throw new Error(`Unsupported order extra type: ${extraType}`);
+
+			return {
+				type: extraType,
+				price: Number((baseSubtotal * extraDefinition.modifierRate).toFixed(2)),
+			};
+		});
+		const extrasTotal = Number(
+			extras.reduce((total, extra) => total + extra.price, 0).toFixed(2),
+		);
+		const subtotal = Number((baseSubtotal + extrasTotal).toFixed(2));
 
 		return {
 			subtotal,
 			totalAmount: subtotal,
 			discountAmount: 0,
+			extras,
 		};
 	}
 

@@ -19,6 +19,10 @@
 			"types": "./dist/env/env.config.d.ts",
 			"default": "./dist/env/env.config.js"
 		},
+		"./env/order-credentials-encryption-key": {
+			"types": "./dist/env/order-credentials-encryption-key.d.ts",
+			"default": "./dist/env/order-credentials-encryption-key.js"
+		},
 		"./orders/elo-boost-price-table": {
 			"types": "./dist/orders/elo-boost-price-table.d.ts",
 			"default": "./dist/orders/elo-boost-price-table.js"

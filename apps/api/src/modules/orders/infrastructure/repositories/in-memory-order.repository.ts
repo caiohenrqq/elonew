@@ -17,6 +17,7 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 			subtotal: order.subtotal,
 			totalAmount: order.totalAmount,
 			discountAmount: order.discountAmount,
+			extras: order.extras,
 		});
 		this.orders.set(createdOrder.id, createdOrder);
 		return createdOrder;

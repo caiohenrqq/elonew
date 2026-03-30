@@ -10,6 +10,7 @@ import {
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import { Injectable } from '@nestjs/common';
 import { CouponDiscountType, Prisma, ServiceType } from '@prisma/client';
+import { isOrderExtraType } from '@shared/orders/order-extra';
 import type { OrderServiceType } from '@shared/orders/service-type';
 import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
@@ -30,6 +31,10 @@ type QuoteRecord = {
 	subtotal: number;
 	totalAmount: number;
 	discountAmount: number;
+	extras: Array<{
+		type: string;
+		price: number;
+	}>;
 	expiresAt: Date;
 	consumedAt: Date | null;
 };
@@ -53,6 +58,10 @@ type OrderRecord = {
 	subtotal: number | null;
 	totalAmount: number | null;
 	discountAmount: number;
+	extras: Array<{
+		type: string;
+		price: number;
+	}>;
 	credentials: null;
 };
 
@@ -67,6 +76,7 @@ type CouponRecord = {
 type OrderQuoteDelegate = {
 	findFirst(args: {
 		where: { id: string; clientId: string };
+		include: { extras: true };
 	}): Promise<QuoteRecord | null>;
 	updateMany(args: {
 		where: {
@@ -107,8 +117,14 @@ type OrderDelegate = {
 			subtotal: number;
 			totalAmount: number;
 			discountAmount: number;
+			extras?: {
+				create: Array<{
+					type: string;
+					price: number;
+				}>;
+			};
 		};
-		include: { credentials: true };
+		include: { credentials: true; extras: true };
 	}): Promise<OrderRecord>;
 };
 
@@ -141,6 +157,7 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 					id: input.quoteId,
 					clientId: input.clientId,
 				},
+				include: { extras: true },
 			});
 			if (!quote) throw new OrderQuoteNotFoundError();
 			if (quote.consumedAt) throw new OrderQuoteAlreadyUsedError();
@@ -170,8 +187,17 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 					subtotal: quote.subtotal,
 					totalAmount: quote.totalAmount,
 					discountAmount: quote.discountAmount,
+					extras:
+						quote.extras.length === 0
+							? undefined
+							: {
+									create: quote.extras.map((extra) => ({
+										type: extra.type,
+										price: extra.price,
+									})),
+								},
 				},
-				include: { credentials: true },
+				include: { credentials: true, extras: true },
 			});
 
 			const consumeResult = await client.orderQuote.updateMany({
@@ -249,6 +275,15 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 			subtotal: record.subtotal,
 			totalAmount: record.totalAmount,
 			discountAmount: record.discountAmount,
+			extras: record.extras.map((extra) => {
+				if (!isOrderExtraType(extra.type))
+					throw new Error(`Invalid order extra type persisted: ${extra.type}`);
+
+				return {
+					type: extra.type,
+					price: extra.price,
+				};
+			}),
 		});
 	}
 

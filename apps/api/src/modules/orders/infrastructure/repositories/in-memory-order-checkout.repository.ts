@@ -53,7 +53,10 @@ export class InMemoryOrderCheckoutRepository implements OrderCheckoutPort {
 					boosterId: input.boosterId,
 					couponId: quote.couponId,
 					requestDetails: quote.requestDetails,
-					pricing: quote.pricing,
+					pricing: {
+						...quote.pricing,
+						extras: quote.pricing.extras,
+					},
 				}),
 			);
 		} catch (error) {
