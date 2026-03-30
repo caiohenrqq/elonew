@@ -21,7 +21,9 @@ type PriceEntry = {
 
 @Injectable()
 export class StaticOrderPricingService implements OrderPricingService {
-	calculate(input: OrderQuoteRequestDetails): OrderPricingSnapshot {
+	async calculate(
+		input: OrderQuoteRequestDetails,
+	): Promise<OrderPricingSnapshot> {
 		if (input.serviceType !== 'elo_boost' && input.serviceType !== 'duo_boost')
 			throw new OrderUnsupportedPricingServiceTypeError(input.serviceType);
 
@@ -66,6 +68,7 @@ export class StaticOrderPricingService implements OrderPricingService {
 		const subtotal = Number((baseSubtotal + extrasTotal).toFixed(2));
 
 		return {
+			pricingVersionId: 'static-pricing',
 			subtotal,
 			totalAmount: subtotal,
 			discountAmount: 0,

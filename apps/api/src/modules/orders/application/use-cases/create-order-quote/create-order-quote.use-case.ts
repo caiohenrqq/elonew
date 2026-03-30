@@ -54,7 +54,7 @@ export class CreateOrderQuoteUseCase {
 			lpGain: input.lpGain,
 			deadline: input.deadline,
 		};
-		const pricing = this.orderPricingService.calculate(requestDetails);
+		const pricing = await this.orderPricingService.calculate(requestDetails);
 		const couponAdjustedPricing = await this.orderCouponService.apply({
 			clientId: input.clientId,
 			couponCode: input.couponCode,

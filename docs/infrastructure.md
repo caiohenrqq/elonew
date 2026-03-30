@@ -7,7 +7,7 @@
 - What it does:
 	- checks if Docker service `database` is running in `infrastructure/docker/dev/docker-compose.dev.yml`
 	- starts it if needed
-	- checks if database `elonew_test` exists
+	- checks if the selected test database exists
 	- creates it when missing
 - Optional env overrides:
 	- `TEST_DB_SERVICE`
@@ -17,11 +17,23 @@
 ### `database-test-setup.sh`
 - Purpose: full setup for DB test lane.
 - What it does:
+	- loads `apps/api/.env.test`
+	- if `TEST_DB_NAME` is provided, rewrites `DATABASE_URL` to that database
 	- runs `database-test-ensure-exists.sh`
 	- runs Prisma migrations on test env:
-		- `dotenv -e apps/api/.env.test -- pnpm --filter @packages/database exec prisma migrate deploy`
+		- `pnpm --filter @packages/database exec prisma migrate deploy`
 - Used by root script:
 	- `pnpm db:test:prepare`
+
+### `api-db-test-runner.sh`
+- Purpose: execute API DB-backed Jest lanes against an isolated per-run Postgres database.
+- What it does:
+	- loads `apps/api/.env.test`
+	- derives a unique `TEST_DB_NAME` when one is not provided
+	- rewrites `DATABASE_URL` to the isolated database
+	- runs workspace builds plus `db:test:prepare`
+	- runs the requested API Jest config in-band
+	- drops the isolated database on exit
 
 ### `api-dev-watch-runner.sh`
 - Purpose: stable API hot-reload runtime for Docker dev.

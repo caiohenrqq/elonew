@@ -15,6 +15,7 @@ type OrderQuoteRecord = {
 	id: string;
 	clientId: string;
 	couponId: string | null;
+	pricingVersionId: string;
 	serviceType: string;
 	currentLeague: string;
 	currentDivision: string;
@@ -52,6 +53,7 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 			data: {
 				clientId: input.clientId,
 				couponId: input.couponId,
+				pricingVersionId: input.pricing.pricingVersionId,
 				serviceType: this.mapServiceTypeToPersistence(
 					input.requestDetails.serviceType,
 				),
@@ -162,6 +164,7 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 				deadline: record.deadline,
 			},
 			pricing: {
+				pricingVersionId: record.pricingVersionId,
 				subtotal: record.subtotal,
 				totalAmount: record.totalAmount,
 				discountAmount: record.discountAmount,

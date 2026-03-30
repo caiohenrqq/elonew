@@ -63,3 +63,41 @@ export class OrderCouponInvalidError extends Error {
 		super('Coupon is invalid.');
 	}
 }
+
+export class OrderPricingVersionNotFoundError extends Error {
+	constructor() {
+		super('Pricing version was not found.');
+	}
+}
+
+export class OrderPricingVersionNotActiveError extends Error {
+	constructor() {
+		super('There is no active pricing version.');
+	}
+}
+
+export class OrderPricingVersionImmutableError extends Error {
+	constructor() {
+		super('Only draft pricing versions can be changed.');
+	}
+}
+
+export class OrderPricingVersionIncompleteError extends Error {
+	constructor() {
+		super('Pricing version configuration is incomplete.');
+	}
+}
+
+export class OrderPricingVersionNameInvalidError extends Error {
+	constructor() {
+		super('Pricing version name is invalid.');
+	}
+}
+
+export class OrderPricingVersionActiveConflictError extends Error {
+	constructor() {
+		super(
+			'Pricing version activation is conflicting with another active version.',
+		);
+	}
+}

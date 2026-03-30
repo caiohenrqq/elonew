@@ -1,6 +1,10 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import {
+	ORDER_PRICING_VERSION_REPOSITORY_KEY,
+	type OrderPricingVersionRepositoryPort,
+} from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import {
@@ -11,15 +15,24 @@ import {
 } from '@modules/orders/domain/order.errors';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
+import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
 import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
+import { OrdersPricingAdminController } from '@modules/orders/presentation/orders-pricing-admin.controller';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
+import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
 
 describe('Orders module integration', () => {
 	let controller: OrdersController;
+	let pricingAdminController: OrdersPricingAdminController;
 	let orderRepository: InMemoryOrderRepository;
+	let pricingVersions: OrderPricingVersionRepositoryPort;
+	const adminUser: AuthenticatedUser = {
+		id: 'admin-1',
+		role: Role.ADMIN,
+	};
 	const clientUser: AuthenticatedUser = {
 		id: 'client-1',
 		role: Role.CLIENT,
@@ -48,6 +61,21 @@ describe('Orders module integration', () => {
 		};
 	}
 
+	function makePricingVersionInputWithHigherGoldOnePrice(name: string) {
+		const input = makeDefaultOrderPricingVersionInput(name);
+
+		return {
+			...input,
+			steps: input.steps.map((step) =>
+				step.serviceType === 'elo_boost' &&
+				step.league === 'gold' &&
+				step.division === 'I'
+					? { ...step, priceToNext: 30 }
+					: step,
+			),
+		};
+	}
+
 	async function createQuotedOrder(input?: { boosterId?: string }) {
 		const quote = await controller.quote(makeQuotePayload(), clientUser);
 
@@ -70,12 +98,23 @@ describe('Orders module integration', () => {
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
 			.useClass(InMemoryOrderQuoteRepository)
+			.overrideProvider(ORDER_PRICING_VERSION_REPOSITORY_KEY)
+			.useClass(InMemoryOrderPricingVersionRepository)
 			.overrideProvider(BOOSTER_USER_READER_KEY)
 			.useClass(BoosterLookupStub)
 			.compile();
 
 		controller = moduleRef.get(OrdersController);
+		pricingAdminController = moduleRef.get(OrdersPricingAdminController);
 		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
+		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		const version = await pricingVersions.createDraft(
+			makeDefaultOrderPricingVersionInput(),
+		);
+		await pricingVersions.activate({
+			versionId: version.id,
+			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+		});
 	});
 
 	it('creates and fetches an order with authenticated client details', async () => {
@@ -192,6 +231,60 @@ describe('Orders module integration', () => {
 				{ type: 'priority_service', price: 2.52 },
 				{ type: 'offline_chat', price: 0 },
 			],
+		});
+	});
+
+	it('keeps historical quotes and orders on the original pricing version after a new version is activated', async () => {
+		const firstQuote = await controller.quote(makeQuotePayload(), clientUser);
+
+		const secondVersion = await pricingAdminController.create(
+			makePricingVersionInputWithHigherGoldOnePrice('Higher gold pricing'),
+			adminUser,
+		);
+		await pricingAdminController.activate(secondVersion.id, adminUser);
+
+		const firstOrder = await controller.create(
+			{
+				quoteId: firstQuote.quoteId,
+			},
+			clientUser,
+		);
+
+		await expect(
+			orderRepository.findById(firstOrder.id),
+		).resolves.toMatchObject({
+			subtotal: 25.2,
+			pricingVersionId: expect.any(String),
+		});
+
+		const secondQuote = await controller.quote(makeQuotePayload(), clientUser);
+		expect(secondQuote).toMatchObject({
+			subtotal: 38.4,
+			totalAmount: 38.4,
+			discountAmount: 0,
+		});
+
+		const secondOrder = await controller.create(
+			{
+				quoteId: secondQuote.quoteId,
+			},
+			clientUser,
+		);
+
+		const persistedFirstOrder = await orderRepository.findById(firstOrder.id);
+		const persistedSecondOrder = await orderRepository.findById(secondOrder.id);
+		expect(persistedFirstOrder?.pricingVersionId).not.toBeNull();
+		expect(persistedSecondOrder?.pricingVersionId).not.toBeNull();
+		expect(persistedSecondOrder?.pricingVersionId).not.toBe(
+			persistedFirstOrder?.pricingVersionId,
+		);
+		expect(persistedFirstOrder).toMatchObject({
+			subtotal: 25.2,
+			totalAmount: 25.2,
+		});
+		expect(persistedSecondOrder).toMatchObject({
+			subtotal: 38.4,
+			totalAmount: 38.4,
 		});
 	});
 

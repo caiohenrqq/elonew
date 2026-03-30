@@ -24,6 +24,7 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 			clientId: order.clientId,
 			boosterId: order.boosterId,
 			couponId: order.couponId,
+			pricingVersionId: order.pricingVersionId,
 			status: order.status,
 			requestDetails: order.requestDetails,
 			subtotal: order.subtotal,
@@ -163,6 +164,7 @@ function makeQuote(): StoredQuote {
 			deadline: new Date('2026-03-31T00:00:00.000Z'),
 		},
 		pricing: {
+			pricingVersionId: 'pricing-version-1',
 			subtotal: 25.2,
 			totalAmount: 25.2,
 			discountAmount: 0,
@@ -212,6 +214,7 @@ describe('InMemoryOrderCheckoutRepository', () => {
 				extras: ['mmr_buffed', 'priority_service'],
 			},
 			pricing: {
+				pricingVersionId: 'pricing-version-1',
 				subtotal: 36.54,
 				totalAmount: 36.54,
 				discountAmount: 0,
@@ -274,6 +277,7 @@ describe('InMemoryOrderCheckoutRepository', () => {
 				id: 'existing-order',
 				clientId: 'client-1',
 				couponId: null,
+				pricingVersionId: 'pricing-version-1',
 				requestDetails: makeQuote().requestDetails,
 				pricing: makeQuote().pricing,
 			}),
@@ -283,6 +287,7 @@ describe('InMemoryOrderCheckoutRepository', () => {
 			...makeQuote(),
 			couponId: 'coupon-1',
 			pricing: {
+				pricingVersionId: 'pricing-version-1',
 				subtotal: 25.2,
 				totalAmount: 22.68,
 				discountAmount: 2.52,

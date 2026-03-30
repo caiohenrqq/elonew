@@ -98,6 +98,7 @@ describe('Order domain rules', () => {
 		const order = Order.createDraft({
 			id: 'order-6',
 			clientId: 'client-1',
+			pricingVersionId: 'pricing-version-1',
 			requestDetails: {
 				serviceType: 'elo_boost',
 				currentLeague: 'gold',

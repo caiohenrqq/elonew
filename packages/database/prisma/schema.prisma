@@ -50,6 +50,12 @@ enum CouponDiscountType {
   FIXED
 }
 
+enum PricingVersionStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
 model User {
   id               String    @id @default(cuid())
   username         String    @unique
@@ -114,6 +120,8 @@ model Order {
   discountAmount   Float        @default(0)
   couponId         String?
   coupon           Coupon?      @relation(fields: [couponId], references: [id])
+  pricingVersionId String?
+  pricingVersion   PricingVersion? @relation(fields: [pricingVersionId], references: [id])
   
   credentials      OrderCredentials?
   quote            OrderQuote?
@@ -129,6 +137,7 @@ model Order {
   @@index([status])
   @@index([clientId])
   @@index([boosterId])
+  @@index([pricingVersionId])
   @@map("orders")
 }
 
@@ -151,6 +160,8 @@ model OrderQuote {
   subtotal         Float
   totalAmount      Float
   discountAmount   Float        @default(0)
+  pricingVersionId String
+  pricingVersion   PricingVersion @relation(fields: [pricingVersionId], references: [id])
   extras           OrderQuoteExtra[]
   expiresAt        DateTime
   consumedAt       DateTime?
@@ -161,6 +172,7 @@ model OrderQuote {
 
   @@index([clientId, expiresAt])
   @@index([clientId, consumedAt])
+  @@index([pricingVersionId])
   @@map("order_quotes")
 }
 
@@ -264,6 +276,47 @@ model Coupon {
   orderQuotes OrderQuote[]
 
   @@map("coupons")
+}
+
+model PricingVersion {
+  id          String               @id @default(cuid())
+  name        String
+  status      PricingVersionStatus @default(DRAFT)
+  activatedAt DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  steps       PricingStep[]
+  extras      PricingExtra[]
+  orders      Order[]
+  orderQuotes OrderQuote[]
+
+  @@index([status])
+  @@map("pricing_versions")
+}
+
+model PricingStep {
+  id               String         @id @default(cuid())
+  pricingVersionId String
+  pricingVersion   PricingVersion @relation(fields: [pricingVersionId], references: [id], onDelete: Cascade)
+  serviceType      ServiceType
+  league           String
+  division         String
+  priceToNext      Float
+
+  @@unique([pricingVersionId, serviceType, league, division])
+  @@map("pricing_steps")
+}
+
+model PricingExtra {
+  id               String         @id @default(cuid())
+  pricingVersionId String
+  pricingVersion   PricingVersion @relation(fields: [pricingVersionId], references: [id], onDelete: Cascade)
+  type             String
+  modifierRate     Float
+
+  @@unique([pricingVersionId, type])
+  @@map("pricing_extras")
 }
 
 model Chat {

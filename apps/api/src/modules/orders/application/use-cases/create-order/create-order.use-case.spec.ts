@@ -33,6 +33,7 @@ class OrderCheckoutStub implements OrderCheckoutPort {
 		id: 'order-1',
 		clientId: 'client-1',
 		boosterId: null,
+		pricingVersionId: 'pricing-version-1',
 		status: OrderStatus.AWAITING_PAYMENT,
 		requestDetails: {
 			serviceType: 'elo_boost',
@@ -75,6 +76,7 @@ class OrderCheckoutStub implements OrderCheckoutPort {
 			id: this.nextOrder.id,
 			clientId: this.nextOrder.clientId,
 			boosterId: this.nextOrder.boosterId,
+			pricingVersionId: this.nextOrder.pricingVersionId,
 			status: this.nextOrder.status,
 			requestDetails: this.nextOrder.requestDetails ?? undefined,
 			subtotal: this.nextOrder.subtotal,
@@ -137,6 +139,7 @@ describe('CreateOrderUseCase', () => {
 			id: 'order-99',
 			clientId: 'client-1',
 			boosterId: 'booster-1',
+			pricingVersionId: 'pricing-version-1',
 			status: OrderStatus.AWAITING_PAYMENT,
 			requestDetails: {
 				serviceType: 'elo_boost',

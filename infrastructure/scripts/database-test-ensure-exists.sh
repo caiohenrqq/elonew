@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$REPO_ROOT"
+
 COMPOSE_FILE="infrastructure/docker/dev/docker-compose.dev.yml"
 DB_SERVICE="${TEST_DB_SERVICE:-database}"
 DB_NAME="${TEST_DB_NAME:-elonew_test}"

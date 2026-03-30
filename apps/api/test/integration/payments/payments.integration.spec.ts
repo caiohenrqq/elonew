@@ -1,9 +1,14 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import {
+	ORDER_PRICING_VERSION_REPOSITORY_KEY,
+	type OrderPricingVersionRepositoryPort,
+} from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
+import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
 import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { ORDER_PAYMENT_AMOUNT_PORT_KEY } from '@modules/payments/application/ports/order-payment-amount.port';
@@ -20,10 +25,12 @@ import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
+import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
 
 describe('Payments module integration', () => {
 	let ordersController: OrdersController;
 	let paymentsController: PaymentsController;
+	let pricingVersions: OrderPricingVersionRepositoryPort;
 	const clientUser: AuthenticatedUser = {
 		id: 'client-1',
 		role: Role.CLIENT,
@@ -71,6 +78,8 @@ describe('Payments module integration', () => {
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
 			.useClass(InMemoryOrderQuoteRepository)
+			.overrideProvider(ORDER_PRICING_VERSION_REPOSITORY_KEY)
+			.useClass(InMemoryOrderPricingVersionRepository)
 			.overrideProvider(PAYMENT_REPOSITORY_KEY)
 			.useClass(InMemoryPaymentRepository)
 			.overrideProvider(PROCESSED_WEBHOOK_EVENT_PORT_KEY)
@@ -99,6 +108,14 @@ describe('Payments module integration', () => {
 
 		ordersController = moduleRef.get(OrdersController);
 		paymentsController = moduleRef.get(PaymentsController);
+		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		const version = await pricingVersions.createDraft(
+			makeDefaultOrderPricingVersionInput(),
+		);
+		await pricingVersions.activate({
+			versionId: version.id,
+			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+		});
 	});
 
 	it('creates and fetches a payment with 70% booster share', async () => {

@@ -234,8 +234,14 @@ describe('Users (e2e)', () => {
 		for (let index = 0; index < 3; index++) {
 			await requestHttp(app)
 				.get('/api/health/api')
-				.expect(200, {
-					status: 'ok',
+				.expect((response) => {
+					expect(response.status).toBe(200);
+					expect(response.body).toEqual({
+						status: 'ok',
+					});
+					expect(response.headers['x-content-type-options']).toBe('nosniff');
+					expect(response.headers['x-frame-options']).toBe('DENY');
+					expect(response.headers['referrer-policy']).toBe('no-referrer');
 				})
 				.execute();
 		}

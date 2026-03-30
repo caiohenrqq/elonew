@@ -1,5 +1,4 @@
-import { PrismaService } from '@app/common/prisma/prisma.service';
-import { AppSettingsModule } from '@app/common/settings/app-settings.module';
+import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { ORDER_COMPLETION_EARNINGS_PORT_KEY } from '@modules/orders/application/ports/order-completion-earnings.port';
 import { WALLET_FUNDS_RELEASE_JOB_SCHEDULER_PORT_KEY } from '@modules/wallet/application/ports/wallet-funds-release-job-scheduler.port';
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
@@ -14,10 +13,9 @@ import { WalletsController } from '@modules/wallet/presentation/wallets.controll
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [AppSettingsModule],
+	imports: [PrismaModule],
 	controllers: [WalletsController],
 	providers: [
-		PrismaService,
 		PrismaWalletRepository,
 		BullmqWalletFundsReleaseJobSchedulerAdapter,
 		{

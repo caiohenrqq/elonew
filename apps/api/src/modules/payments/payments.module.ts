@@ -1,5 +1,4 @@
-import { PrismaService } from '@app/common/prisma/prisma.service';
-import { AppSettingsModule } from '@app/common/settings/app-settings.module';
+import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { AuthModule } from '@modules/auth/auth.module';
 import { OrdersModule } from '@modules/orders/orders.module';
@@ -31,10 +30,9 @@ import { MercadoPagoSdkAdapter } from '@packages/integrations/mercadopago/mercad
 import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 
 @Module({
-	imports: [AppSettingsModule, AuthModule, OrdersModule],
+	imports: [PrismaModule, AuthModule, OrdersModule],
 	controllers: [PaymentsController],
 	providers: [
-		PrismaService,
 		PrismaPaymentRepository,
 		{
 			provide: PAYMENT_REPOSITORY_KEY,

@@ -19,6 +19,7 @@ export type OrderQuoteRequestDetails = {
 };
 
 export type OrderPricingSnapshot = {
+	pricingVersionId: string;
 	subtotal: number;
 	totalAmount: number;
 	discountAmount: number;

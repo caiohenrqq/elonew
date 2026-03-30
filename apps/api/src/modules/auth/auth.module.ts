@@ -1,6 +1,5 @@
 import { HttpThrottlingModule } from '@app/common/http/http-throttling.module';
-import { PrismaService } from '@app/common/prisma/prisma.service';
-import { AppSettingsModule } from '@app/common/settings/app-settings.module';
+import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AUTH_SESSION_REPOSITORY_KEY } from '@modules/auth/application/ports/auth-session-repository.port';
 import {
 	ACCESS_TOKEN_SERVICE_KEY,
@@ -21,10 +20,9 @@ import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [AppSettingsModule, HttpThrottlingModule, UsersModule],
+	imports: [PrismaModule, HttpThrottlingModule, UsersModule],
 	controllers: [AuthController],
 	providers: [
-		PrismaService,
 		PrismaAuthSessionRepository,
 		{
 			provide: AUTH_SESSION_REPOSITORY_KEY,

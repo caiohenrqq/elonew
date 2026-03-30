@@ -3,21 +3,13 @@ import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { ConfirmEmailUseCase } from '@modules/users/application/use-cases/confirm-email/confirm-email.use-case';
 import { SignUpUseCase } from '@modules/users/application/use-cases/sign-up/sign-up.use-case';
 import {
+	type ConfirmEmailSchemaInput,
 	confirmEmailSchema,
+	type SignUpSchemaInput,
 	signUpSchema,
 } from '@modules/users/presentation/users.request-schemas';
 import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler.guard';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-
-type SignUpBody = {
-	username: string;
-	email: string;
-	password: string;
-};
-
-type ConfirmEmailBody = {
-	token: string;
-};
 
 @Controller('users')
 @UseGuards(UsersThrottlerGuard)
@@ -29,7 +21,9 @@ export class UsersController {
 	) {}
 
 	@Post('sign-up')
-	async signUp(@Body(new ZodValidationPipe(signUpSchema)) body: SignUpBody) {
+	async signUp(
+		@Body(new ZodValidationPipe(signUpSchema)) body: SignUpSchemaInput,
+	) {
 		const result = await this.signUpUseCase.execute({
 			username: body.username,
 			email: body.email,
@@ -52,7 +46,8 @@ export class UsersController {
 
 	@Post('confirm-email')
 	confirmEmail(
-		@Body(new ZodValidationPipe(confirmEmailSchema)) body: ConfirmEmailBody,
+		@Body(new ZodValidationPipe(confirmEmailSchema))
+		body: ConfirmEmailSchemaInput,
 	) {
 		return this.confirmEmailUseCase.execute({
 			token: body.token,

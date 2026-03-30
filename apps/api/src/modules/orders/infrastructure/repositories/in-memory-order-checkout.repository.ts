@@ -52,6 +52,7 @@ export class InMemoryOrderCheckoutRepository implements OrderCheckoutPort {
 					clientId: input.clientId,
 					boosterId: input.boosterId,
 					couponId: quote.couponId,
+					pricingVersionId: quote.pricing.pricingVersionId,
 					requestDetails: quote.requestDetails,
 					pricing: {
 						...quote.pricing,

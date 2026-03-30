@@ -72,6 +72,7 @@ export class ApplyOrderCouponService implements OrderCouponService {
 		return {
 			couponId: coupon.id,
 			pricing: {
+				pricingVersionId: input.pricing.pricingVersionId,
 				subtotal: input.pricing.subtotal,
 				totalAmount,
 				discountAmount,

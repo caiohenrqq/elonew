@@ -87,4 +87,17 @@ describe('Wallets (e2e)', () => {
 			.expect(400)
 			.execute();
 	});
+
+	it('rejects malformed booster ids with bad request', async () => {
+		await requestHttp(app).get('/wallets/%20').expect(400).execute();
+
+		await requestHttp(app)
+			.post('/wallets/%20/withdrawals')
+			.send({
+				amount: 10,
+				requestedAt: '2026-03-10T00:00:00.000Z',
+			})
+			.expect(400)
+			.execute();
+	});
 });

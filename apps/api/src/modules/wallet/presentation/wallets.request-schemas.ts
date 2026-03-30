@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+export const boosterIdParamSchema = z.string().trim().min(1);
+
+export type BoosterIdParamSchemaInput = z.infer<typeof boosterIdParamSchema>;
+
 export const creditCompletedOrderEarningsSchema = z.object({
 	orderId: z.string().trim().min(1),
 	boosterId: z.string().trim().min(1),

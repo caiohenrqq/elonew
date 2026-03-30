@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	type HttpException,
 	NotFoundException,
@@ -58,6 +59,13 @@ export const mapAsUnauthorized = (
 ): DomainErrorMappingRule => ({
 	errorTypes,
 	toException: (message: string) => new UnauthorizedException(message),
+});
+
+export const mapAsConflict = (
+	...errorTypes: ErrorConstructor[]
+): DomainErrorMappingRule => ({
+	errorTypes,
+	toException: (message: string) => new ConflictException(message),
 });
 
 export const mapAsForbidden = (
