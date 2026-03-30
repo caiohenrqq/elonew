@@ -151,6 +151,7 @@ model OrderQuote {
   subtotal         Float
   totalAmount      Float
   discountAmount   Float        @default(0)
+  extras           OrderQuoteExtra[]
   expiresAt        DateTime
   consumedAt       DateTime?
   orderId          String?      @unique
@@ -179,11 +180,23 @@ model OrderCredentials {
 model OrderExtra {
   id      String @id @default(cuid())
   orderId String
-  order   Order  @relation(fields: [orderId], references: [id])
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   type    String
   price   Float
 
+  @@unique([orderId, type])
   @@map("order_extras")
+}
+
+model OrderQuoteExtra {
+  id           String     @id @default(cuid())
+  orderQuoteId String
+  orderQuote   OrderQuote @relation(fields: [orderQuoteId], references: [id], onDelete: Cascade)
+  type         String
+  price        Float
+
+  @@unique([orderQuoteId, type])
+  @@map("order_quote_extras")
 }
 
 model Payment {

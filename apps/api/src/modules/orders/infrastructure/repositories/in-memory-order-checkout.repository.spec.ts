@@ -29,6 +29,7 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 			subtotal: order.subtotal,
 			totalAmount: order.totalAmount,
 			discountAmount: order.discountAmount,
+			extras: order.extras,
 		});
 		this.orders.set(createdOrder.id, createdOrder);
 		return createdOrder;
@@ -150,6 +151,7 @@ function makeQuote(): StoredQuote {
 		couponId: null,
 		requestDetails: {
 			serviceType: 'elo_boost',
+			extras: [],
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			currentLp: 50,
@@ -164,6 +166,7 @@ function makeQuote(): StoredQuote {
 			subtotal: 25.2,
 			totalAmount: 25.2,
 			discountAmount: 0,
+			extras: [],
 		},
 		expiresAt: new Date('2026-03-31T00:00:00.000Z'),
 		consumedAt: null,
@@ -191,10 +194,50 @@ describe('InMemoryOrderCheckoutRepository', () => {
 		});
 
 		expect(createdOrder.id).toBe('order-1');
+		expect(createdOrder.extras).toEqual([]);
 		expect(quoteRepository.getById('quote-1')).toMatchObject({
 			consumedAt: new Date('2026-03-18T12:00:00.000Z'),
 			orderId: 'order-1',
 		});
+	});
+
+	it('carries priced extras from the quote into the created order', async () => {
+		const orderRepository = new InMemoryOrderRepository();
+		const quoteRepository = new InMemoryOrderQuoteRepository();
+		const couponLookup = new CouponLookupStub();
+		quoteRepository.insert({
+			...makeQuote(),
+			requestDetails: {
+				...makeQuote().requestDetails,
+				extras: ['mmr_buffed', 'priority_service'],
+			},
+			pricing: {
+				subtotal: 36.54,
+				totalAmount: 36.54,
+				discountAmount: 0,
+				extras: [
+					{ type: 'mmr_buffed', price: 8.82 },
+					{ type: 'priority_service', price: 2.52 },
+				],
+			},
+		});
+		const repository = new InMemoryOrderCheckoutRepository(
+			orderRepository,
+			quoteRepository,
+			couponLookup,
+		);
+
+		const createdOrder = await repository.createDraftOrderFromOwnedQuote({
+			orderId: 'order-1',
+			clientId: 'client-1',
+			quoteId: 'quote-1',
+			now: new Date('2026-03-18T12:00:00.000Z'),
+		});
+
+		expect(createdOrder.extras).toEqual([
+			{ type: 'mmr_buffed', price: 8.82 },
+			{ type: 'priority_service', price: 2.52 },
+		]);
 	});
 
 	it('restores the quote when order creation fails after consumption', async () => {
@@ -243,6 +286,7 @@ describe('InMemoryOrderCheckoutRepository', () => {
 				subtotal: 25.2,
 				totalAmount: 22.68,
 				discountAmount: 2.52,
+				extras: [],
 			},
 		});
 		const couponLookup = new CouponLookupStub();

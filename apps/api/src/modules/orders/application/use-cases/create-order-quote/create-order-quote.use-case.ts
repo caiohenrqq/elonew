@@ -43,6 +43,7 @@ export class CreateOrderQuoteUseCase {
 	async execute(input: CreateOrderQuoteInput): Promise<CreateOrderQuoteOutput> {
 		const requestDetails = {
 			serviceType: input.serviceType,
+			extras: input.extras ?? [],
 			currentLeague: input.currentLeague,
 			currentDivision: input.currentDivision,
 			currentLp: input.currentLp,

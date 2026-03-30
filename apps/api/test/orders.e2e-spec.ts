@@ -265,6 +265,20 @@ describe('Orders (e2e)', () => {
 			.execute();
 	});
 
+	it('rejects duplicate extras in the quote payload', async () => {
+		const token = signToken({ sub: 'client-duplicates', role: 'CLIENT' });
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				...makeQuotePayload(),
+				extras: ['priority_service', 'priority_service'],
+			})
+			.expect(400)
+			.execute();
+	});
+
 	it('returns the same invalid coupon response for missing and inactive coupons', async () => {
 		const token = signToken({ sub: 'client-coupon', role: 'CLIENT' });
 		couponLookup.coupons.set('INACTIVE10', {

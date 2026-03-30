@@ -6,7 +6,12 @@ import {
 	type OrderRequestDetails,
 } from '@modules/orders/domain/order.entity';
 import { OrderStatus } from '@modules/orders/domain/order-status';
+import { OrderCredentialsCipherService } from '@modules/orders/infrastructure/security/order-credentials-cipher.service';
 import { Injectable } from '@nestjs/common';
+import {
+	isOrderExtraType,
+	type OrderPricedExtra,
+} from '@shared/orders/order-extra';
 import type { OrderServiceType } from '@shared/orders/service-type';
 import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
@@ -29,6 +34,10 @@ type OrderRecord = {
 	subtotal: number | null;
 	totalAmount: number | null;
 	discountAmount: number;
+	extras: Array<{
+		type: string;
+		price: number;
+	}>;
 	credentials: {
 		login: string;
 		summonerName: string;
@@ -39,11 +48,11 @@ type OrderRecord = {
 type OrderDelegate = {
 	findUnique(args: {
 		where: { id: string };
-		include: { credentials: true };
+		include: { credentials: true; extras: true };
 	}): Promise<OrderRecord | null>;
 	findFirst(args: {
 		where: { id: string; clientId: string };
-		include: { credentials: true };
+		include: { credentials: true; extras: true };
 	}): Promise<OrderRecord | null>;
 	findFirst(args: {
 		where: { clientId: string };
@@ -69,6 +78,12 @@ type OrderDelegate = {
 			subtotal: number | null;
 			totalAmount: number | null;
 			discountAmount: number;
+			extras?: {
+				create: Array<{
+					type: string;
+					price: number;
+				}>;
+			};
 			credentials?:
 				| {
 						create: {
@@ -79,7 +94,7 @@ type OrderDelegate = {
 				  }
 				| undefined;
 		};
-		include: { credentials: true };
+		include: { credentials: true; extras: true };
 	}): Promise<OrderRecord>;
 	upsert(args: {
 		where: { id: string };
@@ -102,6 +117,12 @@ type OrderDelegate = {
 			subtotal: number | null;
 			totalAmount: number | null;
 			discountAmount: number;
+			extras?: {
+				create: Array<{
+					type: string;
+					price: number;
+				}>;
+			};
 			credentials?:
 				| {
 						create: {
@@ -130,6 +151,13 @@ type OrderDelegate = {
 			subtotal: number | null;
 			totalAmount: number | null;
 			discountAmount: number;
+			extras?: {
+				deleteMany: Record<string, never>;
+				create: Array<{
+					type: string;
+					price: number;
+				}>;
+			};
 			credentials?:
 				| {
 						upsert: {
@@ -161,7 +189,10 @@ type OrderPrismaClient = {
 
 @Injectable()
 export class PrismaOrderRepository implements OrderRepositoryPort {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(
+		private readonly prisma: PrismaService,
+		private readonly orderCredentialsCipher: OrderCredentialsCipherService,
+	) {}
 
 	async create(order: Order): Promise<Order> {
 		const record = await this.getDelegate().create({
@@ -173,9 +204,10 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
+				extras: this.mapExtrasCreate(order.extras),
 				credentials: this.mapCredentialsCreate(order.credentials),
 			},
-			include: { credentials: true },
+			include: { credentials: true, extras: true },
 		});
 
 		return this.mapOrderFromRecord(record);
@@ -184,7 +216,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 	async findById(id: string): Promise<Order | null> {
 		const record = await this.getDelegate().findUnique({
 			where: { id },
-			include: { credentials: true },
+			include: { credentials: true, extras: true },
 		});
 		if (!record) return null;
 
@@ -194,7 +226,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 	async findByIdForClient(id: string, clientId: string): Promise<Order | null> {
 		const record = await this.getDelegate().findFirst({
 			where: { id, clientId },
-			include: { credentials: true },
+			include: { credentials: true, extras: true },
 		});
 		if (!record) return null;
 
@@ -229,6 +261,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
+				extras: this.mapExtrasCreate(order.extras),
 				credentials: credentialsCreate,
 			},
 			update: {
@@ -238,6 +271,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
+				extras: this.mapExtrasUpdate(order.extras),
 				credentials: credentialsUpdate,
 			},
 		});
@@ -263,7 +297,57 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 			subtotal: record.subtotal,
 			totalAmount: record.totalAmount,
 			discountAmount: record.discountAmount,
+			extras: (record.extras ?? []).map((extra) =>
+				this.mapExtraFromRecord(extra),
+			),
 		});
+	}
+
+	private mapExtrasCreate(extras?: OrderPricedExtra[]):
+		| {
+				create: Array<{
+					type: string;
+					price: number;
+				}>;
+		  }
+		| undefined {
+		if (!extras || extras.length === 0) return undefined;
+
+		return {
+			create: extras.map((extra) => ({
+				type: extra.type,
+				price: extra.price,
+			})),
+		};
+	}
+
+	private mapExtrasUpdate(extras?: OrderPricedExtra[]): {
+		deleteMany: Record<string, never>;
+		create: Array<{
+			type: string;
+			price: number;
+		}>;
+	} {
+		return {
+			deleteMany: {},
+			create: (extras ?? []).map((extra) => ({
+				type: extra.type,
+				price: extra.price,
+			})),
+		};
+	}
+
+	private mapExtraFromRecord(record: {
+		type: string;
+		price: number;
+	}): OrderPricedExtra {
+		if (!isOrderExtraType(record.type))
+			throw new Error(`Invalid order extra type persisted: ${record.type}`);
+
+		return {
+			type: record.type,
+			price: record.price,
+		};
 	}
 
 	private mapCredentialsFromRecord(
@@ -272,9 +356,9 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 		if (!record) return null;
 
 		return {
-			login: record.login,
-			summonerName: record.summonerName,
-			password: record.password,
+			login: this.orderCredentialsCipher.decrypt(record.login),
+			summonerName: this.orderCredentialsCipher.decrypt(record.summonerName),
+			password: this.orderCredentialsCipher.decrypt(record.password),
 		};
 	}
 
@@ -291,9 +375,11 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 
 		return {
 			create: {
-				login: credentials.login,
-				summonerName: credentials.summonerName,
-				password: credentials.password,
+				login: this.orderCredentialsCipher.encrypt(credentials.login),
+				summonerName: this.orderCredentialsCipher.encrypt(
+					credentials.summonerName,
+				),
+				password: this.orderCredentialsCipher.encrypt(credentials.password),
 			},
 		};
 	}
@@ -319,14 +405,18 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 		return {
 			upsert: {
 				create: {
-					login: credentials.login,
-					summonerName: credentials.summonerName,
-					password: credentials.password,
+					login: this.orderCredentialsCipher.encrypt(credentials.login),
+					summonerName: this.orderCredentialsCipher.encrypt(
+						credentials.summonerName,
+					),
+					password: this.orderCredentialsCipher.encrypt(credentials.password),
 				},
 				update: {
-					login: credentials.login,
-					summonerName: credentials.summonerName,
-					password: credentials.password,
+					login: this.orderCredentialsCipher.encrypt(credentials.login),
+					summonerName: this.orderCredentialsCipher.encrypt(
+						credentials.summonerName,
+					),
+					password: this.orderCredentialsCipher.encrypt(credentials.password),
 				},
 			},
 		};

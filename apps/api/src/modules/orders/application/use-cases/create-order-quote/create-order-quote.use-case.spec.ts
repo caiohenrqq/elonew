@@ -53,6 +53,7 @@ class OrderCouponServiceStub implements OrderCouponService {
 					subtotal: input.pricing.subtotal,
 					totalAmount: 22.68,
 					discountAmount: 2.52,
+					extras: input.pricing.extras,
 				},
 			};
 		}
@@ -106,6 +107,7 @@ describe('CreateOrderQuoteUseCase', () => {
 				subtotal: 25.2,
 				totalAmount: 25.2,
 				discountAmount: 0,
+				extras: [],
 			},
 			expiresAt: new Date('2026-03-18T13:00:00.000Z'),
 		});
@@ -116,6 +118,7 @@ describe('CreateOrderQuoteUseCase', () => {
 				subtotal: 25.2,
 				totalAmount: 25.2,
 				discountAmount: 0,
+				extras: [],
 			},
 		});
 	});
@@ -162,6 +165,7 @@ describe('CreateOrderQuoteUseCase', () => {
 				subtotal: 25.2,
 				totalAmount: 25.2,
 				discountAmount: 0,
+				extras: [],
 			},
 		});
 		expect(quoteRepository.lastCreated).toMatchObject({
@@ -170,6 +174,71 @@ describe('CreateOrderQuoteUseCase', () => {
 				subtotal: 25.2,
 				totalAmount: 22.68,
 				discountAmount: 2.52,
+				extras: [],
+			},
+		});
+	});
+
+	it('applies deterministic extras pricing before coupon calculation', async () => {
+		const quoteRepository = new InMemoryOrderQuoteRepository();
+		const couponService = new OrderCouponServiceStub();
+		const useCase = new CreateOrderQuoteUseCase(
+			new StaticOrderPricingService(),
+			couponService,
+			quoteRepository,
+			{
+				orderQuoteTtlMinutes: 60,
+			} as never,
+		);
+
+		await expect(
+			useCase.execute({
+				clientId: 'client-1',
+				now: new Date('2026-03-18T12:00:00.000Z'),
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: new Date('2026-03-31T00:00:00.000Z'),
+				extras: ['mmr_buffed', 'priority_service', 'offline_chat'],
+			}),
+		).resolves.toEqual({
+			quoteId: 'quote-1',
+			subtotal: 36.54,
+			totalAmount: 36.54,
+			discountAmount: 0,
+		});
+
+		expect(couponService.lastInput).toMatchObject({
+			pricing: {
+				subtotal: 36.54,
+				totalAmount: 36.54,
+				discountAmount: 0,
+				extras: [
+					{ type: 'mmr_buffed', price: 8.82 },
+					{ type: 'priority_service', price: 2.52 },
+					{ type: 'offline_chat', price: 0 },
+				],
+			},
+		});
+		expect(quoteRepository.lastCreated).toMatchObject({
+			requestDetails: {
+				extras: ['mmr_buffed', 'priority_service', 'offline_chat'],
+			},
+			pricing: {
+				subtotal: 36.54,
+				totalAmount: 36.54,
+				discountAmount: 0,
+				extras: [
+					{ type: 'mmr_buffed', price: 8.82 },
+					{ type: 'priority_service', price: 2.52 },
+					{ type: 'offline_chat', price: 0 },
+				],
 			},
 		});
 	});

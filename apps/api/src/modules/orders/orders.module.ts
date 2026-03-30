@@ -27,6 +27,7 @@ import { PrismaCouponLookupRepository } from '@modules/orders/infrastructure/rep
 import { PrismaOrderRepository } from '@modules/orders/infrastructure/repositories/prisma-order.repository';
 import { PrismaOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/prisma-order-checkout.repository';
 import { PrismaOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/prisma-order-quote.repository';
+import { OrderCredentialsCipherService } from '@modules/orders/infrastructure/security/order-credentials-cipher.service';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
@@ -41,6 +42,7 @@ import { Module } from '@nestjs/common';
 		PrismaOrderCheckoutRepository,
 		PrismaOrderRepository,
 		PrismaOrderQuoteRepository,
+		OrderCredentialsCipherService,
 		{
 			provide: BOOSTER_USER_READER_KEY,
 			useExisting: PrismaBoosterUserReader,

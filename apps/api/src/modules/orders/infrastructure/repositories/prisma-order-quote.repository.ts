@@ -8,6 +8,7 @@ import {
 } from '@modules/orders/domain/order-pricing.errors';
 import { Injectable } from '@nestjs/common';
 import { ServiceType } from '@prisma/client';
+import { isOrderExtraType } from '@shared/orders/order-extra';
 import type { OrderServiceType } from '@shared/orders/service-type';
 
 type OrderQuoteRecord = {
@@ -27,6 +28,10 @@ type OrderQuoteRecord = {
 	subtotal: number;
 	totalAmount: number;
 	discountAmount: number;
+	extras: Array<{
+		type: string;
+		price: number;
+	}>;
 	expiresAt: Date;
 	consumedAt: Date | null;
 	orderId: string | null;
@@ -62,6 +67,15 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 				subtotal: input.pricing.subtotal,
 				totalAmount: input.pricing.totalAmount,
 				discountAmount: input.pricing.discountAmount,
+				extras:
+					input.pricing.extras.length === 0
+						? undefined
+						: {
+								create: input.pricing.extras.map((extra) => ({
+									type: extra.type,
+									price: extra.price,
+								})),
+							},
 				expiresAt: input.expiresAt,
 			},
 			select: { id: true },
@@ -81,6 +95,7 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 				id: input.quoteId,
 				clientId: input.clientId,
 			},
+			include: { extras: true },
 		});
 		if (!quote) throw new OrderQuoteNotFoundError();
 		if (quote.consumedAt) throw new OrderQuoteAlreadyUsedError();
@@ -97,6 +112,7 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 			},
 			data: {
 				consumedAt: input.now,
+				orderId: input.orderId,
 			},
 		});
 		if (result.count === 0) throw new OrderQuoteAlreadyUsedError();
@@ -127,6 +143,14 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 			couponId: record.couponId,
 			requestDetails: {
 				serviceType: this.mapServiceTypeFromPersistence(record.serviceType),
+				extras: record.extras.map((extra) => {
+					if (!isOrderExtraType(extra.type))
+						throw new Error(
+							`Invalid order extra type persisted: ${extra.type}`,
+						);
+
+					return extra.type;
+				}),
 				currentLeague: record.currentLeague,
 				currentDivision: record.currentDivision,
 				currentLp: record.currentLp,
@@ -141,6 +165,17 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 				subtotal: record.subtotal,
 				totalAmount: record.totalAmount,
 				discountAmount: record.discountAmount,
+				extras: record.extras.map((extra) => {
+					if (!isOrderExtraType(extra.type))
+						throw new Error(
+							`Invalid order extra type persisted: ${extra.type}`,
+						);
+
+					return {
+						type: extra.type,
+						price: extra.price,
+					};
+				}),
 			},
 		};
 	}

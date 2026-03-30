@@ -75,6 +75,7 @@ export class ApplyOrderCouponService implements OrderCouponService {
 				subtotal: input.pricing.subtotal,
 				totalAmount,
 				discountAmount,
+				extras: input.pricing.extras,
 			},
 		};
 	}
