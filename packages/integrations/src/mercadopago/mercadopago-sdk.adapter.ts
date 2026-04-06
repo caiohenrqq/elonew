@@ -137,7 +137,6 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 			gatewayPaymentId: String(response.id),
 			gatewayStatus: response.status,
 			gatewayStatusDetail: response.status_detail ?? null,
-			isApproved: response.status === 'approved',
 		};
 	}
 
