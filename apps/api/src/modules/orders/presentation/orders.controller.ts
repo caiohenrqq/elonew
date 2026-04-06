@@ -10,7 +10,6 @@ import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/comp
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
-import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import {
@@ -32,8 +31,6 @@ import {
 	createOrderQuoteSchema,
 } from '@shared/orders/create-order-quote.schema';
 import {
-	type AcceptOrderSchemaInput,
-	acceptOrderSchema,
 	type OrderIdParamSchemaInput,
 	orderIdParamSchema,
 	type SaveOrderCredentialsSchemaInput,
@@ -46,7 +43,6 @@ export class OrdersController {
 		private readonly createOrderUseCase: CreateOrderUseCase,
 		private readonly createOrderQuoteUseCase: CreateOrderQuoteUseCase,
 		private readonly getOrderUseCase: GetOrderUseCase,
-		private readonly markOrderAsPaidUseCase: MarkOrderAsPaidUseCase,
 		private readonly acceptOrderUseCase: AcceptOrderUseCase,
 		private readonly rejectOrderUseCase: RejectOrderUseCase,
 		private readonly cancelOrderUseCase: CancelOrderUseCase,
@@ -127,71 +123,84 @@ export class OrdersController {
 		});
 	}
 
-	@Post(':orderId/payment-confirmed')
-	@HttpCode(200)
-	async confirmPayment(
-		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
-		orderId: OrderIdParamSchemaInput,
-	): Promise<{ success: true }> {
-		await this.markOrderAsPaidUseCase.execute({ orderId });
-		return { success: true };
-	}
-
 	@Post(':orderId/accept')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.BOOSTER)
 	@HttpCode(200)
 	async accept(
 		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
 		orderId: OrderIdParamSchemaInput,
-		@Body(new ZodValidationPipe(acceptOrderSchema))
-		body?: AcceptOrderSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{ success: true }> {
 		await this.acceptOrderUseCase.execute({
 			orderId,
-			boosterId: body?.boosterId,
+			boosterId: currentUser.id,
 		});
 		return { success: true };
 	}
 
 	@Post(':orderId/reject')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.BOOSTER)
 	@HttpCode(200)
 	async reject(
 		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
 		orderId: OrderIdParamSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{ success: true }> {
-		await this.rejectOrderUseCase.execute({ orderId });
+		await this.rejectOrderUseCase.execute({
+			orderId,
+			boosterId: currentUser.id,
+		});
 		return { success: true };
 	}
 
 	@Post(':orderId/cancel')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
 	@HttpCode(200)
 	async cancel(
 		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
 		orderId: OrderIdParamSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{ success: true }> {
-		await this.cancelOrderUseCase.execute({ orderId });
+		await this.cancelOrderUseCase.execute({
+			orderId,
+			clientId: currentUser.id,
+		});
 		return { success: true };
 	}
 
 	@Post(':orderId/complete')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.BOOSTER)
 	@HttpCode(200)
 	async complete(
 		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
 		orderId: OrderIdParamSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{ success: true }> {
-		await this.completeOrderUseCase.execute({ orderId });
+		await this.completeOrderUseCase.execute({
+			orderId,
+			boosterId: currentUser.id,
+		});
 		return { success: true };
 	}
 
 	@Post(':orderId/credentials')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
 	@HttpCode(200)
 	async saveCredentials(
 		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
 		orderId: OrderIdParamSchemaInput,
 		@Body(new ZodValidationPipe(saveOrderCredentialsSchema))
 		body: SaveOrderCredentialsSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{ success: true }> {
 		await this.saveOrderCredentialsUseCase.execute({
 			orderId,
+			clientId: currentUser.id,
 			login: body.login,
 			summonerName: body.summonerName,
 			password: body.password,

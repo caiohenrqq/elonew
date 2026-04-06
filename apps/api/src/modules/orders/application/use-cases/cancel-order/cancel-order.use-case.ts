@@ -7,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type CancelOrderInput = {
 	orderId: string;
+	clientId: string;
 };
 
 @Injectable()
@@ -17,7 +18,10 @@ export class CancelOrderUseCase {
 	) {}
 
 	async execute(input: CancelOrderInput): Promise<void> {
-		const order = await this.orderRepository.findById(input.orderId);
+		const order = await this.orderRepository.findByIdForClient(
+			input.orderId,
+			input.clientId,
+		);
 		if (!order) throw new OrderNotFoundError();
 
 		order.cancel();

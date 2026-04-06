@@ -10,6 +10,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type SaveOrderCredentialsInput = {
 	orderId: string;
+	clientId: string;
 	login: string;
 	summonerName: string;
 	password: string;
@@ -24,7 +25,10 @@ export class SaveOrderCredentialsUseCase {
 	) {}
 
 	async execute(input: SaveOrderCredentialsInput): Promise<void> {
-		const order = await this.orderRepository.findById(input.orderId);
+		const order = await this.orderRepository.findByIdForClient(
+			input.orderId,
+			input.clientId,
+		);
 		if (!order) throw new OrderNotFoundError();
 		if (input.password !== input.confirmPassword)
 			throw new OrderCredentialsPasswordMismatchError();

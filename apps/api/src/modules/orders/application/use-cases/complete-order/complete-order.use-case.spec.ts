@@ -54,7 +54,7 @@ describe('CompleteOrderUseCase', () => {
 	it('completes order and deletes persisted credentials', async () => {
 		const repository = new InMemoryOrderRepository();
 		const earningsPort = new InMemoryOrderCompletionEarningsPort();
-		const order = Order.create('order-1');
+		const order = Order.create('order-1', { boosterId: 'booster-1' });
 		order.confirmPayment();
 		order.setCredentials({
 			login: 'login',
@@ -65,7 +65,7 @@ describe('CompleteOrderUseCase', () => {
 		repository.insert(order);
 
 		const useCase = new CompleteOrderUseCase(repository, earningsPort);
-		await useCase.execute({ orderId: 'order-1' });
+		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('completed');
@@ -77,35 +77,35 @@ describe('CompleteOrderUseCase', () => {
 		const earningsPort = new InMemoryOrderCompletionEarningsPort();
 		const useCase = new CompleteOrderUseCase(repository, earningsPort);
 
-		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
-			OrderNotFoundError,
-		);
+		await expect(
+			useCase.execute({ orderId: 'missing-order', boosterId: 'booster-1' }),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 
 	it('throws when order is not in progress', async () => {
 		const repository = new InMemoryOrderRepository();
 		const earningsPort = new InMemoryOrderCompletionEarningsPort();
-		const order = Order.create('order-2');
+		const order = Order.create('order-2', { boosterId: 'booster-1' });
 		order.confirmPayment();
 		repository.insert(order);
 		const useCase = new CompleteOrderUseCase(repository, earningsPort);
 
-		await expect(useCase.execute({ orderId: 'order-2' })).rejects.toThrow(
-			OrderInvalidTransitionError,
-		);
+		await expect(
+			useCase.execute({ orderId: 'order-2', boosterId: 'booster-1' }),
+		).rejects.toThrow(OrderInvalidTransitionError);
 	});
 
 	it('completes order when credentials are already null', async () => {
 		const repository = new InMemoryOrderRepository();
 		const earningsPort = new InMemoryOrderCompletionEarningsPort();
-		const order = Order.create('order-3');
+		const order = Order.create('order-3', { boosterId: 'booster-1' });
 		order.confirmPayment();
 		order.acceptByBooster();
 		repository.insert(order);
 		const useCase = new CompleteOrderUseCase(repository, earningsPort);
 
 		await expect(
-			useCase.execute({ orderId: 'order-3' }),
+			useCase.execute({ orderId: 'order-3', boosterId: 'booster-1' }),
 		).resolves.toBeUndefined();
 		await expect(repository.findById('order-3')).resolves.toMatchObject({
 			id: 'order-3',
@@ -123,7 +123,7 @@ describe('CompleteOrderUseCase', () => {
 		repository.insert(order);
 
 		const useCase = new CompleteOrderUseCase(repository, earningsPort);
-		await useCase.execute({ orderId: 'order-4' });
+		await useCase.execute({ orderId: 'order-4', boosterId: 'booster-1' });
 
 		expect(earningsPort.calls).toHaveLength(1);
 		expect(earningsPort.calls[0]).toMatchObject({
@@ -131,5 +131,20 @@ describe('CompleteOrderUseCase', () => {
 			boosterId: 'booster-1',
 		});
 		expect(earningsPort.calls[0]?.completedAt).toBeInstanceOf(Date);
+	});
+
+	it('throws when a different booster tries to complete the order', async () => {
+		const repository = new InMemoryOrderRepository();
+		const earningsPort = new InMemoryOrderCompletionEarningsPort();
+		const order = Order.create('order-5', { boosterId: 'booster-1' });
+		order.confirmPayment();
+		order.acceptByBooster();
+		repository.insert(order);
+
+		const useCase = new CompleteOrderUseCase(repository, earningsPort);
+
+		await expect(
+			useCase.execute({ orderId: 'order-5', boosterId: 'booster-2' }),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 });

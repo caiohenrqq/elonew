@@ -7,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type RejectOrderInput = {
 	orderId: string;
+	boosterId: string;
 };
 
 @Injectable()
@@ -19,6 +20,8 @@ export class RejectOrderUseCase {
 	async execute(input: RejectOrderInput): Promise<void> {
 		const order = await this.orderRepository.findById(input.orderId);
 		if (!order) throw new OrderNotFoundError();
+		if (order.boosterId && order.boosterId !== input.boosterId)
+			throw new OrderNotFoundError();
 
 		order.rejectByBooster();
 		await this.orderRepository.save(order);

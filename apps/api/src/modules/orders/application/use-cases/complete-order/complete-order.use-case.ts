@@ -11,6 +11,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type CompleteOrderInput = {
 	orderId: string;
+	boosterId: string;
 };
 
 @Injectable()
@@ -25,6 +26,7 @@ export class CompleteOrderUseCase {
 	async execute(input: CompleteOrderInput): Promise<void> {
 		const order = await this.orderRepository.findById(input.orderId);
 		if (!order) throw new OrderNotFoundError();
+		if (order.boosterId !== input.boosterId) throw new OrderNotFoundError();
 
 		order.complete();
 		await this.orderRepository.save(order);

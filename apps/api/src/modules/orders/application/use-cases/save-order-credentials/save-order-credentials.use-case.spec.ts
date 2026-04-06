@@ -19,8 +19,11 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		return this.orders.get(id) ?? null;
 	}
 
-	async findByIdForClient(id: string): Promise<Order | null> {
-		return this.findById(id);
+	async findByIdForClient(id: string, clientId: string): Promise<Order | null> {
+		const order = await this.findById(id);
+		if (!order || order.clientId !== clientId) return null;
+
+		return order;
 	}
 
 	async save(order: Order): Promise<void> {
@@ -35,13 +38,14 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 describe('SaveOrderCredentialsUseCase', () => {
 	it('stores credentials after payment confirmation', async () => {
 		const repository = new InMemoryOrderRepository();
-		const order = Order.create('order-1');
+		const order = Order.create('order-1', { clientId: 'client-1' });
 		order.confirmPayment();
 		repository.insert(order);
 		const useCase = new SaveOrderCredentialsUseCase(repository);
 
 		await useCase.execute({
 			orderId: 'order-1',
+			clientId: 'client-1',
 			login: 'login',
 			summonerName: 'summoner',
 			password: 'secret',
@@ -58,7 +62,7 @@ describe('SaveOrderCredentialsUseCase', () => {
 
 	it('throws when passwords do not match', async () => {
 		const repository = new InMemoryOrderRepository();
-		const order = Order.create('order-2');
+		const order = Order.create('order-2', { clientId: 'client-1' });
 		order.confirmPayment();
 		repository.insert(order);
 		const useCase = new SaveOrderCredentialsUseCase(repository);
@@ -66,6 +70,7 @@ describe('SaveOrderCredentialsUseCase', () => {
 		await expect(
 			useCase.execute({
 				orderId: 'order-2',
+				clientId: 'client-1',
 				login: 'login',
 				summonerName: 'summoner',
 				password: 'secret',
@@ -76,12 +81,13 @@ describe('SaveOrderCredentialsUseCase', () => {
 
 	it('throws when trying to store credentials before payment confirmation', async () => {
 		const repository = new InMemoryOrderRepository();
-		repository.insert(Order.create('order-3'));
+		repository.insert(Order.create('order-3', { clientId: 'client-1' }));
 		const useCase = new SaveOrderCredentialsUseCase(repository);
 
 		await expect(
 			useCase.execute({
 				orderId: 'order-3',
+				clientId: 'client-1',
 				login: 'login',
 				summonerName: 'summoner',
 				password: 'secret',
@@ -97,6 +103,7 @@ describe('SaveOrderCredentialsUseCase', () => {
 		await expect(
 			useCase.execute({
 				orderId: 'missing-order',
+				clientId: 'client-1',
 				login: 'login',
 				summonerName: 'summoner',
 				password: 'secret',
@@ -107,13 +114,14 @@ describe('SaveOrderCredentialsUseCase', () => {
 
 	it('overwrites credentials when called multiple times for the same order', async () => {
 		const repository = new InMemoryOrderRepository();
-		const order = Order.create('order-4');
+		const order = Order.create('order-4', { clientId: 'client-1' });
 		order.confirmPayment();
 		repository.insert(order);
 		const useCase = new SaveOrderCredentialsUseCase(repository);
 
 		await useCase.execute({
 			orderId: 'order-4',
+			clientId: 'client-1',
 			login: 'login-1',
 			summonerName: 'summoner-1',
 			password: 'secret-1',
@@ -121,6 +129,7 @@ describe('SaveOrderCredentialsUseCase', () => {
 		});
 		await useCase.execute({
 			orderId: 'order-4',
+			clientId: 'client-1',
 			login: 'login-2',
 			summonerName: 'summoner-2',
 			password: 'secret-2',
@@ -133,5 +142,24 @@ describe('SaveOrderCredentialsUseCase', () => {
 			summonerName: 'summoner-2',
 			password: 'secret-2',
 		});
+	});
+
+	it('throws when a different client tries to store credentials', async () => {
+		const repository = new InMemoryOrderRepository();
+		const order = Order.create('order-5', { clientId: 'client-1' });
+		order.confirmPayment();
+		repository.insert(order);
+		const useCase = new SaveOrderCredentialsUseCase(repository);
+
+		await expect(
+			useCase.execute({
+				orderId: 'order-5',
+				clientId: 'client-2',
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+				confirmPassword: 'secret',
+			}),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 });

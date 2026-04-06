@@ -39,7 +39,7 @@ describe('RejectOrderUseCase', () => {
 		repository.insert(order);
 		const useCase = new RejectOrderUseCase(repository);
 
-		await useCase.execute({ orderId: 'order-1' });
+		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('pending_booster');
@@ -49,9 +49,9 @@ describe('RejectOrderUseCase', () => {
 		const repository = new InMemoryOrderRepository();
 		const useCase = new RejectOrderUseCase(repository);
 
-		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
-			OrderNotFoundError,
-		);
+		await expect(
+			useCase.execute({ orderId: 'missing-order', boosterId: 'booster-1' }),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 
 	it('throws when order is not pending booster', async () => {
@@ -59,8 +59,20 @@ describe('RejectOrderUseCase', () => {
 		repository.insert(Order.create('order-2'));
 		const useCase = new RejectOrderUseCase(repository);
 
-		await expect(useCase.execute({ orderId: 'order-2' })).rejects.toThrow(
-			OrderInvalidTransitionError,
-		);
+		await expect(
+			useCase.execute({ orderId: 'order-2', boosterId: 'booster-1' }),
+		).rejects.toThrow(OrderInvalidTransitionError);
+	});
+
+	it('throws when a different booster tries to reject an assigned order', async () => {
+		const repository = new InMemoryOrderRepository();
+		const order = Order.create('order-3', { boosterId: 'booster-1' });
+		order.confirmPayment();
+		repository.insert(order);
+		const useCase = new RejectOrderUseCase(repository);
+
+		await expect(
+			useCase.execute({ orderId: 'order-3', boosterId: 'booster-2' }),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 });

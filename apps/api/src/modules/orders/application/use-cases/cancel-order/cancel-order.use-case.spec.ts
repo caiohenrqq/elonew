@@ -15,8 +15,11 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		return this.orders.get(id) ?? null;
 	}
 
-	async findByIdForClient(id: string): Promise<Order | null> {
-		return this.findById(id);
+	async findByIdForClient(id: string, clientId: string): Promise<Order | null> {
+		const order = await this.findById(id);
+		if (!order || order.clientId !== clientId) return null;
+
+		return order;
 	}
 
 	async save(order: Order): Promise<void> {
@@ -31,13 +34,13 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 describe('CancelOrderUseCase', () => {
 	it('cancels an order when cancellation is allowed', async () => {
 		const repository = new InMemoryOrderRepository();
-		const order = Order.create('order-1');
+		const order = Order.create('order-1', { clientId: 'client-1' });
 		order.confirmPayment();
 		repository.insert(order);
 
 		const useCase = new CancelOrderUseCase(repository);
 
-		await useCase.execute({ orderId: 'order-1' });
+		await useCase.execute({ orderId: 'order-1', clientId: 'client-1' });
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('cancelled');
@@ -47,8 +50,18 @@ describe('CancelOrderUseCase', () => {
 		const repository = new InMemoryOrderRepository();
 		const useCase = new CancelOrderUseCase(repository);
 
-		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
-			OrderNotFoundError,
-		);
+		await expect(
+			useCase.execute({ orderId: 'missing-order', clientId: 'client-1' }),
+		).rejects.toThrow(OrderNotFoundError);
+	});
+
+	it('throws when a different client tries to cancel the order', async () => {
+		const repository = new InMemoryOrderRepository();
+		repository.insert(Order.create('order-2', { clientId: 'client-1' }));
+		const useCase = new CancelOrderUseCase(repository);
+
+		await expect(
+			useCase.execute({ orderId: 'order-2', clientId: 'client-2' }),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 });

@@ -39,19 +39,20 @@ describe('AcceptOrderUseCase', () => {
 		repository.insert(order);
 
 		const useCase = new AcceptOrderUseCase(repository);
-		await useCase.execute({ orderId: 'order-1' });
+		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('in_progress');
+		expect(savedOrder?.boosterId).toBe('booster-1');
 	});
 
 	it('throws when order does not exist', async () => {
 		const repository = new InMemoryOrderRepository();
 		const useCase = new AcceptOrderUseCase(repository);
 
-		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
-			OrderNotFoundError,
-		);
+		await expect(
+			useCase.execute({ orderId: 'missing-order', boosterId: 'booster-1' }),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 
 	it('throws when order has not been paid yet', async () => {
@@ -61,8 +62,21 @@ describe('AcceptOrderUseCase', () => {
 
 		const useCase = new AcceptOrderUseCase(repository);
 
-		await expect(useCase.execute({ orderId: 'order-2' })).rejects.toThrow(
-			OrderInvalidTransitionError,
-		);
+		await expect(
+			useCase.execute({ orderId: 'order-2', boosterId: 'booster-1' }),
+		).rejects.toThrow(OrderInvalidTransitionError);
+	});
+
+	it('throws when a different booster tries to accept an assigned order', async () => {
+		const repository = new InMemoryOrderRepository();
+		const order = Order.create('order-3', { boosterId: 'booster-1' });
+		order.confirmPayment();
+		repository.insert(order);
+
+		const useCase = new AcceptOrderUseCase(repository);
+
+		await expect(
+			useCase.execute({ orderId: 'order-3', boosterId: 'booster-2' }),
+		).rejects.toThrow(OrderNotFoundError);
 	});
 });

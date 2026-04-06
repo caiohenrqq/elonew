@@ -4,14 +4,6 @@ export const orderIdParamSchema = z.string().trim().min(1);
 
 export type OrderIdParamSchemaInput = z.infer<typeof orderIdParamSchema>;
 
-export const acceptOrderSchema = z
-	.object({
-		boosterId: z.string().trim().min(1).optional(),
-	})
-	.optional();
-
-export type AcceptOrderSchemaInput = z.infer<typeof acceptOrderSchema>;
-
 export const saveOrderCredentialsSchema = z.object({
 	login: z.string().trim().min(1),
 	summonerName: z.string().trim().min(1),
