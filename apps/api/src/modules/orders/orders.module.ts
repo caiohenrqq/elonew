@@ -52,37 +52,61 @@ import { Module } from '@nestjs/common';
 		OrderCredentialsCipherService,
 		{
 			provide: BOOSTER_USER_READER_KEY,
-			useExisting: PrismaBoosterUserReader,
+			useFactory: (
+				boosterUserReader: PrismaBoosterUserReader,
+			): PrismaBoosterUserReader => boosterUserReader,
+			inject: [PrismaBoosterUserReader],
 		},
 		{
 			provide: COUPON_LOOKUP_PORT_KEY,
-			useExisting: PrismaCouponLookupRepository,
+			useFactory: (
+				couponLookupRepository: PrismaCouponLookupRepository,
+			): PrismaCouponLookupRepository => couponLookupRepository,
+			inject: [PrismaCouponLookupRepository],
 		},
 		ApplyOrderCouponService,
 		{
 			provide: ORDER_COUPON_SERVICE_KEY,
-			useExisting: ApplyOrderCouponService,
+			useFactory: (
+				orderCouponService: ApplyOrderCouponService,
+			): ApplyOrderCouponService => orderCouponService,
+			inject: [ApplyOrderCouponService],
 		},
 		{
 			provide: ORDER_REPOSITORY_KEY,
-			useExisting: PrismaOrderRepository,
+			useFactory: (
+				orderRepository: PrismaOrderRepository,
+			): PrismaOrderRepository => orderRepository,
+			inject: [PrismaOrderRepository],
 		},
 		{
 			provide: ORDER_CHECKOUT_PORT_KEY,
-			useExisting: PrismaOrderCheckoutRepository,
+			useFactory: (
+				orderCheckoutRepository: PrismaOrderCheckoutRepository,
+			): PrismaOrderCheckoutRepository => orderCheckoutRepository,
+			inject: [PrismaOrderCheckoutRepository],
 		},
 		{
 			provide: ORDER_PRICING_VERSION_REPOSITORY_KEY,
-			useExisting: PrismaOrderPricingVersionRepository,
+			useFactory: (
+				orderPricingVersionRepository: PrismaOrderPricingVersionRepository,
+			): PrismaOrderPricingVersionRepository => orderPricingVersionRepository,
+			inject: [PrismaOrderPricingVersionRepository],
 		},
 		VersionedOrderPricingService,
 		{
 			provide: ORDER_PRICING_SERVICE_KEY,
-			useExisting: VersionedOrderPricingService,
+			useFactory: (
+				orderPricingService: VersionedOrderPricingService,
+			): VersionedOrderPricingService => orderPricingService,
+			inject: [VersionedOrderPricingService],
 		},
 		{
 			provide: ORDER_QUOTE_REPOSITORY_KEY,
-			useExisting: PrismaOrderQuoteRepository,
+			useFactory: (
+				orderQuoteRepository: PrismaOrderQuoteRepository,
+			): PrismaOrderQuoteRepository => orderQuoteRepository,
+			inject: [PrismaOrderQuoteRepository],
 		},
 		CreateOrderQuoteUseCase,
 		CreateOrderPricingVersionUseCase,

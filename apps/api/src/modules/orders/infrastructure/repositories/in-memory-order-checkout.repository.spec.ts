@@ -10,7 +10,7 @@ import {
 	OrderCouponInvalidError,
 	OrderQuoteAlreadyUsedError,
 } from '@modules/orders/domain/order-pricing.errors';
-import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
+import { InMemoryOrderCheckoutRepository } from '../../../../../test/support/in-memory/orders/in-memory-order-checkout.repository';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();

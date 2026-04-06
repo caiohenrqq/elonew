@@ -1,6 +1,6 @@
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { Order } from '@modules/orders/domain/order.entity';
-import { OrderStatusFromOrdersRepositoryAdapter } from '@modules/payments/infrastructure/adapters/order-status-from-orders-repository.adapter';
+import { OrderStatusFromOrdersRepositoryAdapter } from '../../../../../test/support/in-memory/payments/order-status-from-orders-repository.adapter';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();

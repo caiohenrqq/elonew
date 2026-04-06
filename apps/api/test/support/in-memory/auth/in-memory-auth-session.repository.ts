@@ -11,17 +11,15 @@ export class InMemoryAuthSessionRepository
 	private readonly sessions = new Map<string, AuthSessionRecord>();
 	private nextId = 1;
 
-	async findByRefreshTokenHash(
-		tokenHash: string,
-	): Promise<AuthSessionRecord | null> {
-		return (
+	findByRefreshTokenHash(tokenHash: string): Promise<AuthSessionRecord | null> {
+		return Promise.resolve(
 			[...this.sessions.values()].find(
 				(session) => session.refreshTokenHash === tokenHash,
-			) ?? null
+			) ?? null,
 		);
 	}
 
-	async create(session: {
+	create(session: {
 		userId: string;
 		refreshTokenHash: string;
 		expiresAt: Date;
@@ -38,10 +36,11 @@ export class InMemoryAuthSessionRepository
 		};
 		this.sessions.set(createdSession.id, createdSession);
 
-		return createdSession;
+		return Promise.resolve(createdSession);
 	}
 
-	async save(session: AuthSessionRecord): Promise<void> {
+	save(session: AuthSessionRecord): Promise<void> {
 		this.sessions.set(session.id, session);
+		return Promise.resolve();
 	}
 }

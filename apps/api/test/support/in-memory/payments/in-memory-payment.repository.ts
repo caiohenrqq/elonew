@@ -16,8 +16,8 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		private readonly orderRepository?: OrderRepositoryPort,
 	) {}
 
-	async findById(id: string): Promise<Payment | null> {
-		return this.payments.get(id) ?? null;
+	findById(id: string): Promise<Payment | null> {
+		return Promise.resolve(this.payments.get(id) ?? null);
 	}
 
 	async findByIdForClient(
@@ -37,23 +37,24 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return payment;
 	}
 
-	async findByOrderId(orderId: string): Promise<Payment | null> {
+	findByOrderId(orderId: string): Promise<Payment | null> {
 		for (const payment of this.payments.values()) {
-			if (payment.orderId === orderId) return payment;
+			if (payment.orderId === orderId) return Promise.resolve(payment);
 		}
 
-		return null;
+		return Promise.resolve(null);
 	}
 
-	async findByGatewayId(gatewayId: string): Promise<Payment | null> {
+	findByGatewayId(gatewayId: string): Promise<Payment | null> {
 		for (const payment of this.payments.values()) {
-			if (payment.gatewayId === gatewayId) return payment;
+			if (payment.gatewayId === gatewayId) return Promise.resolve(payment);
 		}
 
-		return null;
+		return Promise.resolve(null);
 	}
 
-	async save(payment: Payment): Promise<void> {
+	save(payment: Payment): Promise<void> {
 		this.payments.set(payment.id, payment);
+		return Promise.resolve();
 	}
 }

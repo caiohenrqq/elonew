@@ -23,7 +23,7 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 	private readonly quotes = new Map<string, StoredQuote>();
 	private nextId = 1;
 
-	async create(input: {
+	create(input: {
 		clientId: string;
 		couponId: string | null;
 		requestDetails: OrderQuoteSnapshot['requestDetails'];
@@ -42,10 +42,10 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		};
 		this.quotes.set(quote.id, quote);
 
-		return { id: quote.id };
+		return Promise.resolve({ id: quote.id });
 	}
 
-	async consumeByIdForClient(input: {
+	consumeByIdForClient(input: {
 		quoteId: string;
 		clientId: string;
 		now: Date;
@@ -60,23 +60,24 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		quote.consumedAt = input.now;
 		quote.orderId = input.orderId;
 
-		return {
+		return Promise.resolve({
 			couponId: quote.couponId,
 			requestDetails: quote.requestDetails,
 			pricing: quote.pricing,
-		};
+		});
 	}
 
-	async restoreConsumedByIdForClient(input: {
+	restoreConsumedByIdForClient(input: {
 		quoteId: string;
 		clientId: string;
 		orderId: string;
 	}): Promise<void> {
 		const quote = this.quotes.get(input.quoteId);
-		if (!quote || quote.clientId !== input.clientId) return;
-		if (quote.orderId !== input.orderId) return;
+		if (!quote || quote.clientId !== input.clientId) return Promise.resolve();
+		if (quote.orderId !== input.orderId) return Promise.resolve();
 
 		quote.consumedAt = null;
 		quote.orderId = null;
+		return Promise.resolve();
 	}
 }

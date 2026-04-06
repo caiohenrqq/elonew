@@ -3,15 +3,15 @@ import { AUTH_SESSION_REPOSITORY_KEY } from '@modules/auth/application/ports/aut
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
-import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
-import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
-import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
-import { InMemoryUserRepository } from '@modules/users/infrastructure/repositories/in-memory-user.repository';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
+import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
+import { InMemoryOrderQuoteRepository } from './support/in-memory/orders/in-memory-order-quote.repository';
+import { InMemoryUserRepository } from './support/in-memory/users/in-memory-user.repository';
 import { createTestAppSettings } from './test-app-settings';
 
 class InMemoryAuthSessionRepository {

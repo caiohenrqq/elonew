@@ -6,15 +6,16 @@ import { Injectable } from '@nestjs/common';
 export class InMemoryWalletRepository implements WalletRepositoryPort {
 	private readonly wallets = new Map<string, Wallet>();
 
-	async findByBoosterId(boosterId: string): Promise<Wallet | null> {
-		return this.wallets.get(boosterId) ?? null;
+	findByBoosterId(boosterId: string): Promise<Wallet | null> {
+		return Promise.resolve(this.wallets.get(boosterId) ?? null);
 	}
 
-	async findAll(): Promise<Wallet[]> {
-		return [...this.wallets.values()];
+	findAll(): Promise<Wallet[]> {
+		return Promise.resolve([...this.wallets.values()]);
 	}
 
-	async save(wallet: Wallet): Promise<void> {
+	save(wallet: Wallet): Promise<void> {
 		this.wallets.set(wallet.boosterId, wallet);
+		return Promise.resolve();
 	}
 }

@@ -7,11 +7,12 @@ export class InMemoryProcessedWebhookEventRepository
 {
 	private readonly processedEventIds = new Set<string>();
 
-	async has(eventId: string): Promise<boolean> {
-		return this.processedEventIds.has(eventId);
+	has(eventId: string): Promise<boolean> {
+		return Promise.resolve(this.processedEventIds.has(eventId));
 	}
 
-	async markProcessed(eventId: string): Promise<void> {
+	markProcessed(eventId: string): Promise<void> {
 		this.processedEventIds.add(eventId);
+		return Promise.resolve();
 	}
 }

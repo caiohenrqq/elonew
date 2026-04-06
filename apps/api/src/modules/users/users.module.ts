@@ -21,16 +21,25 @@ import { Module } from '@nestjs/common';
 		UsersThrottlerGuard,
 		{
 			provide: PASSWORD_HASHER_KEY,
-			useExisting: Argon2PasswordHasher,
+			useFactory: (
+				passwordHasher: Argon2PasswordHasher,
+			): Argon2PasswordHasher => passwordHasher,
+			inject: [Argon2PasswordHasher],
 		},
 		HmacEmailConfirmationTokenService,
 		{
 			provide: EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY,
-			useExisting: HmacEmailConfirmationTokenService,
+			useFactory: (
+				emailConfirmationTokenService: HmacEmailConfirmationTokenService,
+			): HmacEmailConfirmationTokenService => emailConfirmationTokenService,
+			inject: [HmacEmailConfirmationTokenService],
 		},
 		{
 			provide: USER_REPOSITORY_KEY,
-			useExisting: PrismaUserRepository,
+			useFactory: (
+				userRepository: PrismaUserRepository,
+			): PrismaUserRepository => userRepository,
+			inject: [PrismaUserRepository],
 		},
 		SignUpUseCase,
 		ConfirmEmailUseCase,

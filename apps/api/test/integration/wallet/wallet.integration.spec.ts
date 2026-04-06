@@ -2,12 +2,12 @@ import type { AuthenticatedUser } from '@modules/auth/application/authenticated-
 import { WALLET_FUNDS_RELEASE_JOB_SCHEDULER_PORT_KEY } from '@modules/wallet/application/ports/wallet-funds-release-job-scheduler.port';
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
-import { InMemoryWalletRepository } from '@modules/wallet/infrastructure/repositories/in-memory-wallet.repository';
 import { WalletsController } from '@modules/wallet/presentation/wallets.controller';
 import { WalletModule } from '@modules/wallet/wallet.module';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
+import { InMemoryWalletRepository } from '../../support/in-memory/wallet/in-memory-wallet.repository';
 
 describe('Wallet module integration', () => {
 	let moduleRef: TestingModule;
