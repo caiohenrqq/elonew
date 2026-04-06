@@ -22,7 +22,6 @@ export type FetchPaymentNotificationOutput = {
 	gatewayPaymentId: string;
 	gatewayStatus: string;
 	gatewayStatusDetail: string | null;
-	isApproved: boolean;
 };
 
 export const PAYMENT_GATEWAY_PORT_KEY = Symbol('PAYMENT_GATEWAY_PORT_KEY');

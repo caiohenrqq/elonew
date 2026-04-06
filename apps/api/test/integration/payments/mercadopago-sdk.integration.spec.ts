@@ -197,7 +197,6 @@ describe('MercadoPagoSdkAdapter', () => {
 			gatewayPaymentId: '123',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
-			isApproved: true,
 		});
 	});
 

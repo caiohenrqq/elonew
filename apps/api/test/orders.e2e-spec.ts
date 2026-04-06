@@ -8,6 +8,7 @@ import {
 } from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
+import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
 import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
@@ -24,6 +25,7 @@ describe('Orders (e2e)', () => {
 	let couponLookup: CouponLookupStub;
 	let orderRepository: InMemoryOrderRepository;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
+	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
 
 	class CouponLookupStub {
 		public coupons = new Map<string, StoredCoupon>();
@@ -126,6 +128,7 @@ describe('Orders (e2e)', () => {
 		app = await createTestHttpApp(moduleRef);
 		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
 		const version = await pricingVersions.createDraft(
 			makeDefaultOrderPricingVersionInput(),
 		);
@@ -206,22 +209,20 @@ describe('Orders (e2e)', () => {
 	});
 
 	it('moves order through payment and acceptance flow', async () => {
-		const token = signToken({ sub: 'client-2', role: 'CLIENT' });
-		const createdOrder = await createQuotedOrder(token);
-
-		await requestHttp(app)
-			.post(`/orders/${createdOrder.id}/payment-confirmed`)
-			.expect(200, { success: true })
-			.execute();
+		const clientToken = signToken({ sub: 'client-2', role: 'CLIENT' });
+		const boosterToken = signToken({ sub: 'booster-1', role: 'BOOSTER' });
+		const createdOrder = await createQuotedOrder(clientToken);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
 
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${boosterToken}`)
 			.expect(200, { success: true })
 			.execute();
 
 		await requestHttp(app)
 			.get(`/orders/${createdOrder.id}`)
-			.set('Authorization', `Bearer ${token}`)
+			.set('Authorization', `Bearer ${clientToken}`)
 			.expect(200, {
 				id: createdOrder.id,
 				status: 'in_progress',
@@ -491,11 +492,14 @@ describe('Orders (e2e)', () => {
 	});
 
 	it('returns 400 for invalid transition', async () => {
-		const token = signToken({ sub: 'client-4', role: 'CLIENT' });
-		const createdOrder = await createQuotedOrder(token);
+		const boosterToken = signToken({ sub: 'booster-1', role: 'BOOSTER' });
+		const createdOrder = await createQuotedOrder(
+			signToken({ sub: 'client-4', role: 'CLIENT' }),
+		);
 
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${boosterToken}`)
 			.expect(400, {
 				message: 'Invalid order transition: awaiting_payment -> in_progress.',
 				error: 'Bad Request',
@@ -504,39 +508,117 @@ describe('Orders (e2e)', () => {
 			.execute();
 	});
 
-	it('rejects accept payloads with non-string boosterId', async () => {
-		const token = signToken({ sub: 'client-5', role: 'CLIENT' });
-		const createdOrder = await createQuotedOrder(token);
-
-		await requestHttp(app)
-			.post(`/orders/${createdOrder.id}/payment-confirmed`)
-			.expect(200, { success: true })
-			.execute();
+	it('rejects unauthenticated order mutations', async () => {
+		const createdOrder = await createQuotedOrder(
+			signToken({ sub: 'client-5', role: 'CLIENT' }),
+		);
 
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
-			.send({ boosterId: 123 })
-			.expect(400)
+			.expect(401)
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/cancel`)
+			.expect(401)
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/complete`)
+			.expect(401)
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/credentials`)
+			.send({
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+				confirmPassword: 'secret',
+			})
+			.expect(401)
 			.execute();
 	});
 
 	it('rejects credentials payloads missing login', async () => {
 		const token = signToken({ sub: 'client-6', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
-
-		await requestHttp(app)
-			.post(`/orders/${createdOrder.id}/payment-confirmed`)
-			.expect(200, { success: true })
-			.execute();
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
 
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/credentials`)
+			.set('Authorization', `Bearer ${token}`)
 			.send({
 				summonerName: 'summoner',
 				password: 'secret',
 				confirmPassword: 'secret',
 			})
 			.expect(400)
+			.execute();
+	});
+
+	it('rejects order mutations from authenticated users with the wrong role', async () => {
+		const clientToken = signToken({ sub: 'client-7', role: 'CLIENT' });
+		const boosterToken = signToken({ sub: 'booster-1', role: 'BOOSTER' });
+		const createdOrder = await createQuotedOrder(clientToken);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${clientToken}`)
+			.expect(403)
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/cancel`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.expect(403)
+			.execute();
+	});
+
+	it('returns 404 when a different client tries to save credentials', async () => {
+		const ownerToken = signToken({ sub: 'client-owner-1', role: 'CLIENT' });
+		const otherToken = signToken({ sub: 'client-owner-2', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(ownerToken);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/credentials`)
+			.set('Authorization', `Bearer ${otherToken}`)
+			.send({
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+				confirmPassword: 'secret',
+			})
+			.expect(404, {
+				message: 'Order not found.',
+				error: 'Not Found',
+				statusCode: 404,
+			})
+			.execute();
+	});
+
+	it('returns 404 when a different booster tries to accept the order', async () => {
+		const clientToken = signToken({ sub: 'client-selected', role: 'CLIENT' });
+		const otherBoosterToken = signToken({
+			sub: 'booster-2',
+			role: 'BOOSTER',
+		});
+		const createdOrder = await createQuotedOrder(clientToken);
+		const order = await orderRepository.findById(createdOrder.id);
+		order?.assignBooster('booster-1');
+		if (order) await orderRepository.save(order);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${otherBoosterToken}`)
+			.expect(404, {
+				message: 'Order not found.',
+				error: 'Not Found',
+				statusCode: 404,
+			})
 			.execute();
 	});
 });

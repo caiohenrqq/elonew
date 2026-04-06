@@ -1,4 +1,8 @@
 import {
+	ORDER_CREDENTIAL_CLEANUP_PORT_KEY,
+	type OrderCredentialCleanupPort,
+} from '@modules/payments/application/ports/order-credential-cleanup.port';
+import {
 	ORDER_PAYMENT_CONFIRMATION_PORT_KEY,
 	type OrderPaymentConfirmationPort,
 } from '@modules/payments/application/ports/order-payment-confirmation.port';
@@ -38,6 +42,8 @@ type HandlePaymentConfirmedWebhookOutput = {
 	processed: boolean;
 };
 
+type PaymentWebhookResolution = 'confirm' | 'fail' | 'pending' | 'defer';
+
 @Injectable()
 export class HandlePaymentConfirmedWebhookUseCase {
 	constructor(
@@ -47,6 +53,8 @@ export class HandlePaymentConfirmedWebhookUseCase {
 		private readonly processedWebhookEventPort: ProcessedWebhookEventPort,
 		@Inject(ORDER_PAYMENT_CONFIRMATION_PORT_KEY)
 		private readonly orderPaymentConfirmationPort: OrderPaymentConfirmationPort,
+		@Inject(ORDER_CREDENTIAL_CLEANUP_PORT_KEY)
+		private readonly orderCredentialCleanupPort: OrderCredentialCleanupPort,
 		@Inject(PAYMENT_WEBHOOK_SIGNATURE_VERIFIER_PORT_KEY)
 		private readonly paymentWebhookSignatureVerifier: PaymentWebhookSignatureVerifierPort,
 		@Inject(PAYMENT_GATEWAY_PORT_KEY)
@@ -87,10 +95,15 @@ export class HandlePaymentConfirmedWebhookUseCase {
 			gatewayStatus: notification.gatewayStatus,
 			gatewayStatusDetail: notification.gatewayStatusDetail,
 		});
-		if (notification.isApproved) payment.confirm();
+
+		const resolution = this.resolveNotification(notification.gatewayStatus);
+		if (resolution === 'confirm') payment.confirm();
+		if (resolution === 'fail') payment.fail();
 		await this.paymentRepository.save(payment);
-		if (notification.isApproved)
+		if (resolution === 'confirm')
 			await this.orderPaymentConfirmationPort.markAsPaid(payment.orderId);
+		if (resolution === 'fail')
+			await this.orderCredentialCleanupPort.clearCredentials(payment.orderId);
 		await this.processedWebhookEventPort.markProcessed(processedEventKey);
 
 		return { processed: true };
@@ -102,5 +115,21 @@ export class HandlePaymentConfirmedWebhookUseCase {
 
 	private buildProcessedEventKey(notificationResourceId: string): string {
 		return `mercadopago:${notificationResourceId}`;
+	}
+
+	private resolveNotification(gatewayStatus: string): PaymentWebhookResolution {
+		switch (gatewayStatus) {
+			case 'approved':
+				return 'confirm';
+			case 'authorized':
+			case 'pending':
+			case 'in_process':
+				return 'pending';
+			case 'rejected':
+			case 'cancelled':
+				return 'fail';
+			default:
+				return 'defer';
+		}
 	}
 }

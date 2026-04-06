@@ -1,3 +1,4 @@
+import type { OrderCredentialCleanupPort } from '@modules/payments/application/ports/order-credential-cleanup.port';
 import type { OrderPaymentConfirmationPort } from '@modules/payments/application/ports/order-payment-confirmation.port';
 import type { PaymentGatewayPort } from '@modules/payments/application/ports/payment-gateway.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
@@ -86,6 +87,14 @@ class AcceptAllPaymentWebhookSignatureVerifier
 	}
 }
 
+class InMemoryOrderCredentialCleanupPort implements OrderCredentialCleanupPort {
+	readonly orderIds: string[] = [];
+
+	async clearCredentials(orderId: string): Promise<void> {
+		this.orderIds.push(orderId);
+	}
+}
+
 class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 	fetchCalls = 0;
 
@@ -94,7 +103,6 @@ class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 		gatewayPaymentId: 'mp-payment-1',
 		gatewayStatus: 'approved',
 		gatewayStatusDetail: 'accredited',
-		isApproved: true,
 	};
 
 	async initiatePayment(): Promise<{
@@ -110,7 +118,6 @@ class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 		gatewayPaymentId: string;
 		gatewayStatus: string;
 		gatewayStatusDetail: string | null;
-		isApproved: boolean;
 	}> {
 		this.fetchCalls++;
 		return this.notification;
@@ -141,6 +148,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -185,6 +193,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -193,7 +202,6 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			gatewayPaymentId: 'mp-payment-2',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
-			isApproved: true,
 		};
 
 		await useCase.execute({
@@ -237,6 +245,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -245,7 +254,6 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			gatewayPaymentId: 'mp-payment-2b',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
-			isApproved: true,
 		};
 
 		await expect(
@@ -290,6 +298,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -298,7 +307,6 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			gatewayPaymentId: 'mp-payment-2c',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
-			isApproved: true,
 		};
 
 		await expect(
@@ -335,13 +343,13 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			gatewayPaymentId: 'mp-missing-payment',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
-			isApproved: true,
 		};
 
 		const useCase = new HandlePaymentConfirmedWebhookUseCase(
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -382,12 +390,12 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			gatewayPaymentId: 'mp-payment-5',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
-			isApproved: true,
 		};
 		const useCase = new HandlePaymentConfirmedWebhookUseCase(
 			paymentRepository,
 			processedWebhookEventPort,
 			failingOrderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -426,12 +434,12 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			gatewayPaymentId: 'mp-payment-6',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
-			isApproved: true,
 		};
 		const useCase = new HandlePaymentConfirmedWebhookUseCase(
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -473,6 +481,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			rejectingVerifier,
 			new InMemoryPaymentGatewayPort(),
 		);
@@ -502,6 +511,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -525,7 +535,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 		).resolves.toBe(false);
 	});
 
-	it('does not confirm the payment for non-approved provider statuses while still persisting gateway state', async () => {
+	it('keeps the payment awaiting confirmation for authorized provider statuses', async () => {
 		const paymentRepository = new InMemoryPaymentRepository();
 		const processedWebhookEventPort = new InMemoryProcessedWebhookEventPort();
 		const orderPaymentConfirmationPort =
@@ -542,14 +552,14 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 		paymentGatewayPort.notification = {
 			internalPaymentId: 'payment-8',
 			gatewayPaymentId: 'mp-payment-8',
-			gatewayStatus: 'pending',
-			gatewayStatusDetail: 'pending_waiting_payment',
-			isApproved: false,
+			gatewayStatus: 'authorized',
+			gatewayStatusDetail: 'pending_capture',
 		};
 		const useCase = new HandlePaymentConfirmedWebhookUseCase(
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);
@@ -567,11 +577,155 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 		const savedPayment = await paymentRepository.findById('payment-8');
 		expect(savedPayment?.status).toBe('awaiting_confirmation');
 		expect(savedPayment?.gatewayId).toBe('mp-payment-8');
-		expect(savedPayment?.gatewayStatus).toBe('pending');
-		expect(savedPayment?.gatewayStatusDetail).toBe('pending_waiting_payment');
+		expect(savedPayment?.gatewayStatus).toBe('authorized');
+		expect(savedPayment?.gatewayStatusDetail).toBe('pending_capture');
 		await expect(
 			processedWebhookEventPort.has(processedWebhookKey('notification-8')),
 		).resolves.toBe(true);
+	});
+
+	it('fails the payment for rejected provider statuses and clears related order credentials', async () => {
+		const paymentRepository = new InMemoryPaymentRepository();
+		const processedWebhookEventPort = new InMemoryProcessedWebhookEventPort();
+		const orderCredentialCleanupPort = new InMemoryOrderCredentialCleanupPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
+		paymentRepository.insert(
+			Payment.create({
+				id: 'payment-10',
+				orderId: 'order-10',
+				grossAmount: 100,
+				paymentMethod: 'pix',
+			}),
+		);
+		paymentGatewayPort.notification = {
+			internalPaymentId: 'payment-10',
+			gatewayPaymentId: 'mp-payment-10',
+			gatewayStatus: 'rejected',
+			gatewayStatusDetail: 'cc_rejected_bad_filled_security_code',
+		};
+
+		const useCase = new HandlePaymentConfirmedWebhookUseCase(
+			paymentRepository,
+			processedWebhookEventPort,
+			{
+				async markAsPaid(orderId: string): Promise<void> {
+					throw new Error(`order should not be confirmed: ${orderId}`);
+				},
+			},
+			orderCredentialCleanupPort,
+			new AcceptAllPaymentWebhookSignatureVerifier(),
+			paymentGatewayPort,
+		);
+
+		await expect(
+			useCase.execute({
+				eventId: 'event-10',
+				topic: 'payment.updated',
+				notificationResourceId: 'notification-10',
+				requestId: 'request-10',
+				signature: 'signature-10',
+			}),
+		).resolves.toEqual({ processed: true });
+
+		const savedPayment = await paymentRepository.findById('payment-10');
+		expect(savedPayment?.status).toBe('failed');
+		expect(savedPayment?.gatewayStatus).toBe('rejected');
+		expect(orderCredentialCleanupPort.orderIds).toEqual(['order-10']);
+	});
+
+	it('fails the payment for cancelled provider statuses and clears related order credentials', async () => {
+		const paymentRepository = new InMemoryPaymentRepository();
+		const processedWebhookEventPort = new InMemoryProcessedWebhookEventPort();
+		const orderCredentialCleanupPort = new InMemoryOrderCredentialCleanupPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
+		paymentRepository.insert(
+			Payment.create({
+				id: 'payment-11',
+				orderId: 'order-11',
+				grossAmount: 100,
+				paymentMethod: 'pix',
+			}),
+		);
+		paymentGatewayPort.notification = {
+			internalPaymentId: 'payment-11',
+			gatewayPaymentId: 'mp-payment-11',
+			gatewayStatus: 'cancelled',
+			gatewayStatusDetail: 'by_payer',
+		};
+
+		const useCase = new HandlePaymentConfirmedWebhookUseCase(
+			paymentRepository,
+			processedWebhookEventPort,
+			{
+				async markAsPaid(orderId: string): Promise<void> {
+					throw new Error(`order should not be confirmed: ${orderId}`);
+				},
+			},
+			orderCredentialCleanupPort,
+			new AcceptAllPaymentWebhookSignatureVerifier(),
+			paymentGatewayPort,
+		);
+
+		await expect(
+			useCase.execute({
+				eventId: 'event-11',
+				topic: 'payment.updated',
+				notificationResourceId: 'notification-11',
+				requestId: 'request-11',
+				signature: 'signature-11',
+			}),
+		).resolves.toEqual({ processed: true });
+
+		const savedPayment = await paymentRepository.findById('payment-11');
+		expect(savedPayment?.status).toBe('failed');
+		expect(savedPayment?.gatewayStatus).toBe('cancelled');
+		expect(orderCredentialCleanupPort.orderIds).toEqual(['order-11']);
+	});
+
+	it('does not downgrade a held payment for deferred post-approval reversal statuses', async () => {
+		const paymentRepository = new InMemoryPaymentRepository();
+		const processedWebhookEventPort = new InMemoryProcessedWebhookEventPort();
+		const orderPaymentConfirmationPort =
+			new InMemoryOrderPaymentConfirmationPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
+		const payment = Payment.create({
+			id: 'payment-12',
+			orderId: 'order-12',
+			grossAmount: 100,
+			paymentMethod: 'pix',
+		});
+		payment.confirm();
+		paymentRepository.insert(payment);
+		paymentGatewayPort.notification = {
+			internalPaymentId: 'payment-12',
+			gatewayPaymentId: 'mp-payment-12',
+			gatewayStatus: 'refunded',
+			gatewayStatusDetail: 'refunded',
+		};
+
+		const useCase = new HandlePaymentConfirmedWebhookUseCase(
+			paymentRepository,
+			processedWebhookEventPort,
+			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
+			new AcceptAllPaymentWebhookSignatureVerifier(),
+			paymentGatewayPort,
+		);
+
+		await expect(
+			useCase.execute({
+				eventId: 'event-12',
+				topic: 'payment.updated',
+				notificationResourceId: 'notification-12',
+				requestId: 'request-12',
+				signature: 'signature-12',
+			}),
+		).resolves.toEqual({ processed: true });
+
+		const savedPayment = await paymentRepository.findById('payment-12');
+		expect(savedPayment?.status).toBe('held');
+		expect(savedPayment?.gatewayStatus).toBe('refunded');
+		expect(orderPaymentConfirmationPort.orderIds).toEqual([]);
 	});
 
 	it('rejects webhook notifications missing an internal payment reference from the provider payload', async () => {
@@ -585,12 +739,12 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			gatewayPaymentId: 'mp-payment-9',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
-			isApproved: true,
 		};
 		const useCase = new HandlePaymentConfirmedWebhookUseCase(
 			paymentRepository,
 			processedWebhookEventPort,
 			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
 		);

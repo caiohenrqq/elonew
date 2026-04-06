@@ -22,7 +22,6 @@ export type MercadoPagoFetchPaymentNotificationOutput = {
 	gatewayPaymentId: string;
 	gatewayStatus: string;
 	gatewayStatusDetail: string | null;
-	isApproved: boolean;
 };
 
 export type MercadoPagoWebhookPayload = {

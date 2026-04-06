@@ -7,6 +7,7 @@ import {
 } from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
+import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import {
 	OrderBoosterNotEligibleError,
 	OrderCredentialsStorageNotAllowedError,
@@ -20,15 +21,18 @@ import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/rep
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { OrdersPricingAdminController } from '@modules/orders/presentation/orders-pricing-admin.controller';
+import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
 
 describe('Orders module integration', () => {
+	let moduleRef: TestingModule;
 	let controller: OrdersController;
 	let pricingAdminController: OrdersPricingAdminController;
 	let orderRepository: InMemoryOrderRepository;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
+	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
 	const adminUser: AuthenticatedUser = {
 		id: 'admin-1',
 		role: Role.ADMIN,
@@ -36,6 +40,10 @@ describe('Orders module integration', () => {
 	const clientUser: AuthenticatedUser = {
 		id: 'client-1',
 		role: Role.CLIENT,
+	};
+	const boosterUser: AuthenticatedUser = {
+		id: 'booster-1',
+		role: Role.BOOSTER,
 	};
 
 	class BoosterLookupStub {
@@ -89,7 +97,7 @@ describe('Orders module integration', () => {
 	}
 
 	beforeEach(async () => {
-		const moduleRef = await Test.createTestingModule({
+		moduleRef = await Test.createTestingModule({
 			imports: [OrdersModule],
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
@@ -108,6 +116,7 @@ describe('Orders module integration', () => {
 		pricingAdminController = moduleRef.get(OrdersPricingAdminController);
 		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
 		const version = await pricingVersions.createDraft(
 			makeDefaultOrderPricingVersionInput(),
 		);
@@ -115,6 +124,10 @@ describe('Orders module integration', () => {
 			versionId: version.id,
 			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
 		});
+	});
+
+	afterEach(async () => {
+		await moduleRef.close();
 	});
 
 	it('creates and fetches an order with authenticated client details', async () => {
@@ -204,21 +217,29 @@ describe('Orders module integration', () => {
 			clientUser,
 		);
 
-		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({
+		await expect(
+			markOrderAsPaidUseCase.execute({ orderId: createdOrder.id }),
+		).resolves.toBeUndefined();
+		await expect(
+			controller.saveCredentials(
+				createdOrder.id,
+				{
+					login: 'login',
+					summonerName: 'summoner',
+					password: 'secret',
+					confirmPassword: 'secret',
+				},
+				clientUser,
+			),
+		).resolves.toEqual({ success: true });
+		await expect(
+			controller.accept(createdOrder.id, boosterUser),
+		).resolves.toEqual({
 			success: true,
 		});
 		await expect(
-			controller.saveCredentials(createdOrder.id, {
-				login: 'login',
-				summonerName: 'summoner',
-				password: 'secret',
-				confirmPassword: 'secret',
-			}),
-		).resolves.toEqual({ success: true });
-		await expect(controller.accept(createdOrder.id)).resolves.toEqual({
-			success: true,
-		});
-		await expect(controller.complete(createdOrder.id)).resolves.toEqual({
+			controller.complete(createdOrder.id, boosterUser),
+		).resolves.toEqual({
 			success: true,
 		});
 
@@ -290,24 +311,34 @@ describe('Orders module integration', () => {
 
 	it('applies payment confirmation and acceptance transitions', async () => {
 		const createdOrder = await createQuotedOrder();
-		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({
+		await expect(
+			markOrderAsPaidUseCase.execute({ orderId: createdOrder.id }),
+		).resolves.toBeUndefined();
+		await expect(
+			controller.saveCredentials(
+				createdOrder.id,
+				{
+					login: 'login',
+					summonerName: 'summoner',
+					password: 'secret',
+					confirmPassword: 'secret',
+				},
+				clientUser,
+			),
+		).resolves.toEqual({ success: true });
+		await expect(
+			controller.reject(createdOrder.id, boosterUser),
+		).resolves.toEqual({
 			success: true,
 		});
 		await expect(
-			controller.saveCredentials(createdOrder.id, {
-				login: 'login',
-				summonerName: 'summoner',
-				password: 'secret',
-				confirmPassword: 'secret',
-			}),
-		).resolves.toEqual({ success: true });
-		await expect(controller.reject(createdOrder.id)).resolves.toEqual({
+			controller.accept(createdOrder.id, boosterUser),
+		).resolves.toEqual({
 			success: true,
 		});
-		await expect(controller.accept(createdOrder.id)).resolves.toEqual({
-			success: true,
-		});
-		await expect(controller.complete(createdOrder.id)).resolves.toEqual({
+		await expect(
+			controller.complete(createdOrder.id, boosterUser),
+		).resolves.toEqual({
 			success: true,
 		});
 
@@ -336,23 +367,27 @@ describe('Orders module integration', () => {
 			controller.get('missing-order', clientUser),
 		).rejects.toBeInstanceOf(OrderNotFoundError);
 		await expect(
-			controller.confirmPayment('missing-order'),
+			markOrderAsPaidUseCase.execute({ orderId: 'missing-order' }),
 		).rejects.toBeInstanceOf(OrderNotFoundError);
 	});
 
 	it('surfaces invalid-transition domain errors for direct controller calls', async () => {
 		const createdOrder = await createQuotedOrder();
 
-		await expect(controller.accept(createdOrder.id)).rejects.toBeInstanceOf(
-			OrderInvalidTransitionError,
-		);
 		await expect(
-			controller.saveCredentials(createdOrder.id, {
-				login: 'login',
-				summonerName: 'summoner',
-				password: 'secret',
-				confirmPassword: 'secret',
-			}),
+			controller.accept(createdOrder.id, boosterUser),
+		).rejects.toBeInstanceOf(OrderInvalidTransitionError);
+		await expect(
+			controller.saveCredentials(
+				createdOrder.id,
+				{
+					login: 'login',
+					summonerName: 'summoner',
+					password: 'secret',
+					confirmPassword: 'secret',
+				},
+				clientUser,
+			),
 		).rejects.toBeInstanceOf(OrderCredentialsStorageNotAllowedError);
 	});
 

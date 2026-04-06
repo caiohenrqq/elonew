@@ -1,5 +1,6 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
+import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
@@ -16,6 +17,12 @@ describe('Payments module integration (db)', () => {
 	let paymentsController: PaymentsController;
 	let prisma: PrismaService;
 	let clientUser: AuthenticatedUser;
+	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
+	let mercadoPagoSdkMock: {
+		createPayment: jest.Mock;
+		fetchPaymentNotification: jest.Mock;
+		verifyWebhookSignature: jest.Mock;
+	};
 
 	function makeCreateOrderBody(): CreateOrderSchemaInput {
 		return {
@@ -77,29 +84,31 @@ describe('Payments module integration (db)', () => {
 	}
 
 	beforeEach(async () => {
+		mercadoPagoSdkMock = {
+			createPayment: jest.fn(async ({ paymentId }) => ({
+				checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
+				gatewayReferenceId: `pref-${paymentId}`,
+				gatewayStatus: 'pending',
+			})),
+			fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
+				internalPaymentId: notificationId,
+				gatewayPaymentId: `mp-${notificationId}`,
+				gatewayStatus: 'approved',
+				gatewayStatusDetail: 'accredited',
+			})),
+			verifyWebhookSignature: jest.fn().mockResolvedValue(true),
+		};
+
 		moduleRef = await Test.createTestingModule({
 			imports: [PaymentsModule],
 		})
 			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
-			.useValue({
-				createPayment: jest.fn(async ({ paymentId }) => ({
-					checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
-					gatewayReferenceId: `pref-${paymentId}`,
-					gatewayStatus: 'pending',
-				})),
-				fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
-					internalPaymentId: notificationId,
-					gatewayPaymentId: `mp-${notificationId}`,
-					gatewayStatus: 'approved',
-					gatewayStatusDetail: 'accredited',
-					isApproved: true,
-				})),
-				verifyWebhookSignature: jest.fn().mockResolvedValue(true),
-			})
+			.useValue(mercadoPagoSdkMock)
 			.compile();
 
 		ordersController = moduleRef.get(OrdersController);
 		paymentsController = moduleRef.get(PaymentsController);
+		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
 		prisma = moduleRef.get(PrismaService);
 		await prisma.processedWebhookEvent.deleteMany();
 		await prisma.payment.deleteMany();
@@ -342,6 +351,104 @@ describe('Payments module integration (db)', () => {
 		});
 	});
 
+	it('keeps the payment awaiting confirmation for authorized webhook statuses', async () => {
+		const createdOrder = await createQuotedOrder();
+		const payment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+		mercadoPagoSdkMock.fetchPaymentNotification.mockResolvedValueOnce({
+			internalPaymentId: payment.id,
+			gatewayPaymentId: `mp-${payment.id}`,
+			gatewayStatus: 'authorized',
+			gatewayStatusDetail: 'pending_capture',
+		});
+
+		await expect(
+			paymentsController.handleMercadoPagoWebhook(
+				{
+					id: 'event-db-authorized',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
+				},
+				'signature-db-authorized',
+				'request-db-authorized',
+			),
+		).resolves.toEqual({ processed: true });
+
+		await expect(
+			paymentsController.get(payment.id, clientUser),
+		).resolves.toMatchObject({
+			id: payment.id,
+			status: 'awaiting_confirmation',
+		});
+		await expect(
+			prisma.order.findUnique({
+				where: { id: createdOrder.id },
+				select: { status: true },
+			}),
+		).resolves.toMatchObject({
+			status: 'awaiting_payment',
+		});
+	});
+
+	it('fails the payment for rejected webhook statuses and clears credentials', async () => {
+		const createdOrder = await createQuotedOrder();
+		const payment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'credit_card',
+			},
+			clientUser,
+		);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await ordersController.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login-webhook',
+				summonerName: 'summoner-webhook',
+				password: 'secret-webhook',
+				confirmPassword: 'secret-webhook',
+			},
+			clientUser,
+		);
+		mercadoPagoSdkMock.fetchPaymentNotification.mockResolvedValueOnce({
+			internalPaymentId: payment.id,
+			gatewayPaymentId: `mp-${payment.id}`,
+			gatewayStatus: 'rejected',
+			gatewayStatusDetail: 'cc_rejected_bad_filled_security_code',
+		});
+
+		await expect(
+			paymentsController.handleMercadoPagoWebhook(
+				{
+					id: 'event-db-rejected',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
+				},
+				'signature-db-rejected',
+				'request-db-rejected',
+			),
+		).resolves.toEqual({ processed: true });
+
+		await expect(
+			paymentsController.get(payment.id, clientUser),
+		).resolves.toMatchObject({
+			id: payment.id,
+			status: 'failed',
+		});
+		await expect(
+			prisma.orderCredentials.findUnique({
+				where: { orderId: createdOrder.id },
+			}),
+		).resolves.toBeNull();
+	});
+
 	it('fails a payment, clears credentials, and keeps the negative state idempotent', async () => {
 		const createdOrder = await createQuotedOrder();
 		const payment = await paymentsController.create(
@@ -351,13 +458,17 @@ describe('Payments module integration (db)', () => {
 			},
 			clientUser,
 		);
-		await ordersController.confirmPayment(createdOrder.id);
-		await ordersController.saveCredentials(createdOrder.id, {
-			login: 'login-db',
-			summonerName: 'summoner-db',
-			password: 'secret-db',
-			confirmPassword: 'secret-db',
-		});
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await ordersController.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			},
+			clientUser,
+		);
 
 		await expect(paymentsController.fail(payment.id)).resolves.toEqual({
 			success: true,

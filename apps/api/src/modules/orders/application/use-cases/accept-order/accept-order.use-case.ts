@@ -7,7 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type AcceptOrderInput = {
 	orderId: string;
-	boosterId?: string;
+	boosterId: string;
 };
 
 @Injectable()
@@ -21,7 +21,10 @@ export class AcceptOrderUseCase {
 		const order = await this.orderRepository.findById(input.orderId);
 		if (!order) throw new OrderNotFoundError();
 
-		if (input.boosterId) order.assignBooster(input.boosterId);
+		if (order.boosterId && order.boosterId !== input.boosterId)
+			throw new OrderNotFoundError();
+
+		if (!order.boosterId) order.assignBooster(input.boosterId);
 		order.acceptByBooster();
 		await this.orderRepository.save(order);
 	}

@@ -8,6 +8,7 @@ import {
 	ORDER_REPOSITORY_KEY,
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
+import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import {
 	OrderBoosterNotEligibleError,
 	OrderCredentialsStorageNotAllowedError,
@@ -33,7 +34,9 @@ describe('Orders module integration (db)', () => {
 	let prisma: PrismaService;
 	let orderRepository: OrderRepositoryPort;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
+	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
 	let clientUser: AuthenticatedUser;
+	let boosterUser: AuthenticatedUser;
 
 	function makeCreateOrderBody(): CreateOrderSchemaInput {
 		return {
@@ -104,6 +107,7 @@ describe('Orders module integration (db)', () => {
 		prisma = moduleRef.get(PrismaService);
 		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
 		await prisma.payment.deleteMany();
 		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
@@ -121,6 +125,18 @@ describe('Orders module integration (db)', () => {
 		clientUser = {
 			id: createdUser.id,
 			role: Role.CLIENT,
+		};
+		const createdBooster = await prisma.user.create({
+			data: {
+				username: `booster-${uniqueSuffix}`,
+				email: `booster-${uniqueSuffix}@example.com`,
+				password: 'secret',
+				role: 'BOOSTER',
+			},
+		});
+		boosterUser = {
+			id: createdBooster.id,
+			role: Role.BOOSTER,
 		};
 		await seedActivePricingVersion();
 	});
@@ -302,15 +318,19 @@ describe('Orders module integration (db)', () => {
 			clientUser,
 		);
 
-		await controller.confirmPayment(createdOrder.id);
-		await controller.saveCredentials(createdOrder.id, {
-			login: 'login',
-			summonerName: 'summoner',
-			password: 'secret',
-			confirmPassword: 'secret',
-		});
-		await controller.accept(createdOrder.id);
-		await controller.complete(createdOrder.id);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await controller.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+				confirmPassword: 'secret',
+			},
+			clientUser,
+		);
+		await controller.accept(createdOrder.id, boosterUser);
+		await controller.complete(createdOrder.id, boosterUser);
 
 		const persistedOrder = await prisma.order.findUnique({
 			where: { id: createdOrder.id },
@@ -591,10 +611,12 @@ describe('Orders module integration (db)', () => {
 
 	it('applies payment confirmation and acceptance transitions', async () => {
 		const createdOrder = await createQuotedOrder();
-		await expect(controller.confirmPayment(createdOrder.id)).resolves.toEqual({
-			success: true,
-		});
-		await expect(controller.accept(createdOrder.id)).resolves.toEqual({
+		await expect(
+			markOrderAsPaidUseCase.execute({ orderId: createdOrder.id }),
+		).resolves.toBeUndefined();
+		await expect(
+			controller.accept(createdOrder.id, boosterUser),
+		).resolves.toEqual({
 			success: true,
 		});
 
@@ -612,16 +634,16 @@ describe('Orders module integration (db)', () => {
 			controller.get('missing-order', clientUser),
 		).rejects.toBeInstanceOf(OrderNotFoundError);
 		await expect(
-			controller.confirmPayment('missing-order'),
+			markOrderAsPaidUseCase.execute({ orderId: 'missing-order' }),
 		).rejects.toBeInstanceOf(OrderNotFoundError);
 	});
 
 	it('maps invalid transitions to bad request exception', async () => {
 		const createdOrder = await createQuotedOrder();
 
-		await expect(controller.accept(createdOrder.id)).rejects.toBeInstanceOf(
-			OrderInvalidTransitionError,
-		);
+		await expect(
+			controller.accept(createdOrder.id, boosterUser),
+		).rejects.toBeInstanceOf(OrderInvalidTransitionError);
 	});
 
 	it('rejects selected users that are not boosters', async () => {
@@ -664,14 +686,18 @@ describe('Orders module integration (db)', () => {
 
 	it('persists credentials after payment confirmation', async () => {
 		const createdOrder = await createQuotedOrder();
-		await controller.confirmPayment(createdOrder.id);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
 		await expect(
-			controller.saveCredentials(createdOrder.id, {
-				login: 'login-db',
-				summonerName: 'summoner-db',
-				password: 'secret-db',
-				confirmPassword: 'secret-db',
-			}),
+			controller.saveCredentials(
+				createdOrder.id,
+				{
+					login: 'login-db',
+					summonerName: 'summoner-db',
+					password: 'secret-db',
+					confirmPassword: 'secret-db',
+				},
+				clientUser,
+			),
 		).resolves.toEqual({ success: true });
 
 		const credentials = await prisma.orderCredentials.findUnique({
@@ -698,15 +724,19 @@ describe('Orders module integration (db)', () => {
 
 	it('deletes credentials after order completion', async () => {
 		const createdOrder = await createQuotedOrder();
-		await controller.confirmPayment(createdOrder.id);
-		await controller.saveCredentials(createdOrder.id, {
-			login: 'login-db',
-			summonerName: 'summoner-db',
-			password: 'secret-db',
-			confirmPassword: 'secret-db',
-		});
-		await controller.accept(createdOrder.id);
-		await controller.complete(createdOrder.id);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await controller.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			},
+			clientUser,
+		);
+		await controller.accept(createdOrder.id, boosterUser);
+		await controller.complete(createdOrder.id, boosterUser);
 
 		const credentials = await prisma.orderCredentials.findUnique({
 			where: { orderId: createdOrder.id },
@@ -725,12 +755,16 @@ describe('Orders module integration (db)', () => {
 		const createdOrder = await createQuotedOrder();
 
 		await expect(
-			controller.saveCredentials(createdOrder.id, {
-				login: 'login-db',
-				summonerName: 'summoner-db',
-				password: 'secret-db',
-				confirmPassword: 'secret-db',
-			}),
+			controller.saveCredentials(
+				createdOrder.id,
+				{
+					login: 'login-db',
+					summonerName: 'summoner-db',
+					password: 'secret-db',
+					confirmPassword: 'secret-db',
+				},
+				clientUser,
+			),
 		).rejects.toBeInstanceOf(OrderCredentialsStorageNotAllowedError);
 	});
 });
