@@ -37,6 +37,7 @@ export class AuthController {
 	}
 
 	@Post('logout')
+	@UseGuards(AuthThrottlerGuard)
 	@HttpCode(200)
 	async logout(
 		@Body(new ZodValidationPipe(refreshSessionSchema))

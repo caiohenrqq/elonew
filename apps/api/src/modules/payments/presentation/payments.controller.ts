@@ -1,6 +1,7 @@
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
+import { Public } from '@modules/auth/presentation/decorators/public.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
 import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
@@ -109,6 +110,7 @@ export class PaymentsController {
 	}
 
 	@Post('webhooks/mercadopago')
+	@Public()
 	@HttpCode(200)
 	async handleMercadoPagoWebhook(
 		@Body(new ZodValidationPipe(mercadoPagoWebhookSchema))
