@@ -31,6 +31,11 @@ describe('Payments module integration', () => {
 	let ordersController: OrdersController;
 	let paymentsController: PaymentsController;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
+	let mercadoPagoSdkMock: {
+		createPayment: jest.Mock;
+		fetchPaymentNotification: jest.Mock;
+		verifyWebhookSignature: jest.Mock;
+	};
 	const clientUser: AuthenticatedUser = {
 		id: 'client-1',
 		role: Role.CLIENT,
@@ -69,6 +74,21 @@ describe('Payments module integration', () => {
 	}
 
 	beforeEach(async () => {
+		mercadoPagoSdkMock = {
+			createPayment: jest.fn(async ({ paymentId }) => ({
+				checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
+				gatewayReferenceId: `pref-${paymentId}`,
+				gatewayStatus: 'pending',
+			})),
+			fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
+				internalPaymentId: notificationId,
+				gatewayPaymentId: `mp-${notificationId}`,
+				gatewayStatus: 'approved',
+				gatewayStatusDetail: 'accredited',
+			})),
+			verifyWebhookSignature: jest.fn().mockResolvedValue(true),
+		};
+
 		const moduleRef = await Test.createTestingModule({
 			imports: [PaymentsModule],
 		})
@@ -85,21 +105,7 @@ describe('Payments module integration', () => {
 			.overrideProvider(PROCESSED_WEBHOOK_EVENT_PORT_KEY)
 			.useClass(InMemoryProcessedWebhookEventRepository)
 			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
-			.useValue({
-				createPayment: jest.fn(async ({ paymentId }) => ({
-					checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
-					gatewayReferenceId: `pref-${paymentId}`,
-					gatewayStatus: 'pending',
-				})),
-				fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
-					internalPaymentId: notificationId,
-					gatewayPaymentId: `mp-${notificationId}`,
-					gatewayStatus: 'approved',
-					gatewayStatusDetail: 'accredited',
-					isApproved: true,
-				})),
-				verifyWebhookSignature: jest.fn().mockResolvedValue(true),
-			})
+			.useValue(mercadoPagoSdkMock)
 			.overrideProvider(ORDER_STATUS_PORT_KEY)
 			.useClass(OrderStatusFromOrdersRepositoryAdapter)
 			.overrideProvider(ORDER_PAYMENT_AMOUNT_PORT_KEY)
@@ -258,6 +264,89 @@ describe('Payments module integration', () => {
 		await expect(
 			paymentsController.get(payment.id, clientUser),
 		).resolves.toMatchObject({ id: payment.id, status: 'held' });
+	});
+
+	it('keeps the payment awaiting confirmation for authorized webhook statuses', async () => {
+		const createdOrder = await createQuotedOrder();
+		const payment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+		mercadoPagoSdkMock.fetchPaymentNotification.mockResolvedValueOnce({
+			internalPaymentId: payment.id,
+			gatewayPaymentId: `mp-${payment.id}`,
+			gatewayStatus: 'authorized',
+			gatewayStatusDetail: 'pending_capture',
+		});
+
+		await expect(
+			paymentsController.handleMercadoPagoWebhook(
+				{
+					id: 'event-authorized',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
+				},
+				'signature-authorized',
+				'request-authorized',
+			),
+		).resolves.toEqual({ processed: true });
+
+		await expect(
+			paymentsController.get(payment.id, clientUser),
+		).resolves.toMatchObject({
+			id: payment.id,
+			status: 'awaiting_confirmation',
+		});
+		await expect(
+			ordersController.get(createdOrder.id, clientUser),
+		).resolves.toMatchObject({
+			id: createdOrder.id,
+			status: 'awaiting_payment',
+		});
+	});
+
+	it('fails the payment for rejected webhook statuses', async () => {
+		const createdOrder = await createQuotedOrder();
+		const payment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+		mercadoPagoSdkMock.fetchPaymentNotification.mockResolvedValueOnce({
+			internalPaymentId: payment.id,
+			gatewayPaymentId: `mp-${payment.id}`,
+			gatewayStatus: 'rejected',
+			gatewayStatusDetail: 'cc_rejected_bad_filled_security_code',
+		});
+
+		await expect(
+			paymentsController.handleMercadoPagoWebhook(
+				{
+					id: 'event-rejected',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
+				},
+				'signature-rejected',
+				'request-rejected',
+			),
+		).resolves.toEqual({ processed: true });
+
+		await expect(
+			paymentsController.get(payment.id, clientUser),
+		).resolves.toMatchObject({ id: payment.id, status: 'failed' });
+		await expect(
+			ordersController.get(createdOrder.id, clientUser),
+		).resolves.toMatchObject({
+			id: createdOrder.id,
+			status: 'awaiting_payment',
+		});
 	});
 
 	it('fails a payment and keeps the negative state idempotent', async () => {

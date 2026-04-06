@@ -1,10 +1,15 @@
 import { createHmac } from 'node:crypto';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import {
+	ORDER_PRICING_VERSION_REPOSITORY_KEY,
+	type OrderPricingVersionRepositoryPort,
+} from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
+import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
 import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { ORDER_PAYMENT_AMOUNT_PORT_KEY } from '@modules/payments/application/ports/order-payment-amount.port';
@@ -22,11 +27,18 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
 
 describe('Payments (e2e)', () => {
 	let app: ApiHttpApp;
 	let ordersController: OrdersController;
 	let paymentsController: PaymentsController;
+	let pricingVersions: OrderPricingVersionRepositoryPort;
+	let mercadoPagoSdkMock: {
+		createPayment: jest.Mock;
+		fetchPaymentNotification: jest.Mock;
+		verifyWebhookSignature: jest.Mock;
+	};
 	const testInternalApiKey =
 		process.env.INTERNAL_API_KEY ?? 'test-internal-api-key';
 	const validWebhookSignature = 'valid-signature';
@@ -101,6 +113,23 @@ describe('Payments (e2e)', () => {
 	}
 
 	beforeEach(async () => {
+		mercadoPagoSdkMock = {
+			createPayment: jest.fn(async ({ paymentId }) => ({
+				checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
+				gatewayReferenceId: `pref-${paymentId}`,
+				gatewayStatus: 'pending',
+			})),
+			fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
+				internalPaymentId: notificationId,
+				gatewayPaymentId: `mp-${notificationId}`,
+				gatewayStatus: 'approved',
+				gatewayStatusDetail: 'accredited',
+			})),
+			verifyWebhookSignature: jest.fn(async ({ signature }) => {
+				return signature === validWebhookSignature;
+			}),
+		};
+
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
@@ -110,28 +139,14 @@ describe('Payments (e2e)', () => {
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
 			.useClass(InMemoryOrderQuoteRepository)
+			.overrideProvider(ORDER_PRICING_VERSION_REPOSITORY_KEY)
+			.useClass(InMemoryOrderPricingVersionRepository)
 			.overrideProvider(PAYMENT_REPOSITORY_KEY)
 			.useClass(InMemoryPaymentRepository)
 			.overrideProvider(PROCESSED_WEBHOOK_EVENT_PORT_KEY)
 			.useClass(InMemoryProcessedWebhookEventRepository)
 			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
-			.useValue({
-				createPayment: jest.fn(async ({ paymentId }) => ({
-					checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
-					gatewayReferenceId: `pref-${paymentId}`,
-					gatewayStatus: 'pending',
-				})),
-				fetchPaymentNotification: jest.fn(async ({ notificationId }) => ({
-					internalPaymentId: notificationId,
-					gatewayPaymentId: `mp-${notificationId}`,
-					gatewayStatus: 'approved',
-					gatewayStatusDetail: 'accredited',
-					isApproved: true,
-				})),
-				verifyWebhookSignature: jest.fn(async ({ signature }) => {
-					return signature === validWebhookSignature;
-				}),
-			})
+			.useValue(mercadoPagoSdkMock)
 			.overrideProvider(ORDER_STATUS_PORT_KEY)
 			.useClass(OrderStatusFromOrdersRepositoryAdapter)
 			.overrideProvider(ORDER_PAYMENT_AMOUNT_PORT_KEY)
@@ -141,6 +156,14 @@ describe('Payments (e2e)', () => {
 		app = await createTestHttpApp(moduleRef);
 		ordersController = moduleRef.get(OrdersController);
 		paymentsController = moduleRef.get(PaymentsController);
+		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		const version = await pricingVersions.createDraft(
+			makeDefaultOrderPricingVersionInput(),
+		);
+		await pricingVersions.activate({
+			versionId: version.id,
+			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+		});
 	});
 
 	afterEach(async () => {
@@ -459,6 +482,111 @@ describe('Payments (e2e)', () => {
 				data: { id: paymentId },
 			})
 			.expect(200, { processed: true })
+			.execute();
+	});
+
+	it('keeps payments awaiting confirmation for authorized webhook statuses', async () => {
+		const token = signToken({
+			sub: 'client-webhook-authorized',
+			role: 'CLIENT',
+		});
+		const createdOrder = await createQuotedOrder(token);
+		let paymentId = '';
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
+			.execute();
+
+		mercadoPagoSdkMock.fetchPaymentNotification.mockResolvedValueOnce({
+			internalPaymentId: paymentId,
+			gatewayPaymentId: `mp-${paymentId}`,
+			gatewayStatus: 'authorized',
+			gatewayStatusDetail: 'pending_capture',
+		});
+
+		await requestHttp(app)
+			.post('/payments/webhooks/mercadopago')
+			.set('x-request-id', 'request-authorized')
+			.set('x-signature', validWebhookSignature)
+			.send({
+				id: 'event-authorized',
+				type: 'payment.updated',
+				action: 'payment.updated',
+				data: { id: paymentId },
+			})
+			.expect(200, { processed: true })
+			.execute();
+
+		await requestHttp(app)
+			.get(`/payments/${paymentId}`)
+			.set('Authorization', `Bearer ${token}`)
+			.expect(200)
+			.expect(({ body }) => {
+				expect(body).toMatchObject({
+					id: paymentId,
+					status: 'awaiting_confirmation',
+				});
+			})
+			.execute();
+	});
+
+	it('fails payments for rejected webhook statuses', async () => {
+		const token = signToken({ sub: 'client-webhook-rejected', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+		let paymentId = '';
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
+			.execute();
+
+		mercadoPagoSdkMock.fetchPaymentNotification.mockResolvedValueOnce({
+			internalPaymentId: paymentId,
+			gatewayPaymentId: `mp-${paymentId}`,
+			gatewayStatus: 'rejected',
+			gatewayStatusDetail: 'cc_rejected_bad_filled_security_code',
+		});
+
+		await requestHttp(app)
+			.post('/payments/webhooks/mercadopago')
+			.set('x-request-id', 'request-rejected')
+			.set('x-signature', validWebhookSignature)
+			.send({
+				id: 'event-rejected',
+				type: 'payment.updated',
+				action: 'payment.updated',
+				data: { id: paymentId },
+			})
+			.expect(200, { processed: true })
+			.execute();
+
+		await requestHttp(app)
+			.get(`/payments/${paymentId}`)
+			.set('Authorization', `Bearer ${token}`)
+			.expect(200)
+			.expect(({ body }) => {
+				expect(body).toMatchObject({
+					id: paymentId,
+					status: 'failed',
+				});
+			})
 			.execute();
 	});
 
