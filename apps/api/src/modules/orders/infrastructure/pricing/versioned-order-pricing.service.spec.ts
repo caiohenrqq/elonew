@@ -1,7 +1,7 @@
 import { OrderPricingVersionNotActiveError } from '@modules/orders/domain/order-pricing.errors';
 import { VersionedOrderPricingService } from '@modules/orders/infrastructure/pricing/versioned-order-pricing.service';
-import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
 import { makeDefaultOrderPricingVersionInput } from '../../../../../test/order-pricing-version-test-data';
+import { InMemoryOrderPricingVersionRepository } from '../../../../../test/support/in-memory/orders/in-memory-order-pricing-version.repository';
 
 describe('VersionedOrderPricingService', () => {
 	it('rejects quote calculation when there is no active pricing version', async () => {

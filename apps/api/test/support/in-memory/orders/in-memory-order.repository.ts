@@ -5,7 +5,7 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();
 	private nextId = 1;
 
-	async create(order: Order): Promise<Order> {
+	create(order: Order): Promise<Order> {
 		const createdOrder = Order.rehydrate({
 			id: order.id || `order-${this.nextId++}`,
 			clientId: order.clientId,
@@ -21,27 +21,30 @@ export class InMemoryOrderRepository implements OrderRepositoryPort {
 			extras: order.extras,
 		});
 		this.orders.set(createdOrder.id, createdOrder);
-		return createdOrder;
+		return Promise.resolve(createdOrder);
 	}
 
-	async findById(id: string): Promise<Order | null> {
-		return this.orders.get(id) ?? null;
+	findById(id: string): Promise<Order | null> {
+		return Promise.resolve(this.orders.get(id) ?? null);
 	}
 
-	async findByIdForClient(id: string, clientId: string): Promise<Order | null> {
+	findByIdForClient(id: string, clientId: string): Promise<Order | null> {
 		const order = this.orders.get(id) ?? null;
-		if (!order || order.clientId !== clientId) return null;
+		if (!order || order.clientId !== clientId) return Promise.resolve(null);
 
-		return order;
+		return Promise.resolve(order);
 	}
 
-	async existsForClient(clientId: string): Promise<boolean> {
-		return Array.from(this.orders.values()).some(
-			(order) => order.clientId === clientId,
+	existsForClient(clientId: string): Promise<boolean> {
+		return Promise.resolve(
+			Array.from(this.orders.values()).some(
+				(order) => order.clientId === clientId,
+			),
 		);
 	}
 
-	async save(order: Order): Promise<void> {
+	save(order: Order): Promise<void> {
 		this.orders.set(order.id, order);
+		return Promise.resolve();
 	}
 }

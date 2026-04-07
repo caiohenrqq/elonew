@@ -5,34 +5,32 @@ export class InMemoryUserRepository implements UserRepositoryPort {
 	private readonly users = new Map<string, User>();
 	private nextId = 1;
 
-	async findById(id: string): Promise<User | null> {
-		return this.users.get(id) ?? null;
+	findById(id: string): Promise<User | null> {
+		return Promise.resolve(this.users.get(id) ?? null);
 	}
 
-	async findByEmail(email: string): Promise<User | null> {
-		return (
-			[...this.users.values()].find((user) => user.email === email) ?? null
+	findByEmail(email: string): Promise<User | null> {
+		return Promise.resolve(
+			[...this.users.values()].find((user) => user.email === email) ?? null,
 		);
 	}
 
-	async findByUsername(username: string): Promise<User | null> {
-		return (
+	findByUsername(username: string): Promise<User | null> {
+		return Promise.resolve(
 			[...this.users.values()].find((user) => user.username === username) ??
-			null
+				null,
 		);
 	}
 
-	async findByEmailConfirmationTokenHash(
-		tokenHash: string,
-	): Promise<User | null> {
-		return (
+	findByEmailConfirmationTokenHash(tokenHash: string): Promise<User | null> {
+		return Promise.resolve(
 			[...this.users.values()].find(
 				(user) => user.emailConfirmationTokenHash === tokenHash,
-			) ?? null
+			) ?? null,
 		);
 	}
 
-	async create(user: User): Promise<User> {
+	create(user: User): Promise<User> {
 		const createdUser = User.rehydrate({
 			id: `user-${this.nextId++}`,
 			username: user.username,
@@ -48,10 +46,11 @@ export class InMemoryUserRepository implements UserRepositoryPort {
 		});
 		this.users.set(createdUser.id, createdUser);
 
-		return createdUser;
+		return Promise.resolve(createdUser);
 	}
 
-	async save(user: User): Promise<void> {
+	save(user: User): Promise<void> {
 		this.users.set(user.id, user);
+		return Promise.resolve();
 	}
 }

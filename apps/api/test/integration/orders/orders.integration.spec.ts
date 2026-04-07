@@ -14,10 +14,6 @@ import {
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
-import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
-import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
-import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
-import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { OrdersPricingAdminController } from '@modules/orders/presentation/orders-pricing-admin.controller';
@@ -25,6 +21,10 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
+import { InMemoryOrderRepository } from '../../support/in-memory/orders/in-memory-order.repository';
+import { InMemoryOrderCheckoutRepository } from '../../support/in-memory/orders/in-memory-order-checkout.repository';
+import { InMemoryOrderPricingVersionRepository } from '../../support/in-memory/orders/in-memory-order-pricing-version.repository';
+import { InMemoryOrderQuoteRepository } from '../../support/in-memory/orders/in-memory-order-quote.repository';
 
 describe('Orders module integration', () => {
 	let moduleRef: TestingModule;

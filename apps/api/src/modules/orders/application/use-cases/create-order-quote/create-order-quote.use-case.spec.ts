@@ -3,8 +3,8 @@ import type { OrderQuoteRepositoryPort } from '@modules/orders/application/ports
 import type { OrderCouponService } from '@modules/orders/application/services/order-coupon.service';
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
 import { VersionedOrderPricingService } from '@modules/orders/infrastructure/pricing/versioned-order-pricing.service';
-import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
 import { makeDefaultOrderPricingVersionInput } from '../../../../../../test/order-pricing-version-test-data';
+import { InMemoryOrderPricingVersionRepository } from '../../../../../../test/support/in-memory/orders/in-memory-order-pricing-version.repository';
 
 class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 	lastCreated: {

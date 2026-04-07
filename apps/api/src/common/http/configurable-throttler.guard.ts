@@ -27,9 +27,9 @@ export abstract class ConfigurableThrottlerGuard extends ThrottlerGuard {
 		super(options, storageService, reflector);
 	}
 
-	async canActivate(context: ExecutionContext): Promise<boolean> {
+	canActivate(context: ExecutionContext): Promise<boolean> {
 		const throttleConfig = this.getThrottleConfig(context);
-		if (!throttleConfig) return true;
+		if (!throttleConfig) return Promise.resolve(true);
 
 		const getTracker =
 			this.commonOptions.getTracker ?? this.getTracker.bind(this);

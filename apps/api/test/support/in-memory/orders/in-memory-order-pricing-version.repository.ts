@@ -17,27 +17,31 @@ export class InMemoryOrderPricingVersionRepository
 	private readonly versions = new Map<string, StoredPricingVersion>();
 	private nextId = 1;
 
-	async findActive(): Promise<OrderPricingVersionSnapshot | null> {
+	findActive(): Promise<OrderPricingVersionSnapshot | null> {
 		const activeVersion =
 			Array.from(this.versions.values()).find(
 				(version) => version.status === 'active',
 			) ?? null;
 
-		return activeVersion ? this.cloneVersion(activeVersion) : null;
-	}
-
-	async findById(id: string): Promise<OrderPricingVersionSnapshot | null> {
-		const version = this.versions.get(id) ?? null;
-		return version ? this.cloneVersion(version) : null;
-	}
-
-	async list(): Promise<OrderPricingVersionSnapshot[]> {
-		return Array.from(this.versions.values()).map((version) =>
-			this.cloneVersion(version),
+		return Promise.resolve(
+			activeVersion ? this.cloneVersion(activeVersion) : null,
 		);
 	}
 
-	async createDraft(input: {
+	findById(id: string): Promise<OrderPricingVersionSnapshot | null> {
+		const version = this.versions.get(id) ?? null;
+		return Promise.resolve(version ? this.cloneVersion(version) : null);
+	}
+
+	list(): Promise<OrderPricingVersionSnapshot[]> {
+		return Promise.resolve(
+			Array.from(this.versions.values()).map((version) =>
+				this.cloneVersion(version),
+			),
+		);
+	}
+
+	createDraft(input: {
 		name: string;
 		steps: OrderPricingStep[];
 		extras: OrderPricingExtraRate[];
@@ -55,10 +59,10 @@ export class InMemoryOrderPricingVersionRepository
 		};
 		this.versions.set(version.id, version);
 
-		return this.cloneVersion(version);
+		return Promise.resolve(this.cloneVersion(version));
 	}
 
-	async replaceDraft(input: {
+	replaceDraft(input: {
 		versionId: string;
 		name: string;
 		steps: OrderPricingStep[];
@@ -78,10 +82,10 @@ export class InMemoryOrderPricingVersionRepository
 		};
 		this.versions.set(updatedVersion.id, updatedVersion);
 
-		return this.cloneVersion(updatedVersion);
+		return Promise.resolve(this.cloneVersion(updatedVersion));
 	}
 
-	async activate(input: {
+	activate(input: {
 		versionId: string;
 		activatedAt: Date;
 	}): Promise<OrderPricingVersionSnapshot> {
@@ -107,7 +111,7 @@ export class InMemoryOrderPricingVersionRepository
 		};
 		this.versions.set(activatedVersion.id, activatedVersion);
 
-		return this.cloneVersion(activatedVersion);
+		return Promise.resolve(this.cloneVersion(activatedVersion));
 	}
 
 	private cloneVersion(

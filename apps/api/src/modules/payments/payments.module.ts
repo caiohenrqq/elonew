@@ -36,12 +36,19 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 		PrismaPaymentRepository,
 		{
 			provide: PAYMENT_REPOSITORY_KEY,
-			useExisting: PrismaPaymentRepository,
+			useFactory: (
+				paymentRepository: PrismaPaymentRepository,
+			): PrismaPaymentRepository => paymentRepository,
+			inject: [PrismaPaymentRepository],
 		},
 		PrismaProcessedWebhookEventRepository,
 		{
 			provide: PROCESSED_WEBHOOK_EVENT_PORT_KEY,
-			useExisting: PrismaProcessedWebhookEventRepository,
+			useFactory: (
+				processedWebhookEventRepository: PrismaProcessedWebhookEventRepository,
+			): PrismaProcessedWebhookEventRepository =>
+				processedWebhookEventRepository,
+			inject: [PrismaProcessedWebhookEventRepository],
 		},
 		{
 			provide: MERCADO_PAGO_SDK_PORT_KEY,
@@ -56,32 +63,52 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 		MercadoPagoPaymentGatewayAdapter,
 		{
 			provide: PAYMENT_GATEWAY_PORT_KEY,
-			useExisting: MercadoPagoPaymentGatewayAdapter,
+			useFactory: (
+				paymentGateway: MercadoPagoPaymentGatewayAdapter,
+			): MercadoPagoPaymentGatewayAdapter => paymentGateway,
+			inject: [MercadoPagoPaymentGatewayAdapter],
 		},
 		OrderStatusFromPrismaAdapter,
 		{
 			provide: ORDER_STATUS_PORT_KEY,
-			useExisting: OrderStatusFromPrismaAdapter,
+			useFactory: (
+				orderStatusPort: OrderStatusFromPrismaAdapter,
+			): OrderStatusFromPrismaAdapter => orderStatusPort,
+			inject: [OrderStatusFromPrismaAdapter],
 		},
 		OrderPaymentAmountFromPrismaAdapter,
 		{
 			provide: ORDER_PAYMENT_AMOUNT_PORT_KEY,
-			useExisting: OrderPaymentAmountFromPrismaAdapter,
+			useFactory: (
+				orderPaymentAmountPort: OrderPaymentAmountFromPrismaAdapter,
+			): OrderPaymentAmountFromPrismaAdapter => orderPaymentAmountPort,
+			inject: [OrderPaymentAmountFromPrismaAdapter],
 		},
 		OrderPaymentConfirmationFromOrdersAdapter,
 		{
 			provide: ORDER_PAYMENT_CONFIRMATION_PORT_KEY,
-			useExisting: OrderPaymentConfirmationFromOrdersAdapter,
+			useFactory: (
+				orderPaymentConfirmationPort: OrderPaymentConfirmationFromOrdersAdapter,
+			): OrderPaymentConfirmationFromOrdersAdapter =>
+				orderPaymentConfirmationPort,
+			inject: [OrderPaymentConfirmationFromOrdersAdapter],
 		},
 		OrderCredentialCleanupFromOrdersAdapter,
 		{
 			provide: ORDER_CREDENTIAL_CLEANUP_PORT_KEY,
-			useExisting: OrderCredentialCleanupFromOrdersAdapter,
+			useFactory: (
+				orderCredentialCleanupPort: OrderCredentialCleanupFromOrdersAdapter,
+			): OrderCredentialCleanupFromOrdersAdapter => orderCredentialCleanupPort,
+			inject: [OrderCredentialCleanupFromOrdersAdapter],
 		},
 		MercadoPagoPaymentWebhookSignatureVerifierAdapter,
 		{
 			provide: PAYMENT_WEBHOOK_SIGNATURE_VERIFIER_PORT_KEY,
-			useExisting: MercadoPagoPaymentWebhookSignatureVerifierAdapter,
+			useFactory: (
+				paymentWebhookSignatureVerifier: MercadoPagoPaymentWebhookSignatureVerifierAdapter,
+			): MercadoPagoPaymentWebhookSignatureVerifierAdapter =>
+				paymentWebhookSignatureVerifier,
+			inject: [MercadoPagoPaymentWebhookSignatureVerifierAdapter],
 		},
 		CreatePaymentUseCase,
 		GetPaymentUseCase,

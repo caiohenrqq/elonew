@@ -1,12 +1,12 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { AUTH_SESSION_REPOSITORY_KEY } from '@modules/auth/application/ports/auth-session-repository.port';
-import { InMemoryAuthSessionRepository } from '@modules/auth/infrastructure/repositories/in-memory-auth-session.repository';
 import { AuthController } from '@modules/auth/presentation/auth.controller';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
-import { InMemoryUserRepository } from '@modules/users/infrastructure/repositories/in-memory-user.repository';
 import { UsersController } from '@modules/users/presentation/users.controller';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../../../src/app.module';
+import { InMemoryAuthSessionRepository } from '../../support/in-memory/auth/in-memory-auth-session.repository';
+import { InMemoryUserRepository } from '../../support/in-memory/users/in-memory-user.repository';
 import { createTestAppSettings } from '../../test-app-settings';
 
 describe('Auth module integration', () => {

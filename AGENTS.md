@@ -80,36 +80,6 @@ Start every task by determining:
 4. Whether the request depends on recency. If yes, apply the rules above.
 5. If requirements are ambiguous, ask targeted clarifying questions before making irreversible changes.
 
-## CONTINUITY.md (REQUIRED)
-Maintain a single continuity file for the current workspace: `.agent/CONTINUITY.md`.
-
-- Read `.agent/CONTINUITY.md` at the start of each assistant turn before acting.
-- Treat `.agent/CONTINUITY.md` as the canonical surviving briefing; do not rely on earlier chat or tool output unless it is reflected there.
-- Update `.agent/CONTINUITY.md` only when there is a meaningful delta in one of these sections:
-  - `[PLANS]`
-  - `[DECISIONS]`
-  - `[PROGRESS]`
-  - `[DISCOVERIES]`
-  - `[OUTCOMES]`
-
-### File format
-- Every entry must include:
-  - an ISO timestamp
-  - a provenance tag: `[USER]`, `[CODE]`, `[TOOL]`, or `[ASSUMPTION]`
-- If something is unknown, write `UNCONFIRMED`.
-- If something changes, supersede it explicitly instead of silently rewriting history.
-- Do not record user-specific absolute filesystem paths in `.agent/CONTINUITY.md` (for example `/home/<user>`); prefer repo-relative paths or generic forms such as `~/.codex/...` when a path is necessary.
-
-### Anti-drift / anti-bloat rules
-- Facts only. No transcripts and no raw logs.
-- Keep the file short, bounded, and high-signal.
-- If sections become bloated, compress older items into `[MILESTONE]` bullets.
-
-### Continuity vs changelog
-- Use `.agent/CONTINUITY.md` for the current working state only: active plans, decisions, progress, discoveries, and outcomes that help the next agent continue the task safely.
-- Use `.agent/CHANGELOG.md` for durable project history: meaningful landed changes that should remain discoverable after the current task is no longer active.
-- Do not use `.agent/CONTINUITY.md` as a long-term project history file, and do not use `.agent/CHANGELOG.md` as a substitute for the current task brief.
-
 ## Repo-specific execution rules
 
 ### Documentation and dependency rules
@@ -254,7 +224,6 @@ A task is done when:
 - documentation is updated for impacted areas
 - impact is explained: what changed, where, and why
 - follow-ups are listed if anything was intentionally left out
-- `.agent/CONTINUITY.md` is updated if the change materially affected goal, state, or decisions
 
 ## Official docs
 - NestJS: https://docs.nestjs.com/

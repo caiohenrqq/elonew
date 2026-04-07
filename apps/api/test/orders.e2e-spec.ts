@@ -9,16 +9,16 @@ import {
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
-import { InMemoryOrderRepository } from '@modules/orders/infrastructure/repositories/in-memory-order.repository';
-import { InMemoryOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-checkout.repository';
-import { InMemoryOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-pricing-version.repository';
-import { InMemoryOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/in-memory-order-quote.repository';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
+import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
+import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
+import { InMemoryOrderPricingVersionRepository } from './support/in-memory/orders/in-memory-order-pricing-version.repository';
+import { InMemoryOrderQuoteRepository } from './support/in-memory/orders/in-memory-order-quote.repository';
 
 describe('Orders (e2e)', () => {
 	let app: ApiHttpApp;

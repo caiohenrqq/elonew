@@ -1,12 +1,12 @@
 import { createHmac } from 'node:crypto';
 import { WALLET_FUNDS_RELEASE_JOB_SCHEDULER_PORT_KEY } from '@modules/wallet/application/ports/wallet-funds-release-job-scheduler.port';
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
-import { InMemoryWalletRepository } from '@modules/wallet/infrastructure/repositories/in-memory-wallet.repository';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { InMemoryWalletRepository } from './support/in-memory/wallet/in-memory-wallet.repository';
 
 describe('Wallets (e2e)', () => {
 	let app: ApiHttpApp;

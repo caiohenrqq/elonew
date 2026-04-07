@@ -17,19 +17,30 @@ import { Module } from '@nestjs/common';
 	controllers: [WalletsController],
 	providers: [
 		PrismaWalletRepository,
-		BullmqWalletFundsReleaseJobSchedulerAdapter,
 		{
 			provide: WALLET_REPOSITORY_KEY,
-			useExisting: PrismaWalletRepository,
+			useFactory: (
+				walletRepository: PrismaWalletRepository,
+			): PrismaWalletRepository => walletRepository,
+			inject: [PrismaWalletRepository],
 		},
+		BullmqWalletFundsReleaseJobSchedulerAdapter,
 		{
 			provide: WALLET_FUNDS_RELEASE_JOB_SCHEDULER_PORT_KEY,
-			useExisting: BullmqWalletFundsReleaseJobSchedulerAdapter,
+			useFactory: (
+				walletFundsReleaseJobScheduler: BullmqWalletFundsReleaseJobSchedulerAdapter,
+			): BullmqWalletFundsReleaseJobSchedulerAdapter =>
+				walletFundsReleaseJobScheduler,
+			inject: [BullmqWalletFundsReleaseJobSchedulerAdapter],
 		},
 		OrderCompletionEarningsFromWalletAdapter,
 		{
 			provide: ORDER_COMPLETION_EARNINGS_PORT_KEY,
-			useExisting: OrderCompletionEarningsFromWalletAdapter,
+			useFactory: (
+				orderCompletionEarningsPort: OrderCompletionEarningsFromWalletAdapter,
+			): OrderCompletionEarningsFromWalletAdapter =>
+				orderCompletionEarningsPort,
+			inject: [OrderCompletionEarningsFromWalletAdapter],
 		},
 		GetWalletUseCase,
 		CreditCompletedOrderEarningsUseCase,

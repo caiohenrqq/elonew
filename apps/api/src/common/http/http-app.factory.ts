@@ -10,7 +10,7 @@ import type { TestingModule } from '@nestjs/testing';
 export type ApiHttpApp = NestFastifyApplication;
 const HTTP_BODY_LIMIT_BYTES = 1_048_576;
 
-export async function createHttpApp(
+export function createHttpApp(
 	options?: NestApplicationOptions,
 ): Promise<ApiHttpApp> {
 	return NestFactory.create<ApiHttpApp>(

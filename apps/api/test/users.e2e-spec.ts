@@ -1,10 +1,10 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
-import { InMemoryUserRepository } from '@modules/users/infrastructure/repositories/in-memory-user.repository';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { InMemoryUserRepository } from './support/in-memory/users/in-memory-user.repository';
 import { createTestAppSettings } from './test-app-settings';
 
 describe('Users (e2e)', () => {
