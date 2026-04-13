@@ -1,11 +1,38 @@
-html,
-body {
-	margin: 0;
-	padding: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+	--background: #09090b;
+	--foreground: #fafafa;
 }
 
 body {
-	font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+	background-color: #09090b;
+	color: #fafafa;
+	font-family: var(--font-satoshi), sans-serif;
+	overflow-x: hidden;
+	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+}
+
+html.lenis,
+html.lenis body {
+	height: auto;
+}
+
+.lenis.lenis-smooth {
+	scroll-behavior: auto;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+	overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+	overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+	pointer-events: none;
 }

@@ -1,3 +1,5 @@
+import { LandingPage } from '@/features/landing/presentation/landing-page';
+
 export default function Home() {
-	return <main>Web app initialized.</main>;
+	return <LandingPage />;
 }
