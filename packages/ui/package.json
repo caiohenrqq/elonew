@@ -1,0 +1,57 @@
+{
+	"name": "@packages/ui",
+	"private": true,
+	"version": "0.0.0",
+	"exports": {
+		"./animation/gsap": {
+			"types": "./src/animation/gsap.ts",
+			"default": "./src/animation/gsap.ts"
+		},
+		"./backgrounds/gradient-noise": {
+			"types": "./src/backgrounds/gradient-noise.tsx",
+			"default": "./src/backgrounds/gradient-noise.tsx"
+		},
+		"./brand/glitch-logo": {
+			"types": "./src/brand/glitch-logo.tsx",
+			"default": "./src/brand/glitch-logo.tsx"
+		},
+		"./navigation/navbar": {
+			"types": "./src/navigation/navbar.tsx",
+			"default": "./src/navigation/navbar.tsx"
+		},
+		"./providers/smooth-scroll": {
+			"types": "./src/providers/smooth-scroll.tsx",
+			"default": "./src/providers/smooth-scroll.tsx"
+		},
+		"./text/word-swap": {
+			"types": "./src/text/word-swap.tsx",
+			"default": "./src/text/word-swap.tsx"
+		},
+		"./utils/cn": {
+			"types": "./src/utils/cn.ts",
+			"default": "./src/utils/cn.ts"
+		}
+	},
+	"peerDependencies": {
+		"@gsap/react": "^2.1.2",
+		"clsx": "^2.1.1",
+		"gsap": "^3.14.2",
+		"lenis": "^1.3.21",
+		"motion": "^12.38.0",
+		"next": "16.1.6",
+		"react": "19.2.3",
+		"tailwind-merge": "^3.5.0"
+	},
+	"devDependencies": {
+		"@gsap/react": "^2.1.2",
+		"@types/react": "^19",
+		"clsx": "^2.1.1",
+		"gsap": "^3.14.2",
+		"lenis": "^1.3.21",
+		"motion": "^12.38.0",
+		"next": "16.1.6",
+		"react": "19.2.3",
+		"tailwind-merge": "^3.5.0",
+		"typescript": "^5"
+	}
+}

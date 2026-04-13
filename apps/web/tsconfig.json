@@ -13,7 +13,6 @@
 		"isolatedModules": true,
 		"jsx": "react-jsx",
 		"incremental": true,
-		"baseUrl": ".",
 		"plugins": [
 			{
 				"name": "next"
@@ -26,10 +25,18 @@
 			"@database/*": ["../../packages/database/src/*"],
 			"@config/*": ["../../packages/config/src/*"],
 			"@auth/*": ["../../packages/auth/src/*"],
+			"@packages/ui/*": ["../../packages/ui/src/*"],
 			"@ui/*": ["../../packages/ui/src/*"],
 			"@testing/*": ["../../packages/testing/src/*"],
-			"@integrations/*": ["../../packages/integrations/src/*"]
-		}
+			"@integrations/*": ["../../packages/integrations/src/*"],
+			"@gsap/react": ["./node_modules/@gsap/react"],
+			"clsx": ["./node_modules/clsx"],
+			"gsap": ["./node_modules/gsap"],
+			"gsap/*": ["./node_modules/gsap/*"],
+			"motion/*": ["./node_modules/motion/*"],
+			"tailwind-merge": ["./node_modules/tailwind-merge"]
+		},
+		"typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
 	},
 	"include": [
 		"next-env.d.ts",
