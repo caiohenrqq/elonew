@@ -5,7 +5,7 @@ import { ServicesSection } from './sections/services-section';
 
 export function LandingPage() {
 	return (
-		<main className="min-h-screen bg-[#09090b]">
+		<main className="min-h-screen bg-background">
 			<HeroSection />
 			<ServicesSection />
 			<ProcessSection />

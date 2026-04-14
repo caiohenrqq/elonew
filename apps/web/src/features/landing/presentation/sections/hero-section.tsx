@@ -50,7 +50,7 @@ export function HeroSection() {
 			</div>
 
 			<div className="hero-content relative z-10 text-center max-w-5xl px-4 w-full">
-				<h1 className="hero-headline text-5xl md:text-8xl font-black uppercase tracking-tighter leading-tight mb-8 text-white">
+				<h1 className="hero-headline text-5xl md:text-8xl font-black uppercase tracking-tight leading-tight mb-8 text-white">
 					<span className="block opacity-90">Suba de</span>
 					<span className="block text-hextech-cyan drop-shadow-[0_0_15px_rgba(14,165,233,0.3)]">
 						Elo.
@@ -64,10 +64,7 @@ export function HeroSection() {
 					<motion.button
 						whileHover={{ scale: 1.05 }}
 						whileTap={{ scale: 0.95 }}
-						onMouseEnter={() => climbSwap.animate(true)}
-						onMouseLeave={() => climbSwap.animate(false)}
-						onFocus={() => climbSwap.animate(true)}
-						onBlur={() => climbSwap.animate(false)}
+						{...climbSwap.getTriggerProps()}
 						className="px-10 py-4 bg-hextech-cyan text-background font-bold uppercase tracking-widest rounded-sm hover:shadow-[0_0_20px_rgba(14,165,233,0.5)] transition-all"
 					>
 						<WordSwapText
@@ -80,10 +77,7 @@ export function HeroSection() {
 					<motion.button
 						whileHover={{ scale: 1.05 }}
 						whileTap={{ scale: 0.95 }}
-						onMouseEnter={() => servicesSwap.animate(true)}
-						onMouseLeave={() => servicesSwap.animate(false)}
-						onFocus={() => servicesSwap.animate(true)}
-						onBlur={() => servicesSwap.animate(false)}
+						{...servicesSwap.getTriggerProps()}
 						className="px-10 py-4 border border-foreground/20 hover:border-hextech-cyan/50 font-bold uppercase tracking-widest rounded-sm transition-all"
 					>
 						<WordSwapText

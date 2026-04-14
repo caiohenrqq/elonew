@@ -5,31 +5,17 @@ import { useRef } from 'react';
 import { PROCESS_STEPS } from '../../model/process-steps';
 import { ProcessStepCard } from '../../ui/process-step-card';
 import { SectionHeading } from '../../ui/section-heading';
+import { useHorizontalPinnedScroll } from '../../ui/use-horizontal-pinned-scroll';
 
 export function ProcessSection() {
 	const sectionRef = useRef<HTMLDivElement>(null);
 	const horizontalRef = useRef<HTMLDivElement>(null);
 
+	useHorizontalPinnedScroll(sectionRef, horizontalRef);
+
 	useGSAP(
 		() => {
-			if (!sectionRef.current || !horizontalRef.current) return;
-
-			const scrollWidth = horizontalRef.current.scrollWidth;
-
-			gsap.to(horizontalRef.current, {
-				x: () => -(scrollWidth - window.innerWidth),
-				ease: 'none',
-				scrollTrigger: {
-					trigger: sectionRef.current,
-					pin: true,
-					scrub: true,
-					start: 'top top',
-					end: () => `+=${scrollWidth}`,
-					invalidateOnRefresh: true,
-					anticipatePin: 1,
-					pinSpacing: true,
-				},
-			});
+			if (!sectionRef.current) return;
 
 			gsap.from('.how-it-works-title', {
 				opacity: 0,
@@ -48,7 +34,7 @@ export function ProcessSection() {
 	return (
 		<section
 			ref={sectionRef}
-			className="relative bg-[#09090b] overflow-hidden z-10 h-screen flex flex-col justify-center"
+			className="relative bg-background overflow-hidden z-10 h-screen flex flex-col justify-center"
 		>
 			<SectionHeading
 				eyebrow="Processo"

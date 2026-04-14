@@ -1,43 +1,21 @@
 'use client';
 
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { useRef } from 'react';
 import { LANDING_SERVICES } from '../../model/services';
 import { SectionHeading } from '../../ui/section-heading';
 import { ServiceCard } from '../../ui/service-card';
+import { useHorizontalPinnedScroll } from '../../ui/use-horizontal-pinned-scroll';
 
 export function ServicesSection() {
 	const sectionRef = useRef<HTMLDivElement>(null);
 	const horizontalRef = useRef<HTMLDivElement>(null);
 
-	useGSAP(
-		() => {
-			if (!sectionRef.current || !horizontalRef.current) return;
-
-			const scrollWidth = horizontalRef.current.scrollWidth;
-
-			gsap.to(horizontalRef.current, {
-				x: () => -(scrollWidth - window.innerWidth),
-				ease: 'none',
-				scrollTrigger: {
-					trigger: sectionRef.current,
-					pin: true,
-					scrub: true,
-					start: 'top top',
-					end: () => `+=${scrollWidth}`,
-					invalidateOnRefresh: true,
-					anticipatePin: 1,
-					pinSpacing: true,
-				},
-			});
-		},
-		{ scope: sectionRef },
-	);
+	useHorizontalPinnedScroll(sectionRef, horizontalRef);
 
 	return (
 		<section
 			ref={sectionRef}
-			className="relative bg-[#09090b] z-20 h-screen overflow-hidden flex flex-col justify-center"
+			className="relative bg-background z-20 h-screen overflow-hidden flex flex-col justify-center"
 		>
 			<SectionHeading
 				eyebrow="Catálogo profissional"

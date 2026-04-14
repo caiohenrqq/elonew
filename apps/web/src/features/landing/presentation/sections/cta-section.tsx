@@ -141,21 +141,21 @@ export function CtaSection() {
 	);
 
 	return (
-		<section ref={containerRef} className="relative w-full bg-[#09090b] z-20">
+		<section ref={containerRef} className="relative w-full bg-background z-20">
 			<div
 				ref={innerRef}
 				className="relative h-screen w-full flex items-center justify-center overflow-hidden border border-white/5 shadow-2xl mx-auto"
 			>
-				<div className="cta-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#0ea5e9]/10 rounded-full blur-[100px] pointer-events-none" />
+				<div className="cta-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-hextech-cyan/10 rounded-full blur-[100px] pointer-events-none" />
 
 				<div className="max-w-4xl mx-auto text-center px-6 relative z-10 translate-y-8 md:translate-y-10">
 					<div className="overflow-hidden mb-4">
-						<span className="cta-reveal block text-[9px] font-black uppercase tracking-[0.6em] text-[#0ea5e9]">
+						<span className="cta-reveal block text-[9px] font-black uppercase tracking-[0.6em] text-hextech-cyan">
 							A ascensão final
 						</span>
 					</div>
 
-					<h3 className="text-[10vw] md:text-[7.5rem] font-black uppercase tracking-tighter text-white leading-[0.85] mb-12 select-none">
+					<h3 className="text-[10vw] md:text-[7.5rem] font-black uppercase tracking-tight text-white leading-[0.85] mb-12 select-none">
 						<div className="overflow-hidden">
 							<span className="cta-reveal block">DEIXE O</span>
 						</div>
@@ -177,7 +177,7 @@ export function CtaSection() {
 							onHoverChange={(isHovering) => startSwap.animate(isHovering)}
 							onFocus={() => startSwap.animate(true)}
 							onBlur={() => startSwap.animate(false)}
-							className="px-14 py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-xs rounded-sm hover:bg-[#0ea5e9] hover:text-white transition-colors shadow-[0_15px_60px_rgba(255,255,255,0.05)]"
+							className="px-14 py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-xs rounded-sm hover:bg-hextech-cyan hover:text-white transition-colors shadow-[0_15px_60px_rgba(255,255,255,0.05)]"
 						>
 							<WordSwapText
 								topRef={startSwap.topRef}
@@ -188,10 +188,7 @@ export function CtaSection() {
 						</MagneticButton>
 						<button
 							type="button"
-							onMouseEnter={() => catalogSwap.animate(true)}
-							onMouseLeave={() => catalogSwap.animate(false)}
-							onFocus={() => catalogSwap.animate(true)}
-							onBlur={() => catalogSwap.animate(false)}
+							{...catalogSwap.getTriggerProps()}
 							className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white transition-colors py-4"
 						>
 							<WordSwapText
@@ -207,12 +204,12 @@ export function CtaSection() {
 						<div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 						{CTA_STATS.map((stat) => (
 							<div key={stat.label} className="cta-stat min-w-32 text-center">
-								<p className="overflow-hidden text-6xl md:text-8xl font-black text-white leading-none mb-6 tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]">
+								<p className="overflow-hidden text-6xl md:text-8xl font-black text-white leading-none mb-6 tracking-tight drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]">
 									<span className="cta-stat-value block will-change-transform">
 										{stat.value}
 									</span>
 								</p>
-								<div className="cta-stat-line mx-auto mb-6 h-[2px] w-12 bg-[#0ea5e9] shadow-[0_0_10px_rgba(14,165,233,0.5)] will-change-transform" />
+								<div className="cta-stat-line mx-auto mb-6 h-[2px] w-12 bg-hextech-cyan shadow-[0_0_10px_rgba(14,165,233,0.5)] will-change-transform" />
 								<p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
 									{stat.label}
 								</p>
