@@ -30,6 +30,38 @@
 		"./utils/cn": {
 			"types": "./src/utils/cn.ts",
 			"default": "./src/utils/cn.ts"
+		},
+		"./components/badge": {
+			"types": "./src/components/badge.tsx",
+			"default": "./src/components/badge.tsx"
+		},
+		"./components/button": {
+			"types": "./src/components/button.tsx",
+			"default": "./src/components/button.tsx"
+		},
+		"./components/checkbox": {
+			"types": "./src/components/checkbox.tsx",
+			"default": "./src/components/checkbox.tsx"
+		},
+		"./components/card": {
+			"types": "./src/components/card.tsx",
+			"default": "./src/components/card.tsx"
+		},
+		"./components/input": {
+			"types": "./src/components/input.tsx",
+			"default": "./src/components/input.tsx"
+		},
+		"./components/label": {
+			"types": "./src/components/label.tsx",
+			"default": "./src/components/label.tsx"
+		},
+		"./components/select": {
+			"types": "./src/components/select.tsx",
+			"default": "./src/components/select.tsx"
+		},
+		"./components/table": {
+			"types": "./src/components/table.tsx",
+			"default": "./src/components/table.tsx"
 		}
 	},
 	"peerDependencies": {

@@ -21,7 +21,7 @@ export function ServiceCard({ index, service }: ServiceCardProps) {
 	const Icon = SERVICE_ICONS[service.icon];
 
 	return (
-		<div className="service-card flex-shrink-0 w-[80vw] md:w-[28vw] aspect-[16/11] group relative p-8 bg-[#111113] border border-white/5 hover:border-[#0ea5e9]/40 transition-colors duration-500 rounded-sm flex flex-col justify-end overflow-hidden cursor-pointer shadow-2xl">
+		<div className="service-card flex-shrink-0 w-[80vw] md:w-[28vw] aspect-[16/11] group relative p-8 bg-[#111113] border border-white/5 hover:border-hextech-cyan/40 transition-colors duration-500 rounded-sm flex flex-col justify-end overflow-hidden cursor-pointer shadow-2xl">
 			<span className="absolute top-0 left-0 text-[10rem] font-black text-white/[0.02] leading-none select-none -translate-x-6 -translate-y-6">
 				0{index + 1}
 			</span>
@@ -31,12 +31,12 @@ export function ServiceCard({ index, service }: ServiceCardProps) {
 			</div>
 
 			<div className="relative z-10 flex flex-col justify-between h-full whitespace-normal">
-				<div className="w-12 h-12 flex items-center justify-center rounded-sm bg-[#09090b] border border-white/5 mb-4 group-hover:border-[#0ea5e9]/30 transition-all duration-500">
-					<Icon className="text-[#0ea5e9]" size={24} />
+				<div className="w-12 h-12 flex items-center justify-center rounded-sm bg-background border border-white/5 mb-4 group-hover:border-hextech-cyan/30 transition-all duration-500">
+					<Icon className="text-hextech-cyan" size={24} />
 				</div>
 
 				<div>
-					<h4 className="text-2xl font-black uppercase mb-1 tracking-tight text-white group-hover:text-[#0ea5e9] transition-colors duration-500">
+					<h4 className="text-2xl font-black uppercase mb-1 tracking-tight text-white group-hover:text-hextech-cyan transition-colors duration-500">
 						{service.title}
 					</h4>
 					<p className="text-white/40 text-xs leading-relaxed group-hover:text-white/70 transition-colors duration-500 font-medium line-clamp-2">
@@ -44,7 +44,7 @@ export function ServiceCard({ index, service }: ServiceCardProps) {
 					</p>
 				</div>
 
-				<div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-[#0ea5e9] group-hover:gap-6 transition-all duration-500 mt-4">
+				<div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-hextech-cyan group-hover:gap-6 transition-all duration-500 mt-4">
 					<span>Configurar</span>
 					<span className="text-lg">&rarr;</span>
 				</div>

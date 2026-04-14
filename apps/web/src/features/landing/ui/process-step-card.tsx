@@ -11,7 +11,7 @@ export function ProcessStepCard({ step }: ProcessStepCardProps) {
 				{step.number}
 			</span>
 			<div className="max-w-md">
-				<h4 className="text-2xl md:text-3xl font-black uppercase mb-4 tracking-tight text-[#0ea5e9]">
+				<h4 className="text-2xl md:text-3xl font-black uppercase mb-4 tracking-tight text-hextech-cyan">
 					{step.title}
 				</h4>
 				<p className="text-sm md:text-base text-white/50 leading-relaxed font-medium">
