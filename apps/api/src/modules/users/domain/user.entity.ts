@@ -44,7 +44,7 @@ export class User {
 			input.email,
 			input.passwordHash,
 			Role.CLIENT,
-			false,
+			true,
 			null,
 			input.emailConfirmationTokenHash,
 			input.emailConfirmationTokenExpiresAt,
