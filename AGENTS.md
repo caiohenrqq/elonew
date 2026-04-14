@@ -273,8 +273,8 @@ A task is done when:
 - [ ] Create endpoints for Admin intervention (Force cancel, user block/unblock).
 
 ### 8. Frontend implementation (Next.js)
-- [ ] Build shared component library in `@packages/ui`.
-- [ ] Implement Client Dashboard (Order creation, active order tracking).
+- [x] Build shared component library in `@packages/ui`.
+- [x] Implement Client Dashboard (Order creation, active order tracking).
 - [ ] Implement Booster Dashboard (Available orders queue, wallet management).
 - [ ] Implement Admin Dashboard (Metric overview, user management, support view).
 
