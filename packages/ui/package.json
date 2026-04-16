@@ -51,6 +51,10 @@
 			"types": "./src/components/input.tsx",
 			"default": "./src/components/input.tsx"
 		},
+		"./components/number-input": {
+			"types": "./src/components/number-input.tsx",
+			"default": "./src/components/number-input.tsx"
+		},
 		"./components/label": {
 			"types": "./src/components/label.tsx",
 			"default": "./src/components/label.tsx"
@@ -85,5 +89,9 @@
 		"react": "19.2.3",
 		"tailwind-merge": "^3.5.0",
 		"typescript": "^5"
+	},
+	"dependencies": {
+		"@radix-ui/react-select": "^2.2.6",
+		"lucide-react": "^1.8.0"
 	}
 }

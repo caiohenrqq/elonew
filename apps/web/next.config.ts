@@ -2,6 +2,9 @@ import { resolve } from 'node:path';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+	experimental: {
+		optimizePackageImports: ['lucide-react'],
+	},
 	transpilePackages: ['@packages/ui'],
 	turbopack: {
 		resolveAlias: {
