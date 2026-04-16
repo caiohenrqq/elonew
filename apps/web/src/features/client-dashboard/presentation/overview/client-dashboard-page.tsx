@@ -1,6 +1,3 @@
-'use client';
-
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { getButtonClassName } from '@packages/ui/components/button';
 import { Card } from '@packages/ui/components/card';
 import {
@@ -13,27 +10,12 @@ import {
 } from '@packages/ui/components/table';
 import { Package, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useRef } from 'react';
+import { DashboardEntrance } from './dashboard-entrance';
 import { MetricCard } from './metric-card';
 
 export const ClientDashboardPage = () => {
-	const containerRef = useRef<HTMLDivElement>(null);
-
-	useGSAP(
-		() => {
-			gsap.from('.dashboard-animate', {
-				y: 20,
-				opacity: 0,
-				stagger: 0.1,
-				duration: 0.8,
-				ease: 'power3.out',
-			});
-		},
-		{ scope: containerRef },
-	);
-
 	return (
-		<div ref={containerRef} className="space-y-10">
+		<DashboardEntrance>
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<div className="dashboard-animate">
 					<MetricCard label="Pedidos Ativos" value="00">
@@ -124,6 +106,6 @@ export const ClientDashboardPage = () => {
 					</Table>
 				</Card>
 			</section>
-		</div>
+		</DashboardEntrance>
 	);
 };

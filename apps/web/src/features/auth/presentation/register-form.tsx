@@ -1,18 +1,14 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { Button } from '@packages/ui/components/button';
 import { CheckCircle2, Lock, Mail, User, UserPlus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { registerAction } from '@/features/auth/actions/auth-actions';
-import {
-	type RegisterFormInput,
-	registerFormSchema,
-} from '../model/auth-schemas';
+import type { RegisterFormInput } from '../model/auth-schemas';
 import {
 	AuthCheckboxField,
 	AuthErrorText,
@@ -28,7 +24,6 @@ export const RegisterForm = () => {
 	const [isSuccess, setIsSuccess] = useState(false);
 	const [isPending, startTransition] = useTransition();
 	const form = useForm<RegisterFormInput>({
-		resolver: zodResolver(registerFormSchema),
 		defaultValues: {
 			username: '',
 			email: '',
@@ -50,6 +45,16 @@ export const RegisterForm = () => {
 		{ scope: containerRef },
 	);
 
+	useEffect(() => {
+		if (!isSuccess) return;
+
+		const redirectTimeout = window.setTimeout(() => {
+			router.push('/login');
+		}, 3000);
+
+		return () => window.clearTimeout(redirectTimeout);
+	}, [isSuccess, router]);
+
 	const handleSubmit = form.handleSubmit((values) => {
 		setFormError(null);
 		startTransition(async () => {
@@ -58,9 +63,6 @@ export const RegisterForm = () => {
 				setFormError(result.error);
 			} else if (result?.success) {
 				setIsSuccess(true);
-				setTimeout(() => {
-					router.push('/login');
-				}, 3000);
 			}
 		});
 	});
@@ -103,7 +105,7 @@ export const RegisterForm = () => {
 				</p>
 			</div>
 
-			<form className="space-y-6" onSubmit={handleSubmit}>
+			<form className="space-y-6" noValidate onSubmit={handleSubmit}>
 				<div className="space-y-4">
 					<div className="auth-animate">
 						<AuthField
@@ -113,7 +115,6 @@ export const RegisterForm = () => {
 							icon={User}
 							autoComplete="username"
 							placeholder="Como devemos te chamar?"
-							error={form.formState.errors.username?.message}
 							{...form.register('username')}
 						/>
 					</div>
@@ -126,7 +127,6 @@ export const RegisterForm = () => {
 							icon={Mail}
 							autoComplete="email"
 							placeholder="exemplo@elonew.com"
-							error={form.formState.errors.email?.message}
 							{...form.register('email')}
 						/>
 					</div>
@@ -139,7 +139,6 @@ export const RegisterForm = () => {
 							icon={Lock}
 							autoComplete="new-password"
 							placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-							error={form.formState.errors.password?.message}
 							{...form.register('password')}
 						/>
 					</div>
@@ -147,11 +146,7 @@ export const RegisterForm = () => {
 
 				<div className="space-y-4">
 					<div className="auth-animate">
-						<AuthCheckboxField
-							id="terms"
-							error={form.formState.errors.termsAccepted?.message}
-							{...form.register('termsAccepted')}
-						>
+						<AuthCheckboxField id="terms" {...form.register('termsAccepted')}>
 							Eu li e aceito os{' '}
 							<span className="text-white underline cursor-pointer">
 								Termos de Uso

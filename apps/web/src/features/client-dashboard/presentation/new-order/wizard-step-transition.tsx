@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'motion/react';
-import type { ReactNode } from 'react';
+import { gsap, useGSAP } from '@packages/ui/animation/gsap';
+import { type ReactNode, useRef } from 'react';
 
 type WizardStepTransitionProps = {
 	children: ReactNode;
@@ -11,13 +11,32 @@ type WizardStepTransitionProps = {
 export const WizardStepTransition = ({
 	children,
 	stepKey,
-}: WizardStepTransitionProps) => (
-	<motion.div
-		key={stepKey}
-		initial={{ opacity: 0, x: 20 }}
-		animate={{ opacity: 1, x: 0 }}
-		exit={{ opacity: 0, x: -20 }}
-	>
-		{children}
-	</motion.div>
-);
+}: WizardStepTransitionProps) => {
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	useGSAP(
+		() => {
+			gsap.fromTo(
+				containerRef.current,
+				{
+					autoAlpha: 0,
+					y: 20,
+				},
+				{
+					autoAlpha: 1,
+					y: 0,
+					duration: 0.45,
+					ease: 'power3.out',
+					clearProps: 'transform',
+				},
+			);
+		},
+		{ scope: containerRef, dependencies: [stepKey] },
+	);
+
+	return (
+		<div key={stepKey} ref={containerRef}>
+			{children}
+		</div>
+	);
+};

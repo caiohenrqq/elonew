@@ -1,15 +1,13 @@
 import { Button } from '@packages/ui/components/button';
-import { Label } from '@packages/ui/components/label';
-import { Select } from '@packages/ui/components/select';
 import { cn } from '@packages/ui/utils/cn';
-import { ArrowRight, ChevronRight, ShieldCheck, Users } from 'lucide-react';
+import { ChevronRight, ShieldCheck, Users } from 'lucide-react';
 import {
-	DIVISIONS,
-	LEAGUES,
 	SERVICE_TYPES,
 	type ServiceTypeIcon,
 } from '../../model/new-order-options';
+import { isDesiredRankAvailable } from '../../model/rank-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
+import { RankRoutePicker } from './rank-route-picker';
 import { SelectableOption } from './selectable-option';
 
 const SERVICE_ICONS = {
@@ -31,6 +29,13 @@ export const ServiceStep = ({
 	onChange,
 	onNext,
 }: ServiceStepProps) => {
+	const canContinue = isDesiredRankAvailable(
+		orderInput.currentLeague,
+		orderInput.currentDivision,
+		orderInput.desiredLeague,
+		orderInput.desiredDivision,
+	);
+
 	return (
 		<div className="space-y-8">
 			<div className="space-y-2">
@@ -77,85 +82,19 @@ export const ServiceStep = ({
 				})}
 			</div>
 
-			<div className="space-y-6">
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<div className="space-y-3">
-						<Label htmlFor="current-league">Liga Atual</Label>
-						<Select
-							id="current-league"
-							value={orderInput.currentLeague}
-							onChange={(event) =>
-								onChange('currentLeague', event.target.value)
-							}
-						>
-							{LEAGUES.map((league) => (
-								<option key={league.value} value={league.value}>
-									{league.label}
-								</option>
-							))}
-						</Select>
-					</div>
-					<div className="space-y-3">
-						<Label htmlFor="current-division">Divisão Atual</Label>
-						<Select
-							id="current-division"
-							value={orderInput.currentDivision}
-							onChange={(event) =>
-								onChange('currentDivision', event.target.value)
-							}
-						>
-							{DIVISIONS.map((division) => (
-								<option key={division} value={division}>
-									{division}
-								</option>
-							))}
-						</Select>
-					</div>
-				</div>
+			<RankRoutePicker orderInput={orderInput} onChange={onChange} />
 
-				<div className="flex justify-center">
-					<ArrowRight className="text-white/10 w-6 h-6" />
-				</div>
-
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<div className="space-y-3">
-						<Label htmlFor="desired-league">Liga Desejada</Label>
-						<Select
-							id="desired-league"
-							value={orderInput.desiredLeague}
-							onChange={(event) =>
-								onChange('desiredLeague', event.target.value)
-							}
-						>
-							{LEAGUES.map((league) => (
-								<option key={league.value} value={league.value}>
-									{league.label}
-								</option>
-							))}
-						</Select>
-					</div>
-					<div className="space-y-3">
-						<Label htmlFor="desired-division">Divisão Desejada</Label>
-						<Select
-							id="desired-division"
-							value={orderInput.desiredDivision}
-							onChange={(event) =>
-								onChange('desiredDivision', event.target.value)
-							}
-						>
-							{DIVISIONS.map((division) => (
-								<option key={division} value={division}>
-									{division}
-								</option>
-							))}
-						</Select>
-					</div>
-				</div>
+			<div className="flex justify-end pt-6 border-t border-white/5 mt-8">
+				<Button
+					type="button"
+					onClick={onNext}
+					className="group"
+					disabled={!canContinue}
+				>
+					Próximo Passo
+					<ChevronRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+				</Button>
 			</div>
-
-			<Button className="w-full" onClick={onNext}>
-				Próximo Passo <ChevronRight className="ml-2 w-4 h-4" />
-			</Button>
 		</div>
 	);
 };

@@ -5,6 +5,7 @@ import {
 	createPaymentSchema,
 	type GetOrderOutput,
 	type OrderQuoteOutput,
+	type OrderQuotePreviewOutput,
 	orderQuoteSchema,
 	type StartCheckoutInput,
 	startCheckoutSchema,
@@ -22,6 +23,20 @@ export const createOrderQuote = async (
 	const body = orderQuoteSchema.parse(input);
 
 	return await apiRequest<OrderQuoteOutput>('/orders/quote', {
+		auth: true,
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+};
+
+export const previewOrderQuote = async (
+	input: unknown,
+	apiRequest: AuthenticatedApiRequest,
+) => {
+	const { paymentMethod: _paymentMethod, ...body } =
+		startCheckoutSchema.parse(input);
+
+	return await apiRequest<OrderQuotePreviewOutput>('/orders/quote/preview', {
 		auth: true,
 		method: 'POST',
 		body: JSON.stringify(body),

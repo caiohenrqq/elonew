@@ -36,3 +36,13 @@ html.lenis body {
 .lenis.lenis-scrolling iframe {
 	pointer-events: none;
 }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield;
+}

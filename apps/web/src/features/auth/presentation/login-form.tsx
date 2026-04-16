@@ -1,6 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { Button } from '@packages/ui/components/button';
 import { Lock, Mail, ShieldCheck } from 'lucide-react';
@@ -9,7 +8,7 @@ import Link from 'next/link';
 import { useRef, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { loginAction } from '@/features/auth/actions/auth-actions';
-import { type LoginFormInput, loginFormSchema } from '../model/auth-schemas';
+import type { LoginFormInput } from '../model/auth-schemas';
 import {
 	AuthCheckboxField,
 	AuthErrorText,
@@ -22,7 +21,6 @@ export const LoginForm = () => {
 	const [formError, setFormError] = useState<string | null>(null);
 	const [isPending, startTransition] = useTransition();
 	const form = useForm<LoginFormInput>({
-		resolver: zodResolver(loginFormSchema),
 		defaultValues: {
 			email: '',
 			password: '',
@@ -61,7 +59,7 @@ export const LoginForm = () => {
 				</p>
 			</div>
 
-			<form className="space-y-6" onSubmit={handleSubmit}>
+			<form className="space-y-6" noValidate onSubmit={handleSubmit}>
 				<div className="space-y-4">
 					<div className="auth-animate">
 						<AuthField
@@ -71,7 +69,6 @@ export const LoginForm = () => {
 							icon={Mail}
 							autoComplete="email"
 							placeholder="exemplo@elonew.com"
-							error={form.formState.errors.email?.message}
 							{...form.register('email')}
 						/>
 					</div>
@@ -84,7 +81,6 @@ export const LoginForm = () => {
 							icon={Lock}
 							autoComplete="current-password"
 							placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-							error={form.formState.errors.password?.message}
 							labelAction={
 								<Link
 									href="/forgot-password"

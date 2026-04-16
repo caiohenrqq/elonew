@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 export const loginFormSchema = z.object({
-	email: z.string().trim().email('Informe um e-mail válido.'),
-	password: z.string().trim().min(1, 'Informe sua senha.'),
+	email: z.string().trim().email('Dados inválidos.'),
+	password: z.string().trim().min(1, 'Dados inválidos.'),
 });
 
 export const registerFormSchema = z.object({
 	username: z.string().trim().min(1, 'Informe seu nome de usuário.'),
-	email: z.string().trim().email('Informe um e-mail válido.'),
+	email: z.string().trim().email('Dados inválidos.'),
 	password: z.string().min(12, 'A senha deve ter pelo menos 12 caracteres.'),
 	termsAccepted: z
 		.boolean()

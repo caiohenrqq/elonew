@@ -7,8 +7,12 @@ import {
 	CardTitle,
 } from '@packages/ui/components/card';
 import { Checkbox } from '@packages/ui/components/checkbox';
-import { Zap } from 'lucide-react';
-import { EXTRAS, getLeagueLabel } from '../../model/new-order-options';
+import { ChevronRight, Zap } from 'lucide-react';
+import {
+	EXTRAS,
+	getDivisionLabel,
+	getLeagueLabel,
+} from '../../model/new-order-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
 
 type ReviewStepProps = {
@@ -64,9 +68,9 @@ export const ReviewStep = ({
 							</p>
 							<p className="text-xs font-black uppercase">
 								{getLeagueLabel(orderInput.currentLeague)}{' '}
-								{orderInput.currentDivision} {'->'}{' '}
+								{getDivisionLabel(orderInput.currentDivision)} {'->'}{' '}
 								{getLeagueLabel(orderInput.desiredLeague)}{' '}
-								{orderInput.desiredDivision}
+								{getDivisionLabel(orderInput.desiredDivision)}
 							</p>
 						</div>
 					</div>
@@ -90,7 +94,7 @@ export const ReviewStep = ({
 				</CardContent>
 			</Card>
 
-			<div className="space-y-4">
+			<div className="flex flex-col items-center gap-6 pt-6 border-t border-white/5 mt-8">
 				<div className="flex items-center gap-2 px-2">
 					<Checkbox
 						id="terms-confirmation"
@@ -107,18 +111,21 @@ export const ReviewStep = ({
 						confirmo que meus dados estão corretos.
 					</label>
 				</div>
-				<div className="flex gap-4">
+				<div className="flex gap-4 w-full">
 					<Button variant="outline" className="flex-1" onClick={onBack}>
 						Ajustar
 					</Button>
 					<Button
 						type="button"
 						variant="primary"
-						className="flex-[2] bg-emerald-500 hover:bg-emerald-600"
+						className="flex-[2] bg-emerald-500 hover:bg-emerald-600 group"
 						onClick={onCheckout}
 						disabled={isSubmitting}
 					>
 						{isSubmitting ? 'Iniciando checkout...' : 'Finalizar e Pagar'}
+						{!isSubmitting && (
+							<ChevronRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+						)}
 					</Button>
 				</div>
 				{error ? (

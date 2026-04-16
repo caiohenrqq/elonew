@@ -41,6 +41,16 @@ export type OrderQuoteOutput = {
 	discountAmount: number;
 };
 
+export type OrderQuotePreviewOutput = {
+	subtotal: number;
+	totalAmount: number;
+	discountAmount: number;
+	extras: {
+		type: string;
+		price: number;
+	}[];
+};
+
 export type CreateOrderOutput = {
 	id: string;
 	status: string;
