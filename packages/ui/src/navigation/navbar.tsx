@@ -75,7 +75,7 @@ export function Navbar() {
 					</div>
 
 					<div className="flex items-center gap-6">
-						<div className="hidden sm:block">
+						<div className="hidden sm:block text-[10px] font-black uppercase tracking-[0.3em]">
 							<WordSwapLink href="/client">Portal do Cliente</WordSwapLink>
 						</div>
 						<Link
