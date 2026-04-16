@@ -46,6 +46,8 @@ export class VersionedOrderPricingService implements OrderPricingService {
 			input.currentLeague,
 			input.currentDivision,
 		);
+		if (!currentEntry) throw new OrderRankNotPricedError();
+
 		const desiredEntry = this.findEntry(
 			priceTable,
 			input.desiredLeague,
@@ -54,7 +56,12 @@ export class VersionedOrderPricingService implements OrderPricingService {
 		const currentValue =
 			this.getCumulativeValue(priceTable, currentEntry) +
 			(currentEntry.priceToNext * input.currentLp) / 100;
-		const desiredValue = this.getCumulativeValue(priceTable, desiredEntry);
+		const desiredValue = this.getTargetValue(
+			priceTable,
+			input.desiredLeague,
+			input.desiredDivision,
+			desiredEntry,
+		);
 		const baseSubtotal = Number((desiredValue - currentValue).toFixed(2));
 		if (baseSubtotal <= 0) throw new OrderRankProgressionInvalidError();
 
@@ -106,7 +113,7 @@ export class VersionedOrderPricingService implements OrderPricingService {
 		priceTable: readonly PriceEntry[],
 		league: string,
 		division: string,
-	): PriceEntry {
+	): PriceEntry | null {
 		const normalizedLeague = league.trim().toLowerCase();
 		const normalizedDivision = division.trim().toUpperCase();
 		const entry = priceTable.find(
@@ -114,15 +121,16 @@ export class VersionedOrderPricingService implements OrderPricingService {
 				item.league === normalizedLeague &&
 				item.division === normalizedDivision,
 		);
-		if (!entry) throw new OrderRankNotPricedError();
 
-		return entry;
+		return entry ?? null;
 	}
 
 	private getCumulativeValue(
 		priceTable: readonly PriceEntry[],
-		entry: PriceEntry,
+		entry: PriceEntry | null,
 	): number {
+		if (!entry) throw new OrderRankNotPricedError();
+
 		const targetIndex = priceTable.findIndex(
 			(item) =>
 				item.league === entry.league && item.division === entry.division,
@@ -134,6 +142,32 @@ export class VersionedOrderPricingService implements OrderPricingService {
 				.slice(0, targetIndex)
 				.reduce((total, item) => total + item.priceToNext, 0)
 				.toFixed(2),
+		);
+	}
+
+	private getTargetValue(
+		priceTable: readonly PriceEntry[],
+		league: string,
+		division: string,
+		entry: PriceEntry | null,
+	): number {
+		if (entry) return this.getCumulativeValue(priceTable, entry);
+
+		if (this.isMasterRank(league, division)) {
+			return Number(
+				priceTable
+					.reduce((total, item) => total + item.priceToNext, 0)
+					.toFixed(2),
+			);
+		}
+
+		throw new OrderRankNotPricedError();
+	}
+
+	private isMasterRank(league: string, division: string): boolean {
+		return (
+			league.trim().toLowerCase() === 'master' &&
+			division.trim().toUpperCase() === 'MASTER'
 		);
 	}
 }

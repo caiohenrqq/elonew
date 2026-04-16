@@ -23,6 +23,7 @@ import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order
 import { GetOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/get-order-pricing-version/get-order-pricing-version.use-case';
 import { ListOrderPricingVersionsUseCase } from '@modules/orders/application/use-cases/list-order-pricing-versions/list-order-pricing-versions.use-case';
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
+import { PreviewOrderQuoteUseCase } from '@modules/orders/application/use-cases/preview-order-quote/preview-order-quote.use-case';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import { UpdateOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/update-order-pricing-version/update-order-pricing-version.use-case';
@@ -115,6 +116,7 @@ import { Module } from '@nestjs/common';
 		GetOrderPricingVersionUseCase,
 		UpdateOrderPricingVersionUseCase,
 		ActivateOrderPricingVersionUseCase,
+		PreviewOrderQuoteUseCase,
 		GetOrderUseCase,
 		MarkOrderAsPaidUseCase,
 		AcceptOrderUseCase,
