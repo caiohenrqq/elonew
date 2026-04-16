@@ -1,4 +1,46 @@
-import { startCheckout } from './checkout-service';
+import { previewOrderQuote, startCheckout } from './checkout-service';
+
+describe('previewOrderQuote', () => {
+	it('requests non-persistent quote preview pricing', async () => {
+		const apiRequest = jest.fn().mockResolvedValueOnce({
+			subtotal: 120,
+			totalAmount: 108,
+			discountAmount: 12,
+			extras: [{ type: 'priority_service', price: 10 }],
+		});
+
+		const result = await previewOrderQuote(
+			{
+				serviceType: 'elo_boost',
+				extras: ['priority_service'],
+				currentLeague: 'silver',
+				currentDivision: 'IV',
+				currentLp: 0,
+				desiredLeague: 'gold',
+				desiredDivision: 'IV',
+				server: 'BR',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-05-01T00:00:00.000Z',
+				paymentMethod: 'pix',
+				couponCode: 'WELCOME10',
+			},
+			apiRequest,
+		);
+
+		expect(result).toEqual({
+			subtotal: 120,
+			totalAmount: 108,
+			discountAmount: 12,
+			extras: [{ type: 'priority_service', price: 10 }],
+		});
+		expect(apiRequest).toHaveBeenCalledWith('/orders/quote/preview', {
+			auth: true,
+			method: 'POST',
+			body: expect.any(String),
+		});
+	});
+});
 
 describe('startCheckout', () => {
 	it('creates the quote, order, and payment through the API in sequence', async () => {
