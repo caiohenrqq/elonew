@@ -62,9 +62,9 @@ describe('DetailsStep', () => {
 			/>,
 		);
 
-		expect(screen.getByLabelText(/Nome do Booster Favorito/i)).toBeVisible();
 		expect(
-			screen.getByText(/Preferência salva apenas nesta tela/i),
+			screen.getByLabelText(/Nome do Booster Favorito/i),
 		).toBeInTheDocument();
+		expect(screen.getByText(/0\/50/i)).toBeInTheDocument();
 	});
 });
