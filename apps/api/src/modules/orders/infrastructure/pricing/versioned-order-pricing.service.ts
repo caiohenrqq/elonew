@@ -53,9 +53,14 @@ export class VersionedOrderPricingService implements OrderPricingService {
 			input.desiredLeague,
 			input.desiredDivision,
 		);
+		const currentProgress = this.getRankProgress(
+			input.currentLeague,
+			input.currentDivision,
+			input.currentLp,
+		);
 		const currentValue =
 			this.getCumulativeValue(priceTable, currentEntry) +
-			(currentEntry.priceToNext * input.currentLp) / 100;
+			(currentEntry.priceToNext * currentProgress) / 100;
 		const desiredValue = this.getTargetValue(
 			priceTable,
 			input.desiredLeague,
@@ -115,7 +120,10 @@ export class VersionedOrderPricingService implements OrderPricingService {
 		division: string,
 	): PriceEntry | null {
 		const normalizedLeague = league.trim().toLowerCase();
-		const normalizedDivision = division.trim().toUpperCase();
+		const normalizedDivision = this.normalizeDivisionForRank(
+			normalizedLeague,
+			division,
+		);
 		const entry = priceTable.find(
 			(item) =>
 				item.league === normalizedLeague &&
@@ -151,7 +159,17 @@ export class VersionedOrderPricingService implements OrderPricingService {
 		division: string,
 		entry: PriceEntry | null,
 	): number {
-		if (entry) return this.getCumulativeValue(priceTable, entry);
+		if (entry) {
+			const targetValue = this.getCumulativeValue(priceTable, entry);
+			if (!this.isMasterRank(league, division)) return targetValue;
+
+			return Number(
+				(
+					targetValue +
+					(entry.priceToNext * this.getMasterPdlFromDivision(division)) / 100
+				).toFixed(2),
+			);
+		}
 
 		if (this.isMasterRank(league, division)) {
 			return Number(
@@ -164,10 +182,45 @@ export class VersionedOrderPricingService implements OrderPricingService {
 		throw new OrderRankNotPricedError();
 	}
 
+	private getRankProgress(
+		league: string,
+		division: string,
+		currentLp: number,
+	): number {
+		if (!this.isMasterRank(league, division)) return currentLp;
+		if (division.trim().toUpperCase() === 'MASTER') return currentLp;
+
+		return this.getMasterPdlFromDivision(division);
+	}
+
 	private isMasterRank(league: string, division: string): boolean {
 		return (
 			league.trim().toLowerCase() === 'master' &&
-			division.trim().toUpperCase() === 'MASTER'
+			this.isMasterDivision(division)
 		);
+	}
+
+	private normalizeDivisionForRank(league: string, division: string): string {
+		if (league === 'master' && this.isMasterDivision(division)) return 'MASTER';
+
+		return division.trim().toUpperCase();
+	}
+
+	private isMasterDivision(division: string): boolean {
+		return (
+			division.trim().toUpperCase() === 'MASTER' ||
+			this.parseMasterPdlFromDivision(division) !== null
+		);
+	}
+
+	private getMasterPdlFromDivision(division: string): number {
+		return this.parseMasterPdlFromDivision(division) ?? 0;
+	}
+
+	private parseMasterPdlFromDivision(division: string): number | null {
+		const pdl = Number(division);
+		if (!Number.isInteger(pdl) || pdl < 0 || pdl > 250) return null;
+
+		return pdl;
 	}
 }

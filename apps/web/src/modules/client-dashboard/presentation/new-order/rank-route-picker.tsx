@@ -1,14 +1,21 @@
 import { gsap, useGSAP } from '@packages/ui/animation/gsap';
+import { Label } from '@packages/ui/components/label';
+import { NumberInput } from '@packages/ui/components/number-input';
 import { cn } from '@packages/ui/utils/cn';
 import Image from 'next/image';
 import { type CSSProperties, useRef } from 'react';
 import {
+	DEFAULT_MASTER_PDL,
+	getMasterPdlFromDivision,
 	getRankDivisionLabel,
 	getRankOption,
 	isDesiredRankAvailable,
 	isRankWithoutDivisions,
+	MASTER_PDL_MAX,
+	MASTER_PDL_MIN,
 	MASTER_RANK_DIVISION,
 	normalizeDesiredRank,
+	normalizeMasterPdlDivision,
 	normalizeRankDivision,
 	RANK_DIVISIONS,
 	RANK_OPTIONS,
@@ -78,6 +85,7 @@ const RankPanel = ({
 	const initialRank = useRef(selectedRank);
 	const panelRef = useRef<HTMLElement>(null);
 	const hasDivisions = !isRankWithoutDivisions(selectedLeague);
+	const selectedPdl = getMasterPdlFromDivision(selectedDivision);
 	const hasValidSelection = isValidDesiredSelection(
 		field,
 		currentLeague,
@@ -150,14 +158,17 @@ const RankPanel = ({
 							: RANK_DIVISIONS;
 						const isDisabled =
 							field === 'desired' &&
-							!rankDivisions.some((division) =>
-								isDesiredRankAvailable(
-									currentLeague,
-									currentDivision,
-									rank.value,
-									division,
-								),
-							);
+							(isRankWithoutDivisions(rank.value)
+								? isRankWithoutDivisions(currentLeague) &&
+									getMasterPdlFromDivision(currentDivision) >= MASTER_PDL_MAX
+								: !rankDivisions.some((division) =>
+										isDesiredRankAvailable(
+											currentLeague,
+											currentDivision,
+											rank.value,
+											division,
+										),
+									));
 
 						return (
 							<button
@@ -197,42 +208,60 @@ const RankPanel = ({
 					})}
 				</div>
 
-				<fieldset className="grid grid-cols-4 overflow-hidden rounded-sm border border-white/10 bg-black/20">
-					<legend className="sr-only">{copy[field].title}: divisão</legend>
-					{RANK_DIVISIONS.map((division) => {
-						const isSelected =
-							hasDivisions &&
-							selectedDivision === division &&
-							hasValidSelection;
-						const isDisabled =
-							!hasDivisions ||
-							(field === 'desired' &&
+				{hasDivisions ? (
+					<fieldset className="grid grid-cols-4 overflow-hidden rounded-sm border border-white/10 bg-black/20">
+						<legend className="sr-only">{copy[field].title}: divisão</legend>
+						{RANK_DIVISIONS.map((division) => {
+							const isSelected =
+								selectedDivision === division && hasValidSelection;
+							const isDisabled =
+								field === 'desired' &&
 								!isDesiredRankAvailable(
 									currentLeague,
 									currentDivision,
 									selectedLeague,
 									division,
-								));
+								);
 
-						return (
-							<button
-								key={division}
-								type="button"
-								aria-pressed={isSelected}
-								disabled={isDisabled}
-								onClick={() => onDivisionChange(division)}
-								className={cn(
-									'h-10 cursor-pointer border-r border-white/10 text-[10px] font-black uppercase tracking-[0.18em] transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--rank-accent)] disabled:cursor-not-allowed disabled:text-white/15',
-									isSelected
-										? 'bg-[var(--rank-accent)] text-black'
-										: 'text-white/50 hover:bg-white/5 hover:text-white',
-								)}
-							>
-								{division}
-							</button>
-						);
-					})}
-				</fieldset>
+							return (
+								<button
+									key={division}
+									type="button"
+									aria-pressed={isSelected}
+									disabled={isDisabled}
+									onClick={() => onDivisionChange(division)}
+									className={cn(
+										'h-10 cursor-pointer border-r border-white/10 text-[10px] font-black uppercase tracking-[0.18em] transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--rank-accent)] disabled:cursor-not-allowed disabled:text-white/15',
+										isSelected
+											? 'bg-[var(--rank-accent)] text-black'
+											: 'text-white/50 hover:bg-white/5 hover:text-white',
+									)}
+								>
+									{division}
+								</button>
+							);
+						})}
+					</fieldset>
+				) : (
+					<div className="space-y-2 rounded-sm border border-white/10 bg-black/20 p-3">
+						<Label htmlFor={`${field}-master-pdl`}>
+							{field === 'current' ? 'PDL atual' : 'PDL desejado'}
+						</Label>
+						<NumberInput
+							id={`${field}-master-pdl`}
+							min={MASTER_PDL_MIN}
+							max={MASTER_PDL_MAX}
+							value={selectedPdl}
+							onChange={(value) =>
+								onDivisionChange(normalizeMasterPdlDivision(value))
+							}
+						/>
+						<p className="text-[10px] text-white/35">
+							Master não usa divisões I, II, III ou IV. Informe entre{' '}
+							{MASTER_PDL_MIN} e {MASTER_PDL_MAX} PDL.
+						</p>
+					</div>
+				)}
 			</div>
 		</section>
 	);
@@ -260,6 +289,11 @@ export const RankRoutePicker = ({
 
 		onChange('currentLeague', league);
 		onChange('currentDivision', nextCurrentDivision);
+		if (isRankWithoutDivisions(league)) {
+			onChange('currentLp', getMasterPdlFromDivision(nextCurrentDivision));
+		} else if (orderInput.currentLp > 99) {
+			onChange('currentLp', 0);
+		}
 		onChange('desiredLeague', desired.league);
 		onChange('desiredDivision', desired.division);
 	};
@@ -286,7 +320,12 @@ export const RankRoutePicker = ({
 				selectedLeague={orderInput.currentLeague}
 				selectedDivision={orderInput.currentDivision}
 				onLeagueChange={(league) =>
-					changeCurrentRank(league, orderInput.currentDivision)
+					changeCurrentRank(
+						league,
+						isRankWithoutDivisions(league)
+							? DEFAULT_MASTER_PDL
+							: orderInput.currentDivision,
+					)
 				}
 				onDivisionChange={(division) =>
 					changeCurrentRank(orderInput.currentLeague as RankLeague, division)
@@ -299,7 +338,12 @@ export const RankRoutePicker = ({
 				selectedLeague={orderInput.desiredLeague}
 				selectedDivision={orderInput.desiredDivision}
 				onLeagueChange={(league) =>
-					changeDesiredRank(league, orderInput.desiredDivision)
+					changeDesiredRank(
+						league,
+						isRankWithoutDivisions(league)
+							? DEFAULT_MASTER_PDL
+							: orderInput.desiredDivision,
+					)
 				}
 				onDivisionChange={(division) =>
 					changeDesiredRank(orderInput.desiredLeague as RankLeague, division)

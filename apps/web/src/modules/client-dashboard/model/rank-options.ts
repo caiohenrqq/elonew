@@ -23,6 +23,9 @@ export type RankOption = {
 
 export const RANK_DIVISIONS = ['IV', 'III', 'II', 'I'] as const;
 export const MASTER_RANK_DIVISION = 'MASTER' as const;
+export const MASTER_PDL_MIN = 0;
+export const MASTER_PDL_MAX = 250;
+export const DEFAULT_MASTER_PDL = String(MASTER_PDL_MIN);
 
 export const RANK_OPTIONS: RankOption[] = [
 	{
@@ -98,12 +101,40 @@ export const isRankWithoutDivisions = (league: string) => {
 	return league === 'master';
 };
 
+export const isMasterPdlDivision = (division: string) => {
+	const pdl = Number(division);
+	return (
+		Number.isInteger(pdl) && pdl >= MASTER_PDL_MIN && pdl <= MASTER_PDL_MAX
+	);
+};
+
+export const getMasterPdlFromDivision = (division: string) => {
+	if (division === MASTER_RANK_DIVISION) return MASTER_PDL_MIN;
+	if (!isMasterPdlDivision(division)) return MASTER_PDL_MIN;
+
+	return Number(division);
+};
+
+export const normalizeMasterPdlDivision = (division: string | number) => {
+	const pdl = Number(division);
+	if (!Number.isFinite(pdl)) return DEFAULT_MASTER_PDL;
+
+	return String(
+		Math.min(MASTER_PDL_MAX, Math.max(MASTER_PDL_MIN, Math.trunc(pdl))),
+	);
+};
+
 export const getRankDivisionLabel = (division: string) => {
-	return division === MASTER_RANK_DIVISION ? 'Sem divisão' : division;
+	if (division === MASTER_RANK_DIVISION || isMasterPdlDivision(division)) {
+		return `${getMasterPdlFromDivision(division)} PDL`;
+	}
+
+	return division;
 };
 
 export const normalizeRankDivision = (league: string, division: string) => {
-	if (isRankWithoutDivisions(league)) return MASTER_RANK_DIVISION;
+	if (isRankWithoutDivisions(league))
+		return normalizeMasterPdlDivision(division);
 
 	return RANK_DIVISIONS.includes(division as (typeof RANK_DIVISIONS)[number])
 		? division
@@ -111,8 +142,12 @@ export const normalizeRankDivision = (league: string, division: string) => {
 };
 
 export const getRankStepIndex = (league: string, division: string) => {
+	const normalizedDivision = isRankWithoutDivisions(league)
+		? MASTER_RANK_DIVISION
+		: division;
+
 	return pricedRankSteps.findIndex(
-		(step) => step.league === league && step.division === division,
+		(step) => step.league === league && step.division === normalizedDivision,
 	);
 };
 
@@ -122,6 +157,16 @@ export const isDesiredRankAvailable = (
 	desiredLeague: string,
 	desiredDivision: string,
 ) => {
+	if (
+		isRankWithoutDivisions(currentLeague) &&
+		isRankWithoutDivisions(desiredLeague)
+	) {
+		return (
+			getMasterPdlFromDivision(desiredDivision) >
+			getMasterPdlFromDivision(currentDivision)
+		);
+	}
+
 	const currentIndex = getRankStepIndex(currentLeague, currentDivision);
 	const desiredIndex = getRankStepIndex(desiredLeague, desiredDivision);
 
@@ -132,6 +177,14 @@ export const getNextRankStep = (
 	currentLeague: string,
 	currentDivision: string,
 ): RankStep => {
+	if (isRankWithoutDivisions(currentLeague)) {
+		const nextPdl = getMasterPdlFromDivision(currentDivision) + 1;
+		return {
+			league: 'master',
+			division: normalizeMasterPdlDivision(nextPdl),
+		};
+	}
+
 	const currentIndex = getRankStepIndex(currentLeague, currentDivision);
 	const nextStep = pricedRankSteps[currentIndex + 1] ?? pricedRankSteps.at(-1);
 
@@ -154,11 +207,16 @@ export const normalizeDesiredRank = (
 	) {
 		return {
 			league: desiredLeague as RankLeague,
-			division: desiredDivision,
+			division: normalizeRankDivision(desiredLeague, desiredDivision),
 		};
 	}
 
-	return getNextRankStep(currentLeague, currentDivision);
+	const nextStep = getNextRankStep(currentLeague, currentDivision);
+
+	return {
+		...nextStep,
+		division: normalizeRankDivision(nextStep.league, nextStep.division),
+	};
 };
 
 export const getRankOption = (league: string) => {

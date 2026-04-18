@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Updated checkout rank selection so Master uses explicit 0-250 PDL input instead of division buttons, widened quote validation for Master PDL, and taught order pricing to interpret Master PDL progress when pricing versions define a Master progression price.
 - Restructured the web frontend from `src/features` to module-first `src/modules`, kept App Router files thin, moved the Next 16 proxy convention into `src/proxy.ts`, removed empty route/helper buckets, and tightened web workspace package imports around declared package entrypoints.
 - Migrated the web app styling setup to Tailwind CSS v4, moved core EloNew theme tokens into `@packages/ui`, and started centralizing reusable UI class decisions across shared primitives to reduce frontend design drift.
 - Improved web/UI maintainability by extracting checkout quote-preview and submit hooks, narrowing the dashboard pathname/motion client boundary, making register success redirects cleanup-safe, adding focused hook coverage, and tightening shared UI primitive defaults.

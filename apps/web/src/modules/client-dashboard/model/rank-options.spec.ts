@@ -25,9 +25,9 @@ describe('rank-options', () => {
 		expect(isDesiredRankAvailable('diamond', 'I', 'master', 'MASTER')).toBe(
 			true,
 		);
-		expect(isDesiredRankAvailable('master', 'MASTER', 'master', 'MASTER')).toBe(
-			false,
-		);
+		expect(isDesiredRankAvailable('master', '0', 'master', '25')).toBe(true);
+		expect(isDesiredRankAvailable('master', '25', 'master', '25')).toBe(false);
+		expect(isDesiredRankAvailable('master', '25', 'master', '10')).toBe(false);
 	});
 
 	it('normalizes invalid desired rank to the next priced step', () => {
@@ -38,7 +38,9 @@ describe('rank-options', () => {
 	});
 
 	it('normalizes rank divisions when moving between master and divided ranks', () => {
-		expect(normalizeRankDivision('master', 'IV')).toBe('MASTER');
+		expect(normalizeRankDivision('master', 'IV')).toBe('0');
+		expect(normalizeRankDivision('master', '25')).toBe('25');
+		expect(normalizeRankDivision('master', '999')).toBe('250');
 		expect(normalizeRankDivision('diamond', 'MASTER')).toBe('IV');
 		expect(normalizeRankDivision('diamond', 'II')).toBe('II');
 	});
@@ -50,14 +52,18 @@ describe('rank-options', () => {
 		});
 		expect(normalizeDesiredRank('diamond', 'I', 'diamond', 'I')).toEqual({
 			league: 'master',
-			division: 'MASTER',
+			division: '0',
 		});
 	});
 
-	it('keeps master as the final dead-end rank', () => {
-		expect(getNextRankStep('master', 'MASTER')).toEqual({
+	it('normalizes master progression by PDL', () => {
+		expect(getNextRankStep('master', '0')).toEqual({
 			league: 'master',
-			division: 'MASTER',
+			division: '1',
+		});
+		expect(normalizeDesiredRank('master', '10', 'master', '10')).toEqual({
+			league: 'master',
+			division: '11',
 		});
 	});
 });
