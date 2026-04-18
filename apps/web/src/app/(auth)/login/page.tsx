@@ -1,7 +1,3 @@
-import { LoginForm } from '@/features/auth/presentation/login-form';
-
-const LoginPage = () => {
-	return <LoginForm />;
-};
+import { LoginPage } from '@/modules/auth/presentation/login-page';
 
 export default LoginPage;

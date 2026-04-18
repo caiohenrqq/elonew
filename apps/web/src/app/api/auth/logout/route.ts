@@ -1,4 +1,4 @@
-import { logout } from '@/features/auth/server/auth-service';
+import { logout } from '@/modules/auth/server/auth-service';
 import { apiErrorResponse } from '@/shared/api-client-management/http';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 
