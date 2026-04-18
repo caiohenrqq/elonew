@@ -185,7 +185,7 @@ export function CtaSection() {
 								onHoverChange={(isHovering) => startSwap.animate(isHovering)}
 								onFocus={() => startSwap.animate(true)}
 								onBlur={() => startSwap.animate(false)}
-								className="px-14 py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-xs rounded-sm hover:bg-hextech-cyan hover:text-white transition-colors shadow-[0_15px_60px_rgba(255,255,255,0.05)]"
+								className="px-14 py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-xs rounded-sm hover:bg-hextech-cyan hover:text-white transition-colors shadow-[0_15px_60px_rgba(255,255,255,0.05)] cursor-pointer"
 							>
 								<WordSwapText
 									topRef={startSwap.topRef}
@@ -199,7 +199,7 @@ export function CtaSection() {
 							type="button"
 							{...catalogSwap.getTriggerProps()}
 							onClick={() => scrollToSection('services')}
-							className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white transition-colors py-4"
+							className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white transition-colors py-4 cursor-pointer"
 						>
 							<WordSwapText
 								topRef={catalogSwap.topRef}

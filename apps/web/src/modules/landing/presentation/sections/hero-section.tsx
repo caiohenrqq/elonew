@@ -70,7 +70,7 @@ export function HeroSection() {
 							whileHover={{ scale: 1.05 }}
 							whileTap={{ scale: 0.95 }}
 							{...climbSwap.getTriggerProps()}
-							className="w-full md:w-auto px-10 py-4 bg-hextech-cyan text-background font-bold uppercase tracking-widest rounded-sm hover:shadow-[0_0_20px_rgba(14,165,233,0.5)] transition-all"
+							className="w-full md:w-auto px-10 py-4 bg-hextech-cyan text-background font-bold uppercase tracking-widest rounded-sm hover:shadow-[0_0_20px_rgba(14,165,233,0.5)] transition-all cursor-pointer"
 						>
 							<WordSwapText
 								topRef={climbSwap.topRef}
@@ -86,7 +86,7 @@ export function HeroSection() {
 						whileTap={{ scale: 0.95 }}
 						{...servicesSwap.getTriggerProps()}
 						onClick={() => scrollToSection('services')}
-						className="w-full md:w-auto px-10 py-4 border border-foreground/20 hover:border-hextech-cyan/50 font-bold uppercase tracking-widest rounded-sm transition-all"
+						className="w-full md:w-auto px-10 py-4 border border-foreground/20 hover:border-hextech-cyan/50 font-bold uppercase tracking-widest rounded-sm transition-all cursor-pointer"
 					>
 						<WordSwapText
 							topRef={servicesSwap.topRef}

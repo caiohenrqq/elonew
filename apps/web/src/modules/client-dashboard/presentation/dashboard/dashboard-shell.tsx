@@ -42,7 +42,7 @@ export const DashboardShell = ({ children, user }: DashboardShellProps) => {
 						<form action={logoutAction}>
 							<button
 								type="submit"
-								className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-red-400 transition-colors w-full"
+								className="cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-red-400 transition-colors w-full"
 							>
 								<LogOut className="w-3 h-3" />
 								Sair
