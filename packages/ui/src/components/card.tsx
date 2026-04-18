@@ -1,18 +1,12 @@
 import * as React from 'react';
+import { labelText, panelSurface } from '../styles/classes';
 import { cn } from '../utils/cn';
 
 const Card = React.forwardRef<
 	HTMLDivElement,
 	React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-	<div
-		ref={ref}
-		className={cn(
-			'rounded-sm border border-white/5 bg-[#0d0d0f]/50',
-			className,
-		)}
-		{...props}
-	/>
+	<div ref={ref} className={cn(panelSurface.base, className)} {...props} />
 ));
 Card.displayName = 'Card';
 
@@ -34,10 +28,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
 	<h3
 		ref={ref}
-		className={cn(
-			'text-xs font-black uppercase tracking-[0.2em] leading-none text-white',
-			className,
-		)}
+		className={cn(labelText.control, 'text-white', className)}
 		{...props}
 	/>
 ));

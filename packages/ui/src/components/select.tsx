@@ -4,6 +4,7 @@ import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import * as React from 'react';
+import { fieldSurface } from '../styles/classes';
 import { cn } from '../utils/cn';
 
 const Select = SelectPrimitive.Root;
@@ -19,7 +20,8 @@ const SelectTrigger = React.forwardRef<
 	<SelectPrimitive.Trigger
 		ref={ref}
 		className={cn(
-			'flex h-10 w-full items-center justify-between rounded-sm border border-white/10 bg-white/5 px-3 py-2 text-xs text-white ring-offset-black placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-hextech-cyan focus:border-hextech-cyan disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 group data-[placeholder]:text-white/40',
+			fieldSurface,
+			'cursor-pointer items-center justify-between placeholder:text-white/40 group data-[placeholder]:text-white/40',
 			className,
 		)}
 		{...props}
@@ -41,7 +43,7 @@ const SelectContent = React.forwardRef<
 			<SelectPrimitive.Content
 				ref={ref}
 				className={cn(
-					'relative z-50 min-w-[8rem] overflow-hidden rounded-sm border border-white/10 bg-[#0c0c0e] text-white shadow-2xl',
+					'relative z-50 min-w-[8rem] overflow-hidden rounded-sm border border-white/10 bg-surface text-white shadow-2xl',
 					position === 'popper' &&
 						'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
 					className,
@@ -98,7 +100,7 @@ const SelectItem = React.forwardRef<
 	<SelectPrimitive.Item
 		ref={ref}
 		className={cn(
-			'relative flex w-full cursor-default select-none items-center rounded-sm py-2 pl-8 pr-2 text-xs outline-none focus:bg-white/10 focus:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors duration-200 group',
+			'relative flex w-full cursor-pointer select-none items-center rounded-sm py-2 pl-8 pr-2 text-xs outline-none focus:bg-white/10 focus:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors duration-200 group',
 			className,
 		)}
 		{...props}

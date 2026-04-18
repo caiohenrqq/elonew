@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from 'lucide-react';
 import * as React from 'react';
+import { fieldSurface } from '../styles/classes';
 import { cn } from '../utils/cn';
 import { Button } from './button';
 
@@ -60,7 +61,8 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 				<input
 					type="number"
 					className={cn(
-						'flex h-10 w-full flex-1 rounded-sm border border-white/10 bg-white/5 px-3 py-2 text-center text-xs text-white ring-offset-black placeholder:text-white/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-hextech-cyan focus-visible:border-hextech-cyan disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
+						fieldSurface,
+						'flex-1 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
 					)}
 					ref={ref}
 					value={value}

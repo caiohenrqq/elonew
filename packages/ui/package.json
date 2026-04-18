@@ -19,9 +19,20 @@
 			"types": "./src/navigation/navbar.tsx",
 			"default": "./src/navigation/navbar.tsx"
 		},
+		"./navigation/use-section-scroll": {
+			"types": "./src/navigation/use-section-scroll.ts",
+			"default": "./src/navigation/use-section-scroll.ts"
+		},
 		"./providers/smooth-scroll": {
 			"types": "./src/providers/smooth-scroll.tsx",
 			"default": "./src/providers/smooth-scroll.tsx"
+		},
+		"./styles/design-system.css": {
+			"default": "./src/styles/design-system.css"
+		},
+		"./styles/classes": {
+			"types": "./src/styles/classes.ts",
+			"default": "./src/styles/classes.ts"
 		},
 		"./text/word-swap": {
 			"types": "./src/text/word-swap.tsx",
