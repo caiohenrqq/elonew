@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
-import { registerAction } from '@/features/auth/actions/auth-actions';
+import { registerAction } from '@/modules/auth/actions/auth-actions';
 import type { RegisterFormInput } from '../model/auth-schemas';
 import {
 	AuthCheckboxField,

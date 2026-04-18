@@ -167,7 +167,7 @@ const RankPanel = ({
 								disabled={isDisabled}
 								onClick={() => onLeagueChange(rank.value)}
 								className={cn(
-									'group flex min-h-[118px] flex-col items-center justify-between rounded-sm border p-2 text-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-25',
+									'group flex min-h-[118px] cursor-pointer flex-col items-center justify-between rounded-sm border p-2 text-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-25',
 									isSelected
 										? 'border-[var(--rank-accent)] bg-white/[0.07] text-white'
 										: 'border-white/10 bg-black/20 text-white/45 hover:border-white/25 hover:text-white',
@@ -222,7 +222,7 @@ const RankPanel = ({
 								disabled={isDisabled}
 								onClick={() => onDivisionChange(division)}
 								className={cn(
-									'h-10 border-r border-white/10 text-[10px] font-black uppercase tracking-[0.18em] transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--rank-accent)] disabled:cursor-not-allowed disabled:text-white/15',
+									'h-10 cursor-pointer border-r border-white/10 text-[10px] font-black uppercase tracking-[0.18em] transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--rank-accent)] disabled:cursor-not-allowed disabled:text-white/15',
 									isSelected
 										? 'bg-[var(--rank-accent)] text-black'
 										: 'text-white/50 hover:bg-white/5 hover:text-white',

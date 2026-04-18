@@ -14,6 +14,7 @@ export function ServicesSection() {
 
 	return (
 		<section
+			id="services"
 			ref={sectionRef}
 			className="relative bg-background z-20 h-screen overflow-hidden flex flex-col justify-center"
 		>

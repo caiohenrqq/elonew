@@ -33,6 +33,7 @@ export function ProcessSection() {
 
 	return (
 		<section
+			id="how-it-works"
 			ref={sectionRef}
 			className="relative bg-background overflow-hidden z-10 h-screen flex flex-col justify-center"
 		>

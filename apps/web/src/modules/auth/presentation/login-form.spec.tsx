@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { HTMLAttributes, PropsWithChildren } from 'react';
-import { loginAction } from '@/features/auth/actions/auth-actions';
+import { loginAction } from '@/modules/auth/actions/auth-actions';
 import { LoginForm } from './login-form';
 
-jest.mock('@/features/auth/actions/auth-actions', () => ({
+jest.mock('@/modules/auth/actions/auth-actions', () => ({
 	loginAction: jest.fn(),
 }));
 

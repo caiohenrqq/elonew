@@ -2,7 +2,7 @@ import { GlitchLogo } from '@packages/ui/brand/glitch-logo';
 import { LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { logoutAction } from '@/features/auth/actions/auth-actions';
+import { logoutAction } from '@/modules/auth/actions/auth-actions';
 import { DashboardNavigation } from './dashboard-navigation';
 
 type DashboardShellProps = {

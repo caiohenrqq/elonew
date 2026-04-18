@@ -11,7 +11,7 @@ jest.mock('next/navigation', () => ({
 	usePathname: jest.fn(),
 }));
 
-jest.mock('@/features/auth/actions/auth-actions', () => ({
+jest.mock('@/modules/auth/actions/auth-actions', () => ({
 	logoutAction: jest.fn(),
 }));
 

@@ -7,10 +7,10 @@ import {
 } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import type { HTMLAttributes, PropsWithChildren } from 'react';
-import { registerAction } from '@/features/auth/actions/auth-actions';
+import { registerAction } from '@/modules/auth/actions/auth-actions';
 import { RegisterForm } from './register-form';
 
-jest.mock('@/features/auth/actions/auth-actions', () => ({
+jest.mock('@/modules/auth/actions/auth-actions', () => ({
 	registerAction: jest.fn(),
 }));
 

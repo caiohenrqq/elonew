@@ -3,17 +3,20 @@
 import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { GradientNoise } from '@packages/ui/backgrounds/gradient-noise';
 import { Navbar } from '@packages/ui/navigation/navbar';
+import { useSectionScroll } from '@packages/ui/navigation/use-section-scroll';
 import {
 	useWordSwapAnimation,
 	WordSwapText,
 } from '@packages/ui/text/word-swap';
 import { motion } from 'motion/react';
+import Link from 'next/link';
 import { useRef } from 'react';
 
 export function HeroSection() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const climbSwap = useWordSwapAnimation();
 	const servicesSwap = useWordSwapAnimation();
+	const scrollToSection = useSectionScroll();
 
 	useGSAP(
 		() => {
@@ -40,6 +43,7 @@ export function HeroSection() {
 
 	return (
 		<section
+			id="hero"
 			ref={containerRef}
 			className="relative h-screen flex flex-col items-center justify-center overflow-hidden"
 		>
@@ -61,24 +65,28 @@ export function HeroSection() {
 					profissionais Challenger. Rápido, seguro e preciso.
 				</p>
 				<div className="flex flex-col md:flex-row gap-4 justify-center">
-					<motion.button
-						whileHover={{ scale: 1.05 }}
-						whileTap={{ scale: 0.95 }}
-						{...climbSwap.getTriggerProps()}
-						className="px-10 py-4 bg-hextech-cyan text-background font-bold uppercase tracking-widest rounded-sm hover:shadow-[0_0_20px_rgba(14,165,233,0.5)] transition-all"
-					>
-						<WordSwapText
-							topRef={climbSwap.topRef}
-							bottomRef={climbSwap.bottomRef}
+					<Link href="/start">
+						<motion.button
+							whileHover={{ scale: 1.05 }}
+							whileTap={{ scale: 0.95 }}
+							{...climbSwap.getTriggerProps()}
+							className="w-full md:w-auto px-10 py-4 bg-hextech-cyan text-background font-bold uppercase tracking-widest rounded-sm hover:shadow-[0_0_20px_rgba(14,165,233,0.5)] transition-all"
 						>
-							Começar subida
-						</WordSwapText>
-					</motion.button>
+							<WordSwapText
+								topRef={climbSwap.topRef}
+								bottomRef={climbSwap.bottomRef}
+							>
+								Começar subida
+							</WordSwapText>
+						</motion.button>
+					</Link>
 					<motion.button
+						type="button"
 						whileHover={{ scale: 1.05 }}
 						whileTap={{ scale: 0.95 }}
 						{...servicesSwap.getTriggerProps()}
-						className="px-10 py-4 border border-foreground/20 hover:border-hextech-cyan/50 font-bold uppercase tracking-widest rounded-sm transition-all"
+						onClick={() => scrollToSection('services')}
+						className="w-full md:w-auto px-10 py-4 border border-foreground/20 hover:border-hextech-cyan/50 font-bold uppercase tracking-widest rounded-sm transition-all"
 					>
 						<WordSwapText
 							topRef={servicesSwap.topRef}

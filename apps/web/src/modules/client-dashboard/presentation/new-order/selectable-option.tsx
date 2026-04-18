@@ -36,7 +36,7 @@ export const SelectableOption = ({
 		type={type}
 		aria-pressed={selected}
 		className={cn(
-			'rounded-sm border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-hextech-cyan',
+			'cursor-pointer rounded-sm border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-hextech-cyan disabled:cursor-not-allowed',
 			layoutStyles[layout],
 			selected ? selectedStyles[layout] : idleStyles[layout],
 			className,

@@ -1,10 +1,12 @@
 'use client';
 
 import { gsap, useGSAP } from '@packages/ui/animation/gsap';
+import { useSectionScroll } from '@packages/ui/navigation/use-section-scroll';
 import {
 	useWordSwapAnimation,
 	WordSwapText,
 } from '@packages/ui/text/word-swap';
+import Link from 'next/link';
 import { useRef } from 'react';
 import { CTA_STATS } from '../../model/cta-stats';
 import { MagneticButton } from '../../ui/magnetic-button';
@@ -14,6 +16,7 @@ export function CtaSection() {
 	const innerRef = useRef<HTMLDivElement>(null);
 	const startSwap = useWordSwapAnimation();
 	const catalogSwap = useWordSwapAnimation();
+	const scrollToSection = useSectionScroll();
 
 	useGSAP(
 		() => {
@@ -25,13 +28,13 @@ export function CtaSection() {
 					width: '94%',
 					scale: 0.96,
 					borderRadius: '30px',
-					backgroundColor: '#111113',
+					backgroundColor: 'var(--color-surface-muted)',
 				},
 				{
 					width: '100%',
 					scale: 1,
 					borderRadius: '0px',
-					backgroundColor: '#09090b',
+					backgroundColor: 'var(--color-background)',
 					ease: 'none',
 					scrollTrigger: {
 						trigger: containerRef.current,
@@ -141,7 +144,11 @@ export function CtaSection() {
 	);
 
 	return (
-		<section ref={containerRef} className="relative w-full bg-background z-20">
+		<section
+			id="about"
+			ref={containerRef}
+			className="relative w-full bg-background z-20"
+		>
 			<div
 				ref={innerRef}
 				className="relative h-screen w-full flex items-center justify-center overflow-hidden border border-white/5 shadow-2xl mx-auto"
@@ -173,22 +180,25 @@ export function CtaSection() {
 					</h3>
 
 					<div className="cta-reveal flex flex-col md:flex-row gap-8 justify-center items-center">
-						<MagneticButton
-							onHoverChange={(isHovering) => startSwap.animate(isHovering)}
-							onFocus={() => startSwap.animate(true)}
-							onBlur={() => startSwap.animate(false)}
-							className="px-14 py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-xs rounded-sm hover:bg-hextech-cyan hover:text-white transition-colors shadow-[0_15px_60px_rgba(255,255,255,0.05)]"
-						>
-							<WordSwapText
-								topRef={startSwap.topRef}
-								bottomRef={startSwap.bottomRef}
+						<Link href="/start">
+							<MagneticButton
+								onHoverChange={(isHovering) => startSwap.animate(isHovering)}
+								onFocus={() => startSwap.animate(true)}
+								onBlur={() => startSwap.animate(false)}
+								className="px-14 py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-xs rounded-sm hover:bg-hextech-cyan hover:text-white transition-colors shadow-[0_15px_60px_rgba(255,255,255,0.05)]"
 							>
-								Começar ascensão
-							</WordSwapText>
-						</MagneticButton>
+								<WordSwapText
+									topRef={startSwap.topRef}
+									bottomRef={startSwap.bottomRef}
+								>
+									Começar ascensão
+								</WordSwapText>
+							</MagneticButton>
+						</Link>
 						<button
 							type="button"
 							{...catalogSwap.getTriggerProps()}
+							onClick={() => scrollToSection('services')}
 							className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white transition-colors py-4"
 						>
 							<WordSwapText
