@@ -12,9 +12,9 @@ test.describe('Landing Page', () => {
 		await expect(startNow.first()).toBeVisible();
 	});
 
-	test('should navigate to login from hero CTA', async ({ page }) => {
+	test('should navigate to register from hero CTA', async ({ page }) => {
 		await page.goto('/');
 		await page.click('text=Abrir App');
-		await expect(page).toHaveURL(/\/login/);
+		await expect(page).toHaveURL(/\/register/);
 	});
 });

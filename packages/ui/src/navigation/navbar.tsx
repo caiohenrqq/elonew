@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { GlitchLogo } from '../brand/glitch-logo';
 import { getButtonClassName } from '../components/button';
+import { labelText, navTextButton } from '../styles/classes';
 import { useWordSwapAnimation, WordSwapText } from '../text/word-swap';
 import { cn } from '../utils/cn';
+import { useSectionScroll } from './use-section-scroll';
 
 type WordSwapLinkProps = {
 	children: string;
@@ -15,13 +17,27 @@ type WordSwapLinkProps = {
 
 function WordSwapLink({ children, href }: WordSwapLinkProps) {
 	const { bottomRef, getTriggerProps, topRef } = useWordSwapAnimation();
+	const isSectionLink = href.startsWith('#');
+	const scrollToSection = useSectionScroll();
+	const className = navTextButton;
+
+	if (isSectionLink) {
+		return (
+			<button
+				type="button"
+				{...getTriggerProps()}
+				onClick={() => scrollToSection(href.slice(1))}
+				className={className}
+			>
+				<WordSwapText topRef={topRef} bottomRef={bottomRef}>
+					{children}
+				</WordSwapText>
+			</button>
+		);
+	}
 
 	return (
-		<a
-			href={href}
-			{...getTriggerProps()}
-			className="inline-block text-white/60 transition-colors duration-300 hover:text-hextech-cyan focus-visible:text-hextech-cyan focus-visible:outline-none"
-		>
+		<a href={href} {...getTriggerProps()} className={className}>
 			<WordSwapText topRef={topRef} bottomRef={bottomRef}>
 				{children}
 			</WordSwapText>
@@ -32,6 +48,7 @@ function WordSwapLink({ children, href }: WordSwapLinkProps) {
 export function Navbar() {
 	const [scrolled, setScrolled] = useState(false);
 	const scrolledRef = useRef(false);
+	const scrollToSection = useSectionScroll();
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -65,21 +82,30 @@ export function Navbar() {
 					)}
 				>
 					<div className="flex items-center">
-						<GlitchLogo />
+						<button
+							type="button"
+							aria-label="Voltar ao início"
+							onClick={() => scrollToSection('hero')}
+							className="focus-visible:outline-none"
+						>
+							<GlitchLogo />
+						</button>
 					</div>
 
-					<div className="hidden md:flex gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-white/60">
+					<div
+						className={cn('hidden md:flex items-center gap-10', labelText.nav)}
+					>
 						<WordSwapLink href="#services">Serviços</WordSwapLink>
 						<WordSwapLink href="#how-it-works">Processo</WordSwapLink>
 						<WordSwapLink href="#about">Sobre</WordSwapLink>
 					</div>
 
 					<div className="flex items-center gap-6">
-						<div className="hidden sm:block text-[10px] font-black uppercase tracking-[0.3em]">
-							<WordSwapLink href="/client">Portal do Cliente</WordSwapLink>
+						<div className={cn('hidden sm:block', labelText.nav)}>
+							<WordSwapLink href="/start">Portal do Cliente</WordSwapLink>
 						</div>
 						<Link
-							href="/login"
+							href="/start"
 							className={cn(
 								getButtonClassName({
 									size: 'sm',
