@@ -46,15 +46,27 @@ export class VersionedOrderPricingService implements OrderPricingService {
 			input.currentLeague,
 			input.currentDivision,
 		);
+		if (!currentEntry) throw new OrderRankNotPricedError();
+
 		const desiredEntry = this.findEntry(
 			priceTable,
 			input.desiredLeague,
 			input.desiredDivision,
 		);
+		const currentProgress = this.getRankProgress(
+			input.currentLeague,
+			input.currentDivision,
+			input.currentLp,
+		);
 		const currentValue =
 			this.getCumulativeValue(priceTable, currentEntry) +
-			(currentEntry.priceToNext * input.currentLp) / 100;
-		const desiredValue = this.getCumulativeValue(priceTable, desiredEntry);
+			(currentEntry.priceToNext * currentProgress) / 100;
+		const desiredValue = this.getTargetValue(
+			priceTable,
+			input.desiredLeague,
+			input.desiredDivision,
+			desiredEntry,
+		);
 		const baseSubtotal = Number((desiredValue - currentValue).toFixed(2));
 		if (baseSubtotal <= 0) throw new OrderRankProgressionInvalidError();
 
@@ -106,23 +118,27 @@ export class VersionedOrderPricingService implements OrderPricingService {
 		priceTable: readonly PriceEntry[],
 		league: string,
 		division: string,
-	): PriceEntry {
+	): PriceEntry | null {
 		const normalizedLeague = league.trim().toLowerCase();
-		const normalizedDivision = division.trim().toUpperCase();
+		const normalizedDivision = this.normalizeDivisionForRank(
+			normalizedLeague,
+			division,
+		);
 		const entry = priceTable.find(
 			(item) =>
 				item.league === normalizedLeague &&
 				item.division === normalizedDivision,
 		);
-		if (!entry) throw new OrderRankNotPricedError();
 
-		return entry;
+		return entry ?? null;
 	}
 
 	private getCumulativeValue(
 		priceTable: readonly PriceEntry[],
-		entry: PriceEntry,
+		entry: PriceEntry | null,
 	): number {
+		if (!entry) throw new OrderRankNotPricedError();
+
 		const targetIndex = priceTable.findIndex(
 			(item) =>
 				item.league === entry.league && item.division === entry.division,
@@ -135,5 +151,76 @@ export class VersionedOrderPricingService implements OrderPricingService {
 				.reduce((total, item) => total + item.priceToNext, 0)
 				.toFixed(2),
 		);
+	}
+
+	private getTargetValue(
+		priceTable: readonly PriceEntry[],
+		league: string,
+		division: string,
+		entry: PriceEntry | null,
+	): number {
+		if (entry) {
+			const targetValue = this.getCumulativeValue(priceTable, entry);
+			if (!this.isMasterRank(league, division)) return targetValue;
+
+			return Number(
+				(
+					targetValue +
+					(entry.priceToNext * this.getMasterPdlFromDivision(division)) / 100
+				).toFixed(2),
+			);
+		}
+
+		if (this.isMasterRank(league, division)) {
+			return Number(
+				priceTable
+					.reduce((total, item) => total + item.priceToNext, 0)
+					.toFixed(2),
+			);
+		}
+
+		throw new OrderRankNotPricedError();
+	}
+
+	private getRankProgress(
+		league: string,
+		division: string,
+		currentLp: number,
+	): number {
+		if (!this.isMasterRank(league, division)) return currentLp;
+		if (division.trim().toUpperCase() === 'MASTER') return currentLp;
+
+		return this.getMasterPdlFromDivision(division);
+	}
+
+	private isMasterRank(league: string, division: string): boolean {
+		return (
+			league.trim().toLowerCase() === 'master' &&
+			this.isMasterDivision(division)
+		);
+	}
+
+	private normalizeDivisionForRank(league: string, division: string): string {
+		if (league === 'master' && this.isMasterDivision(division)) return 'MASTER';
+
+		return division.trim().toUpperCase();
+	}
+
+	private isMasterDivision(division: string): boolean {
+		return (
+			division.trim().toUpperCase() === 'MASTER' ||
+			this.parseMasterPdlFromDivision(division) !== null
+		);
+	}
+
+	private getMasterPdlFromDivision(division: string): number {
+		return this.parseMasterPdlFromDivision(division) ?? 0;
+	}
+
+	private parseMasterPdlFromDivision(division: string): number | null {
+		const pdl = Number(division);
+		if (!Number.isInteger(pdl) || pdl < 0 || pdl > 250) return null;
+
+		return pdl;
 	}
 }

@@ -10,7 +10,7 @@ export function GlitchLogo() {
 					ELONEW
 				</span>
 				<span
-					className="absolute inset-0 text-[#f59e0b] opacity-0 group-hover:opacity-40 group-hover:translate-x-0.5 transition-transform duration-150"
+					className="absolute inset-0 text-hextech-gold opacity-0 group-hover:opacity-40 group-hover:translate-x-0.5 transition-transform duration-150"
 					aria-hidden="true"
 				>
 					ELONEW

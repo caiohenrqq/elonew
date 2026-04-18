@@ -359,6 +359,51 @@ describe('Orders (e2e)', () => {
 			.execute();
 	});
 
+	it('previews quote pricing without persisting a quote', async () => {
+		const token = signToken({ sub: 'client-preview', role: 'CLIENT' });
+
+		await requestHttp(app)
+			.post('/orders/quote/preview')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				...makeQuotePayload(),
+				extras: ['priority_service', 'offline_chat'],
+			})
+			.expect(201, {
+				subtotal: 27.72,
+				totalAmount: 27.72,
+				discountAmount: 0,
+				extras: [
+					{ type: 'priority_service', price: 2.52 },
+					{ type: 'offline_chat', price: 0 },
+				],
+			})
+			.execute();
+	});
+
+	it('previews diamond to master quote pricing', async () => {
+		const token = signToken({ sub: 'client-master-preview', role: 'CLIENT' });
+
+		await requestHttp(app)
+			.post('/orders/quote/preview')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				...makeQuotePayload(),
+				currentLeague: 'diamond',
+				currentDivision: 'IV',
+				currentLp: 0,
+				desiredLeague: 'master',
+				desiredDivision: 'MASTER',
+			})
+			.expect(201, {
+				subtotal: 307.3,
+				totalAmount: 307.3,
+				discountAmount: 0,
+				extras: [],
+			})
+			.execute();
+	});
+
 	it('returns the same invalid coupon response for missing and inactive coupons', async () => {
 		const token = signToken({ sub: 'client-coupon', role: 'CLIENT' });
 		couponLookup.coupons.set('INACTIVE10', {

@@ -19,6 +19,8 @@
 		"start:dev:workers": "pnpm workers dev",
 
 		"test:api": "pnpm api test",
+		"test:e2e:web": "pnpm web test:e2e",
+		"test:e2e:web:report": "pnpm web test:e2e:report",
 
 		"biome:check:api": "pnpm api biome:check",
 		"biome:check:web": "pnpm web biome:check",

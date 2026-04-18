@@ -36,14 +36,14 @@ Practical implications:
 │  ├─ web/
 │     └─ src/
 │        ├─ app/
-│        │  ├─ (public)/
-│        │  ├─ (client)/
-│        │  ├─ (booster)/
-│        │  └─ (admin)/
-│        ├─ features/
-│        ├─ entities/
+│        │  ├─ (auth)/
+│        │  ├─ (dashboard)/
+│        │  ├─ api/
+│        │  └─ start/
+│        ├─ modules/
 │        ├─ shared/
-│        └─ middleware.ts
+│        ├─ types/
+│        └─ proxy.ts
 │  └─ workers/
 │     └─ src/
 │        ├─ processors/
@@ -63,13 +63,13 @@ Practical implications:
 ```
 
 ## TypeScript boundaries and aliases
-Use internal aliases to keep imports stable as packages evolve:
-- `@shared/*`
-- `@database/*`
-- `@auth/*`
-- `@ui/*`
-- `@testing/*`
-- `@integrations/*`
+Use package imports to keep shared workspace boundaries stable as packages evolve:
+- `@packages/shared/...`
+- `@packages/database/...`
+- `@packages/auth/...`
+- `@packages/ui/...`
+- `@packages/testing/...`
+- `@packages/integrations/...`
 
 Boundary rule:
 - Apps must consume shared workspace libraries as packages (dependency + package exports), not through direct `packages/*/src/*` imports.
@@ -112,8 +112,9 @@ Authorization and policy rules reused by API and web.
 ### `@ui` (`packages/ui`)
 Reusable UI components and design primitives for the web app.
 - Base components (`Button`, `Input`, `Modal`, `Table`).
-- Composed dashboard components (`StatCard`, `DataTable`, `PageHeader`).
-- Theme tokens and shared styling primitives.
+- Product-agnostic composed primitives only when they are reusable across product areas.
+- Tailwind CSS v4 theme tokens and shared styling primitives.
+- Shared design decisions must live in the UI package design-system CSS or exported style helpers before feature files use them.
 
 ### `@testing` (`packages/testing`)
 Shared testing assets.

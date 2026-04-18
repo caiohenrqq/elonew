@@ -9,6 +9,7 @@ This stack is optimized for a web-first MVP that includes payments, order lifecy
 - Language: `TypeScript`
 - Backend: `NestJS` on `Fastify`
 - Frontend: `Next.js`
+- Frontend styling: `Tailwind CSS v4` with CSS-first design tokens in `@packages/ui`
 - Database: `PostgreSQL`
 - ORM and migrations: `Prisma`
 - Queue and background jobs: `BullMQ` on `Redis`

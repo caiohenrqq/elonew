@@ -10,6 +10,7 @@ import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/comp
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
+import { PreviewOrderQuoteUseCase } from '@modules/orders/application/use-cases/preview-order-quote/preview-order-quote.use-case';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import {
@@ -42,6 +43,7 @@ export class OrdersController {
 	constructor(
 		private readonly createOrderUseCase: CreateOrderUseCase,
 		private readonly createOrderQuoteUseCase: CreateOrderQuoteUseCase,
+		private readonly previewOrderQuoteUseCase: PreviewOrderQuoteUseCase,
 		private readonly getOrderUseCase: GetOrderUseCase,
 		private readonly acceptOrderUseCase: AcceptOrderUseCase,
 		private readonly rejectOrderUseCase: RejectOrderUseCase,
@@ -49,6 +51,39 @@ export class OrdersController {
 		private readonly completeOrderUseCase: CompleteOrderUseCase,
 		private readonly saveOrderCredentialsUseCase: SaveOrderCredentialsUseCase,
 	) {}
+
+	@Post('quote/preview')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
+	async previewQuote(
+		@Body(new ZodValidationPipe(createOrderQuoteSchema))
+		body: CreateOrderQuoteSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<{
+		subtotal: number;
+		totalAmount: number;
+		discountAmount: number;
+		extras: {
+			type: string;
+			price: number;
+		}[];
+	}> {
+		return await this.previewOrderQuoteUseCase.execute({
+			clientId: currentUser.id,
+			couponCode: body.couponCode,
+			extras: body.extras,
+			serviceType: body.serviceType,
+			currentLeague: body.currentLeague,
+			currentDivision: body.currentDivision,
+			currentLp: body.currentLp,
+			desiredLeague: body.desiredLeague,
+			desiredDivision: body.desiredDivision,
+			server: body.server,
+			desiredQueue: body.desiredQueue,
+			lpGain: body.lpGain,
+			deadline: new Date(body.deadline),
+		});
+	}
 
 	@Post('quote')
 	@UseGuards(JwtAuthGuard, RolesGuard)

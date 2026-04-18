@@ -27,4 +27,5 @@ export const duoBoostPriceTable = [
 	{ league: 'diamond', division: 'III', priceToNext: 103.04 },
 	{ league: 'diamond', division: 'II', priceToNext: 103.04 },
 	{ league: 'diamond', division: 'I', priceToNext: 277.34 },
+	{ league: 'master', division: 'MASTER', priceToNext: 0 },
 ] as const;

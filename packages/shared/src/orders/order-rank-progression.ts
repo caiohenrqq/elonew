@@ -37,4 +37,5 @@ export const orderRankProgression: readonly OrderRankStep[] = [
 	{ league: 'diamond', division: 'III' },
 	{ league: 'diamond', division: 'II' },
 	{ league: 'diamond', division: 'I' },
+	{ league: 'master', division: 'MASTER' },
 ] as const;
