@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- Restructured the web frontend from `src/features` to module-first `src/modules`, kept App Router files thin, moved the Next 16 proxy convention into `src/proxy.ts`, removed empty route/helper buckets, and tightened web workspace package imports around declared package entrypoints.
+- Migrated the web app styling setup to Tailwind CSS v4, moved core EloNew theme tokens into `@packages/ui`, and started centralizing reusable UI class decisions across shared primitives to reduce frontend design drift.
 - Improved web/UI maintainability by extracting checkout quote-preview and submit hooks, narrowing the dashboard pathname/motion client boundary, making register success redirects cleanup-safe, adding focused hook coverage, and tightening shared UI primitive defaults.
 - Expanded the web checkout extras catalog to the full priced/free list, added a polished two-column selector with UI-only favorite booster name capture, improved coupon discount copy, and covered the extras list plus favorite-booster reveal behavior with focused web tests.
 - Added Master as a single non-division rank across shared progression, default pricing tables, and the web rank picker; division controls are disabled for Master and Diamond I now normalizes upward to Master instead of allowing same-rank checkout.
