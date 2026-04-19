@@ -88,7 +88,9 @@ export function Navbar() {
 							onClick={() => scrollToSection('hero')}
 							className="focus-visible:outline-none"
 						>
-							<GlitchLogo />
+							<span className="block origin-left scale-125">
+								<GlitchLogo className="h-14" />
+							</span>
 						</button>
 					</div>
 

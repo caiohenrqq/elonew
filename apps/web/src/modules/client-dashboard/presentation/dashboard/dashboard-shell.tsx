@@ -16,8 +16,12 @@ export const DashboardShell = ({ children, user }: DashboardShellProps) => {
 	return (
 		<div className="flex min-h-screen bg-background text-white">
 			<aside className="fixed left-0 top-0 bottom-0 w-[240px] border-r border-white/5 bg-background z-50 flex flex-col">
-				<div className="p-8 pb-10">
-					<Link href="/" aria-label="Voltar para a página inicial">
+				<div className="flex justify-center p-8 pb-10">
+					<Link
+						href="/"
+						aria-label="Voltar para a página inicial"
+						className="inline-flex justify-center"
+					>
 						<GlitchLogo />
 					</Link>
 				</div>
