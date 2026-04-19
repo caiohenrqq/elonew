@@ -58,7 +58,7 @@ jest.mock('next/link', () => ({
 		children: React.ReactNode;
 		href: string;
 	}) => (
-		<div whilehover="mock" whiletap="mock">
+		<div>
 			<a href={href}>{children}</a>
 		</div>
 	),

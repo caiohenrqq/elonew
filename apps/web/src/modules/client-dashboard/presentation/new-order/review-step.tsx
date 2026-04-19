@@ -1,4 +1,3 @@
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { Badge } from '@packages/ui/components/badge';
 import { Button } from '@packages/ui/components/button';
 import {
@@ -14,13 +13,13 @@ import {
 	ChevronRight,
 	Globe,
 	Layers,
+	type LucideIcon,
 	Shield,
 	Users,
 	Zap,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
-import { useRef } from 'react';
 import {
 	EXTRA_OPTIONS_BY_ID,
 	SERVICE_TYPES,
@@ -47,7 +46,7 @@ const DetailItem = ({
 	label,
 	value,
 }: {
-	icon: any;
+	icon: LucideIcon;
 	label: string;
 	value: string;
 }) => (
@@ -75,69 +74,30 @@ const RankDisplay = ({
 	division: string;
 	isDesired?: boolean;
 }) => {
-	const containerRef = useRef<HTMLDivElement>(null);
-	const glowRef = useRef<HTMLDivElement>(null);
-	const imageRef = useRef<HTMLDivElement>(null);
-
-	const { contextSafe } = useGSAP({ scope: containerRef });
-
-	const onMouseEnter = contextSafe(() => {
-		gsap.to(glowRef.current, {
-			opacity: 0.4,
-			scale: 1.2,
-			duration: 0.25,
-			ease: 'power2.out',
-		});
-		gsap.to(imageRef.current, {
-			y: -8,
-			scale: 1.05,
-			filter: 'brightness(1.2) drop-shadow(0 0 20px rgba(255,255,255,0.2))',
-			duration: 0.4,
-			ease: 'power2.out',
-		});
-	});
-
-	const onMouseLeave = contextSafe(() => {
-		gsap.to(glowRef.current, {
-			opacity: isDesired ? 0.2 : 0,
-			scale: 1,
-			duration: 0.25,
-			ease: 'power2.in',
-		});
-		gsap.to(imageRef.current, {
-			y: 0,
-			scale: 1,
-			filter: isDesired
-				? 'brightness(1) drop-shadow(0 0 15px rgba(255,255,255,0.1))'
-				: 'brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0))',
-			duration: 0.25,
-			ease: 'power2.inOut',
-		});
-	});
-
 	return (
-		<div
-			ref={containerRef}
-			className="flex flex-col items-center gap-3 flex-1"
-			onMouseEnter={onMouseEnter}
-			onMouseLeave={onMouseLeave}
-		>
+		<div className="flex flex-col items-center gap-3 flex-1 group">
 			<div className="relative cursor-default">
 				<div
-					ref={glowRef}
 					className={cn(
-						'absolute inset-0 blur-2xl rounded-full pointer-events-none transition-opacity duration-500',
+						'absolute inset-0 blur-2xl rounded-full pointer-events-none transition-all duration-300 group-hover:opacity-40 group-hover:scale-[1.2]',
 						isDesired ? 'opacity-20' : 'opacity-0',
 					)}
 					style={{ backgroundColor: rank.accent }}
 				/>
-				<div ref={imageRef} className="relative transition-all duration-300">
+				<div
+					className={cn(
+						'relative transition-all duration-300 ease-out group-hover:-translate-y-2 group-hover:scale-105 group-hover:brightness-125 group-hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]',
+						isDesired
+							? 'drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]'
+							: 'drop-shadow-[0_0_0_rgba(255,255,255,0)]',
+					)}
+				>
 					<Image
 						src={rank.image}
 						alt={rank.label}
 						width={80}
 						height={80}
-						className={cn('relative', !isDesired && 'drop-shadow-2xl')}
+						className="relative"
 					/>
 				</div>
 			</div>
@@ -230,11 +190,17 @@ export const ReviewStep = ({
 							label="Serviço"
 							value={serviceType?.label ?? orderInput.serviceType}
 						/>
-						<DetailItem icon={Globe} label="Servidor" value={orderInput.server} />
+						<DetailItem
+							icon={Globe}
+							label="Servidor"
+							value={orderInput.server}
+						/>
 						<DetailItem
 							icon={Layers}
 							label="Fila"
-							value={orderInput.desiredQueue === 'solo_duo' ? 'Solo/Duo' : 'Flex'}
+							value={
+								orderInput.desiredQueue === 'solo_duo' ? 'Solo/Duo' : 'Flex'
+							}
 						/>
 					</div>
 
@@ -302,7 +268,8 @@ export const ReviewStep = ({
 						variant="primary"
 						className={cn(
 							'flex-[2] h-14 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase tracking-[0.2em] text-xs transition-all duration-300 group relative overflow-hidden',
-							(isSubmitting || !hasAcceptedTerms) && 'opacity-50 grayscale pointer-events-none',
+							(isSubmitting || !hasAcceptedTerms) &&
+								'opacity-50 grayscale pointer-events-none',
 						)}
 						onClick={onCheckout}
 						disabled={isSubmitting || !hasAcceptedTerms}
