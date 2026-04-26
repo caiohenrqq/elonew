@@ -1,11 +1,24 @@
 import type { BadgeProps } from '@packages/ui/components/badge';
-import type { GetOrderOutput } from '../server/order-contracts';
+import type {
+	ClientDashboardOrderOutput,
+	ClientDashboardOrdersOutput,
+	GetOrderOutput,
+} from '../server/order-contracts';
 
 export type OrderStatusVariant = NonNullable<BadgeProps['variant']>;
 
 export type ClientOrder = GetOrderOutput & {
 	statusLabel: string;
 	statusVariant: OrderStatusVariant;
+};
+
+export type ClientDashboardOrder = ClientDashboardOrderOutput & {
+	statusLabel: string;
+	statusVariant: OrderStatusVariant;
+};
+
+export type ClientDashboard = Omit<ClientDashboardOrdersOutput, 'orders'> & {
+	orders: ClientDashboardOrder[];
 };
 
 const orderStatusLabels: Record<string, string> = {
@@ -28,6 +41,17 @@ export const toClientOrder = (order: GetOrderOutput): ClientOrder => ({
 	...order,
 	statusLabel: orderStatusLabels[order.status] ?? 'Status indisponível',
 	statusVariant: orderStatusVariants[order.status] ?? 'default',
+});
+
+export const toClientDashboard = (
+	dashboard: ClientDashboardOrdersOutput,
+): ClientDashboard => ({
+	...dashboard,
+	orders: dashboard.orders.map((order) => ({
+		...order,
+		statusLabel: orderStatusLabels[order.status] ?? 'Status indisponível',
+		statusVariant: orderStatusVariants[order.status] ?? 'default',
+	})),
 });
 
 export const formatCurrency = (value: number | null) => {

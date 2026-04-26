@@ -1,3 +1,4 @@
+import { Badge } from '@packages/ui/components/badge';
 import { getButtonClassName } from '@packages/ui/components/button';
 import { Card } from '@packages/ui/components/card';
 import {
@@ -10,31 +11,90 @@ import {
 } from '@packages/ui/components/table';
 import { Package, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import type { ClientDashboardOrder } from '../../model/orders';
+import { type ClientDashboard, formatCurrency } from '../../model/orders';
 import { DashboardEntrance } from './dashboard-entrance';
 import { MetricCard } from './metric-card';
 
-export const ClientDashboardPage = () => {
+type ClientDashboardPageProps = {
+	dashboard: ClientDashboard;
+};
+
+const formatMetricCount = (value: number) => value.toString().padStart(2, '0');
+
+const formatOrderDate = (value: string) =>
+	new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(value));
+
+const formatTitleCase = (value: string) =>
+	value
+		.split(/[_\s-]+/)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(' ');
+
+const formatServiceType = (serviceType: string | null) => {
+	if (!serviceType) return 'Serviço indisponível';
+
+	return formatTitleCase(serviceType);
+};
+
+const formatOrderRoute = (order: ClientDashboardOrder) => {
+	if (
+		!order.currentLeague ||
+		!order.currentDivision ||
+		!order.desiredLeague ||
+		!order.desiredDivision
+	)
+		return 'Detalhes indisponíveis';
+
+	return `${formatTitleCase(order.currentLeague)} ${order.currentDivision} → ${formatTitleCase(order.desiredLeague)} ${order.desiredDivision}`;
+};
+
+export const ClientDashboardPage = ({
+	dashboard,
+}: ClientDashboardPageProps) => {
+	const activeProgress =
+		dashboard.summary.totalOrders > 0
+			? (dashboard.summary.activeOrders / dashboard.summary.totalOrders) * 100
+			: 0;
+
 	return (
 		<DashboardEntrance>
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<div className="dashboard-animate">
-					<MetricCard label="Pedidos Ativos" value="00">
+					<MetricCard
+						label="Pedidos Ativos"
+						value={formatMetricCount(dashboard.summary.activeOrders)}
+					>
 						<div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-							<div className="h-full w-0 bg-hextech-cyan" />
+							<div
+								className="h-full bg-hextech-cyan"
+								style={{ width: `${activeProgress}%` }}
+							/>
 						</div>
 					</MetricCard>
 				</div>
 				<div className="dashboard-animate">
-					<MetricCard label="Total Pedidos" value="00">
+					<MetricCard
+						label="Total Pedidos"
+						value={formatMetricCount(dashboard.summary.totalOrders)}
+					>
 						<p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">
-							Nenhum pedido ainda
+							{dashboard.summary.totalOrders > 0
+								? 'Histórico real da sua conta'
+								: 'Nenhum pedido ainda'}
 						</p>
 					</MetricCard>
 				</div>
 				<div className="dashboard-animate">
-					<MetricCard label="Total Investido" value="R$ 0,00">
+					<MetricCard
+						label="Total Investido"
+						value={formatCurrency(dashboard.summary.totalInvested)}
+					>
 						<p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">
-							Nenhum pagamento registrado
+							{dashboard.summary.totalInvested > 0
+								? 'Soma dos pedidos finalizados no checkout'
+								: 'Nenhum pagamento registrado'}
 						</p>
 					</MetricCard>
 				</div>
@@ -88,20 +148,59 @@ export const ClientDashboardPage = () => {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							<TableRow>
-								<TableCell colSpan={6} className="h-40 text-center">
-									<div className="flex flex-col items-center justify-center space-y-3 opacity-40">
-										<Package className="w-10 h-10" />
-										<p className="text-[10px] font-black uppercase tracking-widest">
-											Nenhum pedido encontrado
-										</p>
-										<p className="max-w-sm text-[10px] text-white/50 leading-relaxed">
-											Seus pedidos reais aparecerão aqui assim que o histórico
-											estiver disponível.
-										</p>
-									</div>
-								</TableCell>
-							</TableRow>
+							{dashboard.orders.length > 0 ? (
+								dashboard.orders.map((order) => (
+									<TableRow key={order.id}>
+										<TableCell className="font-mono text-[10px] text-white/60">
+											{order.id}
+										</TableCell>
+										<TableCell className="font-black uppercase tracking-wider text-white">
+											{formatServiceType(order.serviceType)}
+										</TableCell>
+										<TableCell>
+											<div className="space-y-1">
+												<p className="font-bold text-white/80">
+													{formatOrderRoute(order)}
+												</p>
+												<p className="text-[10px] uppercase tracking-widest text-white/35">
+													{formatCurrency(order.totalAmount)}
+												</p>
+											</div>
+										</TableCell>
+										<TableCell>
+											<Badge variant={order.statusVariant}>
+												{order.statusLabel}
+											</Badge>
+										</TableCell>
+										<TableCell className="text-white/50">
+											{formatOrderDate(order.createdAt)}
+										</TableCell>
+										<TableCell className="text-right">
+											<Link
+												href={`/client/orders/${order.id}`}
+												className="text-[10px] font-black uppercase tracking-widest text-hextech-cyan hover:text-white transition-colors"
+											>
+												Ver detalhes
+											</Link>
+										</TableCell>
+									</TableRow>
+								))
+							) : (
+								<TableRow>
+									<TableCell colSpan={6} className="h-40 text-center">
+										<div className="flex flex-col items-center justify-center space-y-3 opacity-40">
+											<Package className="w-10 h-10" />
+											<p className="text-[10px] font-black uppercase tracking-widest">
+												Nenhum pedido encontrado
+											</p>
+											<p className="max-w-sm text-[10px] text-white/50 leading-relaxed">
+												Seus pedidos reais aparecerão aqui assim que o histórico
+												estiver disponível.
+											</p>
+										</div>
+									</TableCell>
+								</TableRow>
+							)}
 						</TableBody>
 					</Table>
 				</Card>

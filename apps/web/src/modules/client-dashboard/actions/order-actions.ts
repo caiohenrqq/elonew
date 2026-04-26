@@ -5,11 +5,13 @@ import { getCheckoutErrorMessage } from '@/shared/api-client-management/user-mes
 import { getAuthSession } from '@/shared/auth/session';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import {
+	getClientDashboardOrders as getClientDashboardOrdersFromApi,
 	getOrder as getOrderFromApi,
 	previewOrderQuote,
 	startCheckout,
 } from '../server/checkout-service';
 import {
+	type ClientDashboardOrdersOutput,
 	type GetOrderOutput,
 	type OrderQuotePreviewOutput,
 	type StartCheckoutInput,
@@ -80,3 +82,10 @@ export const getOrder = async (orderId: string): Promise<GetOrderOutput> => {
 		api.request(path, { ...init, allowSessionRefresh: false }),
 	);
 };
+
+export const getClientDashboardOrders =
+	async (): Promise<ClientDashboardOrdersOutput> => {
+		return await getClientDashboardOrdersFromApi((path, init) =>
+			api.request(path, { ...init, allowSessionRefresh: false }),
+		);
+	};

@@ -133,3 +133,38 @@ export type GetOrderOutput = {
 	totalAmount: number | null;
 	discountAmount: number;
 };
+
+export const clientDashboardOrderSchema = z.object({
+	id: z.string(),
+	status: z.string(),
+	serviceType: z.string().nullable(),
+	currentLeague: z.string().nullable(),
+	currentDivision: z.string().nullable(),
+	currentLp: z.number().nullable(),
+	desiredLeague: z.string().nullable(),
+	desiredDivision: z.string().nullable(),
+	server: z.string().nullable(),
+	desiredQueue: z.string().nullable(),
+	lpGain: z.number().nullable(),
+	deadline: z.string().nullable(),
+	subtotal: z.number().nullable(),
+	totalAmount: z.number().nullable(),
+	discountAmount: z.number(),
+	createdAt: z.string(),
+});
+
+export const clientDashboardOrdersSchema = z.object({
+	orders: z.array(clientDashboardOrderSchema),
+	summary: z.object({
+		activeOrders: z.number().int().nonnegative(),
+		totalOrders: z.number().int().nonnegative(),
+		totalInvested: z.number().nonnegative(),
+	}),
+});
+
+export type ClientDashboardOrderOutput = z.infer<
+	typeof clientDashboardOrderSchema
+>;
+export type ClientDashboardOrdersOutput = z.infer<
+	typeof clientDashboardOrdersSchema
+>;

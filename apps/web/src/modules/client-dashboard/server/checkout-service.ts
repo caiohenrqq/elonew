@@ -1,6 +1,8 @@
 import {
+	type ClientDashboardOrdersOutput,
 	type CreateOrderOutput,
 	type CreatePaymentOutput,
+	clientDashboardOrdersSchema,
 	createOrderSchema,
 	createPaymentSchema,
 	type GetOrderOutput,
@@ -27,6 +29,16 @@ export const createOrderQuote = async (
 		method: 'POST',
 		body: JSON.stringify(body),
 	});
+};
+
+export const getClientDashboardOrders = async (
+	apiRequest: AuthenticatedApiRequest,
+): Promise<ClientDashboardOrdersOutput> => {
+	const response = await apiRequest<unknown>('/orders?limit=10', {
+		auth: true,
+	});
+
+	return clientDashboardOrdersSchema.parse(response);
 };
 
 export const previewOrderQuote = async (

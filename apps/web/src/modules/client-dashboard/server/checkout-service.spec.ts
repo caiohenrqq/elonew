@@ -1,4 +1,52 @@
-import { previewOrderQuote, startCheckout } from './checkout-service';
+import {
+	getClientDashboardOrders,
+	previewOrderQuote,
+	startCheckout,
+} from './checkout-service';
+
+describe('getClientDashboardOrders', () => {
+	it('requests recent client orders with dashboard summary', async () => {
+		const apiRequest = jest.fn().mockResolvedValueOnce({
+			orders: [
+				{
+					id: 'order-1',
+					status: 'awaiting_payment',
+					serviceType: 'elo_boost',
+					currentLeague: 'gold',
+					currentDivision: 'II',
+					currentLp: 40,
+					desiredLeague: 'platinum',
+					desiredDivision: 'IV',
+					server: 'br',
+					desiredQueue: 'solo_duo',
+					lpGain: 20,
+					deadline: '2026-05-01T00:00:00.000Z',
+					subtotal: 120,
+					totalAmount: 120,
+					discountAmount: 0,
+					createdAt: '2026-04-01T00:00:00.000Z',
+				},
+			],
+			summary: {
+				activeOrders: 1,
+				totalOrders: 1,
+				totalInvested: 120,
+			},
+		});
+
+		const result = await getClientDashboardOrders(apiRequest);
+
+		expect(result.summary).toEqual({
+			activeOrders: 1,
+			totalOrders: 1,
+			totalInvested: 120,
+		});
+		expect(result.orders).toHaveLength(1);
+		expect(apiRequest).toHaveBeenCalledWith('/orders?limit=10', {
+			auth: true,
+		});
+	});
+});
 
 describe('previewOrderQuote', () => {
 	it('requests non-persistent quote preview pricing', async () => {
