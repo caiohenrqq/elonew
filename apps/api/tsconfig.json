@@ -11,19 +11,14 @@
 		"experimentalDecorators": true,
 		"allowSyntheticDefaultImports": true,
 		"target": "ES2023",
+		"types": ["node", "jest"],
 		"sourceMap": true,
 		"outDir": "./dist",
-		"baseUrl": "./",
+		"rootDir": ".",
+		"noEmit": true,
 		"paths": {
-			"@app/*": ["src/*"],
-			"@modules/*": ["src/modules/*"],
-			"@packages/config/*": ["../../packages/config/src/*"],
-			"@shared/*": ["../../packages/shared/src/*"],
-			"@database/*": ["../../packages/database/src/*"],
-			"@auth/*": ["../../packages/auth/src/*"],
-			"@ui/*": ["../../packages/ui/src/*"],
-			"@testing/*": ["../../packages/testing/src/*"],
-			"@integrations/*": ["../../packages/integrations/src/*"]
+			"@app/*": ["./src/*"],
+			"@modules/*": ["./src/modules/*"]
 		},
 		"incremental": true,
 		"skipLibCheck": true,
@@ -32,5 +27,7 @@
 		"noImplicitAny": true,
 		"strictBindCallApply": true,
 		"noFallthroughCasesInSwitch": true
-	}
+	},
+	"include": ["src/**/*.ts", "test/**/*.ts"],
+	"exclude": ["node_modules", "dist"]
 }

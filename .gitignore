@@ -11,3 +11,4 @@ node_modules/
 .playwright-mcp/
 .codex
 .codex/
+*.tsbuildinfo
