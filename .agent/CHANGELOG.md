@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- Migrated API/workers shared-contract imports from the legacy `@shared/*` source alias to `@packages/shared/*` package exports, made `@packages/shared` buildable, and split API app/test tsconfigs so TypeScript 6 can use an app-local `rootDir` without deprecated `baseUrl`.
+- Completed the missing issue `#23` dashboard tracking slice by adding a client-scoped recent-orders API with dashboard summary metrics, wiring the Next client dashboard to real authenticated order data, preserving the empty state, and covering the new backend/web behavior with focused tests.
 - Fixed pending-user activation and generic duplicate-registration HTTP mapping, refreshed auth/order API test fixtures for quote-based versioned pricing, and replaced the web text logo with the official EloNew image asset plus favicon/dashboard/navbar sizing polish.
 - Updated checkout rank selection so Master uses explicit 0-250 PDL input instead of division buttons, widened quote validation for Master PDL, and taught order pricing to interpret Master PDL progress when pricing versions define a Master progression price.
 - Restructured the web frontend from `src/features` to module-first `src/modules`, kept App Router files thin, moved the Next 16 proxy convention into `src/proxy.ts`, removed empty route/helper buckets, and tightened web workspace package imports around declared package entrypoints.
