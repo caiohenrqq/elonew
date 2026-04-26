@@ -7,6 +7,7 @@
 		"auth:build": "pnpm --filter @packages/auth run build",
 		"config:build": "pnpm --filter @packages/config run build",
 		"integrations:build": "pnpm --filter @packages/integrations run build",
+		"shared:build": "pnpm --filter @packages/shared run build",
 		"db": "dotenv -e apps/api/.env -- pnpm --filter @packages/database exec prisma",
 		"db:test": "dotenv -e apps/api/.env.test -- pnpm --filter @packages/database exec prisma",
 		"web": "pnpm --filter web",

@@ -2,8 +2,47 @@
 	"name": "@packages/shared",
 	"version": "0.0.0",
 	"private": true,
-	"main": "./src/index.ts",
-	"types": "./src/index.ts",
+	"exports": {
+		"./orders/create-order-quote.schema": {
+			"types": "./dist/orders/create-order-quote.schema.d.ts",
+			"default": "./dist/orders/create-order-quote.schema.js"
+		},
+		"./orders/create-order.schema": {
+			"types": "./dist/orders/create-order.schema.d.ts",
+			"default": "./dist/orders/create-order.schema.js"
+		},
+		"./orders/order-extra": {
+			"types": "./dist/orders/order-extra.d.ts",
+			"default": "./dist/orders/order-extra.js"
+		},
+		"./orders/order-rank-progression": {
+			"types": "./dist/orders/order-rank-progression.d.ts",
+			"default": "./dist/orders/order-rank-progression.js"
+		},
+		"./orders/service-type": {
+			"types": "./dist/orders/service-type.d.ts",
+			"default": "./dist/orders/service-type.js"
+		},
+		"./payments/payment-method": {
+			"types": "./dist/payments/payment-method.d.ts",
+			"default": "./dist/payments/payment-method.js"
+		},
+		"./utils/enum.utils": {
+			"types": "./dist/utils/enum.utils.d.ts",
+			"default": "./dist/utils/enum.utils.js"
+		},
+		"./wallet/wallet-funds-release-job": {
+			"types": "./dist/wallet/wallet-funds-release-job.d.ts",
+			"default": "./dist/wallet/wallet-funds-release-job.js"
+		},
+		"./wallet/wallet-funds-release.contract": {
+			"types": "./dist/wallet/wallet-funds-release.contract.d.ts",
+			"default": "./dist/wallet/wallet-funds-release.contract.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json"
+	},
 	"dependencies": {
 		"zod": "^3.23.8"
 	}
