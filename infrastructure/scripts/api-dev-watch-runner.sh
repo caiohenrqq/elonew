@@ -6,6 +6,7 @@ cd "$ROOT_DIR"
 
 rm -rf apps/api/dist
 pnpm -w config:build
+pnpm -w shared:build
 
 pnpm --filter api exec nest build --watch &
 BUILD_WATCH_PID=$!
@@ -15,7 +16,7 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
-API_MAIN_PATH="apps/api/dist/apps/api/src/main.js"
+API_MAIN_PATH="apps/api/dist/main.js"
 
 until [ -f "$API_MAIN_PATH" ]; do
 	sleep 0.2
