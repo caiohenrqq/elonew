@@ -1,19 +1,12 @@
 {
-	"extends": "../api/tsconfig.json",
+	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
 		"outDir": "dist",
-		"baseUrl": "./",
+		"rootDir": "./src",
+		"types": ["node"],
 		"paths": {
-			"@app/*": ["src/*"],
-			"@modules/*": ["src/modules/*"],
-			"@packages/config/*": ["../../packages/config/src/*"],
-			"@shared/*": ["../../packages/shared/src/*"],
-			"@database/*": ["../../packages/database/src/*"],
-			"@config/*": ["../../packages/config/src/*"],
-			"@auth/*": ["../../packages/auth/src/*"],
-			"@ui/*": ["../../packages/ui/src/*"],
-			"@testing/*": ["../../packages/testing/src/*"],
-			"@integrations/*": ["../../packages/integrations/src/*"]
+			"@app/*": ["./src/*"],
+			"@modules/*": ["./src/modules/*"]
 		}
 	},
 	"include": ["src/**/*.ts"]
