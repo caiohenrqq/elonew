@@ -2,7 +2,7 @@ import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { type WalletFundsReleaseJobSchedulerPort } from '@modules/wallet/application/ports/wallet-funds-release-job-scheduler.port';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { createBullmqRedisConnection } from '@packages/config/queue/bullmq-redis.connection';
-import type { WalletFundsReleaseJob } from '@shared/wallet/wallet-funds-release-job';
+import type { WalletFundsReleaseJob } from '@packages/shared/wallet/wallet-funds-release-job';
 import { Queue } from 'bullmq';
 
 export function createWalletFundsReleaseJobId(input: {

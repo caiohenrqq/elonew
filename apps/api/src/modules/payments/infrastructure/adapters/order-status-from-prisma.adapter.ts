@@ -2,7 +2,7 @@ import { PrismaService } from '@app/common/prisma/prisma.service';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import type { OrderStatusPort } from '@modules/payments/application/ports/order-status.port';
 import { Injectable } from '@nestjs/common';
-import { ensurePersistedEnum } from '@shared/utils/enum.utils';
+import { ensurePersistedEnum } from '@packages/shared/utils/enum.utils';
 
 type OrderRecord = {
 	status: string;

@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { createOrderSchema } from '@shared/orders/create-order.schema';
+import { createOrderSchema } from '@packages/shared/orders/create-order.schema';
 import { ZodValidationPipe } from './zod-validation.pipe';
 
 describe('ZodValidationPipe', () => {

@@ -22,7 +22,7 @@ import {
 } from '@modules/payments/domain/payment.errors';
 import type { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable } from '@nestjs/common';
-import type { PaymentMethod } from '@shared/payments/payment-method';
+import type { PaymentMethod } from '@packages/shared/payments/payment-method';
 
 type CreatePaymentInput = {
 	clientId: string;

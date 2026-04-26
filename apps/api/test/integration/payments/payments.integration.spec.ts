@@ -16,7 +16,7 @@ import { PaymentsController } from '@modules/payments/presentation/payments.cont
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
-import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
+import type { CreateOrderSchemaInput } from '@packages/shared/orders/create-order.schema';
 import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
 import { InMemoryOrderRepository } from '../../support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from '../../support/in-memory/orders/in-memory-order-checkout.repository';
