@@ -163,7 +163,6 @@ export const ReviewStep = ({
 				</CardHeader>
 
 				<CardContent className="relative p-6 space-y-8">
-					{/* Rank Transition Section */}
 					<div className="flex items-center justify-between gap-4 py-4 px-2 bg-white/[0.02] rounded-lg border border-white/5 relative overflow-hidden">
 						<RankDisplay
 							rank={currentRank}
@@ -183,7 +182,6 @@ export const ReviewStep = ({
 						/>
 					</div>
 
-					{/* Service Config Grid */}
 					<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 						<DetailItem
 							icon={serviceType?.icon === 'shield' ? Shield : Users}
@@ -204,7 +202,6 @@ export const ReviewStep = ({
 						/>
 					</div>
 
-					{/* Extras Section */}
 					<div className="space-y-3">
 						<div className="flex items-center gap-2">
 							<span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
@@ -232,17 +229,15 @@ export const ReviewStep = ({
 				</CardContent>
 			</Card>
 
-			{/* Footer Actions */}
 			<div className="flex flex-col items-center gap-8 pt-4">
-				<div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-white/[0.02] border border-white/5 w-full">
-					<div className="pt-0.5">
-						<Checkbox
-							id="terms-confirmation"
-							name="termsConfirmation"
-							checked={hasAcceptedTerms}
-							onChange={(event) => onTermsChange(event.target.checked)}
-						/>
-					</div>
+				<div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/[0.02] border border-white/5 w-full">
+					<Checkbox
+						id="terms-confirmation"
+						name="termsConfirmation"
+						checked={hasAcceptedTerms}
+						onChange={(event) => onTermsChange(event.target.checked)}
+						className="shrink-0"
+					/>
 					<label
 						htmlFor="terms-confirmation"
 						className="text-[10px] leading-relaxed text-white/40 uppercase tracking-widest cursor-pointer select-none hover:text-white/60 transition-colors"
