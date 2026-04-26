@@ -25,7 +25,7 @@ import { OrdersController } from '@modules/orders/presentation/orders.controller
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
-import type { CreateOrderSchemaInput } from '@shared/orders/create-order.schema';
+import type { CreateOrderSchemaInput } from '@packages/shared/orders/create-order.schema';
 import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
 
 describe('Orders module integration (db)', () => {

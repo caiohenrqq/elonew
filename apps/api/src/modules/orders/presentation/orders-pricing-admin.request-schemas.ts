@@ -1,5 +1,5 @@
-import { orderExtraTypes } from '@shared/orders/order-extra';
-import { rankPricedOrderServiceTypes } from '@shared/orders/order-rank-progression';
+import { orderExtraTypes } from '@packages/shared/orders/order-extra';
+import { rankPricedOrderServiceTypes } from '@packages/shared/orders/order-rank-progression';
 import { z } from 'zod';
 
 const pricingStepSchema = z.object({

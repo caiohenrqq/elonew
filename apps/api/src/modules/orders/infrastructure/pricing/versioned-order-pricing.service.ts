@@ -16,7 +16,7 @@ import {
 	OrderUnsupportedPricingServiceTypeError,
 } from '@modules/orders/domain/order-pricing.errors';
 import { Inject, Injectable } from '@nestjs/common';
-import { isOrderExtraType } from '@shared/orders/order-extra';
+import { isOrderExtraType } from '@packages/shared/orders/order-extra';
 
 type PriceEntry = {
 	league: string;

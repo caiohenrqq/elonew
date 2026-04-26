@@ -1,5 +1,5 @@
-import type { OrderExtraType } from '@shared/orders/order-extra';
-import type { RankPricedOrderServiceType } from '@shared/orders/order-rank-progression';
+import type { OrderExtraType } from '@packages/shared/orders/order-extra';
+import type { RankPricedOrderServiceType } from '@packages/shared/orders/order-rank-progression';
 
 export type OrderPricingVersionStatus = 'draft' | 'active' | 'archived';
 

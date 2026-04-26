@@ -10,6 +10,7 @@ import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/comp
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
+import { ListClientOrdersUseCase } from '@modules/orders/application/use-cases/list-client-orders/list-client-orders.use-case';
 import { PreviewOrderQuoteUseCase } from '@modules/orders/application/use-cases/preview-order-quote/preview-order-quote.use-case';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
@@ -20,18 +21,21 @@ import {
 	HttpCode,
 	Param,
 	Post,
+	Query,
 	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
 	type CreateOrderSchemaInput,
 	createOrderSchema,
-} from '@shared/orders/create-order.schema';
+} from '@packages/shared/orders/create-order.schema';
 import {
 	type CreateOrderQuoteSchemaInput,
 	createOrderQuoteSchema,
-} from '@shared/orders/create-order-quote.schema';
+} from '@packages/shared/orders/create-order-quote.schema';
 import {
+	type ListClientOrdersQuerySchemaInput,
+	listClientOrdersQuerySchema,
 	type OrderIdParamSchemaInput,
 	orderIdParamSchema,
 	type SaveOrderCredentialsSchemaInput,
@@ -45,6 +49,7 @@ export class OrdersController {
 		private readonly createOrderQuoteUseCase: CreateOrderQuoteUseCase,
 		private readonly previewOrderQuoteUseCase: PreviewOrderQuoteUseCase,
 		private readonly getOrderUseCase: GetOrderUseCase,
+		private readonly listClientOrdersUseCase: ListClientOrdersUseCase,
 		private readonly acceptOrderUseCase: AcceptOrderUseCase,
 		private readonly rejectOrderUseCase: RejectOrderUseCase,
 		private readonly cancelOrderUseCase: CancelOrderUseCase,
@@ -136,6 +141,49 @@ export class OrdersController {
 			quoteId: body.quoteId,
 			now: new Date(),
 		});
+	}
+
+	@Get()
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
+	async list(
+		@Query(new ZodValidationPipe(listClientOrdersQuerySchema))
+		query: ListClientOrdersQuerySchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<{
+		orders: Array<{
+			id: string;
+			status: string;
+			serviceType: string | null;
+			currentLeague: string | null;
+			currentDivision: string | null;
+			currentLp: number | null;
+			desiredLeague: string | null;
+			desiredDivision: string | null;
+			server: string | null;
+			desiredQueue: string | null;
+			lpGain: number | null;
+			deadline: Date | null;
+			subtotal: number | null;
+			totalAmount: number | null;
+			discountAmount: number;
+			createdAt: Date;
+		}>;
+		summary: {
+			activeOrders: number;
+			totalOrders: number;
+			totalInvested: number;
+		};
+	}> {
+		const result = await this.listClientOrdersUseCase.execute({
+			clientId: currentUser.id,
+			limit: query.limit,
+		});
+
+		return {
+			orders: result.orders.map(({ clientId: _clientId, ...order }) => order),
+			summary: result.summary,
+		};
 	}
 
 	@Get(':orderId')

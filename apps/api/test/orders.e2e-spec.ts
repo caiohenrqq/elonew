@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto';
+import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
 import type { StoredCoupon } from '@modules/orders/application/ports/coupon-lookup.port';
 import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
@@ -110,11 +111,14 @@ describe('Orders (e2e)', () => {
 
 	beforeEach(async () => {
 		couponLookup = new CouponLookupStub();
+		orderRepository = new InMemoryOrderRepository();
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
-			.useClass(InMemoryOrderRepository)
+			.useValue(orderRepository)
+			.overrideProvider(CLIENT_ORDER_READER_KEY)
+			.useValue(orderRepository)
 			.overrideProvider(ORDER_CHECKOUT_PORT_KEY)
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
@@ -126,7 +130,6 @@ describe('Orders (e2e)', () => {
 			.compile();
 
 		app = await createTestHttpApp(moduleRef);
-		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
 		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
 		const version = await pricingVersions.createDraft(
@@ -155,6 +158,51 @@ describe('Orders (e2e)', () => {
 				subtotal: 25.2,
 				totalAmount: 25.2,
 				discountAmount: 0,
+			})
+			.execute();
+	});
+
+	it('lists recent authenticated client orders with dashboard summary', async () => {
+		const clientToken = signToken({ sub: 'client-list', role: 'CLIENT' });
+		const otherClientToken = signToken({
+			sub: 'client-list-other',
+			role: 'CLIENT',
+		});
+		const olderOrder = await createQuotedOrder(clientToken);
+		const newerOrder = await createQuotedOrder(clientToken);
+		await createQuotedOrder(otherClientToken);
+		await markOrderAsPaidUseCase.execute({ orderId: newerOrder.id });
+
+		await requestHttp(app)
+			.get('/orders?limit=10')
+			.set('Authorization', `Bearer ${clientToken}`)
+			.expect(200)
+			.expect<{
+				orders: Array<{ id: string; status: string; createdAt: string }>;
+				summary: {
+					activeOrders: number;
+					totalOrders: number;
+					totalInvested: number;
+				};
+			}>(({ body }) => {
+				expect(body.orders.map((order) => order.id)).toEqual([
+					newerOrder.id,
+					olderOrder.id,
+				]);
+				expect(body.orders[0]).toEqual(
+					expect.objectContaining({
+						id: newerOrder.id,
+						status: 'pending_booster',
+						serviceType: 'elo_boost',
+						totalAmount: 25.2,
+					}),
+				);
+				expect(body.orders[0]?.createdAt).toEqual(expect.any(String));
+				expect(body.summary).toEqual({
+					activeOrders: 2,
+					totalOrders: 2,
+					totalInvested: 50.4,
+				});
 			})
 			.execute();
 	});

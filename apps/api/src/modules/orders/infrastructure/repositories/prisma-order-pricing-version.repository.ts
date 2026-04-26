@@ -11,12 +11,12 @@ import {
 	OrderPricingVersionNotFoundError,
 } from '@modules/orders/domain/order-pricing.errors';
 import { Injectable } from '@nestjs/common';
-import { Prisma, ServiceType } from '@prisma/client';
-import type { OrderExtraType } from '@shared/orders/order-extra';
+import type { OrderExtraType } from '@packages/shared/orders/order-extra';
 import {
 	orderRankProgression,
 	type RankPricedOrderServiceType,
-} from '@shared/orders/order-rank-progression';
+} from '@packages/shared/orders/order-rank-progression';
+import { Prisma, ServiceType } from '@prisma/client';
 
 type PricingVersionRecord = {
 	id: string;
