@@ -19,7 +19,7 @@ import {
 	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
-import { WALLET_FUNDS_RELEASE_INTERNAL_ROUTE } from '@shared/wallet/wallet-funds-release.contract';
+import { WALLET_FUNDS_RELEASE_INTERNAL_ROUTE } from '@packages/shared/wallet/wallet-funds-release.contract';
 import { WalletNotFoundError } from '../domain/wallet.errors';
 import {
 	type BoosterIdParamSchemaInput,

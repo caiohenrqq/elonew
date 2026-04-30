@@ -58,4 +58,78 @@ describe('VersionedOrderPricingService', () => {
 			extras: [{ type: 'priority_service', price: 2.52 }],
 		});
 	});
+
+	it('prices master as the terminal target for legacy pricing versions without a master row', async () => {
+		const pricingVersions = new InMemoryOrderPricingVersionRepository();
+		const defaultPricing = makeDefaultOrderPricingVersionInput();
+		const version = await pricingVersions.createDraft({
+			...defaultPricing,
+			steps: defaultPricing.steps.filter((step) => step.league !== 'master'),
+		});
+		await pricingVersions.activate({
+			versionId: version.id,
+			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+		});
+		const service = new VersionedOrderPricingService(pricingVersions);
+
+		await expect(
+			service.calculate({
+				serviceType: 'elo_boost',
+				currentLeague: 'diamond',
+				currentDivision: 'IV',
+				currentLp: 0,
+				desiredLeague: 'master',
+				desiredDivision: 'MASTER',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: new Date('2026-03-31T00:00:00.000Z'),
+			}),
+		).resolves.toMatchObject({
+			pricingVersionId: version.id,
+			subtotal: 307.3,
+			totalAmount: 307.3,
+			discountAmount: 0,
+			extras: [],
+		});
+	});
+
+	it('calculates master PDL deltas when the active version prices master progression', async () => {
+		const pricingVersions = new InMemoryOrderPricingVersionRepository();
+		const defaultPricing = makeDefaultOrderPricingVersionInput();
+		const version = await pricingVersions.createDraft({
+			...defaultPricing,
+			steps: defaultPricing.steps.map((step) =>
+				step.serviceType === 'elo_boost' && step.league === 'master'
+					? { ...step, priceToNext: 80 }
+					: step,
+			),
+		});
+		await pricingVersions.activate({
+			versionId: version.id,
+			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+		});
+		const service = new VersionedOrderPricingService(pricingVersions);
+
+		await expect(
+			service.calculate({
+				serviceType: 'elo_boost',
+				currentLeague: 'master',
+				currentDivision: '50',
+				currentLp: 50,
+				desiredLeague: 'master',
+				desiredDivision: '150',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: new Date('2026-03-31T00:00:00.000Z'),
+			}),
+		).resolves.toMatchObject({
+			pricingVersionId: version.id,
+			subtotal: 80,
+			totalAmount: 80,
+			discountAmount: 0,
+			extras: [],
+		});
+	});
 });

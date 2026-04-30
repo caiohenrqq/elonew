@@ -9,10 +9,10 @@ import {
 } from '@modules/orders/domain/order-pricing.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import { Injectable } from '@nestjs/common';
+import { isOrderExtraType } from '@packages/shared/orders/order-extra';
+import type { OrderServiceType } from '@packages/shared/orders/service-type';
+import { ensurePersistedEnum } from '@packages/shared/utils/enum.utils';
 import { CouponDiscountType, Prisma, ServiceType } from '@prisma/client';
-import { isOrderExtraType } from '@shared/orders/order-extra';
-import type { OrderServiceType } from '@shared/orders/service-type';
-import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type QuoteRecord = {
 	id: string;

@@ -4,8 +4,8 @@ import {
 	OrderInvalidTransitionError,
 } from '@modules/orders/domain/order.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
-import type { OrderPricedExtra } from '@shared/orders/order-extra';
-import type { OrderServiceType } from '@shared/orders/service-type';
+import type { OrderPricedExtra } from '@packages/shared/orders/order-extra';
+import type { OrderServiceType } from '@packages/shared/orders/service-type';
 
 type AllowedTransitionMap = Record<OrderStatus, readonly OrderStatus[]>;
 

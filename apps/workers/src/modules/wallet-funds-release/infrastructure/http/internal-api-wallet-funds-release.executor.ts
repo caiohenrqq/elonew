@@ -3,7 +3,7 @@ import { type WalletFundsReleaseExecutorPort } from '@modules/wallet-funds-relea
 import type { ProcessWalletFundsReleaseJobInput } from '@modules/wallet-funds-release/application/process-wallet-funds-release-job.input';
 import { WalletFundsReleaseExecutionFailedError } from '@modules/wallet-funds-release/domain/wallet-funds-release.errors';
 import { Inject, Injectable } from '@nestjs/common';
-import { WALLET_FUNDS_RELEASE_INTERNAL_ROUTE } from '@shared/wallet/wallet-funds-release.contract';
+import { WALLET_FUNDS_RELEASE_INTERNAL_ROUTE } from '@packages/shared/wallet/wallet-funds-release.contract';
 
 @Injectable()
 export class InternalApiWalletFundsReleaseExecutorAdapter

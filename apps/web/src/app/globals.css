@@ -1,20 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@packages/ui/styles/design-system.css";
 
-:root {
-	--background: #09090b;
-	--foreground: #fafafa;
-}
-
-body {
-	background-color: #09090b;
-	color: #fafafa;
-	font-family: var(--font-satoshi), sans-serif;
-	overflow-x: hidden;
-	text-rendering: optimizeLegibility;
-	-webkit-font-smoothing: antialiased;
-}
+@source "../app";
+@source "../modules";
+@source "../shared";
+@source "../../../../packages/ui/src";
 
 html.lenis,
 html.lenis body {
@@ -35,4 +25,14 @@ html.lenis body {
 
 .lenis.lenis-scrolling iframe {
 	pointer-events: none;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield;
 }

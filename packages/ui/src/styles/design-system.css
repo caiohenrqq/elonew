@@ -1,0 +1,43 @@
+@theme {
+	--font-satoshi: var(--font-satoshi), sans-serif;
+
+	--color-background: #09090b;
+	--color-foreground: #fafafa;
+	--color-surface: #0d0d0f;
+	--color-surface-muted: #111113;
+	--color-muted: #18181b;
+	--color-border: rgb(255 255 255 / 0.1);
+	--color-ring: #0ea5e9;
+
+	--color-hextech-cyan: #0ea5e9;
+	--color-hextech-gold: #f59e0b;
+	--color-challenger: #f59e0b;
+
+	--color-success: #34d399;
+	--color-warning: #f59e0b;
+	--color-danger: #ef4444;
+
+	--radius-sm: 0.125rem;
+	--radius-md: 0.25rem;
+	--radius-lg: 0.5rem;
+
+	--text-label-xs: 0.625rem;
+	--text-label-sm: 0.6875rem;
+
+	--shadow-hextech-glow: 0 0 20px rgb(14 165 233 / 0.3);
+	--shadow-panel: 0 16px 36px rgb(0 0 0 / 0.45);
+
+	--ease-elonew-out: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-elonew-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@layer base {
+	body {
+		background-color: var(--color-background);
+		color: var(--color-foreground);
+		font-family: var(--font-satoshi), sans-serif;
+		overflow-x: hidden;
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: antialiased;
+	}
+}

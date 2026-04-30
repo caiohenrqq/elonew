@@ -87,7 +87,8 @@ export function mapApiDomainErrorToHttpException(
 		return mapDomainErrorToHttpException(error, [
 			{
 				errorTypes: [UserEmailAlreadyInUseError, UsernameAlreadyInUseError],
-				toException: (message) => new BadRequestException(message),
+				toException: () =>
+					new BadRequestException('Registration is unavailable.'),
 			},
 		]);
 

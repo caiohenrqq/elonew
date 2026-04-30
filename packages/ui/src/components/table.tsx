@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { labelText } from '../styles/classes';
 import { cn } from '../utils/cn';
 
 const Table = React.forwardRef<
@@ -76,7 +77,8 @@ const TableHead = React.forwardRef<
 	<th
 		ref={ref}
 		className={cn(
-			'h-12 px-4 text-left align-middle font-black uppercase tracking-widest text-white/40 [&:has([role=checkbox])]:pr-0',
+			labelText.control,
+			'h-12 px-4 text-left align-middle tracking-widest [&:has([role=checkbox])]:pr-0',
 			className,
 		)}
 		{...props}

@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@shared/payments/payment-method';
+import type { PaymentMethod } from '@packages/shared/payments/payment-method';
 
 export type InitiatePaymentInput = {
 	paymentId: string;

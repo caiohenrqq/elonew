@@ -4,6 +4,14 @@ export const orderIdParamSchema = z.string().trim().min(1);
 
 export type OrderIdParamSchemaInput = z.infer<typeof orderIdParamSchema>;
 
+export const listClientOrdersQuerySchema = z.object({
+	limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+
+export type ListClientOrdersQuerySchemaInput = z.infer<
+	typeof listClientOrdersQuerySchema
+>;
+
 export const saveOrderCredentialsSchema = z.object({
 	login: z.string().trim().min(1),
 	summonerName: z.string().trim().min(1),

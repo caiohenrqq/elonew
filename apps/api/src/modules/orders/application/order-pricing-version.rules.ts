@@ -9,12 +9,12 @@ import {
 import {
 	type OrderExtraType,
 	orderExtraTypes,
-} from '@shared/orders/order-extra';
+} from '@packages/shared/orders/order-extra';
 import {
 	orderRankProgression,
 	type RankPricedOrderServiceType,
 	rankPricedOrderServiceTypes,
-} from '@shared/orders/order-rank-progression';
+} from '@packages/shared/orders/order-rank-progression';
 
 export function normalizeOrderPricingVersionName(name: string): string {
 	const normalizedName = name.trim();

@@ -19,9 +19,20 @@
 			"types": "./src/navigation/navbar.tsx",
 			"default": "./src/navigation/navbar.tsx"
 		},
+		"./navigation/use-section-scroll": {
+			"types": "./src/navigation/use-section-scroll.ts",
+			"default": "./src/navigation/use-section-scroll.ts"
+		},
 		"./providers/smooth-scroll": {
 			"types": "./src/providers/smooth-scroll.tsx",
 			"default": "./src/providers/smooth-scroll.tsx"
+		},
+		"./styles/design-system.css": {
+			"default": "./src/styles/design-system.css"
+		},
+		"./styles/classes": {
+			"types": "./src/styles/classes.ts",
+			"default": "./src/styles/classes.ts"
 		},
 		"./text/word-swap": {
 			"types": "./src/text/word-swap.tsx",
@@ -50,6 +61,10 @@
 		"./components/input": {
 			"types": "./src/components/input.tsx",
 			"default": "./src/components/input.tsx"
+		},
+		"./components/number-input": {
+			"types": "./src/components/number-input.tsx",
+			"default": "./src/components/number-input.tsx"
 		},
 		"./components/label": {
 			"types": "./src/components/label.tsx",
@@ -85,5 +100,9 @@
 		"react": "19.2.3",
 		"tailwind-merge": "^3.5.0",
 		"typescript": "^5"
+	},
+	"dependencies": {
+		"@radix-ui/react-select": "^2.2.6",
+		"lucide-react": "^1.8.0"
 	}
 }

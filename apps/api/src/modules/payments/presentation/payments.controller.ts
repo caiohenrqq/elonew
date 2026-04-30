@@ -23,7 +23,7 @@ import {
 	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
-import type { PaymentMethod } from '@shared/payments/payment-method';
+import type { PaymentMethod } from '@packages/shared/payments/payment-method';
 import {
 	type CreatePaymentSchemaInput,
 	createPaymentSchema,

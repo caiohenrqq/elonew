@@ -5,7 +5,7 @@ import {
 	PaymentInvalidTransitionError,
 } from '@modules/payments/domain/payment.errors';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
-import type { PaymentMethod } from '@shared/payments/payment-method';
+import type { PaymentMethod } from '@packages/shared/payments/payment-method';
 
 type AllowedTransitionMap = Record<PaymentStatus, readonly PaymentStatus[]>;
 

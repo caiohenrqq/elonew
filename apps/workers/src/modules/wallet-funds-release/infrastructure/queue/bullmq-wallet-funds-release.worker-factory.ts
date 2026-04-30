@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createBullmqRedisConnection } from '@packages/config/queue/bullmq-redis.connection';
-import type { WalletFundsReleaseJob } from '@shared/wallet/wallet-funds-release-job';
+import type { WalletFundsReleaseJob } from '@packages/shared/wallet/wallet-funds-release-job';
 import { Worker } from 'bullmq';
 
 export type WalletFundsReleaseConsumerInstance = {

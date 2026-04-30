@@ -1,6 +1,6 @@
 import { duoBoostPriceTable } from '@packages/config/orders/duo-boost-price-table';
 import { eloBoostPriceTable } from '@packages/config/orders/elo-boost-price-table';
-import { orderExtraDefinitions } from '@shared/orders/order-extra';
+import { orderExtraDefinitions } from '@packages/shared/orders/order-extra';
 
 export function makeDefaultOrderPricingVersionInput(name = 'Default pricing'): {
 	name: string;
