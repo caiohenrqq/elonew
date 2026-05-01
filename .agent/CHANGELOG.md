@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Normalized package.json script conventions across the workspace by implementing a Top-Down Orchestration pattern. Centralized shared package builds at the root and removed duplicated setup chains from apps/api and apps/workers.
 - Refined the landing page CTA section with Awwwards-style animations and a bolder visual design: increased stats typography to `text-8xl`, implemented a slow cinematic counter (4.5s duration), and added premium visual details like glowing drop-shadows and neon-accent lines.
 - Refactored the web landing page into a feature-oriented frontend structure and promoted reusable navigation, animation, background, provider, and utility pieces into a real `@packages/ui` workspace package with explicit subpath exports and Next.js transpilation wiring.
 - Restored the web navbar's scrolled-state backdrop blur while keeping the heavier removed blur/filter/cursor effects out of the landing page.
