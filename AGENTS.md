@@ -260,7 +260,7 @@ A task is done when:
 ### 4. Payments Integration (Mercado Pago)
 - [x] Build `@packages/integrations/mercadopago` wrapper.
 - [x] Implement `HandleWebhook` use-case with idempotency (using `ProcessedWebhookEvent`).
-- [ ] Map Mercado Pago states to internal `PaymentStatus` and trigger order transitions.
+- [x] Map Mercado Pago states to internal `PaymentStatus` and trigger order transitions.
 
 ### 5. Booster Wallet & Finances
 - [x] Implement `Wallet` domain logic for Credit/Debit ledger entries.
