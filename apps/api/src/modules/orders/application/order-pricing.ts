@@ -1,8 +1,8 @@
 import type {
 	OrderExtraType,
 	OrderPricedExtra,
-} from '@shared/orders/order-extra';
-import type { OrderServiceType } from '@shared/orders/service-type';
+} from '@packages/shared/orders/order-extra';
+import type { OrderServiceType } from '@packages/shared/orders/service-type';
 
 export type OrderQuoteRequestDetails = {
 	serviceType: OrderServiceType;

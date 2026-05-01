@@ -1,4 +1,8 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
+import type {
+	ClientOrderDashboardSnapshot,
+	ClientOrderReaderPort,
+} from '@modules/orders/application/ports/client-order-reader.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import {
 	Order,
@@ -11,9 +15,9 @@ import { Injectable } from '@nestjs/common';
 import {
 	isOrderExtraType,
 	type OrderPricedExtra,
-} from '@shared/orders/order-extra';
-import type { OrderServiceType } from '@shared/orders/service-type';
-import { ensurePersistedEnum } from '@shared/utils/enum.utils';
+} from '@packages/shared/orders/order-extra';
+import type { OrderServiceType } from '@packages/shared/orders/service-type';
+import { ensurePersistedEnum } from '@packages/shared/utils/enum.utils';
 
 type OrderRecord = {
 	id: string;
@@ -59,6 +63,19 @@ type OrderDelegate = {
 		where: { clientId: string };
 		select: { id: true };
 	}): Promise<{ id: string } | null>;
+	findMany(args: {
+		where: { clientId: string };
+		include: { extras: true };
+		orderBy: { createdAt: 'desc' };
+		take: number;
+	}): Promise<Array<Omit<OrderRecord, 'credentials'> & { createdAt: Date }>>;
+	count(args: {
+		where: { clientId: string; status?: { in: string[] } };
+	}): Promise<number>;
+	aggregate(args: {
+		where: { clientId: string };
+		_sum: { totalAmount: true };
+	}): Promise<{ _sum: { totalAmount: number | null } }>;
 	create(args: {
 		data: {
 			id?: string;
@@ -192,7 +209,9 @@ type OrderPrismaClient = {
 };
 
 @Injectable()
-export class PrismaOrderRepository implements OrderRepositoryPort {
+export class PrismaOrderRepository
+	implements OrderRepositoryPort, ClientOrderReaderPort
+{
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly orderCredentialsCipher: OrderCredentialsCipherService,
@@ -245,6 +264,50 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 		});
 
 		return record !== null;
+	}
+
+	async findRecentForClient(
+		clientId: string,
+		limit: number,
+	): Promise<ClientOrderDashboardSnapshot[]> {
+		const records = await this.getDelegate().findMany({
+			where: { clientId },
+			include: { extras: true },
+			orderBy: { createdAt: 'desc' },
+			take: limit,
+		});
+
+		return records.map((record) => this.mapDashboardSnapshotFromRecord(record));
+	}
+
+	async countActiveForClient(clientId: string): Promise<number> {
+		return await this.getDelegate().count({
+			where: {
+				clientId,
+				status: {
+					in: [
+						OrderStatus.AWAITING_PAYMENT,
+						OrderStatus.PENDING_BOOSTER,
+						OrderStatus.IN_PROGRESS,
+					],
+				},
+			},
+		});
+	}
+
+	async countForClient(clientId: string): Promise<number> {
+		return await this.getDelegate().count({
+			where: { clientId },
+		});
+	}
+
+	async sumTotalAmountForClient(clientId: string): Promise<number> {
+		const result = await this.getDelegate().aggregate({
+			where: { clientId },
+			_sum: { totalAmount: true },
+		});
+
+		return result._sum.totalAmount ?? 0;
 	}
 
 	async save(order: Order): Promise<void> {
@@ -309,6 +372,32 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 				this.mapExtraFromRecord(extra),
 			),
 		});
+	}
+
+	private mapDashboardSnapshotFromRecord(
+		record: Omit<OrderRecord, 'credentials'> & { createdAt: Date },
+	): ClientOrderDashboardSnapshot {
+		return {
+			id: record.id,
+			clientId: record.clientId,
+			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
+			serviceType: record.serviceType
+				? this.mapServiceTypeFromPersistence(record.serviceType)
+				: null,
+			currentLeague: record.currentLeague,
+			currentDivision: record.currentDivision,
+			currentLp: record.currentLp,
+			desiredLeague: record.desiredLeague,
+			desiredDivision: record.desiredDivision,
+			server: record.server,
+			desiredQueue: record.desiredQueue,
+			lpGain: record.lpGain,
+			deadline: record.deadline,
+			subtotal: record.subtotal,
+			totalAmount: record.totalAmount,
+			discountAmount: record.discountAmount,
+			createdAt: record.createdAt,
+		};
 	}
 
 	private mapExtrasCreate(extras?: OrderPricedExtra[]):

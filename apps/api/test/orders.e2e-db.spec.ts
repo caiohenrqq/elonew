@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
 
 describe('Orders (e2e db)', () => {
 	let app: ApiHttpApp;
@@ -27,6 +28,33 @@ describe('Orders (e2e db)', () => {
 			lpGain: 20,
 			deadline: '2026-03-31T00:00:00.000Z',
 		};
+	}
+
+	async function seedActivePricingVersion() {
+		const input = makeDefaultOrderPricingVersionInput();
+
+		await prisma.pricingVersion.create({
+			data: {
+				name: input.name,
+				status: 'ACTIVE',
+				activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+				steps: {
+					create: input.steps.map((step) => ({
+						serviceType:
+							step.serviceType === 'elo_boost' ? 'ELO_BOOST' : 'DUO_BOOST',
+						league: step.league,
+						division: step.division,
+						priceToNext: step.priceToNext,
+					})),
+				},
+				extras: {
+					create: input.extras.map((extra) => ({
+						type: extra.type,
+						modifierRate: extra.modifierRate,
+					})),
+				},
+			},
+		});
 	}
 
 	function signToken(payload: Record<string, unknown>): string {
@@ -59,6 +87,11 @@ describe('Orders (e2e db)', () => {
 		await prisma.processedWebhookEvent.deleteMany();
 		await prisma.payment.deleteMany();
 		await prisma.order.deleteMany();
+		await prisma.orderQuote.deleteMany();
+		await prisma.pricingStep.deleteMany();
+		await prisma.pricingExtra.deleteMany();
+		await prisma.pricingVersion.deleteMany();
+		await seedActivePricingVersion();
 		const uniqueSuffix = Date.now().toString();
 		const user = await prisma.user.create({
 			data: {
@@ -77,12 +110,23 @@ describe('Orders (e2e db)', () => {
 
 	it('creates an authenticated order and returns it', async () => {
 		const token = signToken({ sub: clientId, role: 'CLIENT' });
+		let quoteId = '';
 		let orderId = '';
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send(makeOrderPayload())
+			.expect(201)
+			.expect<{ quoteId: string }>(({ body }) => {
+				quoteId = body.quoteId;
+			})
+			.execute();
 
 		await requestHttp(app)
 			.post('/orders')
 			.set('Authorization', `Bearer ${token}`)
-			.send(makeOrderPayload())
+			.send({ quoteId })
 			.expect(201)
 			.expect<{ id: string; status: string }>(({ body }) => {
 				orderId = body.id;
@@ -92,7 +136,14 @@ describe('Orders (e2e db)', () => {
 
 		await requestHttp(app)
 			.get(`/orders/${orderId}`)
-			.expect(200, { id: orderId, status: 'awaiting_payment' })
+			.set('Authorization', `Bearer ${token}`)
+			.expect(200, {
+				id: orderId,
+				status: 'awaiting_payment',
+				subtotal: 25.2,
+				totalAmount: 25.2,
+				discountAmount: 0,
+			})
 			.execute();
 	});
 });

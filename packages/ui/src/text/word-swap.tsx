@@ -1,7 +1,7 @@
 'use client';
 
 import type { RefObject } from 'react';
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { gsap } from '../animation/gsap';
 
 type WordSwapTextProps = {
@@ -14,7 +14,7 @@ export function useWordSwapAnimation() {
 	const topRef = useRef<HTMLSpanElement>(null);
 	const bottomRef = useRef<HTMLSpanElement>(null);
 
-	const animate = (isHovering: boolean) => {
+	const animate = useCallback((isHovering: boolean) => {
 		gsap.to(topRef.current, {
 			yPercent: isHovering ? -115 : 0,
 			duration: 0.72,
@@ -28,9 +28,19 @@ export function useWordSwapAnimation() {
 			ease: 'power4.out',
 			overwrite: 'auto',
 		});
-	};
+	}, []);
 
-	return { animate, bottomRef, topRef };
+	const getTriggerProps = useCallback(
+		() => ({
+			onBlur: () => animate(false),
+			onFocus: () => animate(true),
+			onMouseEnter: () => animate(true),
+			onMouseLeave: () => animate(false),
+		}),
+		[animate],
+	);
+
+	return { animate, bottomRef, getTriggerProps, topRef };
 }
 
 export function WordSwapText({

@@ -31,6 +31,7 @@ cleanup() {
 trap cleanup EXIT
 
 pnpm -w config:build
+pnpm -w shared:build
 pnpm -w auth:build
 pnpm -w integrations:build
 pnpm -w db:test:prepare

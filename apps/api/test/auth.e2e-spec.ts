@@ -1,6 +1,10 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { AUTH_SESSION_REPOSITORY_KEY } from '@modules/auth/application/ports/auth-session-repository.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import {
+	ORDER_PRICING_VERSION_REPOSITORY_KEY,
+	type OrderPricingVersionRepositoryPort,
+} from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
@@ -8,8 +12,10 @@ import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
 import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
+import { InMemoryOrderPricingVersionRepository } from './support/in-memory/orders/in-memory-order-pricing-version.repository';
 import { InMemoryOrderQuoteRepository } from './support/in-memory/orders/in-memory-order-quote.repository';
 import { InMemoryUserRepository } from './support/in-memory/users/in-memory-user.repository';
 import { createTestAppSettings } from './test-app-settings';
@@ -74,6 +80,7 @@ class InMemoryAuthSessionRepository {
 
 describe('Auth (e2e)', () => {
 	let app: ApiHttpApp;
+	let pricingVersions: OrderPricingVersionRepositoryPort;
 
 	async function createApp(
 		settingsOverride: Partial<Record<string, unknown>> = {},
@@ -89,6 +96,8 @@ describe('Auth (e2e)', () => {
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
 			.useClass(InMemoryOrderQuoteRepository)
+			.overrideProvider(ORDER_PRICING_VERSION_REPOSITORY_KEY)
+			.useClass(InMemoryOrderPricingVersionRepository)
 			.overrideProvider(AUTH_SESSION_REPOSITORY_KEY)
 			.useClass(InMemoryAuthSessionRepository)
 			.overrideProvider(AppSettingsService)
@@ -96,6 +105,14 @@ describe('Auth (e2e)', () => {
 
 		const moduleRef = await testingModule.compile();
 		app = await createTestHttpApp(moduleRef);
+		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		const version = await pricingVersions.createDraft(
+			makeDefaultOrderPricingVersionInput(),
+		);
+		await pricingVersions.activate({
+			versionId: version.id,
+			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
+		});
 	}
 
 	beforeEach(async () => {

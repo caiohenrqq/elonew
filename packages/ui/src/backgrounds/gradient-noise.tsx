@@ -2,7 +2,7 @@
 
 export function GradientNoise() {
 	return (
-		<div className="absolute inset-0 overflow-hidden bg-[#09090b] pointer-events-none">
+		<div className="absolute inset-0 overflow-hidden bg-background pointer-events-none">
 			<div
 				className="absolute inset-0 opacity-80"
 				style={{
@@ -18,7 +18,7 @@ export function GradientNoise() {
 					backgroundSize: '72px 72px',
 				}}
 			/>
-			<div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#09090b]/80" />
+			<div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/80" />
 		</div>
 	);
 }

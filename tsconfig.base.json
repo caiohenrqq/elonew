@@ -12,18 +12,16 @@
 		"isolatedModules": true,
 		"declaration": true,
 		"sourceMap": true,
-		"baseUrl": ".",
 		"paths": {
-			"@app/*": ["apps/api/src/*"],
-			"@modules/*": ["apps/api/src/modules/*"],
-			"@shared/*": ["packages/shared/src/*"],
-			"@database/*": ["packages/database/src/*"],
-			"@config/*": ["packages/config/src/*"],
-			"@auth/*": ["packages/auth/src/*"],
-			"@packages/integrations/*": ["packages/integrations/src/*"],
-			"@ui/*": ["packages/ui/src/*"],
-			"@testing/*": ["packages/testing/src/*"],
-			"@integrations/*": ["packages/integrations/src/*"]
+			"@app/*": ["./apps/api/src/*"],
+			"@modules/*": ["./apps/api/src/modules/*"],
+			"@database/*": ["./packages/database/src/*"],
+			"@config/*": ["./packages/config/src/*"],
+			"@auth/*": ["./packages/auth/src/*"],
+			"@packages/integrations/*": ["./packages/integrations/src/*"],
+			"@ui/*": ["./packages/ui/src/*"],
+			"@testing/*": ["./packages/testing/src/*"],
+			"@integrations/*": ["./packages/integrations/src/*"]
 		}
 	},
 	"exclude": ["node_modules", "dist"]

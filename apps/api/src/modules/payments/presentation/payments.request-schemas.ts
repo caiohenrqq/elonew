@@ -1,4 +1,4 @@
-import { paymentMethodValues } from '@shared/payments/payment-method';
+import { paymentMethodValues } from '@packages/shared/payments/payment-method';
 import { z } from 'zod';
 
 export const createPaymentSchema = z.object({

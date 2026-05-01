@@ -27,4 +27,5 @@ export const eloBoostPriceTable = [
 	{ league: 'diamond', division: 'III', priceToNext: 70 },
 	{ league: 'diamond', division: 'II', priceToNext: 70 },
 	{ league: 'diamond', division: 'I', priceToNext: 97.3 },
+	{ league: 'master', division: 'MASTER', priceToNext: 0 },
 ] as const;

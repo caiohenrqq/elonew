@@ -3,9 +3,9 @@ import type { PaymentRepositoryPort } from '@modules/payments/application/ports/
 import { Payment } from '@modules/payments/domain/payment.entity';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Injectable } from '@nestjs/common';
+import { PaymentMethod } from '@packages/shared/payments/payment-method';
+import { ensurePersistedEnum } from '@packages/shared/utils/enum.utils';
 import { PaymentMethod as PrismaPaymentMethod } from '@prisma/client';
-import { PaymentMethod } from '@shared/payments/payment-method';
-import { ensurePersistedEnum } from '@shared/utils/enum.utils';
 
 type PaymentRecord = {
 	id: string;

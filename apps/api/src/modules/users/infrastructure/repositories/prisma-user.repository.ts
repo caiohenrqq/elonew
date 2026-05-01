@@ -7,7 +7,7 @@ import {
 } from '@modules/users/domain/user.errors';
 import { Injectable } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
-import { ensurePersistedEnum } from '@shared/utils/enum.utils';
+import { ensurePersistedEnum } from '@packages/shared/utils/enum.utils';
 
 type UserRecord = {
 	id: string;

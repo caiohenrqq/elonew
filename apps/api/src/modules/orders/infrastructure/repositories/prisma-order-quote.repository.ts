@@ -7,9 +7,9 @@ import {
 	OrderQuoteNotFoundError,
 } from '@modules/orders/domain/order-pricing.errors';
 import { Injectable } from '@nestjs/common';
+import { isOrderExtraType } from '@packages/shared/orders/order-extra';
+import type { OrderServiceType } from '@packages/shared/orders/service-type';
 import { ServiceType } from '@prisma/client';
-import { isOrderExtraType } from '@shared/orders/order-extra';
-import type { OrderServiceType } from '@shared/orders/service-type';
 
 type OrderQuoteRecord = {
 	id: string;

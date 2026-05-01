@@ -65,6 +65,10 @@ When a request depends on recency (for example: "latest", "current", "today", "a
 - If the repo already has a container workflow, follow it.
 - If the repo has no container workflow, create a minimal one.
 - Keep repo-specific container details in this file.
+- Before starting any local dev server for frontend or full-stack verification, check the repo Docker workflow first.
+  - Run `docker compose -f infrastructure/docker/dev/docker-compose.dev.yml ps` when Docker access is available.
+  - If the `web` service is already running, use `http://localhost:3001` for browser verification instead of starting another web server.
+  - If the needed service is not running, prefer `pnpm docker:dev:up` over host-level dev servers unless the user explicitly asks otherwise.
 
 ### Secrets and sensitive data
 - Never print secrets such as tokens, private keys, or credentials to terminal output.
@@ -273,8 +277,8 @@ A task is done when:
 - [ ] Create endpoints for Admin intervention (Force cancel, user block/unblock).
 
 ### 8. Frontend implementation (Next.js)
-- [ ] Build shared component library in `@packages/ui`.
-- [ ] Implement Client Dashboard (Order creation, active order tracking).
+- [x] Build shared component library in `@packages/ui`.
+- [x] Implement Client Dashboard (Order creation, active order tracking).
 - [ ] Implement Booster Dashboard (Available orders queue, wallet management).
 - [ ] Implement Admin Dashboard (Metric overview, user management, support view).
 

@@ -3,9 +3,9 @@
 	"private": true,
 	"version": "0.0.0",
 	"scripts": {
-		"dev": "tsx watch src/main.ts",
-		"start": "tsx src/main.ts",
-		"test": "tsx --test src/**/*.spec.ts",
+		"dev": "pnpm -w config:build && pnpm -w shared:build && tsx watch src/main.ts",
+		"start": "pnpm -w config:build && pnpm -w shared:build && tsx src/main.ts",
+		"test": "pnpm -w config:build && pnpm -w shared:build && tsx --test src/**/*.spec.ts",
 		"biome:check": "biome check .",
 		"biome:fix": "biome check --write ."
 	},

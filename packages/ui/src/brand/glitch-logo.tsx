@@ -1,23 +1,21 @@
-export function GlitchLogo() {
-	return (
-		<div className="relative flex items-center gap-1 group cursor-pointer">
-			<div className="relative text-2xl font-black tracking-widest uppercase text-white overflow-hidden">
-				<span className="relative z-10">ELONEW</span>
-				<span
-					className="absolute inset-0 text-[#0ea5e9] opacity-0 group-hover:opacity-50 group-hover:-translate-x-0.5 transition-transform duration-150"
-					aria-hidden="true"
-				>
-					ELONEW
-				</span>
-				<span
-					className="absolute inset-0 text-[#f59e0b] opacity-0 group-hover:opacity-40 group-hover:translate-x-0.5 transition-transform duration-150"
-					aria-hidden="true"
-				>
-					ELONEW
-				</span>
-			</div>
+import Image from 'next/image';
+import { cn } from '../utils/cn';
 
-			<div className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full shadow-[0_0_10px_rgba(14,165,233,0.8)]" />
-		</div>
+type GlitchLogoProps = {
+	className?: string;
+};
+
+export function GlitchLogo({ className }: GlitchLogoProps) {
+	return (
+		<Image
+			src="/images/EloNew.png"
+			alt="EloNew"
+			width={1227}
+			height={1152}
+			className={cn(
+				'block h-28 w-auto cursor-pointer object-contain transition duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:brightness-110',
+				className,
+			)}
+		/>
 	);
 }
