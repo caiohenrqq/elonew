@@ -1,5 +1,9 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type { WalletRepositoryPort } from '@modules/wallet/application/ports/wallet-repository.port';
+import type {
+	WalletTransactionReaderPort,
+	WalletTransactionSnapshot,
+} from '@modules/wallet/application/ports/wallet-transaction-reader.port';
 import {
 	Wallet,
 	type WalletTransaction,
@@ -29,6 +33,10 @@ type WalletDelegate = {
 		where: { boosterId: string };
 		include: { transactions: { orderBy: { createdAt: 'asc' } } };
 	}): Promise<WalletRecord | null>;
+	findUnique(args: {
+		where: { boosterId: string };
+		select: { id: true };
+	}): Promise<{ id: string } | null>;
 	findMany(args: {
 		include: { transactions: { orderBy: { createdAt: 'asc' } } };
 	}): Promise<WalletRecord[]>;
@@ -60,6 +68,11 @@ type WalletTransactionDelegate = {
 			createdAt: Date;
 		}>;
 	}): Promise<{ count: number }>;
+	findMany(args: {
+		where: { walletId: string };
+		orderBy: { createdAt: 'desc' };
+		take: number;
+	}): Promise<Array<WalletRecord['transactions'][number] & { id: string }>>;
 };
 
 type WalletPrismaClient = {
@@ -68,7 +81,9 @@ type WalletPrismaClient = {
 };
 
 @Injectable()
-export class PrismaWalletRepository implements WalletRepositoryPort {
+export class PrismaWalletRepository
+	implements WalletRepositoryPort, WalletTransactionReaderPort
+{
 	constructor(private readonly prisma: PrismaService) {}
 
 	async findByBoosterId(boosterId: string): Promise<Wallet | null> {
@@ -87,6 +102,28 @@ export class PrismaWalletRepository implements WalletRepositoryPort {
 		});
 
 		return records.map((record) => this.mapRecordToDomain(record));
+	}
+
+	async findRecentForBooster(
+		boosterId: string,
+		limit: number,
+	): Promise<WalletTransactionSnapshot[] | null> {
+		const wallet = await this.getWalletDelegate().findUnique({
+			where: { boosterId },
+			select: { id: true },
+		});
+		if (!wallet) return null;
+
+		const records = await this.getWalletTransactionDelegate().findMany({
+			where: { walletId: wallet.id },
+			orderBy: { createdAt: 'desc' },
+			take: limit,
+		});
+
+		return records.map((transaction) => ({
+			id: transaction.id,
+			...this.mapTransactionToDomain(transaction),
+		}));
 	}
 
 	async save(wallet: Wallet): Promise<void> {

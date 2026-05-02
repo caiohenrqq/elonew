@@ -1,5 +1,9 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type {
+	BoosterOrderDashboardSnapshot,
+	BoosterOrderReaderPort,
+} from '@modules/orders/application/ports/booster-order-reader.port';
+import type {
 	ClientOrderDashboardSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
@@ -64,7 +68,14 @@ type OrderDelegate = {
 		select: { id: true };
 	}): Promise<{ id: string } | null>;
 	findMany(args: {
-		where: { clientId: string };
+		where:
+			| { clientId: string }
+			| {
+					status: string;
+					OR?: Array<{ boosterId: string | null }>;
+					boosterId?: string;
+					boosterRejections?: { none: { boosterId: string } };
+			  };
 		include: { extras: true };
 		orderBy: { createdAt: 'desc' };
 		take: number;
@@ -203,14 +214,26 @@ type OrderCredentialsDelegate = {
 	deleteMany(args: { where: { orderId: string } }): Promise<{ count: number }>;
 };
 
+type OrderBoosterRejectionDelegate = {
+	upsert(args: {
+		where: { orderId_boosterId: { orderId: string; boosterId: string } };
+		create: { orderId: string; boosterId: string };
+		update: Record<string, never>;
+	}): Promise<unknown>;
+};
+
 type OrderPrismaClient = {
 	order: OrderDelegate;
 	orderCredentials: OrderCredentialsDelegate;
 };
 
+type OrderRejectionPrismaClient = OrderPrismaClient & {
+	orderBoosterRejection: OrderBoosterRejectionDelegate;
+};
+
 @Injectable()
 export class PrismaOrderRepository
-	implements OrderRepositoryPort, ClientOrderReaderPort
+	implements OrderRepositoryPort, ClientOrderReaderPort, BoosterOrderReaderPort
 {
 	constructor(
 		private readonly prisma: PrismaService,
@@ -310,16 +333,101 @@ export class PrismaOrderRepository
 		return result._sum.totalAmount ?? 0;
 	}
 
+	async findAvailableForBooster(
+		boosterId: string,
+		limit: number,
+	): Promise<BoosterOrderDashboardSnapshot[]> {
+		const records = await this.getDelegate().findMany({
+			where: {
+				status: OrderStatus.PENDING_BOOSTER,
+				OR: [{ boosterId: null }, { boosterId }],
+				boosterRejections: { none: { boosterId } },
+			},
+			include: { extras: true },
+			orderBy: { createdAt: 'desc' },
+			take: limit,
+		});
+
+		return records.map((record) =>
+			this.mapBoosterDashboardSnapshotFromRecord(record),
+		);
+	}
+
+	async findActiveForBooster(
+		boosterId: string,
+		limit: number,
+	): Promise<BoosterOrderDashboardSnapshot[]> {
+		const records = await this.getDelegate().findMany({
+			where: {
+				status: OrderStatus.IN_PROGRESS,
+				boosterId,
+			},
+			include: { extras: true },
+			orderBy: { createdAt: 'desc' },
+			take: limit,
+		});
+
+		return records.map((record) =>
+			this.mapBoosterDashboardSnapshotFromRecord(record),
+		);
+	}
+
+	async findRecentCompletedForBooster(
+		boosterId: string,
+		limit: number,
+	): Promise<BoosterOrderDashboardSnapshot[]> {
+		const records = await this.getDelegate().findMany({
+			where: {
+				status: OrderStatus.COMPLETED,
+				boosterId,
+			},
+			include: { extras: true },
+			orderBy: { createdAt: 'desc' },
+			take: limit,
+		});
+
+		return records.map((record) =>
+			this.mapBoosterDashboardSnapshotFromRecord(record),
+		);
+	}
+
 	async save(order: Order): Promise<void> {
+		await this.saveWithClient(order, this.getClient());
+	}
+
+	async saveBoosterRejection(order: Order, boosterId: string): Promise<void> {
+		await this.prisma.$transaction(async (tx) => {
+			const client = tx as unknown as OrderRejectionPrismaClient;
+			await client.orderBoosterRejection.upsert({
+				where: {
+					orderId_boosterId: {
+						orderId: order.id,
+						boosterId,
+					},
+				},
+				create: {
+					orderId: order.id,
+					boosterId,
+				},
+				update: {},
+			});
+			await this.saveWithClient(order, client);
+		});
+	}
+
+	private async saveWithClient(
+		order: Order,
+		client: OrderPrismaClient,
+	): Promise<void> {
 		const credentialsCreate = this.mapCredentialsCreate(order.credentials);
 		const credentialsUpdate = this.mapCredentialsUpdate(order.credentials);
 		if (!order.credentials) {
-			await this.getOrderCredentialsDelegate().deleteMany({
+			await client.orderCredentials.deleteMany({
 				where: { orderId: order.id },
 			});
 		}
 
-		await this.getDelegate().upsert({
+		await client.order.upsert({
 			where: { id: order.id },
 			create: {
 				id: order.id,
@@ -347,12 +455,12 @@ export class PrismaOrderRepository
 		});
 	}
 
-	private getDelegate(): OrderDelegate {
-		return (this.prisma as unknown as OrderPrismaClient).order;
+	private getClient(): OrderPrismaClient {
+		return this.prisma as unknown as OrderPrismaClient;
 	}
 
-	private getOrderCredentialsDelegate(): OrderCredentialsDelegate {
-		return (this.prisma as unknown as OrderPrismaClient).orderCredentials;
+	private getDelegate(): OrderDelegate {
+		return this.getClient().order;
 	}
 
 	private mapOrderFromRecord(record: OrderRecord): Order {
@@ -396,6 +504,34 @@ export class PrismaOrderRepository
 			subtotal: record.subtotal,
 			totalAmount: record.totalAmount,
 			discountAmount: record.discountAmount,
+			createdAt: record.createdAt,
+		};
+	}
+
+	private mapBoosterDashboardSnapshotFromRecord(
+		record: Omit<OrderRecord, 'credentials'> & { createdAt: Date },
+	): BoosterOrderDashboardSnapshot {
+		const totalAmount = record.totalAmount;
+
+		return {
+			id: record.id,
+			boosterId: record.boosterId,
+			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
+			serviceType: record.serviceType
+				? this.mapServiceTypeFromPersistence(record.serviceType)
+				: null,
+			currentLeague: record.currentLeague,
+			currentDivision: record.currentDivision,
+			currentLp: record.currentLp,
+			desiredLeague: record.desiredLeague,
+			desiredDivision: record.desiredDivision,
+			server: record.server,
+			desiredQueue: record.desiredQueue,
+			lpGain: record.lpGain,
+			deadline: record.deadline,
+			totalAmount,
+			boosterAmount:
+				totalAmount === null ? 0 : Number((totalAmount * 0.7).toFixed(2)),
 			createdAt: record.createdAt,
 		};
 	}

@@ -1,6 +1,7 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import { ORDER_COMPLETION_EARNINGS_PORT_KEY } from '@modules/orders/application/ports/order-completion-earnings.port';
 import {
 	ORDER_PRICING_VERSION_REPOSITORY_KEY,
 	type OrderPricingVersionRepositoryPort,
@@ -52,6 +53,10 @@ describe('Orders module integration', () => {
 			if (id === 'client-2') return { id, role: Role.CLIENT };
 			return null;
 		}
+	}
+
+	class OrderCompletionEarningsStub {
+		async creditCompletedOrderEarnings(): Promise<void> {}
 	}
 
 	function makeQuotePayload() {
@@ -110,6 +115,8 @@ describe('Orders module integration', () => {
 			.useClass(InMemoryOrderPricingVersionRepository)
 			.overrideProvider(BOOSTER_USER_READER_KEY)
 			.useClass(BoosterLookupStub)
+			.overrideProvider(ORDER_COMPLETION_EARNINGS_PORT_KEY)
+			.useClass(OrderCompletionEarningsStub)
 			.compile();
 
 		controller = moduleRef.get(OrdersController);

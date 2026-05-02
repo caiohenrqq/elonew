@@ -10,6 +10,8 @@ import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/comp
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
+import { ListBoosterQueueUseCase } from '@modules/orders/application/use-cases/list-booster-queue/list-booster-queue.use-case';
+import { ListBoosterWorkUseCase } from '@modules/orders/application/use-cases/list-booster-work/list-booster-work.use-case';
 import { ListClientOrdersUseCase } from '@modules/orders/application/use-cases/list-client-orders/list-client-orders.use-case';
 import { PreviewOrderQuoteUseCase } from '@modules/orders/application/use-cases/preview-order-quote/preview-order-quote.use-case';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
@@ -34,7 +36,9 @@ import {
 	createOrderQuoteSchema,
 } from '@packages/shared/orders/create-order-quote.schema';
 import {
+	type ListBoosterOrdersQuerySchemaInput,
 	type ListClientOrdersQuerySchemaInput,
+	listBoosterOrdersQuerySchema,
 	listClientOrdersQuerySchema,
 	type OrderIdParamSchemaInput,
 	orderIdParamSchema,
@@ -50,6 +54,8 @@ export class OrdersController {
 		private readonly previewOrderQuoteUseCase: PreviewOrderQuoteUseCase,
 		private readonly getOrderUseCase: GetOrderUseCase,
 		private readonly listClientOrdersUseCase: ListClientOrdersUseCase,
+		private readonly listBoosterQueueUseCase: ListBoosterQueueUseCase,
+		private readonly listBoosterWorkUseCase: ListBoosterWorkUseCase,
 		private readonly acceptOrderUseCase: AcceptOrderUseCase,
 		private readonly rejectOrderUseCase: RejectOrderUseCase,
 		private readonly cancelOrderUseCase: CancelOrderUseCase,
@@ -184,6 +190,34 @@ export class OrdersController {
 			orders: result.orders.map(({ clientId: _clientId, ...order }) => order),
 			summary: result.summary,
 		};
+	}
+
+	@Get('booster/queue')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.BOOSTER)
+	async listBoosterQueue(
+		@Query(new ZodValidationPipe(listBoosterOrdersQuerySchema))
+		query: ListBoosterOrdersQuerySchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<Awaited<ReturnType<ListBoosterQueueUseCase['execute']>>> {
+		return await this.listBoosterQueueUseCase.execute({
+			boosterId: currentUser.id,
+			limit: query.limit,
+		});
+	}
+
+	@Get('booster/work')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.BOOSTER)
+	async listBoosterWork(
+		@Query(new ZodValidationPipe(listBoosterOrdersQuerySchema))
+		query: ListBoosterOrdersQuerySchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<Awaited<ReturnType<ListBoosterWorkUseCase['execute']>>> {
+		return await this.listBoosterWorkUseCase.execute({
+			boosterId: currentUser.id,
+			limit: query.limit,
+		});
 	}
 
 	@Get(':orderId')

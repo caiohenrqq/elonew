@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
 import { GetWalletUseCase } from '@modules/wallet/application/use-cases/get-wallet/get-wallet.use-case';
+import { ListWalletTransactionsUseCase } from '@modules/wallet/application/use-cases/list-wallet-transactions/list-wallet-transactions.use-case';
 import { ReleaseMaturedWalletFundsUseCase } from '@modules/wallet/application/use-cases/release-matured-wallet-funds/release-matured-wallet-funds.use-case';
 import { RequestWithdrawalUseCase } from '@modules/wallet/application/use-cases/request-withdrawal/request-withdrawal.use-case';
 import {
@@ -16,6 +17,7 @@ import {
 	HttpCode,
 	Param,
 	Post,
+	Query,
 	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
@@ -26,6 +28,8 @@ import {
 	boosterIdParamSchema,
 	type CreditCompletedOrderEarningsSchemaInput,
 	creditCompletedOrderEarningsSchema,
+	type ListWalletTransactionsQuerySchemaInput,
+	listWalletTransactionsQuerySchema,
 	type ReleaseMaturedWalletFundsSchemaInput,
 	type RequestWithdrawalSchemaInput,
 	releaseMaturedWalletFundsSchema,
@@ -36,6 +40,7 @@ import {
 export class WalletsController {
 	constructor(
 		private readonly getWalletUseCase: GetWalletUseCase,
+		private readonly listWalletTransactionsUseCase: ListWalletTransactionsUseCase,
 		private readonly creditCompletedOrderEarningsUseCase: CreditCompletedOrderEarningsUseCase,
 		private readonly releaseMaturedWalletFundsUseCase: ReleaseMaturedWalletFundsUseCase,
 		private readonly requestWithdrawalUseCase: RequestWithdrawalUseCase,
@@ -55,6 +60,23 @@ export class WalletsController {
 	}> {
 		if (currentUser.id !== boosterId) throw new WalletNotFoundError();
 		return await this.getWalletUseCase.execute({ boosterId });
+	}
+
+	@Get(':boosterId/transactions')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.BOOSTER)
+	async listTransactions(
+		@Param('boosterId', new ZodValidationPipe(boosterIdParamSchema))
+		boosterId: BoosterIdParamSchemaInput,
+		@Query(new ZodValidationPipe(listWalletTransactionsQuerySchema))
+		query: ListWalletTransactionsQuerySchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<Awaited<ReturnType<ListWalletTransactionsUseCase['execute']>>> {
+		if (currentUser.id !== boosterId) throw new WalletNotFoundError();
+		return await this.listWalletTransactionsUseCase.execute({
+			boosterId,
+			limit: query.limit,
+		});
 	}
 
 	@Post('credits/order-completed')

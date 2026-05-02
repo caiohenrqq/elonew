@@ -72,6 +72,7 @@ model User {
   profile          Profile?
   ordersAsClient   Order[]   @relation("ClientOrders")
   ordersAsBooster  Order[]   @relation("BoosterOrders")
+  boosterOrderRejections OrderBoosterRejection[] @relation("BoosterRejectedOrders")
   orderQuotes      OrderQuote[]
   wallet           Wallet?
   chatMessages     ChatMessage[]
@@ -130,6 +131,7 @@ model Order {
   chat             Chat?
   rating           Rating?
   walletTransactions WalletTransaction[]
+  boosterRejections OrderBoosterRejection[]
 
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
@@ -139,6 +141,19 @@ model Order {
   @@index([boosterId])
   @@index([pricingVersionId])
   @@map("orders")
+}
+
+model OrderBoosterRejection {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  boosterId String
+  booster   User     @relation("BoosterRejectedOrders", fields: [boosterId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([orderId, boosterId])
+  @@index([boosterId])
+  @@map("order_booster_rejections")
 }
 
 model OrderQuote {

@@ -1,5 +1,6 @@
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { BOOSTER_ORDER_READER_KEY } from '@modules/orders/application/ports/booster-order-reader.port';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
 import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
 import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
@@ -22,6 +23,8 @@ import { CreateOrderPricingVersionUseCase } from '@modules/orders/application/us
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
 import { GetOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/get-order-pricing-version/get-order-pricing-version.use-case';
+import { ListBoosterQueueUseCase } from '@modules/orders/application/use-cases/list-booster-queue/list-booster-queue.use-case';
+import { ListBoosterWorkUseCase } from '@modules/orders/application/use-cases/list-booster-work/list-booster-work.use-case';
 import { ListClientOrdersUseCase } from '@modules/orders/application/use-cases/list-client-orders/list-client-orders.use-case';
 import { ListOrderPricingVersionsUseCase } from '@modules/orders/application/use-cases/list-order-pricing-versions/list-order-pricing-versions.use-case';
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
@@ -90,6 +93,13 @@ import { Module } from '@nestjs/common';
 			inject: [PrismaOrderRepository],
 		},
 		{
+			provide: BOOSTER_ORDER_READER_KEY,
+			useFactory: (
+				orderRepository: PrismaOrderRepository,
+			): PrismaOrderRepository => orderRepository,
+			inject: [PrismaOrderRepository],
+		},
+		{
 			provide: ORDER_CHECKOUT_PORT_KEY,
 			useFactory: (
 				orderCheckoutRepository: PrismaOrderCheckoutRepository,
@@ -127,6 +137,8 @@ import { Module } from '@nestjs/common';
 		ActivateOrderPricingVersionUseCase,
 		PreviewOrderQuoteUseCase,
 		ListClientOrdersUseCase,
+		ListBoosterQueueUseCase,
+		ListBoosterWorkUseCase,
 		GetOrderUseCase,
 		MarkOrderAsPaidUseCase,
 		AcceptOrderUseCase,
