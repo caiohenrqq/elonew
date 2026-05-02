@@ -24,6 +24,7 @@
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"test:e2e": "pnpm -w config:build && pnpm -w shared:build && pnpm -w auth:build && pnpm -w integrations:build && jest --config ./test/jest-e2e.json",
 		"test:e2e:db": "bash ../../infrastructure/scripts/api-db-test-runner.sh ./test/jest-e2e-db.json",
+		"seed:dev-users": "ts-node scripts/seed-dev-users.ts",
 		"prisma:generate": "pnpm -w db:generate",
 		"prisma:validate": "pnpm -w db:validate",
 		"prisma:migrate:dev": "pnpm -w db:migrate:dev",

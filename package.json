@@ -36,6 +36,7 @@
 		"db:validate": "pnpm db validate",
 		"db:migrate:dev": "pnpm db migrate dev",
 		"db:migrate:deploy": "pnpm db migrate deploy",
+		"db:seed:dev": "dotenv -e apps/api/.env -- pnpm --filter api seed:dev-users",
 		"db:studio": "pnpm db studio",
 		"db:test:validate": "pnpm db:test validate",
 		"db:test:prepare": "bash infrastructure/scripts/database-test-setup.sh",
