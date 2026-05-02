@@ -48,24 +48,16 @@ function registerHttpSecurity(app: ApiHttpApp): void {
 					header(name: string, value: string): void;
 				},
 				payload: unknown,
-			) => Promise<unknown> | unknown,
+				done: (err: Error | null, payload?: unknown) => void,
+			) => void,
 		): void;
 	};
 
-	instance.addHook(
-		'onSend',
-		async (
-			_request,
-			reply: {
-				header(name: string, value: string): void;
-			},
-			payload: unknown,
-		) => {
-			reply.header('X-Content-Type-Options', 'nosniff');
-			reply.header('X-Frame-Options', 'DENY');
-			reply.header('Referrer-Policy', 'no-referrer');
+	instance.addHook('onSend', (_request, reply, payload, done) => {
+		reply.header('X-Content-Type-Options', 'nosniff');
+		reply.header('X-Frame-Options', 'DENY');
+		reply.header('Referrer-Policy', 'no-referrer');
 
-			return payload;
-		},
-	);
+		done(null, payload);
+	});
 }
