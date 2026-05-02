@@ -56,6 +56,7 @@ export const setAuthSession = async (session: AuthSessionInput) => {
 			accessToken: session.accessToken,
 			refreshToken: session.refreshToken,
 			accessTokenExpiresAt,
+			userId: session.user.id,
 			userRole: session.user.role,
 			username: session.user.username,
 		},

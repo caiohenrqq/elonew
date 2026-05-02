@@ -15,13 +15,9 @@ export const proxy = (request: NextRequest) => {
 		return NextResponse.redirect(new URL('/login', request.url));
 	}
 
-	if ((pathname === '/login' || pathname === '/register') && hasSession) {
-		return NextResponse.redirect(new URL('/client', request.url));
-	}
-
 	return NextResponse.next();
 };
 
 export const config = {
-	matcher: ['/client/:path*', '/login', '/register'],
+	matcher: ['/client/:path*'],
 };

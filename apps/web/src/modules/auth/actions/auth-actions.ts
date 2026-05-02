@@ -24,16 +24,19 @@ export const loginAction = async (
 		return { error: parsed.error.issues[0]?.message ?? 'Dados inválidos.' };
 	}
 
+	let redirectPath = '/client';
 	try {
 		await assertSameOriginRequest();
-		await login(parsed.data);
+		const session = await login(parsed.data);
+		if (session.user.role === 'BOOSTER') redirectPath = '/booster';
+		if (session.user.role === 'ADMIN') redirectPath = '/';
 	} catch (error) {
 		return {
 			error: getAuthErrorMessage(error, 'login'),
 		};
 	}
 
-	redirect('/client');
+	redirect(redirectPath);
 };
 
 export const registerAction = async (
