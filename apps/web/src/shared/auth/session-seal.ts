@@ -10,6 +10,7 @@ const sealedSessionPayloadSchema = z.object({
 	accessToken: z.string().min(1),
 	refreshToken: z.string().min(1),
 	accessTokenExpiresAt: z.number().int().positive(),
+	userId: z.string().min(1).optional(),
 	userRole: z.string().min(1),
 	username: z.string().min(1).optional(),
 });

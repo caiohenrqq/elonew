@@ -4,6 +4,14 @@ export const boosterIdParamSchema = z.string().trim().min(1);
 
 export type BoosterIdParamSchemaInput = z.infer<typeof boosterIdParamSchema>;
 
+export const listWalletTransactionsQuerySchema = z.object({
+	limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+
+export type ListWalletTransactionsQuerySchemaInput = z.infer<
+	typeof listWalletTransactionsQuerySchema
+>;
+
 export const creditCompletedOrderEarningsSchema = z.object({
 	orderId: z.string().trim().min(1),
 	boosterId: z.string().trim().min(1),

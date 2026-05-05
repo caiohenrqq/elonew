@@ -2,6 +2,7 @@
 
 import { api } from '@/shared/api-client-management/api-client';
 import { getCheckoutErrorMessage } from '@/shared/api-client-management/user-messages';
+import { redirectOnAuthError } from '@/shared/auth/redirect-on-auth-error';
 import { getAuthSession } from '@/shared/auth/session';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import {
@@ -78,14 +79,22 @@ export const startCheckoutAction = async (
 };
 
 export const getOrder = async (orderId: string): Promise<GetOrderOutput> => {
-	return await getOrderFromApi(orderId, (path, init) =>
-		api.request(path, { ...init, allowSessionRefresh: false }),
-	);
+	try {
+		return await getOrderFromApi(orderId, (path, init) =>
+			api.request(path, { ...init, allowSessionRefresh: false }),
+		);
+	} catch (error) {
+		return redirectOnAuthError(error);
+	}
 };
 
 export const getClientDashboardOrders =
 	async (): Promise<ClientDashboardOrdersOutput> => {
-		return await getClientDashboardOrdersFromApi((path, init) =>
-			api.request(path, { ...init, allowSessionRefresh: false }),
-		);
+		try {
+			return await getClientDashboardOrdersFromApi((path, init) =>
+				api.request(path, { ...init, allowSessionRefresh: false }),
+			);
+		} catch (error) {
+			return redirectOnAuthError(error);
+		}
 	};

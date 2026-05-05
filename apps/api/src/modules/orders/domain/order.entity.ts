@@ -211,6 +211,10 @@ export class Order {
 		this.currentBoosterId = boosterId;
 	}
 
+	clearBoosterAssignment(): void {
+		this.currentBoosterId = null;
+	}
+
 	complete(): void {
 		this.transitionTo(OrderStatus.COMPLETED);
 		this.currentCredentials = null;

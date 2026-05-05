@@ -115,6 +115,10 @@ export class InMemoryOrderRepository
 		return Promise.resolve();
 	}
 
+	async saveBoosterRejection(order: Order): Promise<void> {
+		await this.save(order);
+	}
+
 	private mapDashboardSnapshot(order: Order): ClientOrderDashboardSnapshot {
 		return {
 			id: order.id,

@@ -279,7 +279,7 @@ A task is done when:
 ### 8. Frontend implementation (Next.js)
 - [x] Build shared component library in `@packages/ui`.
 - [x] Implement Client Dashboard (Order creation, active order tracking).
-- [ ] Implement Booster Dashboard (Available orders queue, wallet management).
+- [x] Implement Booster Dashboard (Available orders queue, wallet management).
 - [ ] Implement Admin Dashboard (Metric overview, user management, support view).
 
 ### 9. API request validation hardening

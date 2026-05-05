@@ -18,7 +18,10 @@ type ApiRequestOptions = RequestInit & {
 const DEFAULT_API_BASE_URL = 'http://localhost:3000';
 
 const getApiBaseUrl = () => {
-	return (process.env.API_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, '');
+	const configuredUrl = process.env.API_URL;
+	if (configuredUrl) return configuredUrl.replace(/\/$/, '');
+	if (process.env.NODE_ENV !== 'production') return DEFAULT_API_BASE_URL;
+	throw new Error('API_URL is required in production.');
 };
 
 const parseJsonResponse = async (response: Response) => {
@@ -33,12 +36,21 @@ const parseJsonResponse = async (response: Response) => {
 };
 
 const refreshSession = async (refreshToken: string) => {
-	const response = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ refreshToken }),
-		cache: 'no-store',
-	});
+	let response: Response;
+
+	try {
+		response = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ refreshToken }),
+			cache: 'no-store',
+		});
+	} catch {
+		await clearAuthSession();
+		throw new ApiRequestError(401, {
+			message: 'Entre novamente para continuar.',
+		});
+	}
 
 	if (!response.ok) {
 		await clearAuthSession();

@@ -26,9 +26,16 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		this.orders.set(order.id, order);
 	}
 
+	async saveBoosterRejection(order: Order, boosterId: string): Promise<void> {
+		this.rejections.push({ orderId: order.id, boosterId });
+		await this.save(order);
+	}
+
 	insert(order: Order): void {
 		this.orders.set(order.id, order);
 	}
+
+	readonly rejections: Array<{ orderId: string; boosterId: string }> = [];
 }
 
 describe('RejectOrderUseCase', () => {
@@ -43,6 +50,9 @@ describe('RejectOrderUseCase', () => {
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('pending_booster');
+		expect(repository.rejections).toEqual([
+			{ orderId: 'order-1', boosterId: 'booster-1' },
+		]);
 	});
 
 	it('throws when order does not exist', async () => {
@@ -74,5 +84,18 @@ describe('RejectOrderUseCase', () => {
 		await expect(
 			useCase.execute({ orderId: 'order-3', boosterId: 'booster-2' }),
 		).rejects.toThrow(OrderNotFoundError);
+	});
+
+	it('clears selected-booster assignment when that booster rejects', async () => {
+		const repository = new InMemoryOrderRepository();
+		const order = Order.create('order-4', { boosterId: 'booster-1' });
+		order.confirmPayment();
+		repository.insert(order);
+		const useCase = new RejectOrderUseCase(repository);
+
+		await useCase.execute({ orderId: 'order-4', boosterId: 'booster-1' });
+
+		const savedOrder = await repository.findById('order-4');
+		expect(savedOrder?.boosterId).toBeNull();
 	});
 });

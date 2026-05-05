@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 rm -rf apps/api/dist
+rm -f apps/api/*.tsbuildinfo
 pnpm -w config:build
 pnpm -w shared:build
 

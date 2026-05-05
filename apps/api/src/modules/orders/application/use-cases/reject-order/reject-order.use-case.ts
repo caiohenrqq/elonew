@@ -24,6 +24,11 @@ export class RejectOrderUseCase {
 			throw new OrderNotFoundError();
 
 		order.rejectByBooster();
-		await this.orderRepository.save(order);
+		if (order.boosterId === input.boosterId) order.clearBoosterAssignment();
+		if (!this.orderRepository.saveBoosterRejection) {
+			await this.orderRepository.save(order);
+			return;
+		}
+		await this.orderRepository.saveBoosterRejection(order, input.boosterId);
 	}
 }

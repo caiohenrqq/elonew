@@ -23,6 +23,7 @@ export const login = async (input: LoginInput) => {
 		body: JSON.stringify(input),
 	});
 	await setAuthSession(session);
+	return session;
 };
 
 export const register = async (input: RegisterInput) => {
