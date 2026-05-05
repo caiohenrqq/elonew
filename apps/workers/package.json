@@ -3,9 +3,10 @@
 	"private": true,
 	"version": "0.0.0",
 	"scripts": {
-		"dev": "pnpm -w config:build && pnpm -w shared:build && tsx watch src/main.ts",
-		"start": "pnpm -w config:build && pnpm -w shared:build && tsx src/main.ts",
-		"test": "pnpm -w config:build && pnpm -w shared:build && tsx --test src/**/*.spec.ts",
+		"build:deps": "pnpm -w build:packages",
+		"dev": "pnpm build:deps && tsx watch src/main.ts",
+		"start": "pnpm build:deps && tsx src/main.ts",
+		"test": "pnpm build:deps && tsx --test src/**/*.spec.ts",
 		"biome:check": "biome check .",
 		"biome:fix": "biome check --write ."
 	},

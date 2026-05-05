@@ -25,9 +25,9 @@ pnpm install
 pnpm docker:dev:down
 pnpm docker:dev:up
 pnpm docker:dev:logs
-pnpm --filter api run start:dev
-pnpm --filter web run dev
-pnpm --filter @apps/workers run dev
+pnpm dev:api
+pnpm dev:web
+pnpm dev:workers
 ```
 
 When dependencies are added or changed with `pnpm install`, restart the Docker dev stack before continuing so the containers pick up the updated workspace state.
