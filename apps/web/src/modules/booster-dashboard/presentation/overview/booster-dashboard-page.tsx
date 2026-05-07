@@ -1,3 +1,6 @@
+import { BadgeDollarSign, BriefcaseBusiness, ListChecks } from 'lucide-react';
+import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
+import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
 import {
 	getBoosterQueue,
 	getBoosterWallet,
@@ -51,53 +54,58 @@ const BoosterDashboardSummary = ({
 }: BoosterDashboardSummaryProps) => {
 	if (tab === 'queue') {
 		return (
-			<section className="grid gap-3 md:grid-cols-2">
-				<div className="border-b border-white/10 pb-3">
-					<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
-						Fila
+			<section className="dashboard-animate grid gap-4 md:grid-cols-2">
+				<DashboardMetricCard
+					icon={ListChecks}
+					label="Fila"
+					value={summary.availableOrders.toString().padStart(2, '0')}
+				>
+					<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+						Pedidos prontos para aceitar
 					</p>
-					<p className="text-xl font-black text-white">
-						{summary.availableOrders.toString().padStart(2, '0')}
+				</DashboardMetricCard>
+				<DashboardMetricCard
+					icon={BadgeDollarSign}
+					label="Estimado"
+					value={formatCurrency(summary.estimatedAvailableEarnings)}
+				>
+					<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+						Repasse potencial da fila
 					</p>
-				</div>
-				<div className="border-b border-white/10 pb-3">
-					<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
-						Estimado
-					</p>
-					<p className="text-xl font-black text-white">
-						{formatCurrency(summary.estimatedAvailableEarnings)}
-					</p>
-				</div>
+				</DashboardMetricCard>
 			</section>
 		);
 	}
 
 	return (
-		<section className="grid gap-3 md:grid-cols-3">
-			<div className="border-b border-white/10 pb-3">
-				<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
-					Em execução
+		<section className="dashboard-animate grid gap-4 md:grid-cols-3">
+			<DashboardMetricCard
+				icon={BriefcaseBusiness}
+				label="Em execução"
+				value={summary.activeOrders.toString().padStart(2, '0')}
+			>
+				<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+					Pedidos sob sua responsabilidade
 				</p>
-				<p className="text-xl font-black text-white">
-					{summary.activeOrders.toString().padStart(2, '0')}
+			</DashboardMetricCard>
+			<DashboardMetricCard
+				icon={ListChecks}
+				label="Finalizados"
+				value={summary.completedOrders.toString().padStart(2, '0')}
+			>
+				<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+					Conclusões recentes
 				</p>
-			</div>
-			<div className="border-b border-white/10 pb-3">
-				<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
-					Finalizados
+			</DashboardMetricCard>
+			<DashboardMetricCard
+				icon={BadgeDollarSign}
+				label="Recebido"
+				value={formatCurrency(summary.earnedFromRecentCompletions)}
+			>
+				<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+					Repasse dos pedidos finalizados
 				</p>
-				<p className="text-xl font-black text-white">
-					{summary.completedOrders.toString().padStart(2, '0')}
-				</p>
-			</div>
-			<div className="border-b border-white/10 pb-3">
-				<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
-					Recebido
-				</p>
-				<p className="text-xl font-black text-white">
-					{formatCurrency(summary.earnedFromRecentCompletions)}
-				</p>
-			</div>
+			</DashboardMetricCard>
 		</section>
 	);
 };
@@ -105,7 +113,7 @@ const BoosterDashboardSummary = ({
 const BoosterQueueView = ({ queue }: { queue: BoosterQueueViewModel }) => (
 	<>
 		<BoosterDashboardSummary tab="queue" summary={queue.summary} />
-		<div className="grid gap-8 xl:grid-cols-[1fr_360px]">
+		<div className="dashboard-animate grid gap-8 xl:grid-cols-[1fr_360px]">
 			<BoosterOrderList
 				title="Pedidos disponíveis"
 				emptyMessage="Nenhum pedido disponível para aceitar agora."
@@ -120,7 +128,7 @@ const BoosterQueueView = ({ queue }: { queue: BoosterQueueViewModel }) => (
 const BoosterWorkView = ({ work }: { work: BoosterWorkViewModel }) => (
 	<>
 		<BoosterDashboardSummary tab="work" summary={work.summary} />
-		<div className="grid gap-8 xl:grid-cols-[1fr_360px]">
+		<div className="dashboard-animate grid gap-8 xl:grid-cols-[1fr_360px]">
 			<div className="space-y-8">
 				<BoosterOrderList
 					title="Meus pedidos em execução"
@@ -152,7 +160,7 @@ export const BoosterDashboardPage = async ({
 		const work = toBoosterWork(workOutput);
 
 		return (
-			<div className="space-y-8">
+			<DashboardEntrance>
 				<BoosterWorkView
 					work={{
 						...work,
@@ -160,7 +168,7 @@ export const BoosterDashboardPage = async ({
 						transactions: walletTransactions.transactions,
 					}}
 				/>
-			</div>
+			</DashboardEntrance>
 		);
 	}
 
@@ -171,8 +179,8 @@ export const BoosterDashboardPage = async ({
 	const queue = toBoosterQueue(queueOutput);
 
 	return (
-		<div className="space-y-8">
+		<DashboardEntrance>
 			<BoosterQueueView queue={{ ...queue, wallet }} />
-		</div>
+		</DashboardEntrance>
 	);
 };
