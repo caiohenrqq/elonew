@@ -21,6 +21,7 @@
 		"dev:workers": "pnpm workers dev",
 
 		"test:api": "pnpm api test",
+		"test:all": "pnpm -r --if-present test",
 		"test:web": "pnpm web test:e2e",
 		"test:web:report": "pnpm web test:e2e:report",
 

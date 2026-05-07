@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import type { PropsWithChildren } from 'react';
 import {
 	getBoosterQueue,
 	getBoosterWalletTransactions,
@@ -67,8 +68,18 @@ jest.mock('../../actions/booster-actions', () => ({
 	requestBoosterWithdrawalAction: jest.fn(),
 }));
 
+jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
+	DashboardEntrance: ({ children }: PropsWithChildren) => <div>{children}</div>,
+}));
+
 jest.mock('lucide-react', () => ({
+	BadgeDollarSign: () => <svg data-testid="money-icon" />,
+	BriefcaseBusiness: () => <svg data-testid="briefcase-icon" />,
 	CheckCircle2: () => <svg data-testid="check-icon" />,
+	ListChecks: () => <svg data-testid="list-icon" />,
+	PackageCheck: () => <svg data-testid="package-check-icon" />,
+	PackageOpen: () => <svg data-testid="package-open-icon" />,
+	ReceiptText: () => <svg data-testid="receipt-icon" />,
 	XCircle: () => <svg data-testid="reject-icon" />,
 	WalletCards: () => <svg data-testid="wallet-icon" />,
 	ArrowDownLeft: () => <svg data-testid="credit-icon" />,

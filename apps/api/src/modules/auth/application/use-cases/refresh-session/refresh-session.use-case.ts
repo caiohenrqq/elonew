@@ -11,6 +11,7 @@ import {
 import {
 	AuthRefreshTokenInvalidError,
 	AuthRefreshTokenRevokedError,
+	AuthUserBlockedError,
 } from '@modules/auth/domain/auth.errors';
 import {
 	USER_REPOSITORY_KEY,
@@ -59,6 +60,7 @@ export class RefreshSessionUseCase {
 
 		const user = await this.userRepository.findById(session.userId);
 		if (!user) throw new AuthRefreshTokenInvalidError();
+		if (user.isBlocked) throw new AuthUserBlockedError();
 
 		const nextRefreshToken = this.refreshTokenService.generate();
 		session.refreshTokenHash = nextRefreshToken.tokenHash;

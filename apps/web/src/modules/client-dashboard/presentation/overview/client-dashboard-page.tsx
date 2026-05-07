@@ -11,10 +11,10 @@ import {
 } from '@packages/ui/components/table';
 import { Package, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
+import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
 import type { ClientDashboardOrder } from '../../model/orders';
 import { type ClientDashboard, formatCurrency } from '../../model/orders';
-import { DashboardEntrance } from './dashboard-entrance';
-import { MetricCard } from './metric-card';
 
 type ClientDashboardPageProps = {
 	dashboard: ClientDashboard;
@@ -62,7 +62,7 @@ export const ClientDashboardPage = ({
 		<DashboardEntrance>
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<div className="dashboard-animate">
-					<MetricCard
+					<DashboardMetricCard
 						label="Pedidos Ativos"
 						value={formatMetricCount(dashboard.summary.activeOrders)}
 					>
@@ -72,10 +72,10 @@ export const ClientDashboardPage = ({
 								style={{ width: `${activeProgress}%` }}
 							/>
 						</div>
-					</MetricCard>
+					</DashboardMetricCard>
 				</div>
 				<div className="dashboard-animate">
-					<MetricCard
+					<DashboardMetricCard
 						label="Total Pedidos"
 						value={formatMetricCount(dashboard.summary.totalOrders)}
 					>
@@ -84,10 +84,10 @@ export const ClientDashboardPage = ({
 								? 'Histórico real da sua conta'
 								: 'Nenhum pedido ainda'}
 						</p>
-					</MetricCard>
+					</DashboardMetricCard>
 				</div>
 				<div className="dashboard-animate">
-					<MetricCard
+					<DashboardMetricCard
 						label="Total Investido"
 						value={formatCurrency(dashboard.summary.totalInvested)}
 					>
@@ -96,7 +96,7 @@ export const ClientDashboardPage = ({
 								? 'Soma dos pedidos finalizados no checkout'
 								: 'Nenhum pagamento registrado'}
 						</p>
-					</MetricCard>
+					</DashboardMetricCard>
 				</div>
 			</div>
 

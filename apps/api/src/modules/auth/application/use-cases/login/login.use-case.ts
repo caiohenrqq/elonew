@@ -10,6 +10,7 @@ import {
 } from '@modules/auth/application/ports/token-service.port';
 import {
 	AuthInvalidCredentialsError,
+	AuthUserBlockedError,
 	AuthUserInactiveError,
 } from '@modules/auth/domain/auth.errors';
 import {
@@ -66,6 +67,7 @@ export class LoginUseCase {
 		);
 		if (!passwordMatches) throw new AuthInvalidCredentialsError();
 		if (!user.isActive) throw new AuthUserInactiveError();
+		if (user.isBlocked) throw new AuthUserBlockedError();
 
 		const refreshToken = this.refreshTokenService.generate();
 		await this.authSessionRepository.create({

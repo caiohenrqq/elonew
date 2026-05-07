@@ -15,7 +15,7 @@ jest.mock('next/link', () => ({
 	),
 }));
 
-jest.mock('./dashboard-entrance', () => ({
+jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
 	DashboardEntrance: ({ children }: PropsWithChildren) => <div>{children}</div>,
 }));
 

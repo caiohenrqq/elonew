@@ -27,6 +27,7 @@ type DetailsStepProps = {
 		value: StartCheckoutInput[Key],
 	) => void;
 	onToggleExtra: (extraId: string) => void;
+	onNextIntent?: () => void;
 };
 
 const FILTERED_EXTRAS = EXTRAS.filter((extra) => extra.id !== 'mmr_nerfed');
@@ -37,6 +38,7 @@ export const DetailsStep = ({
 	onNext,
 	onChange,
 	onToggleExtra,
+	onNextIntent,
 }: DetailsStepProps) => {
 	const [favoriteBoosterName, setFavoriteBoosterName] = useState('');
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -320,6 +322,8 @@ export const DetailsStep = ({
 				</Button>
 				<Button
 					onClick={onNext}
+					onFocus={onNextIntent}
+					onMouseEnter={onNextIntent}
 					className="group px-8"
 					disabled={isNextDisabled}
 				>

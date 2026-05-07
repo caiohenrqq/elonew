@@ -18,16 +18,46 @@ export const useQuotePreview = (orderInput: StartCheckoutInput) => {
 	);
 	const [isQuotePreviewPending, setIsQuotePreviewPending] = useState(false);
 	const previewRequestId = useRef(0);
+	const {
+		couponCode,
+		currentDivision,
+		currentLeague,
+		currentLp,
+		deadline,
+		desiredDivision,
+		desiredLeague,
+		desiredQueue,
+		extras,
+		lpGain,
+		paymentMethod,
+		server,
+		serviceType,
+	} = orderInput;
 
 	useEffect(() => {
 		const requestId = ++previewRequestId.current;
 		let isCancelled = false;
+		const previewInput: StartCheckoutInput = {
+			couponCode,
+			currentDivision,
+			currentLeague,
+			currentLp,
+			deadline,
+			desiredDivision,
+			desiredLeague,
+			desiredQueue,
+			extras,
+			lpGain,
+			paymentMethod,
+			server,
+			serviceType,
+		};
 
 		setIsQuotePreviewPending(true);
 
 		const timeoutId = window.setTimeout(async () => {
 			try {
-				const result = await previewOrderQuoteAction(orderInput);
+				const result = await previewOrderQuoteAction(previewInput);
 
 				if (isCancelled || previewRequestId.current !== requestId) return;
 
@@ -54,7 +84,21 @@ export const useQuotePreview = (orderInput: StartCheckoutInput) => {
 			isCancelled = true;
 			window.clearTimeout(timeoutId);
 		};
-	}, [orderInput]);
+	}, [
+		couponCode,
+		currentDivision,
+		currentLeague,
+		currentLp,
+		deadline,
+		desiredDivision,
+		desiredLeague,
+		desiredQueue,
+		extras,
+		lpGain,
+		paymentMethod,
+		server,
+		serviceType,
+	]);
 
 	return {
 		isQuotePreviewPending,

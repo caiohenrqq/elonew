@@ -40,6 +40,12 @@ export class AuthUserInactiveError extends Error {
 	}
 }
 
+export class AuthUserBlockedError extends Error {
+	constructor() {
+		super('Account is blocked.');
+	}
+}
+
 export class AuthRefreshTokenInvalidError extends Error {
 	constructor() {
 		super('Invalid refresh token.');

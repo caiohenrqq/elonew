@@ -63,6 +63,7 @@ model User {
   password         String
   role             Role      @default(CLIENT)
   isActive         Boolean   @default(false)
+  isBlocked        Boolean   @default(false)
   emailConfirmedAt DateTime?
   emailConfirmationTokenHash String? @unique
   emailConfirmationTokenExpiresAt DateTime?
@@ -78,6 +79,8 @@ model User {
   chatMessages     ChatMessage[]
   tickets          Ticket[]
   ticketMessages   TicketMessage[]
+  adminActionsPerformed AdminGovernanceAction[] @relation("AdminGovernanceActor")
+  adminActionsOnUser AdminGovernanceAction[] @relation("AdminGovernanceTargetUser")
   ratingsGiven     Rating[]  @relation("RatingsGiven")
   ratingsReceived  Rating[]  @relation("RatingsReceived")
   authSessions     AuthSession[]
@@ -132,6 +135,7 @@ model Order {
   rating           Rating?
   walletTransactions WalletTransaction[]
   boosterRejections OrderBoosterRejection[]
+  adminGovernanceActions AdminGovernanceAction[]
 
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
@@ -378,6 +382,24 @@ model TicketMessage {
   createdAt DateTime @default(now())
 
   @@map("ticket_messages")
+}
+
+model AdminGovernanceAction {
+  id            String   @id @default(cuid())
+  adminUserId   String
+  adminUser     User     @relation("AdminGovernanceActor", fields: [adminUserId], references: [id])
+  actionType    String
+  reason        String
+  targetUserId  String?
+  targetUser    User?    @relation("AdminGovernanceTargetUser", fields: [targetUserId], references: [id])
+  targetOrderId String?
+  targetOrder   Order?   @relation(fields: [targetOrderId], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([adminUserId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([targetOrderId, createdAt])
+  @@map("admin_governance_actions")
 }
 
 model Rating {

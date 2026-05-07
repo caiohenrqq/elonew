@@ -1,5 +1,6 @@
 import { Card } from '@packages/ui/components/card';
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ReceiptText } from 'lucide-react';
+import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import {
 	formatCurrency,
 	formatDate,
@@ -65,9 +66,11 @@ export const WalletPanel = ({ wallet, transactions }: WalletPanelProps) => {
 					</div>
 
 					{transactions.length === 0 ? (
-						<p className="py-8 text-center text-xs text-white/45">
-							Nenhuma movimentação registrada.
-						</p>
+						<DashboardEmptyState
+							icon={ReceiptText}
+							title="Nenhuma movimentação registrada"
+							description="Créditos, bloqueios e liberações da carteira aparecerão aqui."
+						/>
 					) : (
 						<div className="divide-y divide-white/5">
 							{transactions.map((transaction) => {

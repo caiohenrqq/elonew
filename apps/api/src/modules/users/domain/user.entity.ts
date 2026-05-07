@@ -15,6 +15,7 @@ type RehydrateUserInput = {
 	passwordHash: string;
 	role: Role;
 	isActive: boolean;
+	isBlocked?: boolean;
 	emailConfirmedAt: Date | null;
 	emailConfirmationTokenHash: string | null;
 	emailConfirmationTokenExpiresAt: Date | null;
@@ -30,6 +31,7 @@ export class User {
 		public readonly passwordHash: string,
 		public readonly role: Role,
 		public readonly isActive: boolean,
+		public readonly isBlocked: boolean,
 		public readonly emailConfirmedAt: Date | null,
 		public readonly emailConfirmationTokenHash: string | null,
 		public readonly emailConfirmationTokenExpiresAt: Date | null,
@@ -44,6 +46,7 @@ export class User {
 			input.email,
 			input.passwordHash,
 			Role.CLIENT,
+			false,
 			false,
 			null,
 			input.emailConfirmationTokenHash,
@@ -61,6 +64,7 @@ export class User {
 			input.passwordHash,
 			input.role,
 			input.isActive,
+			input.isBlocked ?? false,
 			input.emailConfirmedAt,
 			input.emailConfirmationTokenHash,
 			input.emailConfirmationTokenExpiresAt,
@@ -86,11 +90,46 @@ export class User {
 			this.passwordHash,
 			this.role,
 			true,
+			this.isBlocked,
 			confirmedAt,
 			null,
 			null,
 			this.createdAt,
 			confirmedAt,
+		);
+	}
+
+	block(): User {
+		return new User(
+			this.id,
+			this.username,
+			this.email,
+			this.passwordHash,
+			this.role,
+			this.isActive,
+			true,
+			this.emailConfirmedAt,
+			this.emailConfirmationTokenHash,
+			this.emailConfirmationTokenExpiresAt,
+			this.createdAt,
+			new Date(),
+		);
+	}
+
+	unblock(): User {
+		return new User(
+			this.id,
+			this.username,
+			this.email,
+			this.passwordHash,
+			this.role,
+			this.isActive,
+			false,
+			this.emailConfirmedAt,
+			this.emailConfirmationTokenHash,
+			this.emailConfirmationTokenExpiresAt,
+			this.createdAt,
+			new Date(),
 		);
 	}
 }

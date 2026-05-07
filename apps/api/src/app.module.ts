@@ -1,3 +1,4 @@
+import { AdminModule } from '@modules/admin/admin.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
@@ -14,6 +15,7 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 	imports: [
 		AppSettingsModule,
 		PrismaModule,
+		AdminModule,
 		AuthModule,
 		OrdersModule,
 		PaymentsModule,

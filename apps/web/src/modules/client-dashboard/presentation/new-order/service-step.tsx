@@ -22,12 +22,14 @@ type ServiceStepProps = {
 		value: StartCheckoutInput[Key],
 	) => void;
 	onNext: () => void;
+	onNextIntent?: () => void;
 };
 
 export const ServiceStep = ({
 	orderInput,
 	onChange,
 	onNext,
+	onNextIntent,
 }: ServiceStepProps) => {
 	const canContinue = isDesiredRankAvailable(
 		orderInput.currentLeague,
@@ -88,6 +90,8 @@ export const ServiceStep = ({
 				<Button
 					type="button"
 					onClick={onNext}
+					onFocus={onNextIntent}
+					onMouseEnter={onNextIntent}
 					className="group"
 					disabled={!canContinue}
 				>

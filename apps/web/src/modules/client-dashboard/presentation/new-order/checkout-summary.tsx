@@ -15,7 +15,7 @@ import { Label } from '@packages/ui/components/label';
 import { cn } from '@packages/ui/utils/cn';
 import { Target } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
 	EXTRA_OPTIONS_BY_ID,
 	getExtraLabel,
@@ -153,6 +153,7 @@ export const CheckoutSummary = ({
 	quotePreview,
 	quotePreviewError,
 }: CheckoutSummaryProps) => {
+	const [couponDraft, setCouponDraft] = useState(orderInput.couponCode ?? '');
 	const allExtras = useMemo(() => quotePreview?.extras ?? [], [quotePreview]);
 
 	const paidExtrasTotal = useMemo(
@@ -167,6 +168,17 @@ export const CheckoutSummary = ({
 				: null,
 		[orderInput.couponCode, quotePreview],
 	);
+	const normalizedCouponDraft = couponDraft.trim().toUpperCase();
+	const isCouponApplyDisabled =
+		normalizedCouponDraft === (orderInput.couponCode ?? '');
+
+	useEffect(() => {
+		setCouponDraft(orderInput.couponCode ?? '');
+	}, [orderInput.couponCode]);
+
+	const applyCouponCode = () => {
+		onCouponCodeChange?.(normalizedCouponDraft);
+	};
 
 	return (
 		<aside className="w-full lg:w-[320px] sticky top-30">
@@ -283,14 +295,25 @@ export const CheckoutSummary = ({
 							<Input
 								id="coupon-code"
 								name="couponCode"
-								value={orderInput.couponCode ?? ''}
+								value={couponDraft}
 								onChange={(event) =>
-									onCouponCodeChange?.(event.target.value.toUpperCase())
+									setCouponDraft(event.target.value.toUpperCase())
 								}
+								onKeyDown={(event) => {
+									if (event.key !== 'Enter') return;
+									event.preventDefault();
+									applyCouponCode();
+								}}
 								placeholder="CÓDIGO"
 								className="uppercase font-mono"
 							/>
-							<Button type="button" size="sm" variant="outline">
+							<Button
+								type="button"
+								size="sm"
+								variant="outline"
+								disabled={isCouponApplyDisabled}
+								onClick={applyCouponCode}
+							>
 								Aplicar
 							</Button>
 						</div>

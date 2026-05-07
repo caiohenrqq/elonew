@@ -16,6 +16,7 @@ type UserRecord = {
 	password: string;
 	role: string;
 	isActive: boolean;
+	isBlocked: boolean;
 	emailConfirmedAt: Date | null;
 	emailConfirmationTokenHash: string | null;
 	emailConfirmationTokenExpiresAt: Date | null;
@@ -38,6 +39,7 @@ type UserDelegate = {
 			password: string;
 			role: string;
 			isActive: boolean;
+			isBlocked: boolean;
 			emailConfirmedAt: Date | null;
 			emailConfirmationTokenHash: string | null;
 			emailConfirmationTokenExpiresAt: Date | null;
@@ -51,6 +53,7 @@ type UserDelegate = {
 			password: string;
 			role: string;
 			isActive: boolean;
+			isBlocked: boolean;
 			emailConfirmedAt: Date | null;
 			emailConfirmationTokenHash: string | null;
 			emailConfirmationTokenExpiresAt: Date | null;
@@ -140,6 +143,7 @@ export class PrismaUserRepository implements UserRepositoryPort {
 			passwordHash: record.password,
 			role: ensurePersistedEnum(Role, record.role, 'user role'),
 			isActive: record.isActive,
+			isBlocked: record.isBlocked,
 			emailConfirmedAt: record.emailConfirmedAt,
 			emailConfirmationTokenHash: record.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: record.emailConfirmationTokenExpiresAt,
@@ -155,6 +159,7 @@ export class PrismaUserRepository implements UserRepositoryPort {
 			password: user.passwordHash,
 			role: user.role,
 			isActive: user.isActive,
+			isBlocked: user.isBlocked,
 			emailConfirmedAt: user.emailConfirmedAt,
 			emailConfirmationTokenHash: user.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: user.emailConfirmationTokenExpiresAt,

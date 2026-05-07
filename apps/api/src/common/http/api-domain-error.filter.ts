@@ -8,10 +8,16 @@ import {
 	tryMapDomainErrorToHttpException,
 } from '@app/common/http/domain-error.mapper';
 import {
+	AdminGovernanceReasonRequiredError,
+	AdminOrderNotFoundError,
+	AdminUserNotFoundError,
+} from '@modules/admin/domain/admin.errors';
+import {
 	AuthenticationRequiredError,
 	AuthInvalidCredentialsError,
 	AuthRefreshTokenInvalidError,
 	AuthRefreshTokenRevokedError,
+	AuthUserBlockedError,
 	AuthUserInactiveError,
 	InsufficientPermissionsError,
 	InternalApiKeyRequiredError,
@@ -115,13 +121,15 @@ export function mapApiDomainErrorToHttpException(
 			PaymentWebhookNotificationMismatchError,
 			PaymentWebhookTopicNotSupportedError,
 		),
-		mapAsForbidden(AuthUserInactiveError),
+		mapAsForbidden(AuthUserInactiveError, AuthUserBlockedError),
 		mapAsForbidden(InsufficientPermissionsError),
 		mapAsNotFound(
 			OrderNotFoundError,
 			OrderBoosterNotFoundError,
 			OrderQuoteNotFoundError,
 			OrderPricingVersionNotFoundError,
+			AdminOrderNotFoundError,
+			AdminUserNotFoundError,
 			PaymentNotFoundError,
 			PaymentOrderNotFoundError,
 			WalletNotFoundError,
@@ -149,6 +157,7 @@ export function mapApiDomainErrorToHttpException(
 			WalletInvalidAmountError,
 			WalletInsufficientWithdrawableBalanceError,
 			UserEmailConfirmationTokenInvalidError,
+			AdminGovernanceReasonRequiredError,
 		),
 		mapAsConflict(OrderPricingVersionActiveConflictError),
 	]);

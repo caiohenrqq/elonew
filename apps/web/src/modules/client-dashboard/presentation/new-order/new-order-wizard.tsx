@@ -14,15 +14,16 @@ import { useCheckoutSubmit } from './use-checkout-submit';
 import { useQuotePreview } from './use-quote-preview';
 import { WizardStepTransition } from './wizard-step-transition';
 
-const ServiceStep = dynamic(() =>
-	import('./service-step').then((m) => m.ServiceStep),
-);
-const DetailsStep = dynamic(() =>
-	import('./details-step').then((m) => m.DetailsStep),
-);
-const ReviewStep = dynamic(() =>
-	import('./review-step').then((m) => m.ReviewStep),
-);
+const loadServiceStep = () =>
+	import('./service-step').then((module) => module.ServiceStep);
+const loadDetailsStep = () =>
+	import('./details-step').then((module) => module.DetailsStep);
+const loadReviewStep = () =>
+	import('./review-step').then((module) => module.ReviewStep);
+
+const ServiceStep = dynamic(loadServiceStep);
+const DetailsStep = dynamic(loadDetailsStep);
+const ReviewStep = dynamic(loadReviewStep);
 
 const INITIAL_STEP = 1;
 
@@ -41,6 +42,14 @@ export const NewOrderWizard = () => {
 		hasAcceptedTerms,
 		orderInput,
 	});
+
+	const preloadDetailsStep = useCallback(() => {
+		void loadDetailsStep();
+	}, []);
+
+	const preloadReviewStep = useCallback(() => {
+		void loadReviewStep();
+	}, []);
 
 	useGSAP(
 		() => {
@@ -116,6 +125,7 @@ export const NewOrderWizard = () => {
 									orderInput={orderInput}
 									onChange={updateOrderInput}
 									onNext={() => setStep(2)}
+									onNextIntent={preloadDetailsStep}
 								/>
 							</WizardStepTransition>
 						) : null}
@@ -126,6 +136,7 @@ export const NewOrderWizard = () => {
 									orderInput={orderInput}
 									onBack={() => setStep(1)}
 									onNext={() => setStep(3)}
+									onNextIntent={preloadReviewStep}
 									onChange={updateOrderInput}
 									onToggleExtra={toggleExtra}
 								/>
