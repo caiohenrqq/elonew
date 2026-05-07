@@ -29,7 +29,7 @@ export const loginAction = async (
 		await assertSameOriginRequest();
 		const session = await login(parsed.data);
 		if (session.user.role === 'BOOSTER') redirectPath = '/booster';
-		if (session.user.role === 'ADMIN') redirectPath = '/';
+		if (session.user.role === 'ADMIN') redirectPath = '/admin';
 	} catch (error) {
 		return {
 			error: getAuthErrorMessage(error, 'login'),

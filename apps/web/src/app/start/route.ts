@@ -6,7 +6,7 @@ export async function GET() {
 
 	if (session) {
 		if (session.userRole === 'BOOSTER') redirect('/booster');
-		if (session.userRole === 'ADMIN') redirect('/');
+		if (session.userRole === 'ADMIN') redirect('/admin');
 		redirect('/client');
 	}
 

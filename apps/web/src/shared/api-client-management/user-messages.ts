@@ -6,6 +6,7 @@ const apiErrorMap: Record<string, string> = {
 		'Este nome de usuário já está sendo utilizado.',
 	'Invalid credentials.': 'E-mail ou senha incorretos.',
 	'Account is inactive.': 'Sua conta está inativa.',
+	'Account is blocked.': 'Sua conta está bloqueada.',
 	'Invalid confirmation token.': 'Token de confirmação inválido.',
 	'Authentication required.': 'Autenticação necessária.',
 	'Insufficient permissions.': 'Permissões insuficientes.',
