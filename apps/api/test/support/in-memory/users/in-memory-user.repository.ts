@@ -38,6 +38,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
 			passwordHash: user.passwordHash,
 			role: user.role,
 			isActive: user.isActive,
+			isBlocked: user.isBlocked,
 			emailConfirmedAt: user.emailConfirmedAt,
 			emailConfirmationTokenHash: user.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: user.emailConfirmationTokenExpiresAt,

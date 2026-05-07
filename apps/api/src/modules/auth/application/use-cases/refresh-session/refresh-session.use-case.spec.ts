@@ -7,6 +7,7 @@ import { RefreshSessionUseCase } from '@modules/auth/application/use-cases/refre
 import {
 	AuthRefreshTokenInvalidError,
 	AuthRefreshTokenRevokedError,
+	AuthUserBlockedError,
 } from '@modules/auth/domain/auth.errors';
 import type { UserRepositoryPort } from '@modules/users/application/ports/user-repository.port';
 import { User } from '@modules/users/domain/user.entity';
@@ -159,5 +160,56 @@ describe('RefreshSessionUseCase', () => {
 				refreshToken: 'current-refresh-token',
 			}),
 		).rejects.toBeInstanceOf(AuthRefreshTokenRevokedError);
+	});
+
+	it('rejects refresh sessions for blocked users', async () => {
+		const users = new InMemoryUserRepository();
+		await users.create(
+			User.rehydrate({
+				id: 'user-1',
+				username: 'summoner1',
+				email: 'summoner1@example.com',
+				passwordHash: 'hashed-password',
+				role: Role.CLIENT,
+				isActive: true,
+				isBlocked: true,
+				emailConfirmedAt: new Date('2026-03-16T00:00:00.000Z'),
+				emailConfirmationTokenHash: null,
+				emailConfirmationTokenExpiresAt: null,
+				createdAt: new Date('2026-03-16T00:00:00.000Z'),
+				updatedAt: new Date('2026-03-16T00:00:00.000Z'),
+			}),
+		);
+		const authSessions = new InMemoryAuthSessionRepository();
+		authSessions.findByRefreshTokenHash.mockResolvedValue({
+			id: 'session-1',
+			userId: 'user-1',
+			refreshTokenHash: 'current-hash',
+			expiresAt: new Date('2026-05-24T00:00:00.000Z'),
+			revokedAt: null,
+			lastUsedAt: null,
+			createdAt: new Date('2026-03-17T00:00:00.000Z'),
+			updatedAt: new Date('2026-03-17T00:00:00.000Z'),
+		});
+		const accessTokenService: AccessTokenServicePort = {
+			sign: jest.fn(),
+		};
+		const refreshTokenService: RefreshTokenServicePort = {
+			generate: jest.fn(),
+			hash: jest.fn().mockReturnValue('current-hash'),
+		};
+		const useCase = new RefreshSessionUseCase(
+			users,
+			authSessions,
+			accessTokenService,
+			refreshTokenService,
+		);
+
+		await expect(
+			useCase.execute({
+				refreshToken: 'current-refresh-token',
+			}),
+		).rejects.toBeInstanceOf(AuthUserBlockedError);
+		expect(authSessions.save).not.toHaveBeenCalled();
 	});
 });

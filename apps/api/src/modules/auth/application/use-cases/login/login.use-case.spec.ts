@@ -6,6 +6,7 @@ import type {
 import { LoginUseCase } from '@modules/auth/application/use-cases/login/login.use-case';
 import {
 	AuthInvalidCredentialsError,
+	AuthUserBlockedError,
 	AuthUserInactiveError,
 } from '@modules/auth/domain/auth.errors';
 import type { PasswordHasherPort } from '@modules/users/application/ports/password-hasher.port';
@@ -52,6 +53,7 @@ class InMemoryUserRepository implements UserRepositoryPort {
 			passwordHash: user.passwordHash,
 			role: user.role,
 			isActive: user.isActive,
+			isBlocked: user.isBlocked,
 			emailConfirmedAt: user.emailConfirmedAt,
 			emailConfirmationTokenHash: user.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: user.emailConfirmationTokenExpiresAt,
@@ -220,5 +222,52 @@ describe('LoginUseCase', () => {
 				password: 'Secret123456!',
 			}),
 		).rejects.toBeInstanceOf(AuthUserInactiveError);
+	});
+
+	it('rejects blocked users', async () => {
+		const users = new InMemoryUserRepository();
+		await users.create(
+			User.rehydrate({
+				id: 'user-1',
+				username: 'summoner1',
+				email: 'summoner1@example.com',
+				passwordHash: 'hashed-password',
+				role: Role.CLIENT,
+				isActive: true,
+				isBlocked: true,
+				emailConfirmedAt: new Date('2026-03-16T00:00:00.000Z'),
+				emailConfirmationTokenHash: null,
+				emailConfirmationTokenExpiresAt: null,
+				createdAt: new Date('2026-03-16T00:00:00.000Z'),
+				updatedAt: new Date('2026-03-16T00:00:00.000Z'),
+			}),
+		);
+		const passwordHasher: PasswordHasherPort = {
+			hash: jest.fn(),
+			verify: jest.fn().mockResolvedValue(true),
+		};
+		const authSessions = new InMemoryAuthSessionRepository();
+		const accessTokenService: AccessTokenServicePort = {
+			sign: jest.fn(),
+		};
+		const refreshTokenService: RefreshTokenServicePort = {
+			generate: jest.fn(),
+			hash: jest.fn(),
+		};
+		const useCase = new LoginUseCase(
+			users,
+			passwordHasher,
+			authSessions,
+			accessTokenService,
+			refreshTokenService,
+		);
+
+		await expect(
+			useCase.execute({
+				email: 'summoner1@example.com',
+				password: 'Secret123456!',
+			}),
+		).rejects.toBeInstanceOf(AuthUserBlockedError);
+		expect(authSessions.create).not.toHaveBeenCalled();
 	});
 });
