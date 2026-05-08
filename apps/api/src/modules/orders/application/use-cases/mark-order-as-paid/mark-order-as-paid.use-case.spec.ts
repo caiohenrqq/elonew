@@ -1,3 +1,7 @@
+import type {
+	OrderEvent,
+	OrderEventPublisherPort,
+} from '@modules/orders/application/ports/order-event-publisher.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
@@ -28,17 +32,34 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	}
 }
 
+class OrderEventPublisherSpy implements OrderEventPublisherPort {
+	readonly events: OrderEvent[] = [];
+
+	async publish(event: OrderEvent): Promise<void> {
+		this.events.push(event);
+	}
+}
+
 describe('MarkOrderAsPaidUseCase', () => {
 	it('moves order to pending booster when payment is confirmed', async () => {
 		const repository = new InMemoryOrderRepository();
+		const eventPublisher = new OrderEventPublisherSpy();
 		const order = Order.create('order-1');
 		repository.insert(order);
 
-		const useCase = new MarkOrderAsPaidUseCase(repository);
+		const useCase = new MarkOrderAsPaidUseCase(repository, eventPublisher);
 		await useCase.execute({ orderId: 'order-1' });
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('pending_booster');
+		expect(eventPublisher.events).toMatchObject([
+			{
+				type: 'order.paid',
+				orderId: 'order-1',
+				clientId: null,
+				boosterId: null,
+			},
+		]);
 	});
 
 	it('throws when order does not exist', async () => {
@@ -52,9 +73,10 @@ describe('MarkOrderAsPaidUseCase', () => {
 
 	it('is idempotent when provider retries payment confirmation', async () => {
 		const repository = new InMemoryOrderRepository();
+		const eventPublisher = new OrderEventPublisherSpy();
 		const order = Order.create('order-2');
 		repository.insert(order);
-		const useCase = new MarkOrderAsPaidUseCase(repository);
+		const useCase = new MarkOrderAsPaidUseCase(repository, eventPublisher);
 
 		await useCase.execute({ orderId: 'order-2' });
 
@@ -65,5 +87,6 @@ describe('MarkOrderAsPaidUseCase', () => {
 			id: 'order-2',
 			status: 'pending_booster',
 		});
+		expect(eventPublisher.events).toHaveLength(1);
 	});
 });

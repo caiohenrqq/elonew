@@ -1,3 +1,7 @@
+import type {
+	OrderEvent,
+	OrderEventPublisherPort,
+} from '@modules/orders/application/ports/order-event-publisher.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
@@ -38,13 +42,22 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	readonly rejections: Array<{ orderId: string; boosterId: string }> = [];
 }
 
+class OrderEventPublisherSpy implements OrderEventPublisherPort {
+	readonly events: OrderEvent[] = [];
+
+	async publish(event: OrderEvent): Promise<void> {
+		this.events.push(event);
+	}
+}
+
 describe('RejectOrderUseCase', () => {
 	it('keeps order pending booster when rejected by booster', async () => {
 		const repository = new InMemoryOrderRepository();
+		const eventPublisher = new OrderEventPublisherSpy();
 		const order = Order.create('order-1');
 		order.confirmPayment();
 		repository.insert(order);
-		const useCase = new RejectOrderUseCase(repository);
+		const useCase = new RejectOrderUseCase(repository, eventPublisher);
 
 		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
 
@@ -52,6 +65,14 @@ describe('RejectOrderUseCase', () => {
 		expect(savedOrder?.status).toBe('pending_booster');
 		expect(repository.rejections).toEqual([
 			{ orderId: 'order-1', boosterId: 'booster-1' },
+		]);
+		expect(eventPublisher.events).toMatchObject([
+			{
+				type: 'order.rejected',
+				orderId: 'order-1',
+				clientId: null,
+				boosterId: 'booster-1',
+			},
 		]);
 	});
 

@@ -289,6 +289,10 @@ describe('Orders (e2e)', () => {
 			.execute();
 	});
 
+	it('rejects unauthenticated order event streams', async () => {
+		await requestHttp(app).get('/orders/events').expect(401).execute();
+	});
+
 	it('rejects malformed access tokens', async () => {
 		const header = Buffer.from(
 			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),

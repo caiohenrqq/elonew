@@ -5,6 +5,7 @@ import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/boost
 import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
 import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import { ORDER_EVENT_PUBLISHER_KEY } from '@modules/orders/application/ports/order-event-publisher.port';
 import { ORDER_PRICING_VERSION_REPOSITORY_KEY } from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
@@ -32,6 +33,7 @@ import { PreviewOrderQuoteUseCase } from '@modules/orders/application/use-cases/
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import { UpdateOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/update-order-pricing-version/update-order-pricing-version.use-case';
+import { InMemoryOrderEventBus } from '@modules/orders/infrastructure/events/in-memory-order-event-bus';
 import { VersionedOrderPricingService } from '@modules/orders/infrastructure/pricing/versioned-order-pricing.service';
 import { PrismaBoosterUserReader } from '@modules/orders/infrastructure/repositories/prisma-booster-user.reader';
 import { PrismaCouponLookupRepository } from '@modules/orders/infrastructure/repositories/prisma-coupon-lookup.repository';
@@ -41,13 +43,18 @@ import { PrismaOrderPricingVersionRepository } from '@modules/orders/infrastruct
 import { PrismaOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/prisma-order-quote.repository';
 import { OrderCredentialsCipherService } from '@modules/orders/infrastructure/security/order-credentials-cipher.service';
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
+import { OrdersEventsController } from '@modules/orders/presentation/orders-events.controller';
 import { OrdersPricingAdminController } from '@modules/orders/presentation/orders-pricing-admin.controller';
 import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 
 @Module({
 	imports: [PrismaModule, AuthModule, WalletModule],
-	controllers: [OrdersController, OrdersPricingAdminController],
+	controllers: [
+		OrdersEventsController,
+		OrdersController,
+		OrdersPricingAdminController,
+	],
 	providers: [
 		PrismaBoosterUserReader,
 		PrismaCouponLookupRepository,
@@ -55,6 +62,7 @@ import { Module } from '@nestjs/common';
 		PrismaOrderPricingVersionRepository,
 		PrismaOrderRepository,
 		PrismaOrderQuoteRepository,
+		InMemoryOrderEventBus,
 		OrderCredentialsCipherService,
 		{
 			provide: BOOSTER_USER_READER_KEY,
@@ -84,6 +92,13 @@ import { Module } from '@nestjs/common';
 				orderRepository: PrismaOrderRepository,
 			): PrismaOrderRepository => orderRepository,
 			inject: [PrismaOrderRepository],
+		},
+		{
+			provide: ORDER_EVENT_PUBLISHER_KEY,
+			useFactory: (
+				orderEventBus: InMemoryOrderEventBus,
+			): InMemoryOrderEventBus => orderEventBus,
+			inject: [InMemoryOrderEventBus],
 		},
 		{
 			provide: CLIENT_ORDER_READER_KEY,

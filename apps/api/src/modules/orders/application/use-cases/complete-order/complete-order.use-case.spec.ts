@@ -1,4 +1,8 @@
 import type { OrderCompletionEarningsPort } from '@modules/orders/application/ports/order-completion-earnings.port';
+import type {
+	OrderEvent,
+	OrderEventPublisherPort,
+} from '@modules/orders/application/ports/order-event-publisher.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/complete-order/complete-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
@@ -50,10 +54,19 @@ class InMemoryOrderCompletionEarningsPort
 	}
 }
 
+class OrderEventPublisherSpy implements OrderEventPublisherPort {
+	readonly events: OrderEvent[] = [];
+
+	async publish(event: OrderEvent): Promise<void> {
+		this.events.push(event);
+	}
+}
+
 describe('CompleteOrderUseCase', () => {
 	it('completes order and deletes persisted credentials', async () => {
 		const repository = new InMemoryOrderRepository();
 		const earningsPort = new InMemoryOrderCompletionEarningsPort();
+		const eventPublisher = new OrderEventPublisherSpy();
 		const order = Order.create('order-1', { boosterId: 'booster-1' });
 		order.confirmPayment();
 		order.setCredentials({
@@ -64,12 +77,24 @@ describe('CompleteOrderUseCase', () => {
 		order.acceptByBooster();
 		repository.insert(order);
 
-		const useCase = new CompleteOrderUseCase(repository, earningsPort);
+		const useCase = new CompleteOrderUseCase(
+			repository,
+			earningsPort,
+			eventPublisher,
+		);
 		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('completed');
 		expect(savedOrder?.credentials).toBeNull();
+		expect(eventPublisher.events).toMatchObject([
+			{
+				type: 'order.completed',
+				orderId: 'order-1',
+				clientId: null,
+				boosterId: 'booster-1',
+			},
+		]);
 	});
 
 	it('throws when order does not exist', async () => {

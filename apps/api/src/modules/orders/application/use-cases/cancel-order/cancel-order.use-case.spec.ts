@@ -1,3 +1,7 @@
+import type {
+	OrderEvent,
+	OrderEventPublisherPort,
+} from '@modules/orders/application/ports/order-event-publisher.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
@@ -31,19 +35,36 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	}
 }
 
+class OrderEventPublisherSpy implements OrderEventPublisherPort {
+	readonly events: OrderEvent[] = [];
+
+	async publish(event: OrderEvent): Promise<void> {
+		this.events.push(event);
+	}
+}
+
 describe('CancelOrderUseCase', () => {
 	it('cancels an order when cancellation is allowed', async () => {
 		const repository = new InMemoryOrderRepository();
+		const eventPublisher = new OrderEventPublisherSpy();
 		const order = Order.create('order-1', { clientId: 'client-1' });
 		order.confirmPayment();
 		repository.insert(order);
 
-		const useCase = new CancelOrderUseCase(repository);
+		const useCase = new CancelOrderUseCase(repository, eventPublisher);
 
 		await useCase.execute({ orderId: 'order-1', clientId: 'client-1' });
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('cancelled');
+		expect(eventPublisher.events).toMatchObject([
+			{
+				type: 'order.cancelled',
+				orderId: 'order-1',
+				clientId: 'client-1',
+				boosterId: null,
+			},
+		]);
 	});
 
 	it('throws when order does not exist', async () => {
