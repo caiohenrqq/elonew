@@ -20,6 +20,11 @@ const PRODUCTION_ONLY_DEFAULT_SECRETS = {
 	ORDER_CREDENTIALS_ENCRYPTION_KEY: DEFAULT_ORDER_CREDENTIALS_ENCRYPTION_KEY,
 } as const;
 
+const booleanEnvSchema = z
+	.enum(['true', 'false'])
+	.default('false')
+	.transform((value) => value === 'true');
+
 export const envSchema = z
 	.object({
 		NODE_ENV: z
@@ -66,6 +71,7 @@ export const envSchema = z
 		MERCADO_PAGO_ACCESS_TOKEN: z.string().trim().min(1),
 		MERCADO_PAGO_WEBHOOK_SECRET: z.string().trim().min(1),
 		MERCADO_PAGO_WEBHOOK_URL: z.string().trim().url(),
+		SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE: booleanEnvSchema,
 		ORDER_QUOTE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
 		AUTH_LOGIN_THROTTLE_LIMIT: z.coerce.number().int().positive().default(5),
 		AUTH_LOGIN_THROTTLE_TTL_SECONDS: z.coerce

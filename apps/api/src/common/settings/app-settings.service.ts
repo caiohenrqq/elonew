@@ -87,6 +87,12 @@ export class AppSettingsService {
 		});
 	}
 
+	get skipMercadoPagoCheckoutInDevMode() {
+		return this.config.getOrThrow('SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE', {
+			infer: true,
+		});
+	}
+
 	get orderQuoteTtlMinutes() {
 		return this.config.getOrThrow('ORDER_QUOTE_TTL_MINUTES', {
 			infer: true,

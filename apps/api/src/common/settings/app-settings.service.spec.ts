@@ -14,6 +14,8 @@ describe('AppSettingsService', () => {
 						return 'webhook-secret';
 					case 'MERCADO_PAGO_WEBHOOK_URL':
 						return 'https://example.com/payments/webhooks/mercadopago';
+					case 'SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE':
+						return true;
 					default:
 						throw new Error(`Unexpected config key: ${key}`);
 				}
@@ -26,6 +28,24 @@ describe('AppSettingsService', () => {
 		expect(appSettings.mercadoPagoWebhookUrl).toBe(
 			'https://example.com/payments/webhooks/mercadopago',
 		);
+		expect(appSettings.skipMercadoPagoCheckoutInDevMode).toBe(true);
+	});
+
+	it('parses the dev Mercado Pago checkout skip flag as a strict boolean string', () => {
+		const result = envSchema.safeParse({
+			NODE_ENV: 'development',
+			PORT: 3000,
+			DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/elonew',
+			MERCADO_PAGO_ACCESS_TOKEN: 'mp-access-token',
+			MERCADO_PAGO_WEBHOOK_SECRET: 'webhook-secret',
+			MERCADO_PAGO_WEBHOOK_URL:
+				'https://example.com/payments/webhooks/mercadopago',
+			SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE: 'true',
+		});
+
+		expect(result.success).toBe(true);
+		if (result.success)
+			expect(result.data.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE).toBe(true);
 	});
 
 	it('exposes security throttle and encryption settings', () => {

@@ -1,5 +1,6 @@
 import { paymentMethodValues } from '@packages/shared/payments/payment-method';
 import { z } from 'zod';
+import { devPaymentOutcomeValues } from '../application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
 
 export const createPaymentSchema = z.object({
 	orderId: z.string().trim().min(1),
@@ -28,3 +29,11 @@ export type PaymentIdParamSchemaInput = z.infer<typeof paymentIdParamSchema>;
 export const orderIdParamSchema = z.string().trim().min(1);
 
 export type OrderIdParamSchemaInput = z.infer<typeof orderIdParamSchema>;
+
+export const simulateDevPaymentOutcomeSchema = z.object({
+	outcome: z.enum(devPaymentOutcomeValues),
+});
+
+export type SimulateDevPaymentOutcomeSchemaInput = z.infer<
+	typeof simulateDevPaymentOutcomeSchema
+>;

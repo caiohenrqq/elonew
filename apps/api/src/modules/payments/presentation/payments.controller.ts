@@ -1,4 +1,5 @@
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
+import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Public } from '@modules/auth/presentation/decorators/public.decorator';
@@ -13,12 +14,14 @@ import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-p
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
+import { SimulateDevPaymentOutcomeUseCase } from '@modules/payments/application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
 import {
 	Body,
 	Controller,
 	Get,
 	Headers,
 	HttpCode,
+	NotFoundException,
 	Param,
 	Post,
 	UseGuards,
@@ -34,6 +37,8 @@ import {
 	orderIdParamSchema,
 	type PaymentIdParamSchemaInput,
 	paymentIdParamSchema,
+	type SimulateDevPaymentOutcomeSchemaInput,
+	simulateDevPaymentOutcomeSchema,
 } from './payments.request-schemas';
 
 @Controller('payments')
@@ -46,6 +51,8 @@ export class PaymentsController {
 		private readonly handlePaymentConfirmedWebhookUseCase: HandlePaymentConfirmedWebhookUseCase,
 		private readonly releasePaymentHoldUseCase: ReleasePaymentHoldUseCase,
 		private readonly resumePaymentCheckoutUseCase: ResumePaymentCheckoutUseCase,
+		private readonly simulateDevPaymentOutcomeUseCase: SimulateDevPaymentOutcomeUseCase,
+		private readonly appSettings: AppSettingsService,
 	) {}
 
 	@Post()
@@ -158,5 +165,39 @@ export class PaymentsController {
 	): Promise<{ success: true }> {
 		await this.releasePaymentHoldUseCase.execute({ paymentId });
 		return { success: true };
+	}
+
+	@Post('dev/:paymentId/simulate')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
+	@HttpCode(200)
+	async simulateDevPaymentOutcome(
+		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
+		paymentId: PaymentIdParamSchemaInput,
+		@Body(new ZodValidationPipe(simulateDevPaymentOutcomeSchema))
+		body: SimulateDevPaymentOutcomeSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<{
+		id: string;
+		orderId: string;
+		status: string;
+		gatewayStatus: string | null;
+		gatewayStatusDetail: string | null;
+	}> {
+		this.assertDevPaymentSimulationEnabled();
+
+		return await this.simulateDevPaymentOutcomeUseCase.execute({
+			paymentId,
+			clientId: currentUser.id,
+			outcome: body.outcome,
+		});
+	}
+
+	private assertDevPaymentSimulationEnabled(): void {
+		if (
+			this.appSettings.isProduction ||
+			!this.appSettings.skipMercadoPagoCheckoutInDevMode
+		)
+			throw new NotFoundException();
 	}
 }

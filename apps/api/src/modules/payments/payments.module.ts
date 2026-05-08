@@ -17,6 +17,8 @@ import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-p
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
+import { SimulateDevPaymentOutcomeUseCase } from '@modules/payments/application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
+import { DevPaymentGatewayAdapter } from '@modules/payments/infrastructure/adapters/dev-payment-gateway.adapter';
 import { MercadoPagoPaymentGatewayAdapter } from '@modules/payments/infrastructure/adapters/mercadopago-payment-gateway.adapter';
 import { MercadoPagoPaymentWebhookSignatureVerifierAdapter } from '@modules/payments/infrastructure/adapters/mercadopago-payment-webhook-signature-verifier.adapter';
 import { OrderCredentialCleanupFromOrdersAdapter } from '@modules/payments/infrastructure/adapters/order-credential-cleanup-from-orders.adapter';
@@ -61,13 +63,28 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 				}),
 			inject: [AppSettingsService],
 		},
+		DevPaymentGatewayAdapter,
 		MercadoPagoPaymentGatewayAdapter,
 		{
 			provide: PAYMENT_GATEWAY_PORT_KEY,
 			useFactory: (
 				paymentGateway: MercadoPagoPaymentGatewayAdapter,
-			): MercadoPagoPaymentGatewayAdapter => paymentGateway,
-			inject: [MercadoPagoPaymentGatewayAdapter],
+				devPaymentGateway: DevPaymentGatewayAdapter,
+				appSettings: AppSettingsService,
+			): MercadoPagoPaymentGatewayAdapter | DevPaymentGatewayAdapter => {
+				if (
+					!appSettings.isProduction &&
+					appSettings.skipMercadoPagoCheckoutInDevMode
+				)
+					return devPaymentGateway;
+
+				return paymentGateway;
+			},
+			inject: [
+				MercadoPagoPaymentGatewayAdapter,
+				DevPaymentGatewayAdapter,
+				AppSettingsService,
+			],
 		},
 		OrderStatusFromPrismaAdapter,
 		{
@@ -118,6 +135,7 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 		HandlePaymentConfirmedWebhookUseCase,
 		ReleasePaymentHoldUseCase,
 		ResumePaymentCheckoutUseCase,
+		SimulateDevPaymentOutcomeUseCase,
 	],
 })
 export class PaymentsModule {}

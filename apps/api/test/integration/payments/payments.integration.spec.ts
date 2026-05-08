@@ -9,6 +9,7 @@ import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-re
 import { OrdersController } from '@modules/orders/presentation/orders.controller';
 import { ORDER_PAYMENT_AMOUNT_PORT_KEY } from '@modules/payments/application/ports/order-payment-amount.port';
 import { ORDER_STATUS_PORT_KEY } from '@modules/payments/application/ports/order-status.port';
+import { PAYMENT_GATEWAY_PORT_KEY } from '@modules/payments/application/ports/payment-gateway.port';
 import { PAYMENT_REPOSITORY_KEY } from '@modules/payments/application/ports/payment-repository.port';
 import { PROCESSED_WEBHOOK_EVENT_PORT_KEY } from '@modules/payments/application/ports/processed-webhook-event.port';
 import { PaymentsModule } from '@modules/payments/payments.module';
@@ -31,6 +32,7 @@ describe('Payments module integration', () => {
 	let ordersController: OrdersController;
 	let paymentsController: PaymentsController;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
+	let previousSkipMercadoPagoCheckoutInDevMode: string | undefined;
 	let mercadoPagoSdkMock: {
 		createPayment: jest.Mock;
 		fetchPaymentNotification: jest.Mock;
@@ -74,6 +76,10 @@ describe('Payments module integration', () => {
 	}
 
 	beforeEach(async () => {
+		previousSkipMercadoPagoCheckoutInDevMode =
+			process.env.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE;
+		process.env.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE = 'false';
+
 		mercadoPagoSdkMock = {
 			createPayment: jest.fn(async ({ paymentId }) => ({
 				checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
@@ -106,6 +112,15 @@ describe('Payments module integration', () => {
 			.useClass(InMemoryProcessedWebhookEventRepository)
 			.overrideProvider(MERCADO_PAGO_SDK_PORT_KEY)
 			.useValue(mercadoPagoSdkMock)
+			.overrideProvider(PAYMENT_GATEWAY_PORT_KEY)
+			.useValue({
+				initiatePayment: jest.fn((input) =>
+					mercadoPagoSdkMock.createPayment(input),
+				),
+				fetchPaymentNotification: jest.fn((input) =>
+					mercadoPagoSdkMock.fetchPaymentNotification(input),
+				),
+			})
 			.overrideProvider(ORDER_STATUS_PORT_KEY)
 			.useClass(OrderStatusFromOrdersRepositoryAdapter)
 			.overrideProvider(ORDER_PAYMENT_AMOUNT_PORT_KEY)
@@ -122,6 +137,16 @@ describe('Payments module integration', () => {
 			versionId: version.id,
 			activatedAt: new Date('2026-03-18T10:00:00.000Z'),
 		});
+	});
+
+	afterEach(() => {
+		if (previousSkipMercadoPagoCheckoutInDevMode === undefined) {
+			delete process.env.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE;
+			return;
+		}
+
+		process.env.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE =
+			previousSkipMercadoPagoCheckoutInDevMode;
 	});
 
 	it('creates and fetches a payment with 70% booster share', async () => {
@@ -177,6 +202,42 @@ describe('Payments module integration', () => {
 				clientUser,
 			),
 		).rejects.toThrow('Payment already exists.');
+	});
+
+	it('resumes an awaiting checkout for the owning client', async () => {
+		const createdOrder = await createQuotedOrder();
+		const payment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+
+		await expect(
+			paymentsController.resumeCheckout(createdOrder.id, clientUser),
+		).resolves.toEqual({
+			paymentId: payment.id,
+			checkoutUrl: `https://mercadopago.test/checkout/${payment.id}`,
+		});
+	});
+
+	it('rejects checkout resume after the order is no longer awaiting payment', async () => {
+		const createdOrder = await createQuotedOrder();
+		await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+		await ordersController.cancel(createdOrder.id, clientUser);
+
+		await expect(
+			paymentsController.resumeCheckout(createdOrder.id, clientUser),
+		).rejects.toThrow(
+			'Payment checkout can only be resumed while the order is awaiting payment and the payment is awaiting confirmation.',
+		);
 	});
 
 	it('keeps payment held until order completion', async () => {
