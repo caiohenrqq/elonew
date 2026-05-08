@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { ClientDashboardPage } from './client-dashboard-page';
 
@@ -20,6 +20,15 @@ jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
 }));
 
 describe('ClientDashboardPage', () => {
+	beforeEach(() => {
+		Object.defineProperty(navigator, 'clipboard', {
+			configurable: true,
+			value: {
+				writeText: jest.fn().mockResolvedValue(undefined),
+			},
+		});
+	});
+
 	it('renders dashboard metrics and recent order rows', () => {
 		render(
 			<ClientDashboardPage
@@ -83,5 +92,65 @@ describe('ClientDashboardPage', () => {
 		);
 
 		expect(screen.getByText('Nenhum pedido encontrado')).toBeInTheDocument();
+	});
+
+	it('renders the development checkout tutorial and copies snippets', async () => {
+		render(
+			<ClientDashboardPage
+				dashboard={{
+					orders: [],
+					summary: {
+						activeOrders: 0,
+						totalOrders: 0,
+						totalInvested: 0,
+					},
+				}}
+				devPaymentId="payment-dev-1"
+			/>,
+		);
+
+		expect(
+			screen.getByRole('dialog', { name: /Development checkout/i }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('POST /payments/dev/payment-dev-1/simulate'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('Authorization: Bearer <accessToken>'),
+		).toBeInTheDocument();
+		expect(screen.getByText(/"outcome": "approved"/)).toBeInTheDocument();
+		expect(screen.getByText('Outcome options')).toBeInTheDocument();
+		expect(screen.getAllByText('approved').length).toBeGreaterThan(0);
+		expect(screen.getByText('rejected')).toBeInTheDocument();
+		expect(screen.getByText(/client@elojob.com/)).toBeInTheDocument();
+		expect(screen.queryByText(/Manual/i)).not.toBeInTheDocument();
+
+		expect(
+			screen.queryByText(/Authorization: Bearer dev-access-token/),
+		).not.toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole('button', { name: /Copy Endpoint/i }));
+
+		await waitFor(() => {
+			expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+				'/payments/dev/payment-dev-1/simulate',
+			);
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /Copy Access token/i }));
+
+		await waitFor(() => {
+			expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+				'Authorization: Bearer <accessToken>',
+			);
+		});
+
+		fireEvent.click(screen.getByRole('button', { name: /^Copy Body$/i }));
+
+		await waitFor(() => {
+			expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+				'{\n  "outcome": "approved"\n}',
+			);
+		});
 	});
 });

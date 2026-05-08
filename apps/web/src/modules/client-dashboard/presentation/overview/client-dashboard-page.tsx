@@ -15,9 +15,11 @@ import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
 import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
 import type { ClientDashboardOrder } from '../../model/orders';
 import { type ClientDashboard, formatCurrency } from '../../model/orders';
+import { DevelopmentCheckoutModal } from './development-checkout-modal';
 
 type ClientDashboardPageProps = {
 	dashboard: ClientDashboard;
+	devPaymentId?: string;
 };
 
 const formatMetricCount = (value: number) => value.toString().padStart(2, '0');
@@ -52,6 +54,7 @@ const formatOrderRoute = (order: ClientDashboardOrder) => {
 
 export const ClientDashboardPage = ({
 	dashboard,
+	devPaymentId,
 }: ClientDashboardPageProps) => {
 	const activeProgress =
 		dashboard.summary.totalOrders > 0
@@ -60,6 +63,10 @@ export const ClientDashboardPage = ({
 
 	return (
 		<DashboardEntrance>
+			{devPaymentId ? (
+				<DevelopmentCheckoutModal devPaymentId={devPaymentId} />
+			) : null}
+
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<div className="dashboard-animate">
 					<DashboardMetricCard
