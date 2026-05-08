@@ -31,6 +31,18 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return null;
 	}
 
+	async findByOrderIdForClient(
+		orderId: string,
+		clientId: string,
+	): Promise<Payment | null> {
+		for (const record of this.payments.values()) {
+			if (record.payment.orderId === orderId && record.clientId === clientId)
+				return record.payment;
+		}
+
+		return null;
+	}
+
 	async findByGatewayId(): Promise<Payment | null> {
 		throw new Error('not needed in this test');
 	}

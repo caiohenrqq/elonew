@@ -23,6 +23,10 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return null;
 	}
 
+	async findByOrderIdForClient(): Promise<Payment | null> {
+		throw new Error('not needed in this test');
+	}
+
 	async findByGatewayId(): Promise<Payment | null> {
 		throw new Error('not needed in this test');
 	}

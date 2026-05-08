@@ -45,6 +45,23 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return Promise.resolve(null);
 	}
 
+	async findByOrderIdForClient(
+		orderId: string,
+		clientId: string,
+	): Promise<Payment | null> {
+		const payment = await this.findByOrderId(orderId);
+		if (!payment) return null;
+		if (!this.orderRepository) return payment;
+
+		const order = await this.orderRepository.findByIdForClient(
+			payment.orderId,
+			clientId,
+		);
+		if (!order) return null;
+
+		return payment;
+	}
+
 	findByGatewayId(gatewayId: string): Promise<Payment | null> {
 		for (const payment of this.payments.values()) {
 			if (payment.gatewayId === gatewayId) return Promise.resolve(payment);

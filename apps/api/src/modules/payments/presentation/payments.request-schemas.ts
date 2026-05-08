@@ -24,3 +24,7 @@ export type MercadoPagoWebhookSchemaInput = z.infer<
 export const paymentIdParamSchema = z.string().trim().min(1);
 
 export type PaymentIdParamSchemaInput = z.infer<typeof paymentIdParamSchema>;
+
+export const orderIdParamSchema = z.string().trim().min(1);
+
+export type OrderIdParamSchemaInput = z.infer<typeof orderIdParamSchema>;

@@ -28,6 +28,14 @@ export class PaymentHoldReleaseNotAllowedError extends Error {
 	}
 }
 
+export class PaymentCheckoutResumeNotAllowedError extends Error {
+	constructor() {
+		super(
+			'Payment checkout can only be resumed while the order is awaiting payment and the payment is awaiting confirmation.',
+		);
+	}
+}
+
 export class PaymentOrderNotFoundError extends Error {
 	constructor() {
 		super('Order not found.');

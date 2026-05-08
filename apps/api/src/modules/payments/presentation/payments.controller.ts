@@ -12,6 +12,7 @@ import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
+import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
 import {
 	Body,
 	Controller,
@@ -29,6 +30,8 @@ import {
 	createPaymentSchema,
 	type MercadoPagoWebhookSchemaInput,
 	mercadoPagoWebhookSchema,
+	type OrderIdParamSchemaInput,
+	orderIdParamSchema,
 	type PaymentIdParamSchemaInput,
 	paymentIdParamSchema,
 } from './payments.request-schemas';
@@ -42,6 +45,7 @@ export class PaymentsController {
 		private readonly failPaymentUseCase: FailPaymentUseCase,
 		private readonly handlePaymentConfirmedWebhookUseCase: HandlePaymentConfirmedWebhookUseCase,
 		private readonly releasePaymentHoldUseCase: ReleasePaymentHoldUseCase,
+		private readonly resumePaymentCheckoutUseCase: ResumePaymentCheckoutUseCase,
 	) {}
 
 	@Post()
@@ -96,6 +100,24 @@ export class PaymentsController {
 	): Promise<{ success: true }> {
 		await this.confirmPaymentUseCase.execute({ paymentId });
 		return { success: true };
+	}
+
+	@Post('orders/:orderId/resume')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
+	@HttpCode(200)
+	async resumeCheckout(
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<{
+		paymentId: string;
+		checkoutUrl: string;
+	}> {
+		return await this.resumePaymentCheckoutUseCase.execute({
+			orderId,
+			clientId: currentUser.id,
+		});
 	}
 
 	@Post('internal/:paymentId/fail')

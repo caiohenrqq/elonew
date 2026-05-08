@@ -19,6 +19,7 @@ type PaymentRecord = {
 	gatewayId: string | null;
 	gatewayStatus: string | null;
 	gatewayStatusDetail: string | null;
+	checkoutUrl: string | null;
 };
 
 function mapDomainPaymentMethodToPersisted(
@@ -57,6 +58,10 @@ type PaymentDelegate = {
 			| { gatewayId: string }
 			| {
 					id: string;
+					order: { clientId: string };
+			  }
+			| {
+					orderId: string;
 					order: { clientId: string };
 			  };
 	}): Promise<PaymentRecord | null>;
@@ -104,6 +109,21 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 		return this.mapRecordToDomain(record);
 	}
 
+	async findByOrderIdForClient(
+		orderId: string,
+		clientId: string,
+	): Promise<Payment | null> {
+		const record = await this.getDelegate().findFirst({
+			where: {
+				orderId,
+				order: { clientId },
+			},
+		});
+		if (!record) return null;
+
+		return this.mapRecordToDomain(record);
+	}
+
 	async findByGatewayId(gatewayId: string): Promise<Payment | null> {
 		const record = await this.getDelegate().findFirst({
 			where: { gatewayId },
@@ -128,6 +148,7 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				gatewayId: payment.gatewayId,
 				gatewayStatus: payment.gatewayStatus,
 				gatewayStatusDetail: payment.gatewayStatusDetail,
+				checkoutUrl: payment.checkoutUrl,
 			},
 			update: {
 				status: payment.status,
@@ -139,6 +160,7 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				gatewayId: payment.gatewayId,
 				gatewayStatus: payment.gatewayStatus,
 				gatewayStatusDetail: payment.gatewayStatusDetail,
+				checkoutUrl: payment.checkoutUrl,
 			},
 		});
 	}
@@ -158,6 +180,7 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 			gatewayId: record.gatewayId,
 			gatewayStatus: record.gatewayStatus,
 			gatewayStatusDetail: record.gatewayStatusDetail,
+			checkoutUrl: record.checkoutUrl,
 			grossAmount: record.grossAmount,
 			boosterAmount: record.boosterAmount,
 		});

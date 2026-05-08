@@ -16,6 +16,7 @@ describe('PrismaPaymentRepository', () => {
 			gatewayId: 'mp-payment-1',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: null,
+			checkoutUrl: null,
 		});
 		const upsert = jest.fn().mockResolvedValue(undefined);
 		const prisma = {
@@ -52,6 +53,7 @@ describe('PrismaPaymentRepository', () => {
 			gatewayId: 'mp-payment-1',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: null,
+			checkoutUrl: null,
 		});
 		expect(upsert).toHaveBeenCalledWith({
 			where: { id: 'payment-1' },
@@ -67,6 +69,7 @@ describe('PrismaPaymentRepository', () => {
 				gatewayId: 'mp-payment-1',
 				gatewayStatus: 'approved',
 				gatewayStatusDetail: null,
+				checkoutUrl: null,
 			},
 			update: {
 				status: 'held',
@@ -78,6 +81,7 @@ describe('PrismaPaymentRepository', () => {
 				gatewayId: 'mp-payment-1',
 				gatewayStatus: 'approved',
 				gatewayStatusDetail: null,
+				checkoutUrl: null,
 			},
 		});
 	});
@@ -120,6 +124,7 @@ describe('PrismaPaymentRepository', () => {
 				gatewayId: null,
 				gatewayStatus: null,
 				gatewayStatusDetail: null,
+				checkoutUrl: null,
 			},
 			update: {
 				status: 'awaiting_confirmation',
@@ -131,6 +136,7 @@ describe('PrismaPaymentRepository', () => {
 				gatewayId: null,
 				gatewayStatus: null,
 				gatewayStatusDetail: null,
+				checkoutUrl: null,
 			},
 		});
 	});
@@ -148,6 +154,7 @@ describe('PrismaPaymentRepository', () => {
 			gatewayId: 'mp-gateway-lookup',
 			gatewayStatus: 'pending',
 			gatewayStatusDetail: null,
+			checkoutUrl: null,
 		});
 		const prisma = {
 			payment: {
@@ -198,6 +205,7 @@ describe('PrismaPaymentRepository', () => {
 					gatewayId: null,
 					gatewayStatus: null,
 					gatewayStatusDetail: null,
+					checkoutUrl: null,
 				}),
 				findFirst: jest.fn(),
 				upsert: jest.fn(),
@@ -225,6 +233,7 @@ describe('PrismaPaymentRepository', () => {
 					gatewayId: null,
 					gatewayStatus: null,
 					gatewayStatusDetail: null,
+					checkoutUrl: null,
 				}),
 				findFirst: jest.fn(),
 				upsert: jest.fn(),
@@ -256,6 +265,7 @@ describe('PrismaPaymentRepository', () => {
 					gatewayId: null,
 					gatewayStatus: null,
 					gatewayStatusDetail: null,
+					checkoutUrl: null,
 				}),
 				findFirst: jest.fn(),
 				upsert: jest.fn(),

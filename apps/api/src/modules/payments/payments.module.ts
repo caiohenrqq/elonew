@@ -16,6 +16,7 @@ import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
+import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
 import { MercadoPagoPaymentGatewayAdapter } from '@modules/payments/infrastructure/adapters/mercadopago-payment-gateway.adapter';
 import { MercadoPagoPaymentWebhookSignatureVerifierAdapter } from '@modules/payments/infrastructure/adapters/mercadopago-payment-webhook-signature-verifier.adapter';
 import { OrderCredentialCleanupFromOrdersAdapter } from '@modules/payments/infrastructure/adapters/order-credential-cleanup-from-orders.adapter';
@@ -116,6 +117,7 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 		FailPaymentUseCase,
 		HandlePaymentConfirmedWebhookUseCase,
 		ReleasePaymentHoldUseCase,
+		ResumePaymentCheckoutUseCase,
 	],
 })
 export class PaymentsModule {}

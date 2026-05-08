@@ -56,6 +56,7 @@ import {
 import {
 	PaymentAlreadyExistsError,
 	PaymentAmountInvalidError,
+	PaymentCheckoutResumeNotAllowedError,
 	PaymentHoldReleaseNotAllowedError,
 	PaymentInvalidTransitionError,
 	PaymentNotFoundError,
@@ -152,6 +153,7 @@ export function mapApiDomainErrorToHttpException(
 			OrderPricingVersionNotActiveError,
 			PaymentAlreadyExistsError,
 			PaymentAmountInvalidError,
+			PaymentCheckoutResumeNotAllowedError,
 			PaymentInvalidTransitionError,
 			PaymentHoldReleaseNotAllowedError,
 			WalletInvalidAmountError,

@@ -31,6 +31,7 @@ export class Payment {
 		private attachedGatewayId: string | null,
 		private attachedGatewayStatus: string | null,
 		private attachedGatewayStatusDetail: string | null,
+		private attachedCheckoutUrl: string | null,
 		private currentStatus: PaymentStatus,
 	) {}
 
@@ -55,6 +56,7 @@ export class Payment {
 			null,
 			null,
 			null,
+			null,
 			PaymentStatus.AWAITING_CONFIRMATION,
 		);
 	}
@@ -70,6 +72,7 @@ export class Payment {
 		gatewayId: string | null;
 		gatewayStatus: string | null;
 		gatewayStatusDetail: string | null;
+		checkoutUrl?: string | null;
 		status: PaymentStatus;
 	}): Payment {
 		return new Payment(
@@ -83,6 +86,7 @@ export class Payment {
 			input.gatewayId,
 			input.gatewayStatus,
 			input.gatewayStatusDetail,
+			input.checkoutUrl ?? null,
 			input.status,
 		);
 	}
@@ -107,11 +111,16 @@ export class Payment {
 		return this.attachedGatewayStatusDetail;
 	}
 
+	get checkoutUrl(): string | null {
+		return this.attachedCheckoutUrl;
+	}
+
 	attachGatewayDetails(input: {
 		gatewayReferenceId?: string | null;
 		gatewayId: string | null;
 		gatewayStatus: string | null;
 		gatewayStatusDetail?: string | null;
+		checkoutUrl?: string | null;
 	}): void {
 		if (input.gatewayReferenceId !== undefined)
 			this.attachedGatewayReferenceId = input.gatewayReferenceId;
@@ -120,6 +129,8 @@ export class Payment {
 		this.attachedGatewayStatus = input.gatewayStatus;
 		if (input.gatewayStatusDetail !== undefined)
 			this.attachedGatewayStatusDetail = input.gatewayStatusDetail;
+		if (input.checkoutUrl !== undefined)
+			this.attachedCheckoutUrl = input.checkoutUrl;
 	}
 
 	confirm(): void {

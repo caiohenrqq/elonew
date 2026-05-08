@@ -88,6 +88,7 @@ export class CreatePaymentUseCase {
 			gatewayId: null,
 			gatewayStatus: gatewayPayment.gatewayStatus,
 			gatewayStatusDetail: null,
+			checkoutUrl: gatewayPayment.checkoutUrl,
 		});
 
 		await this.paymentRepository.save(payment);

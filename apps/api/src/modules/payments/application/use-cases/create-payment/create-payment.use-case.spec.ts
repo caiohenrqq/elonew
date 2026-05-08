@@ -29,6 +29,10 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return null;
 	}
 
+	async findByOrderIdForClient(): Promise<Payment | null> {
+		throw new Error('not needed in this test');
+	}
+
 	async findByGatewayId(): Promise<Payment | null> {
 		throw new Error('not needed in this test');
 	}
@@ -300,5 +304,8 @@ describe('CreatePaymentUseCase', () => {
 		expect(savedPayment?.gatewayReferenceId).toBe(`pref-${createdPayment.id}`);
 		expect(savedPayment?.gatewayStatus).toBe('pending');
 		expect(savedPayment?.gatewayId).toBeNull();
+		expect(savedPayment?.checkoutUrl).toBe(
+			`https://mercadopago.test/checkout/${createdPayment.id}`,
+		);
 	});
 });
