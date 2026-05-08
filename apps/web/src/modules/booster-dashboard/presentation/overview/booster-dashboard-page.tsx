@@ -22,6 +22,7 @@ import type {
 	BoosterWalletOutput,
 	BoosterWalletTransactionsOutput,
 } from '../../server/booster-contracts';
+import { BoosterDashboardLiveRefresh } from './booster-dashboard-live-refresh';
 import { BoosterOrderList } from './booster-order-list';
 import { WalletPanel } from './wallet-panel';
 
@@ -116,7 +117,7 @@ const BoosterQueueView = ({ queue }: { queue: BoosterQueueViewModel }) => (
 		<div className="dashboard-animate grid gap-8 xl:grid-cols-[1fr_360px]">
 			<BoosterOrderList
 				title="Pedidos disponíveis"
-				emptyMessage="Nenhum pedido disponível para aceitar agora."
+				emptyMessage="Nenhum pedido pago disponível para aceitar agora."
 				mode="available"
 				orders={queue.availableOrders}
 			/>
@@ -161,6 +162,7 @@ export const BoosterDashboardPage = async ({
 
 		return (
 			<DashboardEntrance>
+				<BoosterDashboardLiveRefresh />
 				<BoosterWorkView
 					work={{
 						...work,
@@ -180,6 +182,7 @@ export const BoosterDashboardPage = async ({
 
 	return (
 		<DashboardEntrance>
+			<BoosterDashboardLiveRefresh />
 			<BoosterQueueView queue={{ ...queue, wallet }} />
 		</DashboardEntrance>
 	);

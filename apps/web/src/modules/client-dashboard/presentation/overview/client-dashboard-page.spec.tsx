@@ -19,6 +19,10 @@ jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
 	DashboardEntrance: ({ children }: PropsWithChildren) => <div>{children}</div>,
 }));
 
+jest.mock('./client-dashboard-live-refresh', () => ({
+	ClientDashboardLiveRefresh: () => null,
+}));
+
 describe('ClientDashboardPage', () => {
 	beforeEach(() => {
 		Object.defineProperty(navigator, 'clipboard', {

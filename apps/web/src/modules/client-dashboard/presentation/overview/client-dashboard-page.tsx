@@ -15,6 +15,7 @@ import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
 import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
 import type { ClientDashboardOrder } from '../../model/orders';
 import { type ClientDashboard, formatCurrency } from '../../model/orders';
+import { ClientDashboardLiveRefresh } from './client-dashboard-live-refresh';
 import { DevelopmentCheckoutModal } from './development-checkout-modal';
 
 type ClientDashboardPageProps = {
@@ -63,6 +64,7 @@ export const ClientDashboardPage = ({
 
 	return (
 		<DashboardEntrance>
+			<ClientDashboardLiveRefresh />
 			{devPaymentId ? (
 				<DevelopmentCheckoutModal devPaymentId={devPaymentId} />
 			) : null}

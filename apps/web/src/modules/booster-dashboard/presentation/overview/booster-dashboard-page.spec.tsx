@@ -72,6 +72,10 @@ jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
 	DashboardEntrance: ({ children }: PropsWithChildren) => <div>{children}</div>,
 }));
 
+jest.mock('./booster-dashboard-live-refresh', () => ({
+	BoosterDashboardLiveRefresh: () => null,
+}));
+
 jest.mock('lucide-react', () => ({
 	BadgeDollarSign: () => <svg data-testid="money-icon" />,
 	BriefcaseBusiness: () => <svg data-testid="briefcase-icon" />,
