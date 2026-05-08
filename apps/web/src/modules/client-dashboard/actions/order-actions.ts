@@ -1,6 +1,8 @@
 'use server';
 
+import { redirect } from 'next/navigation';
 import { api } from '@/shared/api-client-management/api-client';
+import { ApiRequestError } from '@/shared/api-client-management/http';
 import { getCheckoutErrorMessage } from '@/shared/api-client-management/user-messages';
 import { redirectOnAuthError } from '@/shared/auth/redirect-on-auth-error';
 import { getAuthSession } from '@/shared/auth/session';
@@ -9,6 +11,7 @@ import {
 	getClientDashboardOrders as getClientDashboardOrdersFromApi,
 	getOrder as getOrderFromApi,
 	previewOrderQuote,
+	resumePaymentCheckout,
 	startCheckout,
 } from '../server/checkout-service';
 import {
@@ -23,6 +26,10 @@ export type CheckoutActionState = {
 	checkoutUrl?: string;
 	orderId?: string;
 	paymentId?: string;
+	error?: string;
+};
+
+export type ResumePaymentCheckoutActionState = {
 	error?: string;
 };
 
@@ -98,3 +105,32 @@ export const getClientDashboardOrders =
 			return redirectOnAuthError(error);
 		}
 	};
+
+export const resumePaymentCheckoutAction = async (
+	orderId: string,
+	_state: ResumePaymentCheckoutActionState,
+	_formData: FormData,
+): Promise<ResumePaymentCheckoutActionState> => {
+	const session = await getAuthSession();
+	if (!session) redirect('/login');
+
+	let checkoutUrl: string;
+
+	try {
+		await assertSameOriginRequest();
+		const payment = await resumePaymentCheckout(orderId, api.request);
+		checkoutUrl = payment.checkoutUrl;
+	} catch (error) {
+		if (
+			error instanceof ApiRequestError &&
+			(error.status === 401 || error.status === 403)
+		)
+			redirect('/login');
+
+		return {
+			error: getCheckoutErrorMessage(error),
+		};
+	}
+
+	redirect(checkoutUrl);
+};

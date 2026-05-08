@@ -80,6 +80,11 @@ export const createPaymentSchema = z.object({
 	paymentMethod: z.enum(['credit_card', 'pix', 'boleto']),
 });
 
+export const resumePaymentCheckoutSchema = z.object({
+	paymentId: z.string().trim().min(1),
+	checkoutUrl: z.string().trim().url(),
+});
+
 export const startCheckoutSchema = orderQuoteBaseSchema
 	.extend({
 		paymentMethod: createPaymentSchema.shape.paymentMethod,
@@ -89,6 +94,9 @@ export const startCheckoutSchema = orderQuoteBaseSchema
 export type OrderQuoteInput = z.infer<typeof orderQuoteSchema>;
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
+export type ResumePaymentCheckoutOutput = z.infer<
+	typeof resumePaymentCheckoutSchema
+>;
 export type StartCheckoutInput = z.infer<typeof startCheckoutSchema>;
 
 export type OrderQuoteOutput = {

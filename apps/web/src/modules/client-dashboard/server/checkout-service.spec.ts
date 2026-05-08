@@ -1,6 +1,7 @@
 import {
 	getClientDashboardOrders,
 	previewOrderQuote,
+	resumePaymentCheckout,
 	startCheckout,
 } from './checkout-service';
 
@@ -202,5 +203,75 @@ describe('startCheckout', () => {
 				apiRequest,
 			),
 		).rejects.toThrow('Não foi possível iniciar o pagamento com segurança.');
+	});
+
+	it('allows local dev checkout redirects over HTTP outside production', async () => {
+		const apiRequest = jest
+			.fn()
+			.mockResolvedValueOnce({
+				quoteId: 'quote-1',
+				subtotal: 120,
+				totalAmount: 120,
+				discountAmount: 0,
+			})
+			.mockResolvedValueOnce({
+				id: 'order-1',
+				status: 'awaiting_payment',
+				subtotal: 120,
+				totalAmount: 120,
+				discountAmount: 0,
+			})
+			.mockResolvedValueOnce({
+				id: 'payment-1',
+				orderId: 'order-1',
+				status: 'pending',
+				grossAmount: 120,
+				boosterAmount: 80,
+				paymentMethod: 'pix',
+				checkoutUrl: 'http://localhost:3001/client?devPaymentId=payment-1',
+			});
+
+		await expect(
+			startCheckout(
+				{
+					serviceType: 'elo_boost',
+					extras: [],
+					currentLeague: 'silver',
+					currentDivision: 'IV',
+					currentLp: 0,
+					desiredLeague: 'gold',
+					desiredDivision: 'IV',
+					server: 'BR',
+					desiredQueue: 'solo_duo',
+					lpGain: 20,
+					deadline: '2026-05-01T00:00:00.000Z',
+					paymentMethod: 'pix',
+				},
+				apiRequest,
+			),
+		).resolves.toMatchObject({
+			checkoutUrl: 'http://localhost:3001/client?devPaymentId=payment-1',
+			paymentId: 'payment-1',
+		});
+	});
+});
+
+describe('resumePaymentCheckout', () => {
+	it('requests an existing checkout URL for an order', async () => {
+		const apiRequest = jest.fn().mockResolvedValueOnce({
+			paymentId: 'payment-1',
+			checkoutUrl: 'https://checkout.example/pay',
+		});
+
+		await expect(resumePaymentCheckout('order-1', apiRequest)).resolves.toEqual(
+			{
+				paymentId: 'payment-1',
+				checkoutUrl: 'https://checkout.example/pay',
+			},
+		);
+		expect(apiRequest).toHaveBeenCalledWith('/payments/orders/order-1/resume', {
+			auth: true,
+			method: 'POST',
+		});
 	});
 });

@@ -9,6 +9,8 @@ import {
 	type OrderQuoteOutput,
 	type OrderQuotePreviewOutput,
 	orderQuoteSchema,
+	type ResumePaymentCheckoutOutput,
+	resumePaymentCheckoutSchema,
 	type StartCheckoutInput,
 	startCheckoutSchema,
 } from './order-contracts';
@@ -91,6 +93,25 @@ export const getOrder = async (
 	);
 };
 
+export const resumePaymentCheckout = async (
+	orderId: string,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<ResumePaymentCheckoutOutput> => {
+	const response = await apiRequest<unknown>(
+		`/payments/orders/${encodeURIComponent(orderId)}/resume`,
+		{
+			auth: true,
+			method: 'POST',
+		},
+	);
+
+	const payment = resumePaymentCheckoutSchema.parse(response);
+	return {
+		...payment,
+		checkoutUrl: getSafeCheckoutUrl(payment.checkoutUrl),
+	};
+};
+
 export const startCheckout = async (
 	input: StartCheckoutInput,
 	apiRequest: AuthenticatedApiRequest,
@@ -112,9 +133,16 @@ export const startCheckout = async (
 
 const getSafeCheckoutUrl = (checkoutUrl: string) => {
 	const url = new URL(checkoutUrl);
-	if (url.protocol !== 'https:') {
+	const isLocalDevUrl =
+		process.env.NODE_ENV !== 'production' &&
+		url.protocol === 'http:' &&
+		(url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+
+	if (url.protocol !== 'https:' && !isLocalDevUrl) {
 		throw new Error('Não foi possível iniciar o pagamento com segurança.');
 	}
 
 	return url.toString();
 };
+
+export const getSafeCheckoutRedirectUrl = getSafeCheckoutUrl;

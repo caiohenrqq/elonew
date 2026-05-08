@@ -2,12 +2,15 @@ import { Badge } from '@packages/ui/components/badge';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import type { ClientOrder } from '../../model/orders';
+import { ResumePaymentButton } from './resume-payment-button';
 
 type OrderDetailsHeaderProps = {
 	order: ClientOrder;
 };
 
 export const OrderDetailsHeader = ({ order }: OrderDetailsHeaderProps) => {
+	const canResumePayment = order.status === 'awaiting_payment';
+
 	return (
 		<>
 			<Link
@@ -30,6 +33,7 @@ export const OrderDetailsHeader = ({ order }: OrderDetailsHeaderProps) => {
 						Os dados disponíveis deste pedido vieram da sua conta.
 					</p>
 				</div>
+				{canResumePayment ? <ResumePaymentButton orderId={order.id} /> : null}
 			</header>
 		</>
 	);
