@@ -1,4 +1,6 @@
 import { ApiRequestError } from '@/shared/api-client-management/http';
+import type { ListChatMessagesResponseOutput } from '@/shared/chat/chat-contracts';
+import { listAdminOrderChatMessages } from '@/shared/chat/chat-service';
 import {
 	type AdminDashboardOutput,
 	type AdminMetricsOutput,
@@ -91,6 +93,20 @@ export const getAdminOrders = async (
 				auth: true,
 			});
 			return adminOrderSchema.array().parse(response);
+		},
+	);
+};
+
+export const getAdminOrderChatMessages = async (
+	orderId: string,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<ListChatMessagesResponseOutput> => {
+	const path = `/admin/orders/${encodeURIComponent(orderId)}/chat/messages?limit=50`;
+	return await withAdminReadErrorContext(
+		'Admin order chat request',
+		path,
+		async () => {
+			return await listAdminOrderChatMessages(orderId, apiRequest);
 		},
 	);
 };

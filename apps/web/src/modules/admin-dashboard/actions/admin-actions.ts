@@ -4,10 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { api } from '@/shared/api-client-management/api-client';
+import { ApiRequestError } from '@/shared/api-client-management/http';
 import { getAuthErrorMessage } from '@/shared/api-client-management/user-messages';
 import { redirectOnAuthError } from '@/shared/auth/redirect-on-auth-error';
 import type { AuthSession } from '@/shared/auth/session';
 import { getAuthSession } from '@/shared/auth/session';
+import type { ListChatMessagesResponseOutput } from '@/shared/chat/chat-contracts';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import type {
 	AdminDashboardOutput,
@@ -21,6 +23,7 @@ import {
 	forceCancelAdminOrder,
 	getAdminDashboard as getAdminDashboardFromApi,
 	getAdminMetrics as getAdminMetricsFromApi,
+	getAdminOrderChatMessages as getAdminOrderChatMessagesFromApi,
 	getAdminOrders as getAdminOrdersFromApi,
 	getAdminSupportTickets as getAdminSupportTicketsFromApi,
 	getAdminUsers as getAdminUsersFromApi,
@@ -64,6 +67,11 @@ export const getAdminDashboard = async (): Promise<AdminDashboardOutput> => {
 	}
 };
 
+export const getAdminUserId = async () => {
+	const session = await getAdminSessionOrRedirect();
+	return session.userId;
+};
+
 export const getAdminMetrics = async (): Promise<AdminMetricsOutput> => {
 	await getAdminSessionOrRedirect();
 	try {
@@ -87,6 +95,24 @@ export const getAdminOrders = async (): Promise<AdminOrderOutput[]> => {
 	try {
 		return await getAdminOrdersFromApi(renderReadApiRequest);
 	} catch (error) {
+		return redirectOnAuthError(error);
+	}
+};
+
+export const getAdminOrderChatMessages = async (
+	orderId: string,
+): Promise<ListChatMessagesResponseOutput> => {
+	await getAdminSessionOrRedirect();
+
+	try {
+		return await getAdminOrderChatMessagesFromApi(
+			orderId,
+			renderReadApiRequest,
+		);
+	} catch (error) {
+		if (error instanceof ApiRequestError && error.status === 404)
+			return { items: [], nextCursor: null };
+
 		return redirectOnAuthError(error);
 	}
 };

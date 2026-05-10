@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { PropsWithChildren } from 'react';
+import { AdminOrderDetailsView } from '../order-details/admin-order-details-page';
 import {
 	AdminDashboardPage,
 	AdminOrdersPage,
@@ -38,7 +40,9 @@ describe('admin dashboard pages', () => {
 		expect(screen.queryByText('Preciso de ajuda')).not.toBeInTheDocument();
 	});
 
-	it('renders users on the dedicated users page', () => {
+	it('opens user admin actions in a modal', async () => {
+		const user = userEvent.setup();
+
 		render(
 			<AdminUsersPage
 				users={[
@@ -60,10 +64,16 @@ describe('admin dashboard pages', () => {
 		expect(screen.getByText('ATIVO')).toBeInTheDocument();
 		expect(screen.getByText('LIBERADO')).toBeInTheDocument();
 		expect(
-			screen.getByPlaceholderText('Motivo obrigatório da auditoria'),
+			screen.queryByPlaceholderText('Motivo obrigatório da auditoria'),
+		).not.toBeInTheDocument();
+
+		await user.click(screen.getByRole('button', { name: 'Bloquear' }));
+
+		expect(
+			screen.getByRole('dialog', { name: 'Bloquear' }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole('button', { name: 'Bloquear' }),
+			screen.getByPlaceholderText('Motivo obrigatório da auditoria'),
 		).toBeInTheDocument();
 	});
 
@@ -90,14 +100,70 @@ describe('admin dashboard pages', () => {
 		);
 
 		expect(screen.getByText('Pedidos')).toBeInTheDocument();
-		expect(screen.getByText('Aguardando booster')).toBeInTheDocument();
-		expect(screen.getByText(/Cancelamento forçado/i)).toBeInTheDocument();
+		expect(screen.getAllByText('Aguardando booster').length).toBeGreaterThan(0);
+		expect(screen.getAllByText(/Cancelamento forçado/i).length).toBeGreaterThan(
+			0,
+		);
 		expect(
-			screen.getByPlaceholderText('Motivo obrigatório do cancelamento'),
-		).toBeInTheDocument();
+			screen.queryByPlaceholderText('Motivo obrigatório do cancelamento'),
+		).not.toBeInTheDocument();
+		expect(screen.getByRole('link', { name: /ver detalhes/i })).toHaveAttribute(
+			'href',
+			'/admin/orders/order-1',
+		);
 		expect(
-			screen.getByRole('button', { name: 'Cancelar' }),
+			screen.queryByRole('button', { name: 'Cancelar pedido' }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByText('Pode começar pelo mid.'),
+		).not.toBeInTheDocument();
+	});
+
+	it('renders the admin order detail page with read-only chat and governance', () => {
+		render(
+			<AdminOrderDetailsView
+				currentUserId="admin-1"
+				messages={[
+					{
+						id: 'message-1',
+						orderId: 'order-1',
+						chatId: 'chat-1',
+						content: 'Pode começar pelo mid.',
+						sender: {
+							id: 'client-1',
+							username: 'Client',
+							role: 'CLIENT',
+						},
+						createdAt: '2026-05-01T10:00:00.000Z',
+					},
+				]}
+				order={{
+					id: 'order-1',
+					clientId: 'client-1',
+					boosterId: null,
+					status: 'pending_booster',
+					serviceType: 'elo_boost',
+					totalAmount: 120,
+					createdAt: '2026-05-01T00:00:00.000Z',
+					latestGovernanceAction: {
+						type: 'force_cancel_order',
+						reason: 'Pagamento duplicado',
+						createdAt: '2026-05-02T00:00:00.000Z',
+					},
+				}}
+			/>,
+		);
+
+		expect(
+			screen.getByRole('link', { name: /voltar aos pedidos/i }),
+		).toHaveAttribute('href', '/admin/orders');
+		expect(
+			screen.getByRole('button', { name: 'Cancelar pedido' }),
 		).toBeInTheDocument();
+		expect(screen.getByText('Pode começar pelo mid.')).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /enviar mensagem/i }),
+		).not.toBeInTheDocument();
 	});
 
 	it('renders support tickets on the dedicated support page', () => {

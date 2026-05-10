@@ -5,6 +5,7 @@ import {
 	forceCancelAdminOrder,
 	getAdminDashboard,
 	getAdminMetrics,
+	getAdminOrderChatMessages,
 	unblockAdminUser,
 } from './admin-service';
 
@@ -111,6 +112,43 @@ describe('admin service', () => {
 				method: 'POST',
 				body: JSON.stringify({ reason: 'Payment safety review' }),
 			},
+		);
+	});
+
+	it('loads admin order chat history from the read-only admin endpoint', async () => {
+		const apiRequest = jest.fn(async <T>(path: string): Promise<T> => {
+			expect(path).toBe('/admin/orders/order-1/chat/messages?limit=50');
+			return {
+				items: [
+					{
+						id: 'message-1',
+						orderId: 'order-1',
+						chatId: 'chat-1',
+						content: 'Pode começar pelo mid.',
+						sender: {
+							id: 'client-1',
+							username: 'Client',
+							role: 'CLIENT',
+						},
+						createdAt: '2026-05-01T10:00:00.000Z',
+					},
+				],
+				nextCursor: null,
+			} as T;
+		});
+
+		await expect(
+			getAdminOrderChatMessages(
+				'order-1',
+				apiRequest as AuthenticatedApiRequest,
+			),
+		).resolves.toEqual({
+			items: [expect.objectContaining({ id: 'message-1' })],
+			nextCursor: null,
+		});
+		expect(apiRequest).toHaveBeenCalledWith(
+			'/admin/orders/order-1/chat/messages?limit=50',
+			{ auth: true },
 		);
 	});
 
