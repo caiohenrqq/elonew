@@ -5,8 +5,8 @@ import {
 	CardTitle,
 } from '@packages/ui/components/card';
 import { FileText } from 'lucide-react';
+import { DefinitionItem } from '@/shared/dashboard/definition-item';
 import { type ClientOrder, formatCurrency } from '../../model/orders';
-import { DefinitionItem } from './definition-item';
 
 type OrderServiceCardProps = {
 	order: ClientOrder;

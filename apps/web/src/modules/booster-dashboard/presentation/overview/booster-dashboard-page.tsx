@@ -1,8 +1,11 @@
 import { BadgeDollarSign, BriefcaseBusiness, ListChecks } from 'lucide-react';
+import type { ChatMessage } from '@/shared/chat/chat.types';
 import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
 import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
 import {
+	getBoosterOrderChatMessages,
 	getBoosterQueue,
+	getBoosterUserId,
 	getBoosterWallet,
 	getBoosterWalletTransactions,
 	getBoosterWork,
@@ -11,6 +14,7 @@ import {
 	type BoosterQueue,
 	type BoosterWork,
 	formatCurrency,
+	formatOrderRoute,
 	toBoosterQueue,
 	toBoosterWork,
 } from '../../model/booster-orders';
@@ -22,6 +26,7 @@ import type {
 	BoosterWalletOutput,
 	BoosterWalletTransactionsOutput,
 } from '../../server/booster-contracts';
+import { BoosterChatPanel } from './booster-chat-panel';
 import { BoosterDashboardLiveRefresh } from './booster-dashboard-live-refresh';
 import { BoosterOrderList } from './booster-order-list';
 import { WalletPanel } from './wallet-panel';
@@ -47,6 +52,8 @@ type BoosterQueueViewModel = BoosterQueue & {
 type BoosterWorkViewModel = BoosterWork & {
 	wallet: BoosterWalletOutput;
 	transactions: BoosterWalletTransactionsOutput['transactions'];
+	currentUserId: string;
+	chatMessagesByOrderId: Record<string, ChatMessage[]>;
 };
 
 const BoosterDashboardSummary = ({
@@ -137,6 +144,29 @@ const BoosterWorkView = ({ work }: { work: BoosterWorkViewModel }) => (
 					mode="active"
 					orders={work.activeOrders}
 				/>
+				{work.activeOrders.length > 0 ? (
+					<section className="space-y-4">
+						<div>
+							<p className="text-[10px] font-black uppercase tracking-[0.2em] text-hextech-cyan">
+								Chat interno
+							</p>
+							<h2 className="font-display text-2xl font-black text-white">
+								Conversas ativas
+							</h2>
+						</div>
+						<div className="grid gap-4 lg:grid-cols-2">
+							{work.activeOrders.map((order) => (
+								<BoosterChatPanel
+									key={order.id}
+									orderId={order.id}
+									orderLabel={formatOrderRoute(order)}
+									currentUserId={work.currentUserId}
+									initialMessages={work.chatMessagesByOrderId[order.id] ?? []}
+								/>
+							))}
+						</div>
+					</section>
+				) : null}
 				<BoosterOrderList
 					title="Finalizados recentes"
 					emptyMessage="Nenhum pedido finalizado recentemente."
@@ -153,12 +183,20 @@ export const BoosterDashboardPage = async ({
 	tab = DEFAULT_BOOSTER_DASHBOARD_TAB,
 }: BoosterDashboardPageProps = {}) => {
 	if (tab === 'work') {
-		const [workOutput, wallet, walletTransactions] = await Promise.all([
-			getBoosterWork(),
-			getBoosterWallet(),
-			getBoosterWalletTransactions(),
-		]);
+		const [workOutput, wallet, walletTransactions, currentUserId] =
+			await Promise.all([
+				getBoosterWork(),
+				getBoosterWallet(),
+				getBoosterWalletTransactions(),
+				getBoosterUserId(),
+			]);
 		const work = toBoosterWork(workOutput);
+		const chatEntries = await Promise.all(
+			work.activeOrders.map(async (order) => {
+				const chat = await getBoosterOrderChatMessages(order.id);
+				return [order.id, chat.items] as const;
+			}),
+		);
 
 		return (
 			<DashboardEntrance>
@@ -168,6 +206,8 @@ export const BoosterDashboardPage = async ({
 						...work,
 						wallet,
 						transactions: walletTransactions.transactions,
+						currentUserId,
+						chatMessagesByOrderId: Object.fromEntries(chatEntries),
 					}}
 				/>
 			</DashboardEntrance>

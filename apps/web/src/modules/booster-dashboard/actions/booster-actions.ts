@@ -3,10 +3,20 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { api } from '@/shared/api-client-management/api-client';
+import { ApiRequestError } from '@/shared/api-client-management/http';
 import { getCheckoutErrorMessage } from '@/shared/api-client-management/user-messages';
 import { redirectOnAuthError } from '@/shared/auth/redirect-on-auth-error';
 import type { AuthSession } from '@/shared/auth/session';
 import { getAuthSession } from '@/shared/auth/session';
+import {
+	type ChatMessageOutput,
+	type ListChatMessagesResponseOutput,
+	sendChatMessageInputSchema,
+} from '@/shared/chat/chat-contracts';
+import {
+	listOrderChatMessages,
+	sendOrderChatMessage,
+} from '@/shared/chat/chat-service';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import type {
 	BoosterQueueOutput,
@@ -30,6 +40,16 @@ export type BoosterActionState = {
 	success?: boolean;
 };
 
+export type SendBoosterChatMessageActionState =
+	| {
+			message: ChatMessageOutput;
+			error?: never;
+	  }
+	| {
+			error: string;
+			message?: never;
+	  };
+
 const getBoosterSessionOrRedirect = async () => {
 	const session = await getAuthSession();
 	if (!session || session.userRole !== 'BOOSTER' || !session.userId)
@@ -41,6 +61,11 @@ const renderReadApiRequest = <T>(
 	path: string,
 	init: RequestInit & { auth: true },
 ) => api.request<T>(path, { ...init, allowSessionRefresh: false });
+
+export const getBoosterUserId = async () => {
+	const session = await getBoosterSessionOrRedirect();
+	return session.userId;
+};
 
 export const getBoosterQueue = async (): Promise<BoosterQueueOutput> => {
 	await getBoosterSessionOrRedirect();
@@ -81,6 +106,56 @@ export const getBoosterWalletTransactions =
 			return redirectOnAuthError(error);
 		}
 	};
+
+export const getBoosterOrderChatMessages = async (
+	orderId: string,
+): Promise<ListChatMessagesResponseOutput> => {
+	await getBoosterSessionOrRedirect();
+
+	try {
+		return await listOrderChatMessages(orderId, renderReadApiRequest);
+	} catch (error) {
+		if (error instanceof ApiRequestError && error.status === 404)
+			return { items: [], nextCursor: null };
+
+		return redirectOnAuthError(error);
+	}
+};
+
+export const sendBoosterOrderChatMessageAction = async (
+	orderId: string,
+	content: string,
+): Promise<SendBoosterChatMessageActionState> => {
+	const parsed = sendChatMessageInputSchema.safeParse({ content });
+	if (!parsed.success) {
+		return { error: parsed.error.issues[0]?.message ?? 'Mensagem inválida.' };
+	}
+
+	try {
+		await assertSameOriginRequest();
+		await getBoosterSessionOrRedirect();
+
+		return {
+			message: await sendOrderChatMessage(orderId, parsed.data, api.request),
+		};
+	} catch (error) {
+		if (
+			error instanceof ApiRequestError &&
+			(error.status === 401 || error.status === 403)
+		) {
+			return { error: 'Entre novamente para continuar.' };
+		}
+
+		if (error instanceof ApiRequestError && error.status === 409) {
+			return {
+				error:
+					'Este chat não está disponível para envio de mensagens neste status.',
+			};
+		}
+
+		return { error: 'Não foi possível enviar a mensagem.' };
+	}
+};
 
 export const acceptBoosterOrderAction = async (
 	orderId: string,

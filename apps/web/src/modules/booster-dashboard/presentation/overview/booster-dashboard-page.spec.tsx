@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import {
+	getBoosterOrderChatMessages,
 	getBoosterQueue,
+	getBoosterUserId,
 	getBoosterWalletTransactions,
 	getBoosterWork,
 } from '../../actions/booster-actions';
@@ -43,6 +45,11 @@ jest.mock('../../actions/booster-actions', () => ({
 			earnedFromRecentCompletions: 0,
 		},
 	}),
+	getBoosterUserId: jest.fn().mockResolvedValue('booster-1'),
+	getBoosterOrderChatMessages: jest.fn().mockResolvedValue({
+		items: [],
+		nextCursor: null,
+	}),
 	getBoosterWallet: jest.fn().mockResolvedValue({
 		boosterId: 'booster-1',
 		balanceLocked: 30,
@@ -66,6 +73,7 @@ jest.mock('../../actions/booster-actions', () => ({
 	rejectBoosterOrderAction: jest.fn(),
 	completeBoosterOrderAction: jest.fn(),
 	requestBoosterWithdrawalAction: jest.fn(),
+	sendBoosterOrderChatMessageAction: jest.fn(),
 }));
 
 jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
@@ -84,6 +92,7 @@ jest.mock('lucide-react', () => ({
 	PackageCheck: () => <svg data-testid="package-check-icon" />,
 	PackageOpen: () => <svg data-testid="package-open-icon" />,
 	ReceiptText: () => <svg data-testid="receipt-icon" />,
+	Send: () => <svg data-testid="send-icon" />,
 	XCircle: () => <svg data-testid="reject-icon" />,
 	WalletCards: () => <svg data-testid="wallet-icon" />,
 	ArrowDownLeft: () => <svg data-testid="credit-icon" />,
@@ -121,7 +130,63 @@ describe('BoosterDashboardPage', () => {
 		expect(screen.getByText('Movimentações')).toBeInTheDocument();
 		expect(screen.getByText('Conclusão de pedido')).toBeInTheDocument();
 		expect(getBoosterWork).toHaveBeenCalledTimes(1);
+		expect(getBoosterUserId).toHaveBeenCalledTimes(1);
 		expect(getBoosterQueue).not.toHaveBeenCalled();
+		expect(getBoosterOrderChatMessages).not.toHaveBeenCalled();
 		expect(getBoosterWalletTransactions).toHaveBeenCalledTimes(1);
+	});
+
+	it('renders active order chats on the work tab', async () => {
+		jest.mocked(getBoosterWork).mockResolvedValueOnce({
+			activeOrders: [
+				{
+					id: 'order-active-1',
+					boosterId: 'booster-1',
+					status: 'in_progress',
+					serviceType: 'elo_boost',
+					currentLeague: 'gold',
+					currentDivision: 'II',
+					currentLp: 40,
+					desiredLeague: 'platinum',
+					desiredDivision: 'IV',
+					server: 'br',
+					desiredQueue: 'solo_duo',
+					lpGain: 20,
+					deadline: '2026-05-01T00:00:00.000Z',
+					totalAmount: 120,
+					boosterAmount: 84,
+					createdAt: '2026-04-01T00:00:00.000Z',
+				},
+			],
+			recentCompletedOrders: [],
+			summary: {
+				activeOrders: 1,
+				completedOrders: 0,
+				earnedFromRecentCompletions: 0,
+			},
+		});
+		jest.mocked(getBoosterOrderChatMessages).mockResolvedValueOnce({
+			items: [
+				{
+					id: 'message-1',
+					orderId: 'order-active-1',
+					chatId: 'chat-1',
+					content: 'Pode começar pelo mid.',
+					sender: {
+						id: 'client-1',
+						username: 'Client',
+						role: 'CLIENT',
+					},
+					createdAt: '2026-05-01T10:00:00.000Z',
+				},
+			],
+			nextCursor: null,
+		});
+
+		render(await BoosterDashboardPage({ tab: 'work' }));
+
+		expect(screen.getByText('Conversas ativas')).toBeInTheDocument();
+		expect(screen.getByText('Pode começar pelo mid.')).toBeInTheDocument();
+		expect(getBoosterOrderChatMessages).toHaveBeenCalledWith('order-active-1');
 	});
 });
