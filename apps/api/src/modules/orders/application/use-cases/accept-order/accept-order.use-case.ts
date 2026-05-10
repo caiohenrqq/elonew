@@ -1,3 +1,7 @@
+import {
+	CHAT_THREAD_WRITER_KEY,
+	type ChatThreadWriterPort,
+} from '@modules/chat/application/ports/chat-thread-writer.port';
 import { createOrderEvent } from '@modules/orders/application/order-event.factory';
 import {
 	ORDER_EVENT_PUBLISHER_KEY,
@@ -23,6 +27,9 @@ export class AcceptOrderUseCase {
 		@Optional()
 		@Inject(ORDER_EVENT_PUBLISHER_KEY)
 		private readonly orderEventPublisher?: OrderEventPublisherPort,
+		@Optional()
+		@Inject(CHAT_THREAD_WRITER_KEY)
+		private readonly chatThreadWriter?: ChatThreadWriterPort,
 	) {}
 
 	async execute(input: AcceptOrderInput): Promise<void> {
@@ -35,6 +42,7 @@ export class AcceptOrderUseCase {
 		if (!order.boosterId) order.assignBooster(input.boosterId);
 		order.acceptByBooster();
 		await this.orderRepository.save(order);
+		await this.chatThreadWriter?.createOrderChat(order.id);
 		await this.orderEventPublisher?.publish(
 			createOrderEvent('order.accepted', order),
 		);

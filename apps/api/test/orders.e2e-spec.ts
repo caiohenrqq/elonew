@@ -1,4 +1,6 @@
 import { createHmac } from 'node:crypto';
+import { CHAT_REPOSITORY_KEY } from '@modules/chat/application/ports/chat-repository.port';
+import { CHAT_THREAD_WRITER_KEY } from '@modules/chat/application/ports/chat-thread-writer.port';
 import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
 import type { StoredCoupon } from '@modules/orders/application/ports/coupon-lookup.port';
 import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
@@ -16,6 +18,7 @@ import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
+import { InMemoryChatRepository } from './support/in-memory/chat/in-memory-chat.repository';
 import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
 import { InMemoryOrderPricingVersionRepository } from './support/in-memory/orders/in-memory-order-pricing-version.repository';
@@ -25,6 +28,7 @@ describe('Orders (e2e)', () => {
 	let app: ApiHttpApp;
 	let couponLookup: CouponLookupStub;
 	let orderRepository: InMemoryOrderRepository;
+	let chatRepository: InMemoryChatRepository;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
 	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
 
@@ -112,6 +116,7 @@ describe('Orders (e2e)', () => {
 	beforeEach(async () => {
 		couponLookup = new CouponLookupStub();
 		orderRepository = new InMemoryOrderRepository();
+		chatRepository = new InMemoryChatRepository(orderRepository);
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
@@ -127,6 +132,10 @@ describe('Orders (e2e)', () => {
 			.useClass(InMemoryOrderPricingVersionRepository)
 			.overrideProvider(COUPON_LOOKUP_PORT_KEY)
 			.useValue(couponLookup)
+			.overrideProvider(CHAT_REPOSITORY_KEY)
+			.useValue(chatRepository)
+			.overrideProvider(CHAT_THREAD_WRITER_KEY)
+			.useValue(chatRepository)
 			.compile();
 
 		app = await createTestHttpApp(moduleRef);
@@ -278,6 +287,79 @@ describe('Orders (e2e)', () => {
 				totalAmount: 25.2,
 				discountAmount: 0,
 			})
+			.execute();
+	});
+
+	it('persists internal chat messages for accepted order participants', async () => {
+		const clientToken = signToken({ sub: 'client-chat', role: 'CLIENT' });
+		const boosterToken = signToken({ sub: 'booster-chat', role: 'BOOSTER' });
+		const adminToken = signToken({ sub: 'admin-chat', role: 'ADMIN' });
+		const intruderToken = signToken({ sub: 'client-intruder', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(clientToken);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.expect(200, { success: true })
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/chat/messages`)
+			.set('Authorization', `Bearer ${clientToken}`)
+			.send({ content: '  Olá booster  ' })
+			.expect(201)
+			.expect<{
+				content: string;
+				sender: { id: string; role: string };
+			}>(({ body }) => {
+				expect(body.content).toBe('Olá booster');
+				expect(body.sender).toMatchObject({
+					id: 'client-chat',
+					role: 'CLIENT',
+				});
+			})
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/chat/messages`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.send({ content: 'Começando agora.' })
+			.expect(201)
+			.execute();
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}/chat/messages?limit=10`)
+			.set('Authorization', `Bearer ${clientToken}`)
+			.expect(200)
+			.expect<{ items: Array<{ content: string }> }>(({ body }) => {
+				expect(body.items.map((message) => message.content)).toEqual([
+					'Olá booster',
+					'Começando agora.',
+				]);
+			})
+			.execute();
+
+		await requestHttp(app)
+			.get(`/admin/orders/${createdOrder.id}/chat/messages?limit=10`)
+			.set('Authorization', `Bearer ${adminToken}`)
+			.expect(200)
+			.expect<{ items: Array<{ content: string }> }>(({ body }) => {
+				expect(body.items).toHaveLength(2);
+			})
+			.execute();
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}/chat/messages?limit=10`)
+			.set('Authorization', `Bearer ${intruderToken}`)
+			.expect(404)
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/chat/messages`)
+			.set('Authorization', `Bearer ${adminToken}`)
+			.send({ content: 'Admin read-only.' })
+			.expect(403)
 			.execute();
 	});
 

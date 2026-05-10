@@ -25,6 +25,12 @@ import {
 	InvalidInternalApiKeyError,
 } from '@modules/auth/domain/auth.errors';
 import {
+	ChatForbiddenError,
+	ChatMessageNotFoundError,
+	ChatNotWritableError,
+	ChatOrderNotFoundError,
+} from '@modules/chat/domain/chat.errors';
+import {
 	OrderAlreadyExistsError,
 	OrderBoosterNotEligibleError,
 	OrderBoosterNotFoundError,
@@ -124,7 +130,10 @@ export function mapApiDomainErrorToHttpException(
 		),
 		mapAsForbidden(AuthUserInactiveError, AuthUserBlockedError),
 		mapAsForbidden(InsufficientPermissionsError),
+		mapAsForbidden(ChatForbiddenError),
 		mapAsNotFound(
+			ChatOrderNotFoundError,
+			ChatMessageNotFoundError,
 			OrderNotFoundError,
 			OrderBoosterNotFoundError,
 			OrderQuoteNotFoundError,
@@ -161,7 +170,7 @@ export function mapApiDomainErrorToHttpException(
 			UserEmailConfirmationTokenInvalidError,
 			AdminGovernanceReasonRequiredError,
 		),
-		mapAsConflict(OrderPricingVersionActiveConflictError),
+		mapAsConflict(OrderPricingVersionActiveConflictError, ChatNotWritableError),
 	]);
 }
 

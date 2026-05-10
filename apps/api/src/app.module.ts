@@ -1,5 +1,6 @@
 import { AdminModule } from '@modules/admin/admin.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { ChatModule } from '@modules/chat/chat.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { SystemModule } from '@modules/system/system.module';
@@ -17,6 +18,7 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 		PrismaModule,
 		AdminModule,
 		AuthModule,
+		ChatModule,
 		OrdersModule,
 		PaymentsModule,
 		SystemModule,

@@ -1,5 +1,6 @@
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { ChatModule } from '@modules/chat/chat.module';
 import { BOOSTER_ORDER_READER_KEY } from '@modules/orders/application/ports/booster-order-reader.port';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
 import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
@@ -49,7 +50,7 @@ import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, AuthModule, WalletModule],
+	imports: [PrismaModule, AuthModule, ChatModule, WalletModule],
 	controllers: [
 		OrdersEventsController,
 		OrdersController,

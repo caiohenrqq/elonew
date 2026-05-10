@@ -1,3 +1,4 @@
+import type { ChatThreadWriterPort } from '@modules/chat/application/ports/chat-thread-writer.port';
 import type {
 	OrderEvent,
 	OrderEventPublisherPort,
@@ -43,15 +44,31 @@ class OrderEventPublisherSpy implements OrderEventPublisherPort {
 	}
 }
 
+class ChatThreadWriterSpy implements ChatThreadWriterPort {
+	readonly orderIds: string[] = [];
+
+	async createOrderChat(
+		orderId: string,
+	): Promise<{ id: string; orderId: string }> {
+		this.orderIds.push(orderId);
+		return { id: 'chat-1', orderId };
+	}
+}
+
 describe('AcceptOrderUseCase', () => {
 	it('moves order to in progress when booster accepts a paid order', async () => {
 		const repository = new InMemoryOrderRepository();
 		const eventPublisher = new OrderEventPublisherSpy();
+		const chatThreadWriter = new ChatThreadWriterSpy();
 		const order = Order.create('order-1');
 		order.confirmPayment();
 		repository.insert(order);
 
-		const useCase = new AcceptOrderUseCase(repository, eventPublisher);
+		const useCase = new AcceptOrderUseCase(
+			repository,
+			eventPublisher,
+			chatThreadWriter,
+		);
 		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
 
 		const savedOrder = await repository.findById('order-1');
@@ -65,6 +82,7 @@ describe('AcceptOrderUseCase', () => {
 				boosterId: 'booster-1',
 			},
 		]);
+		expect(chatThreadWriter.orderIds).toEqual(['order-1']);
 	});
 
 	it('throws when order does not exist', async () => {
