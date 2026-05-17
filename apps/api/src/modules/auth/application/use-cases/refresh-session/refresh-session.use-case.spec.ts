@@ -84,6 +84,7 @@ describe('RefreshSessionUseCase', () => {
 				token: 'next-access-token',
 				expiresInSeconds: 900,
 			}),
+			verify: jest.fn(),
 		};
 		const refreshTokenService: RefreshTokenServicePort = {
 			generate: jest.fn().mockReturnValue({
@@ -143,6 +144,7 @@ describe('RefreshSessionUseCase', () => {
 		});
 		const accessTokenService: AccessTokenServicePort = {
 			sign: jest.fn(),
+			verify: jest.fn(),
 		};
 		const refreshTokenService: RefreshTokenServicePort = {
 			generate: jest.fn(),
@@ -193,6 +195,7 @@ describe('RefreshSessionUseCase', () => {
 		});
 		const accessTokenService: AccessTokenServicePort = {
 			sign: jest.fn(),
+			verify: jest.fn(),
 		};
 		const refreshTokenService: RefreshTokenServicePort = {
 			generate: jest.fn(),

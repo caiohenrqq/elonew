@@ -6,6 +6,14 @@
 		"./roles/role": {
 			"types": "./dist/roles/role.d.ts",
 			"default": "./dist/roles/role.js"
+		},
+		"./session/session-seal": {
+			"types": "./dist/session/session-seal.d.ts",
+			"default": "./dist/session/session-seal.js"
+		},
+		"./session/session-cookie": {
+			"types": "./dist/session/session-cookie.d.ts",
+			"default": "./dist/session/session-cookie.js"
 		}
 	},
 	"scripts": {

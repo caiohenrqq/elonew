@@ -114,6 +114,7 @@ describe('LoginUseCase', () => {
 				token: 'access-token',
 				expiresInSeconds: 900,
 			}),
+			verify: jest.fn(),
 		};
 		const refreshTokenService: RefreshTokenServicePort = {
 			generate: jest.fn().mockReturnValue({
@@ -164,6 +165,7 @@ describe('LoginUseCase', () => {
 		const authSessions = new InMemoryAuthSessionRepository();
 		const accessTokenService: AccessTokenServicePort = {
 			sign: jest.fn(),
+			verify: jest.fn(),
 		};
 		const refreshTokenService: RefreshTokenServicePort = {
 			generate: jest.fn(),
@@ -203,6 +205,7 @@ describe('LoginUseCase', () => {
 		const authSessions = new InMemoryAuthSessionRepository();
 		const accessTokenService: AccessTokenServicePort = {
 			sign: jest.fn(),
+			verify: jest.fn(),
 		};
 		const refreshTokenService: RefreshTokenServicePort = {
 			generate: jest.fn(),
@@ -249,6 +252,7 @@ describe('LoginUseCase', () => {
 		const authSessions = new InMemoryAuthSessionRepository();
 		const accessTokenService: AccessTokenServicePort = {
 			sign: jest.fn(),
+			verify: jest.fn(),
 		};
 		const refreshTokenService: RefreshTokenServicePort = {
 			generate: jest.fn(),

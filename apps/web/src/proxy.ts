@@ -1,7 +1,6 @@
+import { SESSION_COOKIE_NAME } from '@packages/auth/session/session-cookie';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-
-const SESSION_COOKIE_NAME = 'elonew.session';
 
 const hasSessionCookie = (request: NextRequest) => {
 	return request.cookies.has(SESSION_COOKIE_NAME);

@@ -1,13 +1,13 @@
 import 'server-only';
 
+import { SESSION_COOKIE_NAME } from '@packages/auth/session/session-cookie';
 import { cookies } from 'next/headers';
+import { getWebSessionSecret, isProductionRuntime } from '@/shared/env/web-env';
 import {
 	type SealedSessionPayload,
 	sealSessionPayload,
 	unsealSessionPayload,
 } from './session-seal';
-
-export const SESSION_COOKIE_NAME = 'elonew.session';
 
 export type AuthSessionUser = {
 	id: string;
@@ -26,13 +26,12 @@ export type AuthSessionInput = {
 
 export type AuthSession = SealedSessionPayload;
 
-const isProduction = process.env.NODE_ENV === 'production';
 const refreshTokenMaxAgeSeconds = 60 * 60 * 24 * 30;
 
 const getCookieOptions = () => {
 	return {
 		httpOnly: true,
-		secure: isProduction,
+		secure: isProductionRuntime(),
 		sameSite: 'lax' as const,
 		path: '/',
 		maxAge: refreshTokenMaxAgeSeconds,
@@ -75,8 +74,4 @@ export const isAccessTokenExpired = (session: AuthSession) => {
 	return session.accessTokenExpiresAt <= Date.now() + 10_000;
 };
 
-const getSessionSecret = () => {
-	const secret = process.env.WEB_SESSION_SECRET;
-	if (!secret) throw new Error('WEB_SESSION_SECRET is required.');
-	return secret;
-};
+const getSessionSecret = getWebSessionSecret;

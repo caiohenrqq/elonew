@@ -21,6 +21,8 @@
 		"paths": {
 			"@/*": ["./src/*"],
 			"@gsap/react": ["./node_modules/@gsap/react"],
+			"@packages/auth/*": ["../../packages/auth/src/*"],
+			"@packages/shared/*": ["../../packages/shared/src/*"],
 			"clsx": ["./node_modules/clsx"],
 			"gsap": ["./node_modules/gsap"],
 			"gsap/*": ["./node_modules/gsap/*"],

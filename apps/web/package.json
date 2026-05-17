@@ -16,6 +16,8 @@
 	"dependencies": {
 		"@gsap/react": "^2.1.2",
 		"@hookform/resolvers": "^5.2.2",
+		"@packages/auth": "workspace:*",
+		"@packages/shared": "workspace:*",
 		"@packages/ui": "workspace:*",
 		"clsx": "^2.1.1",
 		"gsap": "^3.14.2",
@@ -56,7 +58,9 @@
 			"tsx"
 		],
 		"moduleNameMapper": {
-			"^@/(.*)$": "<rootDir>/src/$1"
+			"^@/(.*)$": "<rootDir>/src/$1",
+			"^@packages/auth/(.*)$": "<rootDir>/../../packages/auth/src/$1",
+			"^@packages/shared/(.*)$": "<rootDir>/../../packages/shared/src/$1"
 		},
 		"rootDir": ".",
 		"testRegex": "src/.*\\.spec\\.(ts|tsx)$",
