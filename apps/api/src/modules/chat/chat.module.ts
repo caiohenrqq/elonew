@@ -7,6 +7,7 @@ import { SendChatMessageUseCase } from '@modules/chat/application/use-cases/send
 import { PrismaChatRepository } from '@modules/chat/infrastructure/repositories/prisma-chat.repository';
 import { AdminChatController } from '@modules/chat/presentation/admin-chat.controller';
 import { ChatController } from '@modules/chat/presentation/chat.controller';
+import { ChatGateway } from '@modules/chat/presentation/chat.gateway';
 import { Module } from '@nestjs/common';
 
 @Module({
@@ -30,6 +31,7 @@ import { Module } from '@nestjs/common';
 		},
 		ListChatMessagesUseCase,
 		SendChatMessageUseCase,
+		ChatGateway,
 	],
 	exports: [CHAT_THREAD_WRITER_KEY],
 })

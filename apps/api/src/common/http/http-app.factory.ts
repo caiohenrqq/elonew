@@ -1,4 +1,6 @@
 import { AppModule } from '@app/app.module';
+import { AppSettingsService } from '@app/common/settings/app-settings.service';
+import { ApiSocketIoAdapter } from '@app/common/websockets/api-socket-io.adapter';
 import type { NestApplicationOptions } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
@@ -24,6 +26,9 @@ export function createHttpApp(
 
 export async function initializeHttpApp(app: ApiHttpApp): Promise<ApiHttpApp> {
 	registerHttpSecurity(app);
+	app.useWebSocketAdapter(
+		new ApiSocketIoAdapter(app, app.get(AppSettingsService)),
+	);
 	await app.init();
 	await app.getHttpAdapter().getInstance().ready();
 
