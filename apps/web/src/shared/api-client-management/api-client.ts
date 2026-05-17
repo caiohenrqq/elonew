@@ -7,21 +7,13 @@ import {
 	isAccessTokenExpired,
 	setAuthSession,
 } from '@/shared/auth/session';
+import { getWebApiBaseUrl } from '@/shared/env/web-env';
 import { type ApiErrorPayload, ApiRequestError } from './http';
 
 type ApiRequestOptions = RequestInit & {
 	auth?: boolean;
 	allowSessionRefresh?: boolean;
 	retryOnUnauthorized?: boolean;
-};
-
-const DEFAULT_API_BASE_URL = 'http://localhost:3000';
-
-const getApiBaseUrl = () => {
-	const configuredUrl = process.env.API_URL;
-	if (configuredUrl) return configuredUrl.replace(/\/$/, '');
-	if (process.env.NODE_ENV !== 'production') return DEFAULT_API_BASE_URL;
-	throw new Error('API_URL is required in production.');
 };
 
 const parseJsonResponse = async (response: Response) => {
@@ -39,7 +31,7 @@ const refreshSession = async (refreshToken: string) => {
 	let response: Response;
 
 	try {
-		response = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
+		response = await fetch(`${getWebApiBaseUrl()}/auth/refresh`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ refreshToken }),
@@ -109,7 +101,7 @@ const request = async <T>(
 
 	const headers = buildRequestHeaders(init, auth, accessToken);
 
-	const response = await fetch(`${getApiBaseUrl()}${path}`, {
+	const response = await fetch(`${getWebApiBaseUrl()}${path}`, {
 		...init,
 		headers,
 		cache: 'no-store',

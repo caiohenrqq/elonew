@@ -14,10 +14,15 @@ import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-re
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
+import { io, type Socket } from 'socket.io-client';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
+import {
+	getTestJwtSecret,
+	signTestAccessToken as signToken,
+} from './support/auth-token';
 import { InMemoryChatRepository } from './support/in-memory/chat/in-memory-chat.repository';
 import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
@@ -46,10 +51,6 @@ describe('Orders (e2e)', () => {
 		async findById(id: string): Promise<StoredCoupon | null> {
 			return this.coupons.get(id) ?? null;
 		}
-	}
-
-	function getJwtSecret(): string {
-		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
 	}
 
 	function makeQuotePayload() {
@@ -94,23 +95,57 @@ describe('Orders (e2e)', () => {
 		return { id: orderId };
 	}
 
-	function signToken(payload: Record<string, unknown>): string {
-		const now = Math.floor(Date.now() / 1000);
-		const header = Buffer.from(
-			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-		).toString('base64url');
-		const body = Buffer.from(
-			JSON.stringify({
-				issuedAt: now,
-				expiresAt: now + 900,
-				...payload,
-			}),
-		).toString('base64url');
-		const signature = createHmac('sha256', getJwtSecret())
-			.update(`${header}.${body}`)
-			.digest('base64url');
+	function waitForSocketEvent<T>(socket: Socket, event: string): Promise<T> {
+		return new Promise<T>((resolve, reject) => {
+			const cleanup = () => {
+				clearTimeout(timeout);
+				socket.off(event, onEvent);
+			};
+			const timeout = setTimeout(() => {
+				cleanup();
+				reject(new Error(`Timed out waiting for ${event}.`));
+			}, 2500);
+			const onEvent = (payload: T) => {
+				cleanup();
+				resolve(payload);
+			};
 
-		return `${header}.${body}.${signature}`;
+			socket.once(event, onEvent);
+		});
+	}
+
+	async function connectChatSocket(token: string): Promise<Socket> {
+		const socket = io(`${await app.getUrl()}/chat`, {
+			auth: { token: `Bearer ${token}` },
+			forceNew: true,
+			transports: ['websocket'],
+		});
+
+		await new Promise<void>((resolve, reject) => {
+			const cleanup = () => {
+				clearTimeout(timeout);
+				socket.off('connect', onConnect);
+				socket.off('connect_error', onConnectError);
+			};
+			const timeout = setTimeout(() => {
+				cleanup();
+				reject(new Error('Timed out connecting chat socket.'));
+			}, 2500);
+
+			const onConnect = () => {
+				cleanup();
+				resolve();
+			};
+			const onConnectError = (error: Error) => {
+				cleanup();
+				reject(error);
+			};
+
+			socket.once('connect', onConnect);
+			socket.once('connect_error', onConnectError);
+		});
+
+		return socket;
 	}
 
 	beforeEach(async () => {
@@ -363,6 +398,70 @@ describe('Orders (e2e)', () => {
 			.execute();
 	});
 
+	it('delivers persisted chat messages to authorized socket participants', async () => {
+		const clientToken = signToken({ sub: 'client-socket', role: 'CLIENT' });
+		const boosterToken = signToken({
+			sub: 'booster-socket',
+			role: 'BOOSTER',
+		});
+		const intruderToken = signToken({
+			sub: 'client-socket-intruder',
+			role: 'CLIENT',
+		});
+		const createdOrder = await createQuotedOrder(clientToken);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.expect(200, { success: true })
+			.execute();
+		await app.listen(0, '127.0.0.1');
+
+		const clientSocket = await connectChatSocket(clientToken);
+		const boosterSocket = await connectChatSocket(boosterToken);
+		const intruderSocket = await connectChatSocket(intruderToken);
+
+		try {
+			const boosterJoined = waitForSocketEvent(boosterSocket, 'chat:joined');
+			boosterSocket.emit('chat:join', { orderId: createdOrder.id });
+			await expect(boosterJoined).resolves.toEqual({
+				orderId: createdOrder.id,
+			});
+
+			const intruderError = waitForSocketEvent<{
+				code: string;
+				message: string;
+			}>(intruderSocket, 'chat:error');
+			intruderSocket.emit('chat:join', { orderId: createdOrder.id });
+			await expect(intruderError).resolves.toMatchObject({
+				code: 'NOT_FOUND',
+			});
+
+			const deliveredMessage = waitForSocketEvent<{
+				content: string;
+				orderId: string;
+				sender: { id: string; role: string };
+			}>(boosterSocket, 'chat:message.created');
+			clientSocket.emit('chat:send', {
+				orderId: createdOrder.id,
+				content: '  Mensagem realtime  ',
+			});
+
+			await expect(deliveredMessage).resolves.toMatchObject({
+				content: 'Mensagem realtime',
+				orderId: createdOrder.id,
+				sender: {
+					id: 'client-socket',
+					role: 'CLIENT',
+				},
+			});
+		} finally {
+			clientSocket.disconnect();
+			boosterSocket.disconnect();
+			intruderSocket.disconnect();
+		}
+	});
+
 	it('rejects unauthenticated create-order requests', async () => {
 		await requestHttp(app)
 			.post('/orders/quote')
@@ -380,7 +479,7 @@ describe('Orders (e2e)', () => {
 			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
 		).toString('base64url');
 		const payload = Buffer.from('not-json').toString('base64url');
-		const signature = createHmac('sha256', getJwtSecret())
+		const signature = createHmac('sha256', getTestJwtSecret())
 			.update(`${header}.${payload}`)
 			.digest('base64url');
 

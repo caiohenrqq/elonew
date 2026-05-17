@@ -25,7 +25,7 @@ export const orderCredentialsEncryptionKeySchema = z
 			decodeOrderCredentialsEncryptionKey(value);
 		} catch (error) {
 			context.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: 'custom',
 				message:
 					error instanceof Error
 						? error.message

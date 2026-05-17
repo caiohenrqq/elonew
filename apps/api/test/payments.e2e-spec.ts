@@ -1,4 +1,3 @@
-import { createHmac } from 'node:crypto';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import {
@@ -20,6 +19,7 @@ import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
+import { signTestAccessToken as signToken } from './support/auth-token';
 import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
 import { InMemoryOrderPricingVersionRepository } from './support/in-memory/orders/in-memory-order-pricing-version.repository';
@@ -46,10 +46,6 @@ describe('Payments (e2e)', () => {
 		id: 'client-1',
 		role: Role.CLIENT,
 	};
-
-	function getJwtSecret(): string {
-		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
-	}
 
 	function makeQuotePayload() {
 		return {
@@ -91,25 +87,6 @@ describe('Payments (e2e)', () => {
 			.execute();
 
 		return { id: orderId };
-	}
-
-	function signToken(payload: Record<string, unknown>): string {
-		const now = Math.floor(Date.now() / 1000);
-		const header = Buffer.from(
-			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-		).toString('base64url');
-		const body = Buffer.from(
-			JSON.stringify({
-				issuedAt: now,
-				expiresAt: now + 900,
-				...payload,
-			}),
-		).toString('base64url');
-		const signature = createHmac('sha256', getJwtSecret())
-			.update(`${header}.${body}`)
-			.digest('base64url');
-
-		return `${header}.${body}.${signature}`;
 	}
 
 	beforeEach(async () => {

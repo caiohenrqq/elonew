@@ -6,11 +6,14 @@ export function createTestAppSettings(
 	return {
 		port: 3000,
 		databaseUrl: 'postgresql://test',
+		chatSocketAllowedOrigins: ['http://localhost:3001'],
 		jwtAccessTokenSecret: 'test-secret',
 		jwtAccessTokenTtlMinutes: 15,
 		jwtRefreshTokenSecret: 'test-refresh-secret',
 		jwtRefreshTokenTtlDays: 7,
 		emailConfirmationTokenSecret: 'test-email-confirmation-secret',
+		webSessionSecret:
+			'a-very-secret-and-long-session-key-for-development-32chars',
 		emailConfirmationTokenTtlMinutes: 30,
 		internalApiKey: 'test-internal-api-key',
 		orderCredentialsEncryptionKey:

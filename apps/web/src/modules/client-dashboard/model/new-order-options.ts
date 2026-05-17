@@ -1,7 +1,10 @@
+import type { OrderExtraType } from '@packages/shared/orders/order-extra';
+import type { OrderServiceType } from '@packages/shared/orders/service-type';
+
 export type ServiceTypeIcon = 'shield' | 'users';
 
 export type ServiceTypeOption = {
-	id: string;
+	id: OrderServiceType;
 	label: string;
 	icon: ServiceTypeIcon;
 	description: string;
@@ -9,7 +12,7 @@ export type ServiceTypeOption = {
 
 export type ExtraOption = {
 	description: string;
-	id: string;
+	id: OrderExtraType;
 	label: string;
 	price: string;
 	priceLabel: string;
@@ -170,7 +173,7 @@ export const EXTRAS: ExtraOption[] = [
 	},
 ];
 
-export const EXTRA_OPTIONS_BY_ID = new Map(
+export const EXTRA_OPTIONS_BY_ID: ReadonlyMap<string, ExtraOption> = new Map(
 	EXTRAS.map((extra) => [extra.id, extra]),
 );
 

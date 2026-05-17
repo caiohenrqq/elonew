@@ -1,16 +1,8 @@
 import { getAuthSession, isAccessTokenExpired } from '@/shared/auth/session';
+import { getWebApiBaseUrl } from '@/shared/env/web-env';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-const DEFAULT_API_BASE_URL = 'http://localhost:3000';
-
-const getApiBaseUrl = () => {
-	const configuredUrl = process.env.API_URL;
-	if (configuredUrl) return configuredUrl.replace(/\/$/, '');
-	if (process.env.NODE_ENV !== 'production') return DEFAULT_API_BASE_URL;
-	throw new Error('API_URL is required in production.');
-};
 
 const makeSseResponse = (body: BodyInit) =>
 	new Response(body, {
@@ -28,7 +20,7 @@ export const GET = async (request: Request) => {
 		return makeSseResponse('event: auth.expired\ndata: {}\n\n');
 	}
 
-	const response = await fetch(`${getApiBaseUrl()}${'/orders/events'}`, {
+	const response = await fetch(`${getWebApiBaseUrl()}${'/orders/events'}`, {
 		headers: {
 			authorization: `Bearer ${session.accessToken}`,
 			accept: 'text/event-stream',

@@ -3,6 +3,7 @@
 	"private": true,
 	"version": "0.0.0",
 	"dependencies": {
+		"@packages/config": "workspace:*",
 		"@prisma/client": "^7.4.2"
 	},
 	"devDependencies": {

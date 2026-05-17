@@ -132,6 +132,8 @@ External provider adapters and integration logic.
 - Style: modular monolith.
 - Internal style: pragmatic hexagonal/layered modules.
 - API protocol: REST.
+- Realtime protocol: Socket.IO for authenticated chat delivery, documented in
+  `docs/chat-websocket.md`.
 - API contracts: OpenAPI/Swagger.
 - Authentication: JWT access token + refresh token rotation.
 

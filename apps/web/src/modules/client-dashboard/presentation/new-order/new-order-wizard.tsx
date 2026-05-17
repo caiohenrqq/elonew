@@ -1,5 +1,6 @@
 'use client';
 
+import type { OrderExtraType } from '@packages/shared/orders/order-extra';
 import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { AnimatePresence } from 'motion/react';
 import dynamic from 'next/dynamic';
@@ -92,7 +93,7 @@ export const NewOrderWizard = () => {
 		[],
 	);
 
-	const toggleExtra = useCallback((id: string) => {
+	const toggleExtra = useCallback((id: OrderExtraType) => {
 		setOrderInput((previousInput) => ({
 			...previousInput,
 			extras: previousInput.extras.includes(id)

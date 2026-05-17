@@ -1,4 +1,5 @@
 import { PrismaModule } from '@app/common/prisma/prisma.module';
+import { AuthModule } from '@modules/auth/auth.module';
 import { ORDER_COMPLETION_EARNINGS_PORT_KEY } from '@modules/orders/application/ports/order-completion-earnings.port';
 import { WALLET_FUNDS_RELEASE_JOB_SCHEDULER_PORT_KEY } from '@modules/wallet/application/ports/wallet-funds-release-job-scheduler.port';
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
@@ -15,7 +16,7 @@ import { WalletsController } from '@modules/wallet/presentation/wallets.controll
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule],
+	imports: [PrismaModule, AuthModule],
 	controllers: [WalletsController],
 	providers: [
 		PrismaWalletRepository,

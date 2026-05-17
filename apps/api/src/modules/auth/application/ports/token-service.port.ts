@@ -1,3 +1,4 @@
+import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { Role } from '@packages/auth/roles/role';
 
 type AuthUserTokenPayload = {
@@ -13,6 +14,7 @@ export interface AccessTokenServicePort {
 		token: string;
 		expiresInSeconds: number;
 	};
+	verify(token: string): AuthenticatedUser;
 }
 
 export interface RefreshTokenServicePort {

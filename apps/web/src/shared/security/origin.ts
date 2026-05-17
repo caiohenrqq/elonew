@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { ApiRequestError } from '@/shared/api-client-management/http';
+import { getWebAppUrl } from '@/shared/env/web-env';
 
 type OriginCheckInput = {
 	origin: string | null;
@@ -34,7 +35,7 @@ export const assertSameOriginRequest = async () => {
 		origin: headerStore.get('origin'),
 		host: headerStore.get('host'),
 		forwardedHost: headerStore.get('x-forwarded-host'),
-		appUrl: process.env.NEXT_PUBLIC_APP_URL,
+		appUrl: getWebAppUrl(),
 	});
 
 	if (!isAllowed) {

@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+	DEFAULT_CHAT_SOCKET_ALLOWED_ORIGINS,
+	parseChatSocketAllowedOrigins,
+} from './chat-socket.config';
+import { databaseEnvSchema } from './database-env.config';
 import { orderCredentialsEncryptionKeySchema } from './order-credentials-encryption-key';
 import {
 	DEFAULT_REDIS_URL,
@@ -9,6 +14,8 @@ const DEFAULT_JWT_ACCESS_TOKEN_SECRET = 'dev-secret';
 const DEFAULT_INTERNAL_API_KEY = 'dev-internal-api-key';
 const DEFAULT_JWT_REFRESH_TOKEN_SECRET = 'dev-refresh-secret';
 const DEFAULT_EMAIL_CONFIRMATION_TOKEN_SECRET = 'dev-email-confirmation-secret';
+const DEFAULT_WEB_SESSION_SECRET =
+	'a-very-secret-and-long-session-key-for-development-32chars';
 const DEFAULT_ORDER_CREDENTIALS_ENCRYPTION_KEY =
 	'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=';
 
@@ -17,6 +24,7 @@ const PRODUCTION_ONLY_DEFAULT_SECRETS = {
 	INTERNAL_API_KEY: DEFAULT_INTERNAL_API_KEY,
 	JWT_REFRESH_TOKEN_SECRET: DEFAULT_JWT_REFRESH_TOKEN_SECRET,
 	EMAIL_CONFIRMATION_TOKEN_SECRET: DEFAULT_EMAIL_CONFIRMATION_TOKEN_SECRET,
+	WEB_SESSION_SECRET: DEFAULT_WEB_SESSION_SECRET,
 	ORDER_CREDENTIALS_ENCRYPTION_KEY: DEFAULT_ORDER_CREDENTIALS_ENCRYPTION_KEY,
 } as const;
 
@@ -31,8 +39,22 @@ export const envSchema = z
 			.enum(['development', 'test', 'production'])
 			.default('development'),
 		PORT: z.coerce.number().int().positive().default(3000),
-		DATABASE_URL: z.string().trim().min(1),
+		DATABASE_URL: databaseEnvSchema.shape.DATABASE_URL,
 		REDIS_URL: z.string().trim().min(1).default(DEFAULT_REDIS_URL),
+		CHAT_SOCKET_ALLOWED_ORIGINS: z
+			.string()
+			.trim()
+			.min(1)
+			.default(DEFAULT_CHAT_SOCKET_ALLOWED_ORIGINS)
+			.transform(parseChatSocketAllowedOrigins)
+			.refine((origins) => origins.length > 0, {
+				message: 'At least one chat socket origin is required.',
+			})
+			.refine(
+				(origins) =>
+					origins.every((origin) => z.string().url().safeParse(origin).success),
+				{ message: 'Chat socket origins must be valid URLs.' },
+			),
 		JWT_ACCESS_TOKEN_SECRET: z
 			.string()
 			.trim()
@@ -59,6 +81,11 @@ export const envSchema = z
 			.trim()
 			.min(1)
 			.default(DEFAULT_EMAIL_CONFIRMATION_TOKEN_SECRET),
+		WEB_SESSION_SECRET: z
+			.string()
+			.trim()
+			.min(32)
+			.default(DEFAULT_WEB_SESSION_SECRET),
 		EMAIL_CONFIRMATION_TOKEN_TTL_MINUTES: z.coerce
 			.number()
 			.int()
@@ -116,12 +143,25 @@ export const envSchema = z
 		)) {
 			if (env[key as keyof typeof PRODUCTION_ONLY_DEFAULT_SECRETS] === value) {
 				context.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: 'custom',
 					path: [key],
 					message:
 						'Production environment must override development placeholder secrets.',
 				});
 			}
+		}
+
+		if (
+			env.CHAT_SOCKET_ALLOWED_ORIGINS.includes(
+				DEFAULT_CHAT_SOCKET_ALLOWED_ORIGINS,
+			)
+		) {
+			context.addIssue({
+				code: 'custom',
+				path: ['CHAT_SOCKET_ALLOWED_ORIGINS'],
+				message:
+					'Production environment must override development chat socket origins.',
+			});
 		}
 	});
 

@@ -1,3 +1,4 @@
+import type { OrderExtraType } from '@packages/shared/orders/order-extra';
 import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { Badge } from '@packages/ui/components/badge';
 import { Button } from '@packages/ui/components/button';
@@ -26,7 +27,7 @@ type DetailsStepProps = {
 		key: Key,
 		value: StartCheckoutInput[Key],
 	) => void;
-	onToggleExtra: (extraId: string) => void;
+	onToggleExtra: (extraId: OrderExtraType) => void;
 	onNextIntent?: () => void;
 };
 
@@ -57,7 +58,7 @@ export const DetailsStep = ({
 	const { contextSafe } = useGSAP({ scope: containerRef });
 
 	const handleToggleWithAnimation = contextSafe(
-		(id: string, event: React.MouseEvent) => {
+		(id: OrderExtraType, event: React.MouseEvent) => {
 			const card = (event.currentTarget as HTMLElement).closest(
 				'.extra-option-card',
 			);

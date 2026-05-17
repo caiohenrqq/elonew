@@ -3,6 +3,14 @@
 	"version": "0.0.0",
 	"private": true,
 	"exports": {
+		"./admin/admin-governance.schema": {
+			"types": "./dist/admin/admin-governance.schema.d.ts",
+			"default": "./dist/admin/admin-governance.schema.js"
+		},
+		"./chat/send-chat-message.schema": {
+			"types": "./dist/chat/send-chat-message.schema.d.ts",
+			"default": "./dist/chat/send-chat-message.schema.js"
+		},
 		"./orders/create-order-quote.schema": {
 			"types": "./dist/orders/create-order-quote.schema.d.ts",
 			"default": "./dist/orders/create-order-quote.schema.js"
@@ -26,6 +34,10 @@
 		"./payments/payment-method": {
 			"types": "./dist/payments/payment-method.d.ts",
 			"default": "./dist/payments/payment-method.js"
+		},
+		"./payments/create-payment.schema": {
+			"types": "./dist/payments/create-payment.schema.d.ts",
+			"default": "./dist/payments/create-payment.schema.js"
 		},
 		"./utils/enum.utils": {
 			"types": "./dist/utils/enum.utils.d.ts",

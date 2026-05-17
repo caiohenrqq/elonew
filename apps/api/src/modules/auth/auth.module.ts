@@ -11,6 +11,7 @@ import { RefreshSessionUseCase } from '@modules/auth/application/use-cases/refre
 import { PrismaAuthSessionRepository } from '@modules/auth/infrastructure/repositories/prisma-auth-session.repository';
 import { HmacAccessTokenService } from '@modules/auth/infrastructure/security/hmac-access-token.service';
 import { HmacRefreshTokenService } from '@modules/auth/infrastructure/security/hmac-refresh-token.service';
+import { WebSessionCookieService } from '@modules/auth/infrastructure/security/web-session-cookie.service';
 import { AuthController } from '@modules/auth/presentation/auth.controller';
 import { AuthThrottlerGuard } from '@modules/auth/presentation/guards/auth-throttler.guard';
 import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
@@ -32,6 +33,7 @@ import { Module } from '@nestjs/common';
 			inject: [PrismaAuthSessionRepository],
 		},
 		HmacAccessTokenService,
+		WebSessionCookieService,
 		{
 			provide: ACCESS_TOKEN_SERVICE_KEY,
 			useFactory: (
@@ -55,6 +57,12 @@ import { Module } from '@nestjs/common';
 		JwtAuthGuard,
 		RolesGuard,
 	],
-	exports: [InternalApiKeyGuard, JwtAuthGuard, RolesGuard],
+	exports: [
+		ACCESS_TOKEN_SERVICE_KEY,
+		WebSessionCookieService,
+		InternalApiKeyGuard,
+		JwtAuthGuard,
+		RolesGuard,
+	],
 })
 export class AuthModule {}

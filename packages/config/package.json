@@ -11,6 +11,10 @@
 			"types": "./dist/env/worker-env.schema.d.ts",
 			"default": "./dist/env/worker-env.schema.js"
 		},
+		"./env/chat-socket.config": {
+			"types": "./dist/env/chat-socket.config.d.ts",
+			"default": "./dist/env/chat-socket.config.js"
+		},
 		"./env/wallet-funds-release.config": {
 			"types": "./dist/env/wallet-funds-release.config.d.ts",
 			"default": "./dist/env/wallet-funds-release.config.js"
@@ -18,6 +22,10 @@
 		"./env/env.config": {
 			"types": "./dist/env/env.config.d.ts",
 			"default": "./dist/env/env.config.js"
+		},
+		"./env/database-env.config": {
+			"types": "./dist/env/database-env.config.d.ts",
+			"default": "./dist/env/database-env.config.js"
 		},
 		"./env/order-credentials-encryption-key": {
 			"types": "./dist/env/order-credentials-encryption-key.d.ts",

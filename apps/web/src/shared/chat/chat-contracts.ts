@@ -1,3 +1,8 @@
+export {
+	type SendChatMessageSchemaInput as SendChatMessageInput,
+	sendChatMessageSchema as sendChatMessageInputSchema,
+} from '@packages/shared/chat/send-chat-message.schema';
+
 import { z } from 'zod';
 
 export const chatMessageSenderSchema = z.object({
@@ -20,12 +25,7 @@ export const listChatMessagesResponseSchema = z.object({
 	nextCursor: z.string().nullable(),
 });
 
-export const sendChatMessageInputSchema = z.object({
-	content: z.string().trim().min(1).max(2000),
-});
-
 export type ChatMessageOutput = z.infer<typeof chatMessageSchema>;
 export type ListChatMessagesResponseOutput = z.infer<
 	typeof listChatMessagesResponseSchema
 >;
-export type SendChatMessageInput = z.infer<typeof sendChatMessageInputSchema>;

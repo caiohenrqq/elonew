@@ -8,6 +8,8 @@ describe('AppSettingsService', () => {
 		const config = {
 			getOrThrow: jest.fn((key: keyof AppEnv) => {
 				switch (key) {
+					case 'CHAT_SOCKET_ALLOWED_ORIGINS':
+						return ['https://app.example.com'];
 					case 'MERCADO_PAGO_ACCESS_TOKEN':
 						return 'mp-access-token';
 					case 'MERCADO_PAGO_WEBHOOK_SECRET':
@@ -24,6 +26,9 @@ describe('AppSettingsService', () => {
 		const appSettings = new AppSettingsService(config);
 
 		expect(appSettings.mercadoPagoAccessToken).toBe('mp-access-token');
+		expect(appSettings.chatSocketAllowedOrigins).toEqual([
+			'https://app.example.com',
+		]);
 		expect(appSettings.mercadoPagoWebhookSecret).toBe('webhook-secret');
 		expect(appSettings.mercadoPagoWebhookUrl).toBe(
 			'https://example.com/payments/webhooks/mercadopago',
@@ -36,6 +41,8 @@ describe('AppSettingsService', () => {
 			NODE_ENV: 'development',
 			PORT: 3000,
 			DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/elonew',
+			CHAT_SOCKET_ALLOWED_ORIGINS:
+				'https://app.example.com,https://admin.example.com',
 			MERCADO_PAGO_ACCESS_TOKEN: 'mp-access-token',
 			MERCADO_PAGO_WEBHOOK_SECRET: 'webhook-secret',
 			MERCADO_PAGO_WEBHOOK_URL:
@@ -46,6 +53,11 @@ describe('AppSettingsService', () => {
 		expect(result.success).toBe(true);
 		if (result.success)
 			expect(result.data.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE).toBe(true);
+		if (result.success)
+			expect(result.data.CHAT_SOCKET_ALLOWED_ORIGINS).toEqual([
+				'https://app.example.com',
+				'https://admin.example.com',
+			]);
 	});
 
 	it('exposes security throttle and encryption settings', () => {

@@ -4,6 +4,7 @@ import {
 	AuthenticationRequiredError,
 	InvalidAccessTokenError,
 } from '@modules/auth/domain/auth.errors';
+import { HmacAccessTokenService } from '@modules/auth/infrastructure/security/hmac-access-token.service';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import type { ContextType, ExecutionContext, Type } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
@@ -88,7 +89,9 @@ describe('JwtAuthGuard', () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(appSettings);
+		const guard = new JwtAuthGuard(
+			new HmacAccessTokenService(appSettings as AppSettingsService),
+		);
 		const token = signTestToken(
 			{
 				sub: 'user-1',
@@ -113,7 +116,9 @@ describe('JwtAuthGuard', () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(appSettings);
+		const guard = new JwtAuthGuard(
+			new HmacAccessTokenService(appSettings as AppSettingsService),
+		);
 		const context = createExecutionContext({});
 
 		expect(() => guard.canActivate(context)).toThrow(
@@ -125,7 +130,9 @@ describe('JwtAuthGuard', () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(appSettings);
+		const guard = new JwtAuthGuard(
+			new HmacAccessTokenService(appSettings as AppSettingsService),
+		);
 		const header = encodeBase64Url(
 			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
 		);
@@ -144,7 +151,9 @@ describe('JwtAuthGuard', () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(appSettings);
+		const guard = new JwtAuthGuard(
+			new HmacAccessTokenService(appSettings as AppSettingsService),
+		);
 		const token = signTestToken(
 			{
 				sub: 'user-1',
