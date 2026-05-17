@@ -1,19 +1,15 @@
-import { createHmac } from 'node:crypto';
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
+import { signTestAccessToken as signToken } from './support/auth-token';
 
 describe('Orders (e2e db)', () => {
 	let app: ApiHttpApp;
 	let prisma: PrismaService;
 	let clientId: string;
-
-	function getJwtSecret(): string {
-		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
-	}
 
 	function makeOrderPayload() {
 		return {
@@ -55,25 +51,6 @@ describe('Orders (e2e db)', () => {
 				},
 			},
 		});
-	}
-
-	function signToken(payload: Record<string, unknown>): string {
-		const now = Math.floor(Date.now() / 1000);
-		const header = Buffer.from(
-			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-		).toString('base64url');
-		const body = Buffer.from(
-			JSON.stringify({
-				issuedAt: now,
-				expiresAt: now + 900,
-				...payload,
-			}),
-		).toString('base64url');
-		const signature = createHmac('sha256', getJwtSecret())
-			.update(`${header}.${body}`)
-			.digest('base64url');
-
-		return `${header}.${body}.${signature}`;
 	}
 
 	beforeEach(async () => {

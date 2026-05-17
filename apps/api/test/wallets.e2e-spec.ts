@@ -1,4 +1,3 @@
-import { createHmac } from 'node:crypto';
 import { WALLET_FUNDS_RELEASE_JOB_SCHEDULER_PORT_KEY } from '@modules/wallet/application/ports/wallet-funds-release-job-scheduler.port';
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
 import { Test } from '@nestjs/testing';
@@ -6,6 +5,7 @@ import { Role } from '@packages/auth/roles/role';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { signTestAccessToken as signToken } from './support/auth-token';
 import { InMemoryWalletRepository } from './support/in-memory/wallet/in-memory-wallet.repository';
 
 describe('Wallets (e2e)', () => {
@@ -14,31 +14,8 @@ describe('Wallets (e2e)', () => {
 		scheduleRelease: jest.fn().mockResolvedValue(undefined),
 	};
 
-	function getJwtSecret(): string {
-		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
-	}
-
 	function getInternalApiKey(): string {
 		return process.env.INTERNAL_API_KEY ?? 'dev-internal-api-key';
-	}
-
-	function signToken(payload: Record<string, unknown>): string {
-		const now = Math.floor(Date.now() / 1000);
-		const header = Buffer.from(
-			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-		).toString('base64url');
-		const body = Buffer.from(
-			JSON.stringify({
-				issuedAt: now,
-				expiresAt: now + 900,
-				...payload,
-			}),
-		).toString('base64url');
-		const signature = createHmac('sha256', getJwtSecret())
-			.update(`${header}.${body}`)
-			.digest('base64url');
-
-		return `${header}.${body}.${signature}`;
 	}
 
 	beforeEach(async () => {

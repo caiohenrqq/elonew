@@ -1,4 +1,3 @@
-import { createHmac } from 'node:crypto';
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
 import { Test } from '@nestjs/testing';
@@ -6,34 +5,12 @@ import { Role } from '@packages/auth/roles/role';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { signTestAccessToken as signToken } from './support/auth-token';
 import { InMemoryWalletRepository } from './support/in-memory/wallet/in-memory-wallet.repository';
 
 describe('Wallet (e2e)', () => {
 	let app: ApiHttpApp;
 	let creditCompletedOrderEarningsUseCase: CreditCompletedOrderEarningsUseCase;
-
-	function getJwtSecret(): string {
-		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
-	}
-
-	function signToken(payload: Record<string, unknown>): string {
-		const now = Math.floor(Date.now() / 1000);
-		const header = Buffer.from(
-			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-		).toString('base64url');
-		const body = Buffer.from(
-			JSON.stringify({
-				issuedAt: now,
-				expiresAt: now + 900,
-				...payload,
-			}),
-		).toString('base64url');
-		const signature = createHmac('sha256', getJwtSecret())
-			.update(`${header}.${body}`)
-			.digest('base64url');
-
-		return `${header}.${body}.${signature}`;
-	}
 
 	beforeEach(async () => {
 		const moduleRef = await Test.createTestingModule({

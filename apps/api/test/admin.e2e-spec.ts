@@ -1,4 +1,3 @@
-import { createHmac } from 'node:crypto';
 import type { AdminDashboardReaderPort } from '@modules/admin/application/ports/admin-dashboard-reader.port';
 import { ADMIN_DASHBOARD_READER_KEY } from '@modules/admin/application/ports/admin-dashboard-reader.port';
 import type { AdminGovernanceRepositoryPort } from '@modules/admin/application/ports/admin-governance.repository';
@@ -11,6 +10,7 @@ import { Role } from '@packages/auth/roles/role';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
+import { signTestAccessToken as signToken } from './support/auth-token';
 
 describe('Admin dashboard (e2e)', () => {
 	let app: ApiHttpApp;
@@ -90,29 +90,6 @@ describe('Admin dashboard (e2e)', () => {
 		async recordAction(): Promise<void> {
 			throw new Error('Unexpected governance repository call.');
 		}
-	}
-
-	function getJwtSecret(): string {
-		return process.env.JWT_ACCESS_TOKEN_SECRET ?? 'dev-secret';
-	}
-
-	function signToken(payload: Record<string, unknown>): string {
-		const now = Math.floor(Date.now() / 1000);
-		const header = Buffer.from(
-			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-		).toString('base64url');
-		const body = Buffer.from(
-			JSON.stringify({
-				issuedAt: now,
-				expiresAt: now + 900,
-				...payload,
-			}),
-		).toString('base64url');
-		const signature = createHmac('sha256', getJwtSecret())
-			.update(`${header}.${body}`)
-			.digest('base64url');
-
-		return `${header}.${body}.${signature}`;
 	}
 
 	beforeEach(async () => {
