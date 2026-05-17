@@ -1,13 +1,10 @@
-import { paymentMethodValues } from '@packages/shared/payments/payment-method';
+export {
+	type CreatePaymentSchemaInput,
+	createPaymentSchema,
+} from '@packages/shared/payments/create-payment.schema';
+
 import { z } from 'zod';
 import { devPaymentOutcomeValues } from '../application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
-
-export const createPaymentSchema = z.object({
-	orderId: z.string().trim().min(1),
-	paymentMethod: z.enum(paymentMethodValues),
-});
-
-export type CreatePaymentSchemaInput = z.infer<typeof createPaymentSchema>;
 
 export const mercadoPagoWebhookSchema = z.object({
 	action: z.string().trim().min(1),

@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { z } from 'zod';
 import { api } from '@/shared/api-client-management/api-client';
 import { ApiRequestError } from '@/shared/api-client-management/http';
 import { getAuthErrorMessage } from '@/shared/api-client-management/user-messages';
@@ -13,11 +12,13 @@ import type { ListChatMessagesResponseOutput } from '@/shared/chat/chat-contract
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import type {
 	AdminDashboardOutput,
+	AdminGovernanceInput,
 	AdminMetricsOutput,
 	AdminOrderOutput,
 	AdminSupportTicketOutput,
 	AdminUserOutput,
 } from '../server/admin-contracts';
+import { adminGovernanceInputSchema } from '../server/admin-contracts';
 import {
 	blockAdminUser,
 	forceCancelAdminOrder,
@@ -35,11 +36,6 @@ export type AdminGovernanceActionState = {
 	success?: boolean;
 };
 
-const governanceFormSchema = z.object({
-	targetId: z.string().trim().min(1),
-	reason: z.string().trim().min(1).max(500),
-});
-
 const getAdminSessionOrRedirect = async () => {
 	const session = await getAuthSession();
 	if (!session || session.userRole !== 'ADMIN' || !session.userId)
@@ -53,10 +49,10 @@ const renderReadApiRequest = <T>(
 ) => api.request<T>(path, { ...init, allowSessionRefresh: false });
 
 const parseGovernanceForm = (formData: FormData) =>
-	governanceFormSchema.parse({
+	adminGovernanceInputSchema.parse({
 		targetId: formData.get('targetId'),
 		reason: formData.get('reason'),
-	});
+	}) satisfies AdminGovernanceInput;
 
 export const getAdminDashboard = async (): Promise<AdminDashboardOutput> => {
 	await getAdminSessionOrRedirect();

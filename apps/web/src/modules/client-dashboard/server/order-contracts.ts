@@ -1,99 +1,33 @@
-import { z } from 'zod';
+import type { CreateOrderSchemaInput } from '@packages/shared/orders/create-order.schema';
 import {
-	isMasterPdlDivision,
-	MASTER_PDL_MAX,
-	MASTER_PDL_MIN,
-	MASTER_RANK_DIVISION,
-} from '../model/rank-options';
+	type CreateOrderQuoteSchemaInput,
+	createOrderQuoteSchema,
+} from '@packages/shared/orders/create-order-quote.schema';
+import {
+	type CreatePaymentSchemaInput,
+	createPaymentSchema,
+} from '@packages/shared/payments/create-payment.schema';
+import { z } from 'zod';
 
-const isMasterLeague = (league: string) =>
-	league.trim().toLowerCase() === 'master';
+export { createOrderSchema } from '@packages/shared/orders/create-order.schema';
+export { createPaymentSchema } from '@packages/shared/payments/create-payment.schema';
 
-const isValidMasterDivision = (division: string) => {
-	return division === MASTER_RANK_DIVISION || isMasterPdlDivision(division);
-};
-
-const orderQuoteBaseSchema = z.object({
-	serviceType: z.enum(['elo_boost', 'duo_boost']),
-	couponCode: z.string().trim().min(1).optional(),
-	extras: z.array(z.string()).default([]),
-	currentLeague: z.string().trim().min(1),
-	currentDivision: z.string().trim().min(1),
-	currentLp: z.number().int().min(0).max(MASTER_PDL_MAX),
-	desiredLeague: z.string().trim().min(1),
-	desiredDivision: z.string().trim().min(1),
-	server: z.string().trim().min(1),
-	desiredQueue: z.string().trim().min(1),
-	lpGain: z.number().int().positive(),
-	deadline: z.string().datetime(),
-});
-
-const validateOrderQuoteInput = (
-	input: z.infer<typeof orderQuoteBaseSchema>,
-	context: z.RefinementCtx,
-) => {
-	if (!isMasterLeague(input.currentLeague) && input.currentLp > 99) {
-		context.addIssue({
-			code: z.ZodIssueCode.too_big,
-			type: 'number',
-			maximum: 99,
-			inclusive: true,
-			path: ['currentLp'],
-			message: 'Current LP must be between 0 and 99 before Master.',
-		});
-	}
-
-	if (
-		isMasterLeague(input.currentLeague) &&
-		!isValidMasterDivision(input.currentDivision)
-	) {
-		context.addIssue({
-			code: z.ZodIssueCode.custom,
-			path: ['currentDivision'],
-			message: `Master PDL must be between ${MASTER_PDL_MIN} and ${MASTER_PDL_MAX}.`,
-		});
-	}
-
-	if (
-		isMasterLeague(input.desiredLeague) &&
-		!isValidMasterDivision(input.desiredDivision)
-	) {
-		context.addIssue({
-			code: z.ZodIssueCode.custom,
-			path: ['desiredDivision'],
-			message: `Master PDL must be between ${MASTER_PDL_MIN} and ${MASTER_PDL_MAX}.`,
-		});
-	}
-};
-
-export const orderQuoteSchema = orderQuoteBaseSchema.superRefine(
-	validateOrderQuoteInput,
-);
-
-export const createOrderSchema = z.object({
-	quoteId: z.string().trim().min(1),
-	boosterId: z.string().trim().min(1).optional(),
-});
-
-export const createPaymentSchema = z.object({
-	orderId: z.string().trim().min(1),
-	paymentMethod: z.enum(['credit_card', 'pix', 'boleto']),
-});
+export const orderQuoteSchema = createOrderQuoteSchema;
 
 export const resumePaymentCheckoutSchema = z.object({
 	paymentId: z.string().trim().min(1),
 	checkoutUrl: z.string().trim().url(),
 });
 
-export const startCheckoutSchema = orderQuoteBaseSchema
-	.extend({
+export const startCheckoutSchema = createOrderQuoteSchema.and(
+	z.object({
 		paymentMethod: createPaymentSchema.shape.paymentMethod,
-	})
-	.superRefine(validateOrderQuoteInput);
+	}),
+);
 
-export type OrderQuoteInput = z.infer<typeof orderQuoteSchema>;
-export type CreateOrderInput = z.infer<typeof createOrderSchema>;
-export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
+export type OrderQuoteInput = CreateOrderQuoteSchemaInput;
+export type CreateOrderInput = CreateOrderSchemaInput;
+export type CreatePaymentInput = CreatePaymentSchemaInput;
 export type ResumePaymentCheckoutOutput = z.infer<
 	typeof resumePaymentCheckoutSchema
 >;

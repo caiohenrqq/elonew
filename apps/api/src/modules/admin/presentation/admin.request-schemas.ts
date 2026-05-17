@@ -1,3 +1,8 @@
+export {
+	type AdminReasonInput as AdminReasonSchemaInput,
+	adminReasonSchema,
+} from '@packages/shared/admin/admin-governance.schema';
+
 import { z } from 'zod';
 
 export const adminIdParamSchema = z.string().trim().min(1);
@@ -10,9 +15,3 @@ export const adminListQuerySchema = z.object({
 });
 
 export type AdminListQuerySchemaInput = z.infer<typeof adminListQuerySchema>;
-
-export const adminReasonSchema = z.object({
-	reason: z.string().trim().min(1).max(500),
-});
-
-export type AdminReasonSchemaInput = z.infer<typeof adminReasonSchema>;

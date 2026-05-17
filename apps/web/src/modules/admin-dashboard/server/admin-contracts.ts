@@ -1,3 +1,8 @@
+export {
+	type AdminGovernanceInput,
+	adminGovernanceInputSchema,
+} from '@packages/shared/admin/admin-governance.schema';
+
 import { z } from 'zod';
 
 export const adminMetricsSchema = z.object({
@@ -50,11 +55,6 @@ export const adminDashboardSchema = z.object({
 	users: z.array(adminUserSchema),
 	orders: z.array(adminOrderSchema),
 	tickets: z.array(adminSupportTicketSchema),
-});
-
-export const adminGovernanceInputSchema = z.object({
-	targetId: z.string().trim().min(1),
-	reason: z.string().trim().min(1).max(500),
 });
 
 export type AdminMetricsOutput = z.infer<typeof adminMetricsSchema>;
