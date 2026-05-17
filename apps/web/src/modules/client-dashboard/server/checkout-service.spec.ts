@@ -121,7 +121,7 @@ describe('startCheckout', () => {
 		const result = await startCheckout(
 			{
 				serviceType: 'elo_boost',
-				extras: ['priority'],
+				extras: ['priority_service'],
 				currentLeague: 'silver',
 				currentDivision: 'IV',
 				currentLp: 0,

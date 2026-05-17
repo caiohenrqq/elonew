@@ -8,8 +8,12 @@ process.env.MERCADO_PAGO_ACCESS_TOKEN ??= 'test-mercado-pago-access-token';
 process.env.MERCADO_PAGO_WEBHOOK_SECRET ??= 'test-mercado-pago-webhook-secret';
 process.env.MERCADO_PAGO_WEBHOOK_URL ??=
 	'https://example.com/payments/webhooks/mercadopago';
+process.env.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE ??= 'false';
+process.env.CHAT_SOCKET_ALLOWED_ORIGINS ??= 'http://localhost:3001';
 process.env.JWT_REFRESH_TOKEN_SECRET ??= 'test-refresh-secret';
 process.env.EMAIL_CONFIRMATION_TOKEN_SECRET ??=
 	'test-email-confirmation-secret';
+process.env.WEB_SESSION_SECRET ??=
+	'a-very-secret-and-long-session-key-for-development-32chars';
 process.env.ORDER_CREDENTIALS_ENCRYPTION_KEY ??=
 	'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=';

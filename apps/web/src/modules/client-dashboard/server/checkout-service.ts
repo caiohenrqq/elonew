@@ -1,3 +1,4 @@
+import { isProductionRuntime } from '@/shared/env/web-env';
 import {
 	type ClientDashboardOrdersOutput,
 	type CreateOrderOutput,
@@ -134,7 +135,7 @@ export const startCheckout = async (
 const getSafeCheckoutUrl = (checkoutUrl: string) => {
 	const url = new URL(checkoutUrl);
 	const isLocalDevUrl =
-		process.env.NODE_ENV !== 'production' &&
+		!isProductionRuntime() &&
 		url.protocol === 'http:' &&
 		(url.hostname === 'localhost' || url.hostname === '127.0.0.1');
 

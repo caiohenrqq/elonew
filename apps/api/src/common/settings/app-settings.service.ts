@@ -25,6 +25,12 @@ export class AppSettingsService {
 		return this.config.getOrThrow('REDIS_URL', { infer: true });
 	}
 
+	get chatSocketAllowedOrigins() {
+		return this.config.getOrThrow('CHAT_SOCKET_ALLOWED_ORIGINS', {
+			infer: true,
+		});
+	}
+
 	get jwtAccessTokenSecret() {
 		return this.config.getOrThrow('JWT_ACCESS_TOKEN_SECRET', { infer: true });
 	}
@@ -53,6 +59,12 @@ export class AppSettingsService {
 
 	get emailConfirmationTokenSecret() {
 		return this.config.getOrThrow('EMAIL_CONFIRMATION_TOKEN_SECRET', {
+			infer: true,
+		});
+	}
+
+	get webSessionSecret() {
+		return this.config.getOrThrow('WEB_SESSION_SECRET', {
 			infer: true,
 		});
 	}

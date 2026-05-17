@@ -4,6 +4,9 @@
 		"moduleResolution": "nodenext",
 		"target": "ES2023",
 		"types": ["node"],
+		"paths": {
+			"@packages/config/*": ["../config/src/*"]
+		},
 		"strict": true,
 		"noEmit": true
 	},

@@ -29,3 +29,14 @@ export const workerEnvSchema = z.object({
 });
 
 export type WorkerEnv = z.infer<typeof workerEnvSchema>;
+
+export function validateWorkerEnv(config: Record<string, unknown>): WorkerEnv {
+	const result = workerEnvSchema.safeParse(config);
+	if (result.success) return result.data;
+
+	const errors = result.error.issues
+		.map((issue) => `${issue.path.join('.') || 'root'}: ${issue.message}`)
+		.join('\n');
+
+	throw new Error(`Worker env validation failed:\n${errors}`);
+}
