@@ -1,5 +1,6 @@
 import type {
 	ChatMessageRecord,
+	ChatMessageWriteResult,
 	ChatOrderRecord,
 	ChatRepositoryPort,
 	ListChatMessagesInput,
@@ -48,6 +49,15 @@ export class InMemoryChatRepository implements ChatRepositoryPort {
 		senderId: string;
 		content: string;
 	}): Promise<ChatMessageRecord> {
+		return (await this.createMessageWithNotification(input)).message;
+	}
+
+	async createMessageWithNotification(input: {
+		chatId: string;
+		senderId: string;
+		content: string;
+		notification?: { recipientId: string };
+	}): Promise<ChatMessageWriteResult> {
 		const orderId = this.getOrderIdForChat(input.chatId);
 		const message: ChatMessageRecord = {
 			id: `message-${this.nextMessageId++}`,
@@ -67,7 +77,33 @@ export class InMemoryChatRepository implements ChatRepositoryPort {
 			message,
 		]);
 
-		return message;
+		return {
+			message,
+			...(input.notification
+				? {
+						notification: {
+							notification: {
+								id: `notification-${message.id}`,
+								type: 'CHAT_MESSAGE_CREATED' as const,
+								payload: {
+									type: 'CHAT_MESSAGE_CREATED' as const,
+									metadata: {
+										orderId,
+										chatMessageId: message.id,
+										senderId: message.sender.id,
+										senderUsername: message.sender.username,
+									},
+								},
+								readAt: null,
+								activityAt: message.createdAt.toISOString(),
+								createdAt: message.createdAt.toISOString(),
+								updatedAt: message.createdAt.toISOString(),
+							},
+							unreadCount: 1,
+						},
+					}
+				: {}),
+		};
 	}
 
 	async listMessages(

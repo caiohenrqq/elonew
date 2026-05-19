@@ -8,10 +8,11 @@ import { PrismaChatRepository } from '@modules/chat/infrastructure/repositories/
 import { AdminChatController } from '@modules/chat/presentation/admin-chat.controller';
 import { ChatController } from '@modules/chat/presentation/chat.controller';
 import { ChatGateway } from '@modules/chat/presentation/chat.gateway';
+import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, AuthModule],
+	imports: [PrismaModule, AuthModule, NotificationsModule],
 	controllers: [AdminChatController, ChatController],
 	providers: [
 		PrismaChatRepository,

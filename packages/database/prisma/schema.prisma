@@ -57,6 +57,10 @@ enum PricingVersionStatus {
   ARCHIVED
 }
 
+enum NotificationType {
+  CHAT_MESSAGE_CREATED
+}
+
 model User {
   id               String    @id @default(cuid())
   username         String    @unique
@@ -85,6 +89,7 @@ model User {
   ratingsGiven     Rating[]  @relation("RatingsGiven")
   ratingsReceived  Rating[]  @relation("RatingsReceived")
   authSessions     AuthSession[]
+  notifications     Notification[] @relation("UserNotifications")
 
   @@map("users")
 }
@@ -361,6 +366,24 @@ model ChatMessage {
 
   @@index([chatId, createdAt, id])
   @@map("chat_messages")
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  recipientId  String
+  recipient    User             @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  type         NotificationType
+  aggregateKey String
+  payload      Json
+  readAt       DateTime?
+  activityAt   DateTime         @default(now())
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([recipientId, type, aggregateKey])
+  @@index([recipientId, activityAt, id])
+  @@index([recipientId, readAt])
+  @@map("notifications")
 }
 
 model Ticket {

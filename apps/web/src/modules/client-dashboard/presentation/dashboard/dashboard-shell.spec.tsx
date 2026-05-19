@@ -4,6 +4,7 @@ import type {
 	AnchorHTMLAttributes,
 	HTMLAttributes,
 	PropsWithChildren,
+	ReactNode,
 } from 'react';
 import { DashboardShell } from './dashboard-shell';
 
@@ -13,6 +14,18 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/modules/auth/actions/auth-actions', () => ({
 	logoutAction: jest.fn(),
+}));
+
+jest.mock('@/modules/notifications/actions/notification-actions', () => ({
+	getDashboardNotifications: jest.fn().mockResolvedValue({
+		items: [],
+		nextCursor: null,
+		unreadCount: 0,
+	}),
+}));
+
+jest.mock('@/modules/notifications/presentation/notification-popover', () => ({
+	NotificationPopover: () => <div data-testid="notification-popover" />,
 }));
 
 jest.mock('@packages/ui/brand/glitch-logo', () => ({
@@ -66,48 +79,42 @@ describe('DashboardShell', () => {
 		(usePathname as jest.Mock).mockReturnValue('/client');
 	});
 
-	it('should render dashboard shell with user info', () => {
+	const renderShell = async (children: ReactNode) => {
 		render(
-			<DashboardShell user={mockUser}>
-				<div data-testid="children">Content</div>
-			</DashboardShell>,
+			await DashboardShell({
+				user: mockUser,
+				children,
+			}),
 		);
+	};
+
+	it('should render dashboard shell with user info', async () => {
+		await renderShell(<div data-testid="children">Content</div>);
 
 		expect(screen.getByText('TestUser')).toBeInTheDocument();
 		expect(screen.getByTestId('glitch-logo')).toBeInTheDocument();
+		expect(screen.getByTestId('notification-popover')).toBeInTheDocument();
 		expect(screen.getByTestId('children')).toBeInTheDocument();
 	});
 
-	it('should highlight active sidebar item', () => {
+	it('should highlight active sidebar item', async () => {
 		(usePathname as jest.Mock).mockReturnValue('/client/orders/new');
 
-		render(
-			<DashboardShell user={mockUser}>
-				<div>Content</div>
-			</DashboardShell>,
-		);
+		await renderShell(<div>Content</div>);
 
 		const activeItem = screen.getByRole('link', { name: /Novo Pedido/i });
 		expect(activeItem).toHaveAttribute('aria-current', 'page');
 	});
 
-	it('should render sidebar navigation items', () => {
-		render(
-			<DashboardShell user={mockUser}>
-				<div>Content</div>
-			</DashboardShell>,
-		);
+	it('should render sidebar navigation items', async () => {
+		await renderShell(<div>Content</div>);
 
 		expect(screen.getByText('Painel')).toBeInTheDocument();
 		expect(screen.getByText('Novo Pedido')).toBeInTheDocument();
 	});
 
-	it('should have logout button', () => {
-		render(
-			<DashboardShell user={mockUser}>
-				<div>Content</div>
-			</DashboardShell>,
-		);
+	it('should have logout button', async () => {
+		await renderShell(<div>Content</div>);
 
 		expect(screen.getByRole('button', { name: /Sair/i })).toBeInTheDocument();
 	});

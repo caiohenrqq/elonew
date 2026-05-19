@@ -19,6 +19,7 @@ import {
 } from '@/shared/chat/chat-service';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import type {
+	BoosterOrderOutput,
 	BoosterQueueOutput,
 	BoosterWalletOutput,
 	BoosterWalletTransactionsOutput,
@@ -83,6 +84,17 @@ export const getBoosterWork = async (): Promise<BoosterWorkOutput> => {
 	} catch (error) {
 		return redirectOnAuthError(error);
 	}
+};
+
+export const getBoosterOrder = async (
+	orderId: string,
+): Promise<BoosterOrderOutput | null> => {
+	const work = await getBoosterWork();
+	return (
+		[...work.activeOrders, ...work.recentCompletedOrders].find(
+			(order) => order.id === orderId,
+		) ?? null
+	);
 };
 
 export const getBoosterWallet = async (): Promise<BoosterWalletOutput> => {
