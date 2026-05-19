@@ -11,6 +11,10 @@
 			"types": "./dist/chat/send-chat-message.schema.d.ts",
 			"default": "./dist/chat/send-chat-message.schema.js"
 		},
+		"./notifications/notification.schema": {
+			"types": "./dist/notifications/notification.schema.d.ts",
+			"default": "./dist/notifications/notification.schema.js"
+		},
 		"./orders/create-order-quote.schema": {
 			"types": "./dist/orders/create-order-quote.schema.d.ts",
 			"default": "./dist/orders/create-order-quote.schema.js"
