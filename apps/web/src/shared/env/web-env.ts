@@ -13,6 +13,11 @@ export const getWebSessionSecret = () => {
 	return secret;
 };
 
+export const getWebSessionCookieDomain = () => {
+	const domain = process.env.WEB_SESSION_COOKIE_DOMAIN?.trim();
+	return domain || undefined;
+};
+
 export const getWebAppUrl = () => process.env.NEXT_PUBLIC_APP_URL;
 
 export const isProductionRuntime = () => process.env.NODE_ENV === 'production';

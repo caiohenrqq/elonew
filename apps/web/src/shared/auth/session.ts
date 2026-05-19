@@ -2,7 +2,11 @@ import 'server-only';
 
 import { SESSION_COOKIE_NAME } from '@packages/auth/session/session-cookie';
 import { cookies } from 'next/headers';
-import { getWebSessionSecret, isProductionRuntime } from '@/shared/env/web-env';
+import {
+	getWebSessionCookieDomain,
+	getWebSessionSecret,
+	isProductionRuntime,
+} from '@/shared/env/web-env';
 import {
 	type SealedSessionPayload,
 	sealSessionPayload,
@@ -28,13 +32,15 @@ export type AuthSession = SealedSessionPayload;
 
 const refreshTokenMaxAgeSeconds = 60 * 60 * 24 * 30;
 
-const getCookieOptions = () => {
+export const getAuthSessionCookieOptions = () => {
+	const domain = getWebSessionCookieDomain();
 	return {
 		httpOnly: true,
 		secure: isProductionRuntime(),
 		sameSite: 'lax' as const,
 		path: '/',
 		maxAge: refreshTokenMaxAgeSeconds,
+		...(domain ? { domain } : {}),
 	};
 };
 
@@ -62,7 +68,11 @@ export const setAuthSession = async (session: AuthSessionInput) => {
 		getSessionSecret(),
 	);
 
-	cookieStore.set(SESSION_COOKIE_NAME, sealedSession, getCookieOptions());
+	cookieStore.set(
+		SESSION_COOKIE_NAME,
+		sealedSession,
+		getAuthSessionCookieOptions(),
+	);
 };
 
 export const clearAuthSession = async () => {
