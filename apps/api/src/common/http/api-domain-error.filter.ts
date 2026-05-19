@@ -31,6 +31,10 @@ import {
 	ChatOrderNotFoundError,
 } from '@modules/chat/domain/chat.errors';
 import {
+	NotificationNotFoundError,
+	NotificationReadConflictError,
+} from '@modules/notifications/domain/notification.errors';
+import {
 	OrderAlreadyExistsError,
 	OrderBoosterNotEligibleError,
 	OrderBoosterNotFoundError,
@@ -143,6 +147,7 @@ export function mapApiDomainErrorToHttpException(
 			PaymentNotFoundError,
 			PaymentOrderNotFoundError,
 			WalletNotFoundError,
+			NotificationNotFoundError,
 		),
 		mapAsBadRequest(
 			OrderAlreadyExistsError,
@@ -171,6 +176,7 @@ export function mapApiDomainErrorToHttpException(
 			AdminGovernanceReasonRequiredError,
 		),
 		mapAsConflict(OrderPricingVersionActiveConflictError, ChatNotWritableError),
+		mapAsConflict(NotificationReadConflictError),
 	]);
 }
 

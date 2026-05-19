@@ -18,6 +18,9 @@ describe('Users module integration (db)', () => {
 		controller = moduleRef.get(UsersController);
 		prisma = moduleRef.get(PrismaService);
 		await prisma.processedWebhookEvent.deleteMany();
+		await prisma.notification.deleteMany();
+		await prisma.chatMessage.deleteMany();
+		await prisma.chat.deleteMany();
 		await prisma.walletTransaction.deleteMany();
 		await prisma.payment.deleteMany();
 		await prisma.orderCredentials.deleteMany();

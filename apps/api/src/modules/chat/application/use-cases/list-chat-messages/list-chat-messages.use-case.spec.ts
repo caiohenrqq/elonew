@@ -1,5 +1,6 @@
 import type {
 	ChatMessageRecord,
+	ChatMessageWriteResult,
 	ChatOrderRecord,
 	ChatRepositoryPort,
 	ListChatMessagesInput,
@@ -29,6 +30,15 @@ class InMemoryChatRepository implements ChatRepositoryPort {
 		senderId: string;
 		content: string;
 	}): Promise<ChatMessageRecord> {
+		throw new Error('Not implemented.');
+	}
+
+	async createMessageWithNotification(_input: {
+		chatId: string;
+		senderId: string;
+		content: string;
+		notification?: { recipientId: string };
+	}): Promise<ChatMessageWriteResult> {
 		throw new Error('Not implemented.');
 	}
 

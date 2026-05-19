@@ -111,6 +111,9 @@ describe('Payments module integration (db)', () => {
 		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
 		prisma = moduleRef.get(PrismaService);
 		await prisma.processedWebhookEvent.deleteMany();
+		await prisma.notification.deleteMany();
+		await prisma.chatMessage.deleteMany();
+		await prisma.chat.deleteMany();
 		await prisma.payment.deleteMany();
 		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();

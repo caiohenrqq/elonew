@@ -1,6 +1,7 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type {
 	ChatMessageRecord,
+	ChatMessageWriteResult,
 	ChatOrderRecord,
 	ChatRepositoryPort,
 	ListChatMessagesInput,
@@ -9,6 +10,11 @@ import type {
 import { ChatMessageNotFoundError } from '@modules/chat/domain/chat.errors';
 import { Injectable } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
+import {
+	notificationPayloadSchema,
+	notificationTypeSchema,
+} from '@packages/shared/notifications/notification.schema';
+import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaChatRepository implements ChatRepositoryPort {
@@ -59,29 +65,56 @@ export class PrismaChatRepository implements ChatRepositoryPort {
 		senderId: string;
 		content: string;
 	}): Promise<ChatMessageRecord> {
-		const message = await this.prisma.chatMessage.create({
-			data: {
-				chatId: input.chatId,
-				senderId: input.senderId,
-				content: input.content,
-			},
-			include: {
-				chat: {
-					select: {
-						orderId: true,
-					},
-				},
-				sender: {
-					select: {
-						id: true,
-						username: true,
-						role: true,
-					},
-				},
-			},
-		});
+		return (await this.createMessageWithNotification(input)).message;
+	}
 
-		return this.mapMessage(message);
+	async createMessageWithNotification(input: {
+		chatId: string;
+		senderId: string;
+		content: string;
+		notification?: {
+			recipientId: string;
+		};
+	}): Promise<ChatMessageWriteResult> {
+		return await this.prisma.$transaction(async (transaction) => {
+			const message = await this.createMessageRecord(transaction, input);
+			if (!input.notification) return { message: this.mapMessage(message) };
+
+			const notification = await transaction.notification.upsert({
+				where: {
+					recipientId_type_aggregateKey: {
+						recipientId: input.notification.recipientId,
+						type: 'CHAT_MESSAGE_CREATED',
+						aggregateKey: message.chat.orderId,
+					},
+				},
+				create: {
+					recipientId: input.notification.recipientId,
+					type: 'CHAT_MESSAGE_CREATED',
+					aggregateKey: message.chat.orderId,
+					payload: this.buildChatNotificationPayload(message),
+				},
+				update: {
+					payload: this.buildChatNotificationPayload(message),
+					readAt: null,
+					activityAt: new Date(),
+				},
+			});
+			const unreadCount = await transaction.notification.count({
+				where: {
+					recipientId: input.notification.recipientId,
+					readAt: null,
+				},
+			});
+
+			return {
+				message: this.mapMessage(message),
+				notification: {
+					notification: this.mapNotification(notification),
+					unreadCount,
+				},
+			};
+		});
 	}
 
 	async listMessages(
@@ -156,6 +189,78 @@ export class PrismaChatRepository implements ChatRepositoryPort {
 				role: message.sender.role as Role,
 			},
 			createdAt: message.createdAt,
+		};
+	}
+
+	private async createMessageRecord(
+		prisma: Prisma.TransactionClient,
+		input: {
+			chatId: string;
+			senderId: string;
+			content: string;
+		},
+	) {
+		return await prisma.chatMessage.create({
+			data: {
+				chatId: input.chatId,
+				senderId: input.senderId,
+				content: input.content,
+			},
+			include: {
+				chat: {
+					select: {
+						orderId: true,
+					},
+				},
+				sender: {
+					select: {
+						id: true,
+						username: true,
+						role: true,
+					},
+				},
+			},
+		});
+	}
+
+	private buildChatNotificationPayload(message: {
+		id: string;
+		chat: {
+			orderId: string;
+		};
+		sender: {
+			id: string;
+			username: string;
+		};
+	}) {
+		return {
+			type: 'CHAT_MESSAGE_CREATED' as const,
+			metadata: {
+				orderId: message.chat.orderId,
+				chatMessageId: message.id,
+				senderId: message.sender.id,
+				senderUsername: message.sender.username,
+			},
+		};
+	}
+
+	private mapNotification(notification: {
+		id: string;
+		type: string;
+		payload: unknown;
+		readAt: Date | null;
+		activityAt: Date;
+		createdAt: Date;
+		updatedAt: Date;
+	}) {
+		return {
+			id: notification.id,
+			type: notificationTypeSchema.parse(notification.type),
+			payload: notificationPayloadSchema.parse(notification.payload),
+			readAt: notification.readAt?.toISOString() ?? null,
+			activityAt: notification.activityAt.toISOString(),
+			createdAt: notification.createdAt.toISOString(),
+			updatedAt: notification.updatedAt.toISOString(),
 		};
 	}
 }

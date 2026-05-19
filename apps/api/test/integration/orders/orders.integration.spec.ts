@@ -1,4 +1,6 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
+import { CHAT_REPOSITORY_KEY } from '@modules/chat/application/ports/chat-repository.port';
+import { CHAT_THREAD_WRITER_KEY } from '@modules/chat/application/ports/chat-thread-writer.port';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_COMPLETION_EARNINGS_PORT_KEY } from '@modules/orders/application/ports/order-completion-earnings.port';
@@ -22,6 +24,7 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { makeDefaultOrderPricingVersionInput } from '../../order-pricing-version-test-data';
+import { InMemoryChatRepository } from '../../support/in-memory/chat/in-memory-chat.repository';
 import { InMemoryOrderRepository } from '../../support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from '../../support/in-memory/orders/in-memory-order-checkout.repository';
 import { InMemoryOrderPricingVersionRepository } from '../../support/in-memory/orders/in-memory-order-pricing-version.repository';
@@ -32,6 +35,7 @@ describe('Orders module integration', () => {
 	let controller: OrdersController;
 	let pricingAdminController: OrdersPricingAdminController;
 	let orderRepository: InMemoryOrderRepository;
+	let chatRepository: InMemoryChatRepository;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
 	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
 	const adminUser: AuthenticatedUser = {
@@ -102,11 +106,17 @@ describe('Orders module integration', () => {
 	}
 
 	beforeEach(async () => {
+		orderRepository = new InMemoryOrderRepository();
+		chatRepository = new InMemoryChatRepository(orderRepository);
 		moduleRef = await Test.createTestingModule({
 			imports: [OrdersModule],
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
-			.useClass(InMemoryOrderRepository)
+			.useValue(orderRepository)
+			.overrideProvider(CHAT_REPOSITORY_KEY)
+			.useValue(chatRepository)
+			.overrideProvider(CHAT_THREAD_WRITER_KEY)
+			.useValue(chatRepository)
 			.overrideProvider(ORDER_CHECKOUT_PORT_KEY)
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
@@ -121,7 +131,6 @@ describe('Orders module integration', () => {
 
 		controller = moduleRef.get(OrdersController);
 		pricingAdminController = moduleRef.get(OrdersPricingAdminController);
-		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
 		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
 		const version = await pricingVersions.createDraft(
