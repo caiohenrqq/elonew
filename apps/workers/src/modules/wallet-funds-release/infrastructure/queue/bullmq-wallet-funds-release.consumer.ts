@@ -31,7 +31,7 @@ export class BullmqWalletFundsReleaseConsumerAdapter
 		private readonly workerFactory: BullmqWalletFundsReleaseWorkerFactory,
 	) {}
 
-	async onApplicationBootstrap(): Promise<void> {
+	onApplicationBootstrap(): void {
 		if (this.appSettings.isTest) return;
 
 		this.worker = this.workerFactory.create({
