@@ -62,7 +62,7 @@ export class NotificationsGateway
 
 			client.data.user = user;
 			void client.join(this.getUserRoom(user.id));
-			client.emit('notifications:connected', { userId: user.id });
+			void client.emit('notifications:connected', { userId: user.id });
 		} catch (error) {
 			this.emitError(client, error);
 			client.disconnect(true);
@@ -73,7 +73,7 @@ export class NotificationsGateway
 		recipientId: string,
 		event: NotificationUpdatedEventResponse,
 	): void {
-		this.server
+		void this.server
 			?.to(this.getUserRoom(recipientId))
 			.emit('notifications:updated', event);
 	}
@@ -82,7 +82,7 @@ export class NotificationsGateway
 		recipientId: string,
 		event: NotificationsReadAllEventResponse,
 	): void {
-		this.server
+		void this.server
 			?.to(this.getUserRoom(recipientId))
 			.emit('notifications:read-all', event);
 	}
@@ -124,7 +124,7 @@ export class NotificationsGateway
 
 	private emitError(client: NotificationSocket, error: unknown): void {
 		const code = this.getErrorCode(error);
-		client.emit('notifications:error', {
+		void client.emit('notifications:error', {
 			code,
 			message: this.getErrorMessage(code),
 		});

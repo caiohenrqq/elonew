@@ -52,7 +52,7 @@ export class UpsertChatNotificationUseCase {
 		);
 		const notification = mapNotificationResponse(notificationRecord);
 
-		this.notificationEvents.emitNotificationUpdated(
+		void this.notificationEvents.emitNotificationUpdated(
 			input.recipientId,
 			mapNotificationUpdatedEventResponse(notificationRecord, unreadCount),
 		);

@@ -111,7 +111,7 @@ export class ChatGateway implements OnGatewayConnection<ChatSocket> {
 			});
 
 			await client.join(this.getRoomName(input.orderId));
-			client.emit('chat:joined', { orderId: input.orderId });
+			void client.emit('chat:joined', { orderId: input.orderId });
 		} catch (error) {
 			this.emitError(client, error);
 		}
@@ -125,7 +125,7 @@ export class ChatGateway implements OnGatewayConnection<ChatSocket> {
 		try {
 			const input = chatOrderEventSchema.parse(payload);
 			await client.leave(this.getRoomName(input.orderId));
-			client.emit('chat:left', { orderId: input.orderId });
+			void client.emit('chat:left', { orderId: input.orderId });
 		} catch (error) {
 			this.emitError(client, error);
 		}
@@ -149,7 +149,7 @@ export class ChatGateway implements OnGatewayConnection<ChatSocket> {
 			const roomName = this.getRoomName(input.orderId);
 
 			await client.join(roomName);
-			this.server?.to(roomName).emit('chat:message.created', message);
+			void this.server?.to(roomName).emit('chat:message.created', message);
 		} catch (error) {
 			this.emitError(client, error);
 		}
@@ -186,7 +186,7 @@ export class ChatGateway implements OnGatewayConnection<ChatSocket> {
 
 	private emitError(client: ChatSocket, error: unknown): void {
 		const code = this.getErrorCode(error);
-		client.emit('chat:error', {
+		void client.emit('chat:error', {
 			code,
 			message: this.getErrorMessage(code),
 		});

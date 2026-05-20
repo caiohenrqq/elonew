@@ -59,7 +59,7 @@ export class SendChatMessageUseCase {
 		});
 		const { message } = result;
 		if (recipientId && result.notification) {
-			this.notificationEvents.emitNotificationUpdated(recipientId, {
+			void this.notificationEvents.emitNotificationUpdated(recipientId, {
 				notification: result.notification.notification,
 				unreadCount: result.notification.unreadCount,
 			});

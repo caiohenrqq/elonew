@@ -43,7 +43,7 @@ export class MarkNotificationReadUseCase {
 		const unreadCount = await this.notificationRepository.countUnread(
 			input.recipientId,
 		);
-		this.notificationEvents.emitNotificationUpdated(
+		void this.notificationEvents.emitNotificationUpdated(
 			input.recipientId,
 			mapNotificationUpdatedEventResponse(notification, unreadCount),
 		);
