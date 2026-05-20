@@ -262,14 +262,13 @@ export const ReviewStep = ({
 						type="button"
 						variant="primary"
 						className={cn(
-							'flex-[2] h-14 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase tracking-[0.2em] text-xs transition-all duration-300 group relative overflow-hidden',
+							'flex-[2] h-14 bg-emerald-500 text-xs font-black text-black uppercase tracking-[0.2em] transition-colors duration-200 hover:bg-emerald-400',
 							(isSubmitting || !hasAcceptedTerms) &&
 								'opacity-50 grayscale pointer-events-none',
 						)}
 						onClick={onCheckout}
 						disabled={isSubmitting || !hasAcceptedTerms}
 					>
-						<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
 						{isSubmitting ? (
 							<span className="flex items-center gap-2">
 								<motion.div
@@ -283,7 +282,7 @@ export const ReviewStep = ({
 						) : (
 							<span className="flex items-center justify-center gap-2">
 								Finalizar e Pagar
-								<ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+								<ChevronRight className="h-5 w-5" />
 							</span>
 						)}
 					</Button>

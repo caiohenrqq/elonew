@@ -40,7 +40,7 @@ export const ChatPanel: FC<ChatPanelProps> = ({
 		<div
 			className={cn(
 				panelSurface.base,
-				'flex flex-col h-[500px] w-full max-w-md overflow-hidden',
+				'flex h-[min(500px,calc(100vh-12rem))] w-full flex-col overflow-hidden',
 				className,
 			)}
 		>

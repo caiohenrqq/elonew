@@ -329,7 +329,7 @@ export const DetailsStep = ({
 					disabled={isNextDisabled}
 				>
 					Revisar Pedido
-					<ChevronRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+					<ChevronRight className="ml-2 h-4 w-4" />
 				</Button>
 			</div>
 		</div>

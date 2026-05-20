@@ -26,9 +26,9 @@ export const DashboardShell = ({
 	roleLabel,
 	user,
 }: DashboardShellProps) => (
-	<div className="flex min-h-screen bg-background text-white">
-		<aside className="fixed left-0 top-0 bottom-0 z-50 flex w-[240px] flex-col border-r border-white/5 bg-background">
-			<div className="flex justify-center p-8 pb-10">
+	<div className="flex min-h-screen flex-col bg-background text-white lg:flex-row">
+		<aside className="z-50 flex w-full flex-col border-white/5 border-b bg-background lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:w-[240px] lg:border-r lg:border-b-0">
+			<div className="flex justify-center p-6 pb-6 lg:p-8 lg:pb-10">
 				<Link
 					href="/"
 					aria-label="Voltar para a página inicial"
@@ -68,15 +68,15 @@ export const DashboardShell = ({
 			</div>
 		</aside>
 
-		<main className="relative ml-[240px] flex-1">
-			<header className="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-white/5 bg-background/80 px-10">
-				<h1 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">
+		<main className="relative min-w-0 flex-1 lg:ml-[240px]">
+			<header className="sticky top-0 z-40 flex min-h-20 flex-wrap items-center justify-between gap-4 border-white/5 border-b bg-background/80 px-4 py-4 sm:px-6 lg:px-10">
+				<h1 className="min-w-0 text-[10px] font-black uppercase tracking-[0.3em] text-white/60">
 					EloNew / <span className="text-white">{portalLabel}</span>
 				</h1>
 				{headerAside}
 			</header>
 
-			<div className="p-10">{children}</div>
+			<div className="p-4 sm:p-6 lg:p-10">{children}</div>
 		</main>
 	</div>
 );
