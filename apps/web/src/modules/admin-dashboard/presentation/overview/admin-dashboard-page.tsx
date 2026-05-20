@@ -56,19 +56,20 @@ type AdminSupportPageProps = {
 	tickets: AdminSupportTicketOutput[];
 };
 
-const formatCurrency = (value: number) =>
-	new Intl.NumberFormat('pt-BR', {
-		style: 'currency',
-		currency: 'BRL',
-	}).format(value);
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+	style: 'currency',
+	currency: 'BRL',
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+	dateStyle: 'short',
+	timeStyle: 'short',
+});
+
+const formatCurrency = (value: number) => currencyFormatter.format(value);
 
 const formatDate = (value: string | null) =>
-	value
-		? new Intl.DateTimeFormat('pt-BR', {
-				dateStyle: 'short',
-				timeStyle: 'short',
-			}).format(new Date(value))
-		: 'Não informado';
+	value ? dateTimeFormatter.format(new Date(value)) : 'Não informado';
 
 const formatMetricCount = (value: number) => value.toString().padStart(2, '0');
 

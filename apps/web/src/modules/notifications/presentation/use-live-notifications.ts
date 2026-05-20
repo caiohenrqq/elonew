@@ -22,6 +22,7 @@ export const useLiveNotifications = (
 ) => {
 	const [notifications, setNotifications] = useState(initialNotifications);
 	const [liveError, setLiveError] = useState<string | null>(null);
+	const didHandleInitialConnectRef = useRef(false);
 	const didRetryAuthRef = useRef(false);
 
 	const refetchNotifications = useCallback(async () => {
@@ -44,6 +45,11 @@ export const useLiveNotifications = (
 		});
 
 		const refreshFromSource = () => {
+			if (!didHandleInitialConnectRef.current) {
+				didHandleInitialConnectRef.current = true;
+				return;
+			}
+
 			void refetchNotifications().catch(() => {
 				setLiveError('Não foi possível atualizar as notificações.');
 			});

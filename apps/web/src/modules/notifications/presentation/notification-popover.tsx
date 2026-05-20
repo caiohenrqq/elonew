@@ -4,7 +4,7 @@ import { getButtonClassName } from '@packages/ui/components/button';
 import { cn } from '@packages/ui/utils/cn';
 import { Bell, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import type {
 	ListNotificationsResponse,
 	NotificationOutput,
@@ -41,27 +41,25 @@ export const NotificationPopover = ({
 		visibleUnreadCount > 9 ? '9+' : String(visibleUnreadCount);
 
 	const hasNotifications = notifications.items.length > 0;
-	const summary = useMemo(() => {
-		if (visibleUnreadCount === 0) return 'Tudo lido';
-		if (visibleUnreadCount === 1) return '1 nova';
-		return `${visibleUnreadCount} novas`;
-	}, [visibleUnreadCount]);
+	const summary =
+		visibleUnreadCount === 0
+			? 'Tudo lido'
+			: visibleUnreadCount === 1
+				? '1 nova'
+				: `${visibleUnreadCount} novas`;
 
 	const markOneRead = (notificationId: string) => {
+		const targetNotification = notifications.items.find(
+			(notification) => notification.id === notificationId,
+		);
+		if (!targetNotification) return;
+
 		setLiveError(null);
 		setPendingNotificationId(notificationId);
 		startTransition(async () => {
-			const expectedActivityAt = notifications.items.find(
-				(notification) => notification.id === notificationId,
-			)?.activityAt;
-			if (!expectedActivityAt) {
-				setPendingNotificationId(null);
-				return;
-			}
-
 			const result = await markDashboardNotificationReadAction(
 				notificationId,
-				expectedActivityAt,
+				targetNotification.activityAt,
 			);
 			setPendingNotificationId(null);
 			if (result.error) {
@@ -73,12 +71,7 @@ export const NotificationPopover = ({
 			setNotifications((current) => ({
 				...current,
 				unreadCount: Math.max(
-					current.unreadCount -
-						(current.items.find(
-							(notification) => notification.id === notificationId,
-						)?.readAt
-							? 0
-							: 1),
+					current.unreadCount - (targetNotification.readAt ? 0 : 1),
 					0,
 				),
 				items: current.items.map((notification) =>
@@ -136,7 +129,7 @@ export const NotificationPopover = ({
 			</button>
 
 			{isOpen ? (
-				<div className="absolute right-0 mt-3 w-[360px] border border-white/10 bg-background shadow-2xl">
+				<div className="absolute right-0 mt-3 w-[min(calc(100vw-2rem),360px)] border border-white/10 bg-background shadow-panel">
 					<div className="flex items-center justify-between border-white/5 border-b p-4">
 						<div>
 							<p className="text-[9px] font-black uppercase tracking-widest text-white/40">
@@ -156,7 +149,7 @@ export const NotificationPopover = ({
 						</button>
 					</div>
 
-					<div className="max-h-[420px] overflow-y-auto">
+					<div className="max-h-[min(420px,calc(100vh-6rem))] overflow-y-auto">
 						{liveError ? (
 							<div className="border-red-400/20 border-b bg-red-500/10 px-4 py-3 text-[10px] font-semibold text-red-200">
 								{liveError}

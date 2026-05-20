@@ -2,15 +2,13 @@
 
 import { Badge } from '@packages/ui/components/badge';
 import { cn } from '@packages/ui/utils/cn';
-import {
-	type CSSProperties,
-	type FC,
-	memo,
-	useEffect,
-	useMemo,
-	useRef,
-} from 'react';
+import { type CSSProperties, type FC, memo, useEffect, useRef } from 'react';
 import type { ChatMessage, ChatRoleLabel } from './chat.types';
+
+const chatTimeFormatter = new Intl.DateTimeFormat([], {
+	hour: '2-digit',
+	minute: '2-digit',
+});
 
 interface ChatMessageListProps {
 	messages: ChatMessage[];
@@ -59,7 +57,12 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
 	return (
 		<div
 			ref={scrollRef}
-			style={{ contentVisibility: 'auto' } as CSSProperties}
+			style={
+				{
+					containIntrinsicSize: '0 420px',
+					contentVisibility: 'auto',
+				} as CSSProperties
+			}
 			className={cn(
 				'flex flex-col gap-4 overflow-y-auto p-4 scrollbar-hide',
 				className,
@@ -94,12 +97,7 @@ const ROLE_LABELS: ChatRoleLabel = {
 };
 
 const ChatMessageItem = memo(({ message, isMe }: ChatMessageItemProps) => {
-	const timeString = useMemo(() => {
-		return new Date(message.createdAt).toLocaleTimeString([], {
-			hour: '2-digit',
-			minute: '2-digit',
-		});
-	}, [message.createdAt]);
+	const timeString = chatTimeFormatter.format(new Date(message.createdAt));
 
 	return (
 		<div

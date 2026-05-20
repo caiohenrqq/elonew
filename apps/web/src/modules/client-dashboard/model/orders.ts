@@ -37,6 +37,11 @@ const orderStatusVariants: Record<string, OrderStatusVariant> = {
 	cancelled: 'error',
 };
 
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+	style: 'currency',
+	currency: 'BRL',
+});
+
 export const toClientOrder = (order: GetOrderOutput): ClientOrder => ({
 	...order,
 	statusLabel: orderStatusLabels[order.status] ?? 'Status indisponível',
@@ -57,8 +62,5 @@ export const toClientDashboard = (
 export const formatCurrency = (value: number | null) => {
 	if (value === null) return 'Não informado';
 
-	return new Intl.NumberFormat('pt-BR', {
-		style: 'currency',
-		currency: 'BRL',
-	}).format(value);
+	return currencyFormatter.format(value);
 };

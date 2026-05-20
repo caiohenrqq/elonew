@@ -39,6 +39,13 @@ const orderStatusVariants: Record<string, BoosterOrderStatusVariant> = {
 	cancelled: 'error',
 };
 
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+	style: 'currency',
+	currency: 'BRL',
+});
+
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' });
+
 const mapBoosterOrder = (order: BoosterOrderOutput): BoosterOrder => ({
 	...order,
 	statusLabel: orderStatusLabels[order.status] ?? 'Status indisponível',
@@ -59,10 +66,7 @@ export const toBoosterWork = (work: BoosterWorkOutput): BoosterWork => ({
 export const formatCurrency = (value: number | null) => {
 	if (value === null) return 'Não informado';
 
-	return new Intl.NumberFormat('pt-BR', {
-		style: 'currency',
-		currency: 'BRL',
-	}).format(value);
+	return currencyFormatter.format(value);
 };
 
 export const formatTitleCase = (value: string) =>
@@ -87,9 +91,7 @@ export const formatOrderRoute = (order: BoosterOrder) => {
 export const formatDate = (value: string | null) => {
 	if (!value) return 'Não informado';
 
-	return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(
-		new Date(value),
-	);
+	return dateFormatter.format(new Date(value));
 };
 
 export const formatTransactionReason = (

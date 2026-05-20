@@ -33,12 +33,12 @@ type CheckoutSummaryProps = {
 	quotePreviewError?: string | null;
 };
 
-const formatCurrency = (value: number) => {
-	return new Intl.NumberFormat('pt-BR', {
-		style: 'currency',
-		currency: 'BRL',
-	}).format(value);
-};
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+	style: 'currency',
+	currency: 'BRL',
+});
+
+const formatCurrency = (value: number) => currencyFormatter.format(value);
 
 const AnimatedCurrency = ({
 	className,
@@ -154,20 +154,17 @@ export const CheckoutSummary = ({
 	quotePreviewError,
 }: CheckoutSummaryProps) => {
 	const [couponDraft, setCouponDraft] = useState(orderInput.couponCode ?? '');
-	const allExtras = useMemo(() => quotePreview?.extras ?? [], [quotePreview]);
+	const allExtras = quotePreview?.extras ?? [];
 
 	const paidExtrasTotal = useMemo(
 		() => allExtras.reduce((total, extra) => total + extra.price, 0),
 		[allExtras],
 	);
 
-	const appliedCouponCode = useMemo(
-		() =>
-			orderInput.couponCode && quotePreview && quotePreview.discountAmount > 0
-				? orderInput.couponCode
-				: null,
-		[orderInput.couponCode, quotePreview],
-	);
+	const appliedCouponCode =
+		orderInput.couponCode && quotePreview && quotePreview.discountAmount > 0
+			? orderInput.couponCode
+			: null;
 	const normalizedCouponDraft = couponDraft.trim().toUpperCase();
 	const isCouponApplyDisabled =
 		normalizedCouponDraft === (orderInput.couponCode ?? '');
@@ -181,8 +178,8 @@ export const CheckoutSummary = ({
 	};
 
 	return (
-		<aside className="w-full lg:w-[320px] sticky top-30">
-			<Card className="overflow-hidden border-white/10 shadow-2xl">
+		<aside className="w-full lg:sticky lg:top-24 lg:w-[320px]">
+			<Card className="overflow-hidden border-white/10 shadow-panel">
 				<div className="h-1 w-full bg-[var(--rank-accent)]" />
 				<CardHeader>
 					<CardTitle>Resumo de Checkout</CardTitle>

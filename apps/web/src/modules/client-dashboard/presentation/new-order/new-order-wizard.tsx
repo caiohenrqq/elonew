@@ -102,6 +102,13 @@ export const NewOrderWizard = () => {
 		}));
 	}, []);
 
+	const handleCouponCodeChange = useCallback(
+		(couponCode: string) => {
+			updateOrderInput('couponCode', couponCode || undefined);
+		},
+		[updateOrderInput],
+	);
+
 	return (
 		<div
 			ref={wizardRef}
@@ -165,9 +172,7 @@ export const NewOrderWizard = () => {
 					quotePreview={quotePreview}
 					quotePreviewError={quotePreviewError}
 					isQuotePreviewPending={isQuotePreviewPending}
-					onCouponCodeChange={(couponCode) =>
-						updateOrderInput('couponCode', couponCode || undefined)
-					}
+					onCouponCodeChange={handleCouponCodeChange}
 				/>
 			</div>
 		</div>

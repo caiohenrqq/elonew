@@ -30,22 +30,24 @@ type AdminOrderDetailsViewProps = {
 	order: AdminOrderOutput;
 };
 
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+	style: 'currency',
+	currency: 'BRL',
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+	dateStyle: 'short',
+	timeStyle: 'short',
+});
+
 const formatCurrency = (value: number | null) => {
 	if (value === null) return 'Não informado';
 
-	return new Intl.NumberFormat('pt-BR', {
-		style: 'currency',
-		currency: 'BRL',
-	}).format(value);
+	return currencyFormatter.format(value);
 };
 
 const formatDate = (value: string | null) =>
-	value
-		? new Intl.DateTimeFormat('pt-BR', {
-				dateStyle: 'short',
-				timeStyle: 'short',
-			}).format(new Date(value))
-		: 'Não informado';
+	value ? dateTimeFormatter.format(new Date(value)) : 'Não informado';
 
 const formatTitleCase = (value: string) =>
 	value
