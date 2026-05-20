@@ -25,8 +25,12 @@ type ClientDashboardPageProps = {
 
 const formatMetricCount = (value: number) => value.toString().padStart(2, '0');
 
+const orderDateFormatter = new Intl.DateTimeFormat('pt-BR', {
+	timeZone: 'UTC',
+});
+
 const formatOrderDate = (value: string) =>
-	new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(value));
+	orderDateFormatter.format(new Date(value));
 
 const formatTitleCase = (value: string) =>
 	value
@@ -123,8 +127,7 @@ export const ClientDashboardPage = ({
 						href="/client/orders/new"
 						className={getButtonClassName({
 							size: 'sm',
-							className:
-								'gap-2 tracking-widest font-black uppercase hover:shadow-[0_0_15px_rgba(14,165,233,0.3)] transition-all',
+							className: 'gap-2 font-black uppercase tracking-widest',
 						})}
 					>
 						<PlusCircle className="w-3 h-3" />

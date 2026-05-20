@@ -24,8 +24,8 @@ export const DashboardMetricCard = ({
 	return (
 		<Card
 			className={cn(
-				'group relative overflow-hidden transition-all duration-500',
-				'hover:border-hextech-cyan/40 hover:shadow-[0_0_20px_rgba(14,165,233,0.1)]',
+				'group relative overflow-hidden transition-colors duration-200',
+				'hover:border-hextech-cyan/40',
 			)}
 		>
 			<CardHeader className="pb-2">
@@ -40,12 +40,6 @@ export const DashboardMetricCard = ({
 				</CardTitle>
 			</CardHeader>
 			{children ? <CardContent>{children}</CardContent> : null}
-			<div
-				className={cn(
-					'absolute bottom-0 left-0 h-px w-full origin-center scale-x-0 bg-gradient-to-r from-transparent to-transparent transition-transform duration-700 group-hover:scale-x-100',
-					'via-hextech-cyan/50',
-				)}
-			/>
 		</Card>
 	);
 };

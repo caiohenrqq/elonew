@@ -102,14 +102,10 @@ export const LoginForm = () => {
 					</AuthCheckboxField>
 				</div>
 
-				<motion.div
-					className="auth-animate"
-					whileHover={{ scale: 1.01 }}
-					whileTap={{ scale: 0.99 }}
-				>
+				<motion.div className="auth-animate">
 					<Button
 						type="submit"
-						className="w-full h-12 uppercase tracking-widest font-black hover:shadow-[0_0_20px_rgba(14,165,233,0.3)] transition-all"
+						className="h-12 w-full font-black uppercase tracking-widest"
 						disabled={isPending}
 					>
 						{isPending ? 'Entrando...' : 'Entrar Agora'}

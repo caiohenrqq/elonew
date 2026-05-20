@@ -23,7 +23,7 @@ export type ButtonVariant = keyof typeof buttonVariants.variant;
 export type ButtonSize = keyof typeof buttonVariants.size;
 
 export const buttonBaseClassName = cn(
-	'inline-flex cursor-pointer items-center justify-center rounded-sm text-sm font-black uppercase tracking-[0.15em] transition-all duration-200 active:scale-95',
+	'inline-flex cursor-pointer items-center justify-center rounded-sm text-sm font-black uppercase tracking-[0.15em] transition-colors duration-200',
 	focusRing,
 	disabledState,
 );

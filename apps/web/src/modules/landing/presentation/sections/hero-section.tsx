@@ -67,10 +67,8 @@ export function HeroSection() {
 				<div className="flex flex-col md:flex-row gap-4 justify-center">
 					<Link href="/start">
 						<motion.button
-							whileHover={{ scale: 1.05 }}
-							whileTap={{ scale: 0.95 }}
 							{...climbSwap.getTriggerProps()}
-							className="w-full md:w-auto px-10 py-4 bg-hextech-cyan text-background font-bold uppercase tracking-widest rounded-sm hover:shadow-[0_0_20px_rgba(14,165,233,0.5)] transition-all cursor-pointer"
+							className="w-full cursor-pointer rounded-sm bg-hextech-cyan px-10 py-4 font-bold text-background uppercase tracking-widest transition-colors hover:bg-white md:w-auto"
 						>
 							<WordSwapText
 								topRef={climbSwap.topRef}

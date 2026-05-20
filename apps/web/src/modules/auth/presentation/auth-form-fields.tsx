@@ -105,14 +105,13 @@ export const AuthSwitchLink = ({
 	children: ReactNode;
 	href: string;
 }) => (
-	<motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+	<motion.div>
 		<Link
 			href={href}
 			className={getButtonClassName({
 				variant: 'outline',
 				size: 'md',
-				className:
-					'w-full text-[10px] tracking-[0.2em] font-black hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all uppercase',
+				className: 'w-full text-[10px] font-black uppercase tracking-[0.2em]',
 			})}
 		>
 			{children}
