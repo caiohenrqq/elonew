@@ -24,7 +24,7 @@ export class InMemoryOrderEventBus implements OrderEventPublisherPort {
 		KeyedOrderEventSubscriber
 	>();
 
-	async publish(event: OrderEvent): Promise<void> {
+	publish(event: OrderEvent): Promise<void> {
 		for (const subscriber of this.subscribers) {
 			try {
 				subscriber(event);
@@ -32,6 +32,8 @@ export class InMemoryOrderEventBus implements OrderEventPublisherPort {
 				this.subscribers.delete(subscriber);
 			}
 		}
+
+		return Promise.resolve();
 	}
 
 	subscribe(

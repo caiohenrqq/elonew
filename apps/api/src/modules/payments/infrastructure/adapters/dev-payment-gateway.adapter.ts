@@ -9,21 +9,19 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class DevPaymentGatewayAdapter implements PaymentGatewayPort {
-	async initiatePayment(
-		input: InitiatePaymentInput,
-	): Promise<InitiatePaymentOutput> {
-		return {
+	initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentOutput> {
+		return Promise.resolve({
 			checkoutUrl: `http://localhost:3001/client?devPaymentId=${encodeURIComponent(input.paymentId)}`,
 			gatewayReferenceId: `dev-${input.paymentId}`,
 			gatewayStatus: 'pending',
-		};
+		});
 	}
 
-	async fetchPaymentNotification(
+	fetchPaymentNotification(
 		_input: FetchPaymentNotificationInput,
 	): Promise<FetchPaymentNotificationOutput> {
-		throw new Error(
-			'Dev payment gateway does not fetch provider notifications.',
+		return Promise.reject(
+			new Error('Dev payment gateway does not fetch provider notifications.'),
 		);
 	}
 }
