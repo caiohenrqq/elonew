@@ -43,6 +43,10 @@
 			"types": "./dist/payments/create-payment.schema.d.ts",
 			"default": "./dist/payments/create-payment.schema.js"
 		},
+		"./testing/dev-users": {
+			"types": "./dist/testing/dev-users.d.ts",
+			"default": "./dist/testing/dev-users.js"
+		},
 		"./utils/enum.utils": {
 			"types": "./dist/utils/enum.utils.d.ts",
 			"default": "./dist/utils/enum.utils.js"

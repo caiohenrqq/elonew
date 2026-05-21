@@ -1,27 +1,18 @@
 import { validateDatabaseEnv } from '@packages/config/env/database-env.config';
+import {
+	DEV_USER_PASSWORD,
+	DEV_USERS,
+	type DevUserRole,
+} from '@packages/shared/testing/dev-users';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, Role } from '@prisma/client';
 import * as argon2 from 'argon2';
 
-const DEV_PASSWORD = 'DevPassword123!';
-
-const devUsers = [
-	{
-		email: 'admin@elojob.com',
-		username: 'dev-admin',
-		role: Role.ADMIN,
-	},
-	{
-		email: 'booster@elojob.com',
-		username: 'dev-booster',
-		role: Role.BOOSTER,
-	},
-	{
-		email: 'client@elojob.com',
-		username: 'dev-client',
-		role: Role.CLIENT,
-	},
-];
+const prismaRoleByDevUserRole: Record<DevUserRole, Role> = {
+	ADMIN: Role.ADMIN,
+	BOOSTER: Role.BOOSTER,
+	CLIENT: Role.CLIENT,
+};
 
 const getDatabaseUrl = () => validateDatabaseEnv(process.env).DATABASE_URL;
 
@@ -35,7 +26,7 @@ const main = async () => {
 	const existingDevUsers = await prisma.user.findMany({
 		where: {
 			email: {
-				in: devUsers.map((user) => user.email),
+				in: DEV_USERS.map((user) => user.email),
 			},
 		},
 		select: {
@@ -53,16 +44,16 @@ const main = async () => {
 		return;
 	}
 
-	const passwordHash = await argon2.hash(DEV_PASSWORD);
+	const passwordHash = await argon2.hash(DEV_USER_PASSWORD);
 	const confirmedAt = new Date();
 
-	for (const user of devUsers) {
+	for (const user of DEV_USERS) {
 		await prisma.user.create({
 			data: {
 				email: user.email,
 				username: user.username,
 				password: passwordHash,
-				role: user.role,
+				role: prismaRoleByDevUserRole[user.role],
 				isActive: true,
 				emailConfirmedAt: confirmedAt,
 			},
@@ -70,10 +61,10 @@ const main = async () => {
 	}
 
 	console.log('Seeded dev accounts:');
-	for (const user of devUsers) {
+	for (const user of DEV_USERS) {
 		console.log(`- ${user.role.toLowerCase()}: ${user.email}`);
 	}
-	console.log(`Password: ${DEV_PASSWORD}`);
+	console.log(`Password: ${DEV_USER_PASSWORD}`);
 };
 
 main()
