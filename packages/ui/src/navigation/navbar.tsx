@@ -45,7 +45,11 @@ function WordSwapLink({ children, href }: WordSwapLinkProps) {
 	);
 }
 
-export function Navbar() {
+type NavbarProps = {
+	isAuthenticated?: boolean;
+};
+
+export function Navbar({ isAuthenticated = false }: NavbarProps) {
 	const [scrolled, setScrolled] = useState(false);
 	const scrolledRef = useRef(false);
 	const scrollToSection = useSectionScroll();
@@ -103,9 +107,11 @@ export function Navbar() {
 					</div>
 
 					<div className="flex items-center gap-6">
-						<div className={cn('hidden sm:block', labelText.nav)}>
-							<WordSwapLink href="/start">Portal do Cliente</WordSwapLink>
-						</div>
+						{isAuthenticated ? (
+							<div className={cn('hidden sm:block', labelText.nav)}>
+								<WordSwapLink href="/start">Portal do Cliente</WordSwapLink>
+							</div>
+						) : null}
 						<Link
 							href="/start"
 							className={cn(

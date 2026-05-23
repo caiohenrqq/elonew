@@ -12,7 +12,11 @@ import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useRef } from 'react';
 
-export function HeroSection() {
+type HeroSectionProps = {
+	isAuthenticated?: boolean;
+};
+
+export function HeroSection({ isAuthenticated = false }: HeroSectionProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const climbSwap = useWordSwapAnimation();
 	const servicesSwap = useWordSwapAnimation();
@@ -47,7 +51,7 @@ export function HeroSection() {
 			ref={containerRef}
 			className="relative h-screen flex flex-col items-center justify-center overflow-hidden"
 		>
-			<Navbar />
+			<Navbar isAuthenticated={isAuthenticated} />
 
 			<div className="hero-bg absolute inset-0 z-0">
 				<GradientNoise />
