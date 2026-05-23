@@ -11,11 +11,15 @@ import {
 } from '@packages/ui/components/table';
 import {
 	ArrowRight,
+	CheckCircle2,
 	CircleDollarSign,
 	ClipboardCheck,
+	Clock,
 	FileClock,
 	MessageSquare,
 	Package,
+	Play,
+	Shield,
 	ShieldCheck,
 	Ticket,
 	Users,
@@ -182,13 +186,13 @@ export const AdminDashboardPage = ({
 
 	return (
 		<DashboardEntrance>
-			<section className="dashboard-animate space-y-6">
+			<section className="dashboard-animate flex flex-none flex-col space-y-6">
 				<DashboardSectionHeader
 					title="Painel Administrativo"
 					detail={`${orders.length} pedidos / ${users.length} usuários`}
 				/>
 
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
 					{metricItems(metrics).map((item) => (
 						<DashboardMetricCard
 							key={item.label}
@@ -199,51 +203,64 @@ export const AdminDashboardPage = ({
 					))}
 				</div>
 
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+				<div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
 					<DashboardMetricCard
 						label="Em execução"
 						value={formatMetricCount(orderSummary.active)}
+						icon={Play}
 					/>
 					<DashboardMetricCard
 						label="Pendentes"
 						value={formatMetricCount(orderSummary.pending)}
+						icon={Clock}
 					/>
 					<DashboardMetricCard
 						label="Finalizados"
 						value={formatMetricCount(orderSummary.completed)}
+						icon={CheckCircle2}
+					/>
+					<DashboardMetricCard
+						label="Suporte"
+						value={formatMetricCount(tickets.length)}
+						icon={Ticket}
 					/>
 				</div>
+			</section>
 
-				<div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-					<Card className="overflow-hidden border-white/10">
-						<div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
-							<div className="flex items-center gap-3">
-								<ClipboardCheck className="h-4 w-4 text-hextech-cyan" />
-								<h3 className="text-xs font-black uppercase tracking-[0.22em] text-white">
-									Pedidos recentes
-								</h3>
-							</div>
-							<Link
-								href="/admin/orders"
-								className="text-[10px] font-black uppercase tracking-widest text-white/45 transition-colors hover:text-hextech-cyan"
-							>
-								Abrir fila
-							</Link>
+			<div className="dashboard-animate flex min-h-0 flex-1 flex-col gap-6 xl:grid xl:grid-cols-[1fr_380px]">
+				<Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-white/10">
+					<div className="flex flex-none items-center justify-between border-b border-white/5 px-5 py-4">
+						<div className="flex items-center gap-3">
+							<ClipboardCheck className="h-4 w-4 text-hextech-cyan" />
+							<h3 className="text-xs font-black uppercase tracking-[0.3em] text-white">
+								Pedidos recentes
+							</h3>
 						</div>
-						<div className="divide-y divide-white/5">
-							{orders.slice(0, 5).map((order) => (
+						<Link
+							href="/admin/orders"
+							className="text-[10px] font-black uppercase tracking-widest text-white/45 transition-colors hover:text-hextech-cyan"
+						>
+							Abrir fila
+						</Link>
+					</div>
+					<div className="flex-1 overflow-auto">
+						<div className="min-h-full divide-y divide-white/5">
+							{orders.slice(0, 10).map((order) => (
 								<Link
 									key={order.id}
 									href={`/admin/orders/${encodeURIComponent(order.id)}`}
 									className={`grid items-center gap-4 border-l-2 px-5 py-4 transition-colors hover:bg-white/[0.03] md:grid-cols-[minmax(0,1fr)_150px_110px] ${getOrderAccentClassName(order.status)}`}
 								>
-									<div className="min-w-0">
-										<p className="truncate text-sm font-black uppercase text-white">
-											{formatServiceType(order.serviceType)}
-										</p>
-										<p className="mt-1 truncate font-mono text-[10px] text-white/35">
-											{order.id}
-										</p>
+									<div className="flex items-center gap-2.5 min-w-0">
+										<Shield className="h-4 w-4 text-hextech-cyan/70 shrink-0" />
+										<div className="min-w-0">
+											<p className="truncate text-sm font-black uppercase text-white leading-tight">
+												{formatServiceType(order.serviceType)}
+											</p>
+											<p className="mt-1 truncate font-mono text-[10px] text-white/35">
+												{order.id}
+											</p>
+										</div>
 									</div>
 									<div className="justify-self-start md:justify-self-end">
 										<Badge variant="warning">
@@ -256,83 +273,116 @@ export const AdminDashboardPage = ({
 								</Link>
 							))}
 							{orders.length === 0 ? (
-								<div className="p-5 text-sm text-white/40">
-									Nenhum pedido recente.
+								<DashboardEmptyState
+									icon={Package}
+									title="Nenhum pedido recente"
+									description="Pedidos pagos e em andamento aparecerão aqui para acompanhamento administrativo."
+									action={
+										<Link
+											href="/admin/orders"
+											className={getButtonClassName({
+												variant: 'outline',
+												size: 'sm',
+											})}
+										>
+											Abrir fila
+										</Link>
+									}
+								/>
+							) : null}
+						</div>
+					</div>
+				</Card>
+
+				<aside className="grid flex-none gap-6 xl:flex xl:min-h-0 xl:flex-col">
+					<Card className="flex min-h-0 flex-col overflow-hidden border-white/10 xl:flex-1">
+						<div className="flex flex-none items-center justify-between border-b border-white/5 px-5 py-4">
+							<h3 className="text-xs font-black uppercase tracking-[0.3em] text-white">
+								Usuários
+							</h3>
+							<Link
+								href="/admin/users"
+								className="text-[10px] font-black uppercase tracking-widest text-white/45 transition-colors hover:text-hextech-cyan"
+							>
+								Gerenciar
+							</Link>
+						</div>
+						<div className="flex-1 overflow-auto divide-y divide-white/5">
+							{users.slice(0, 6).map((user) => (
+								<div
+									key={user.id}
+									className="flex items-center justify-between gap-4 px-5 py-3"
+								>
+									<div className="min-w-0">
+										<p className="truncate text-sm font-black text-white">
+											{user.username}
+										</p>
+										<p className="truncate text-[10px] text-white/35">
+											{user.email}
+										</p>
+									</div>
+									<Badge>{roleLabels[user.role] ?? user.role}</Badge>
 								</div>
+							))}
+							{users.length === 0 ? (
+								<DashboardEmptyState
+									icon={Users}
+									title="Nenhum usuário"
+									description="Usuários ativos aparecerão aqui quando a API retornar dados."
+								/>
 							) : null}
 						</div>
 					</Card>
 
-					<div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-1">
-						<Card className="overflow-hidden border-white/10">
-							<div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
-								<h3 className="text-xs font-black uppercase tracking-[0.22em] text-white">
-									Usuários
-								</h3>
-								<Link
-									href="/admin/users"
-									className="text-[10px] font-black uppercase tracking-widest text-white/45 transition-colors hover:text-hextech-cyan"
-								>
-									Gerenciar
-								</Link>
-							</div>
-							<div className="divide-y divide-white/5">
-								{users.slice(0, 4).map((user) => (
-									<div
-										key={user.id}
-										className="flex items-center justify-between gap-4 px-5 py-3"
-									>
-										<div className="min-w-0">
-											<p className="truncate text-sm font-black text-white">
-												{user.username}
-											</p>
-											<p className="truncate text-[10px] text-white/35">
-												{user.email}
-											</p>
-										</div>
-										<Badge>{roleLabels[user.role] ?? user.role}</Badge>
-									</div>
-								))}
-							</div>
-						</Card>
-
-						<Card className="overflow-hidden border-white/10">
-							<div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
-								<h3 className="text-xs font-black uppercase tracking-[0.22em] text-white">
-									Suporte
-								</h3>
-								<Link
-									href="/admin/support"
-									className="text-[10px] font-black uppercase tracking-widest text-white/45 transition-colors hover:text-hextech-cyan"
-								>
-									Ver tickets
-								</Link>
-							</div>
-							<div className="divide-y divide-white/5">
-								{tickets.slice(0, 4).map((ticket) => (
-									<div key={ticket.id} className="px-5 py-3">
-										<div className="flex items-center justify-between gap-4">
-											<p className="truncate text-sm font-black text-white">
-												{ticket.subject}
-											</p>
-											<Badge>{formatTicketStatus(ticket.status)}</Badge>
-										</div>
-										<p className="mt-1 text-[10px] text-white/35">
-											{ticket.messageCount} mensagens /{' '}
-											{formatDate(ticket.latestMessageAt)}
+					<Card className="flex min-h-0 flex-col overflow-hidden border-white/10 xl:flex-1">
+						<div className="flex flex-none items-center justify-between border-b border-white/5 px-5 py-4">
+							<h3 className="text-xs font-black uppercase tracking-[0.3em] text-white">
+								Suporte
+							</h3>
+							<Link
+								href="/admin/support"
+								className="text-[10px] font-black uppercase tracking-widest text-white/45 transition-colors hover:text-hextech-cyan"
+							>
+								Ver tickets
+							</Link>
+						</div>
+						<div className="flex-1 overflow-auto divide-y divide-white/5">
+							{tickets.slice(0, 6).map((ticket) => (
+								<div key={ticket.id} className="px-5 py-3">
+									<div className="flex items-center justify-between gap-4">
+										<p className="truncate text-sm font-black text-white">
+											{ticket.subject}
 										</p>
+										<Badge>{formatTicketStatus(ticket.status)}</Badge>
 									</div>
-								))}
-								{tickets.length === 0 ? (
-									<div className="p-5 text-sm text-white/40">
-										Nenhum ticket aberto.
-									</div>
-								) : null}
-							</div>
-						</Card>
-					</div>
-				</div>
-			</section>
+									<p className="mt-1 text-[10px] text-white/35">
+										{ticket.messageCount} mensagens /{' '}
+										{formatDate(ticket.latestMessageAt)}
+									</p>
+								</div>
+							))}
+							{tickets.length === 0 ? (
+								<DashboardEmptyState
+									icon={Ticket}
+									title="Nenhum ticket aberto"
+									description="Chamados de suporte aparecerão aqui para triagem rápida."
+									action={
+										<Link
+											href="/admin/support"
+											className={getButtonClassName({
+												variant: 'outline',
+												size: 'sm',
+											})}
+										>
+											Ver tickets
+										</Link>
+									}
+								/>
+							) : null}
+						</div>
+					</Card>
+				</aside>
+			</div>
 		</DashboardEntrance>
 	);
 };
@@ -460,13 +510,16 @@ export const AdminOrdersPage = ({ orders }: AdminOrdersPageProps) => (
 							{orders.map((order) => (
 								<TableRow key={order.id}>
 									<TableCell>
-										<div className="space-y-1">
-											<p className="font-black uppercase tracking-wider text-white">
-												{formatServiceType(order.serviceType)}
-											</p>
-											<p className="max-w-[190px] truncate font-mono text-[10px] text-white/45">
-												{order.id}
-											</p>
+										<div className="flex items-center gap-2.5">
+											<Shield className="h-4 w-4 text-hextech-cyan/70 shrink-0" />
+											<div className="space-y-1">
+												<p className="font-black uppercase tracking-wider text-white leading-tight">
+													{formatServiceType(order.serviceType)}
+												</p>
+												<p className="max-w-[190px] truncate font-mono text-[10px] text-white/45">
+													{order.id}
+												</p>
+											</div>
 										</div>
 									</TableCell>
 									<TableCell>

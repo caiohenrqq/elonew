@@ -24,7 +24,7 @@ export const AdminDashboardShell = async ({
 			user={user}
 			roleLabel="ADMIN"
 			roleIcon={Shield}
-			portalLabel="Painel Admin"
+			portalLabel="Portal do Admin"
 			navigation={<AdminNavigation />}
 			logoutAction={logoutAction}
 			headerAside={
@@ -33,14 +33,6 @@ export const AdminDashboardShell = async ({
 						initialNotifications={notifications}
 						viewerRole="ADMIN"
 					/>
-					<div className="text-right">
-						<p className="text-[8px] font-medium uppercase tracking-widest text-white/40">
-							Acesso
-						</p>
-						<p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
-							Restrito
-						</p>
-					</div>
 				</div>
 			}
 		>

@@ -27,7 +27,10 @@ export const AdminNavigation = () => {
 	const pathname = usePathname();
 
 	return (
-		<nav className="flex-1 space-y-1 px-4" aria-label="Admin">
+		<nav
+			className="grid flex-1 grid-cols-2 gap-2 px-4 sm:grid-cols-4 lg:block lg:space-y-1"
+			aria-label="Admin"
+		>
 			{navigationItems.map((item) => (
 				<DashboardNavItem
 					key={item.href}
