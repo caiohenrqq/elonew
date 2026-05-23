@@ -38,9 +38,10 @@ export const WithdrawalForm = ({ maxAmount }: WithdrawalFormProps) => {
 				size="sm"
 				className="w-full gap-2"
 				disabled={maxAmount <= 0 || isPending}
+				aria-busy={isPending}
 			>
 				<WalletCards className="h-3 w-3" />
-				Solicitar saque
+				{isPending ? 'Enviando solicitação' : 'Solicitar saque'}
 			</Button>
 			{state.error ? (
 				<p className="text-[10px] font-bold text-danger">{state.error}</p>

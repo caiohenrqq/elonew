@@ -62,13 +62,13 @@ const BoosterDashboardSummary = ({
 }: BoosterDashboardSummaryProps) => {
 	if (tab === 'queue') {
 		return (
-			<section className="dashboard-animate grid gap-4 md:grid-cols-2">
+			<section className="dashboard-animate flex-none grid gap-6 md:grid-cols-2">
 				<DashboardMetricCard
 					icon={ListChecks}
 					label="Fila"
 					value={summary.availableOrders.toString().padStart(2, '0')}
 				>
-					<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+					<p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
 						Pedidos prontos para aceitar
 					</p>
 				</DashboardMetricCard>
@@ -77,7 +77,7 @@ const BoosterDashboardSummary = ({
 					label="Estimado"
 					value={formatCurrency(summary.estimatedAvailableEarnings)}
 				>
-					<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+					<p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
 						Repasse potencial da fila
 					</p>
 				</DashboardMetricCard>
@@ -86,13 +86,13 @@ const BoosterDashboardSummary = ({
 	}
 
 	return (
-		<section className="dashboard-animate grid gap-4 md:grid-cols-3">
+		<section className="dashboard-animate flex-none grid gap-6 md:grid-cols-3">
 			<DashboardMetricCard
 				icon={BriefcaseBusiness}
 				label="Em execução"
 				value={summary.activeOrders.toString().padStart(2, '0')}
 			>
-				<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+				<p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
 					Pedidos sob sua responsabilidade
 				</p>
 			</DashboardMetricCard>
@@ -101,7 +101,7 @@ const BoosterDashboardSummary = ({
 				label="Finalizados"
 				value={summary.completedOrders.toString().padStart(2, '0')}
 			>
-				<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+				<p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
 					Conclusões recentes
 				</p>
 			</DashboardMetricCard>
@@ -110,7 +110,7 @@ const BoosterDashboardSummary = ({
 				label="Recebido"
 				value={formatCurrency(summary.earnedFromRecentCompletions)}
 			>
-				<p className="text-[10px] font-bold uppercase tracking-widest text-white/20">
+				<p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
 					Repasse dos pedidos finalizados
 				</p>
 			</DashboardMetricCard>
@@ -119,9 +119,9 @@ const BoosterDashboardSummary = ({
 };
 
 const BoosterQueueView = ({ queue }: { queue: BoosterQueueViewModel }) => (
-	<>
+	<div className="flex flex-1 flex-col space-y-10 min-h-0">
 		<BoosterDashboardSummary tab="queue" summary={queue.summary} />
-		<div className="dashboard-animate grid gap-8 xl:grid-cols-[1fr_360px]">
+		<div className="dashboard-animate flex min-h-0 flex-1 flex-col gap-6 xl:grid xl:grid-cols-[1fr_360px]">
 			<BoosterOrderList
 				title="Pedidos disponíveis"
 				emptyMessage="Nenhum pedido pago disponível para aceitar agora."
@@ -130,14 +130,14 @@ const BoosterQueueView = ({ queue }: { queue: BoosterQueueViewModel }) => (
 			/>
 			<WalletPanel wallet={queue.wallet} />
 		</div>
-	</>
+	</div>
 );
 
 const BoosterWorkView = ({ work }: { work: BoosterWorkViewModel }) => (
-	<>
+	<div className="flex flex-1 flex-col space-y-10 min-h-0">
 		<BoosterDashboardSummary tab="work" summary={work.summary} />
-		<div className="dashboard-animate grid gap-8 xl:grid-cols-[1fr_360px]">
-			<div className="space-y-8">
+		<div className="dashboard-animate flex min-h-0 flex-1 flex-col gap-6 xl:grid xl:grid-cols-[1fr_360px]">
+			<div className="flex min-h-0 flex-1 flex-col space-y-8">
 				<BoosterOrderList
 					title="Meus pedidos em execução"
 					emptyMessage="Nenhum pedido em execução."
@@ -145,7 +145,7 @@ const BoosterWorkView = ({ work }: { work: BoosterWorkViewModel }) => (
 					orders={work.activeOrders}
 				/>
 				{work.activeOrders.length > 0 ? (
-					<section className="space-y-4">
+					<section className="flex-none space-y-4">
 						<div>
 							<p className="text-[10px] font-black uppercase tracking-[0.2em] text-hextech-cyan">
 								Chat interno
@@ -176,7 +176,7 @@ const BoosterWorkView = ({ work }: { work: BoosterWorkViewModel }) => (
 			</div>
 			<WalletPanel wallet={work.wallet} transactions={work.transactions} />
 		</div>
-	</>
+	</div>
 );
 
 export const BoosterDashboardPage = async ({

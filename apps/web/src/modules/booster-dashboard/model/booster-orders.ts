@@ -26,7 +26,7 @@ export type BoosterWork = Omit<
 };
 
 const orderStatusLabels: Record<string, string> = {
-	pending_booster: 'Disponível',
+	pending_booster: 'Aguardando Booster',
 	in_progress: 'Em execução',
 	completed: 'Finalizado',
 	cancelled: 'Cancelado',

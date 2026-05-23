@@ -30,7 +30,10 @@ export const BoosterNavigation = () => {
 	const tab = parseBoosterDashboardTab(searchParams.get('tab') ?? undefined);
 
 	return (
-		<nav className="flex-1 space-y-1 px-4" aria-label="Portal do Booster">
+		<nav
+			className="grid flex-1 grid-cols-2 gap-2 px-4 lg:block lg:space-y-1"
+			aria-label="Portal do Booster"
+		>
 			{boosterDashboardTabs.map((item) => (
 				<DashboardNavItem
 					key={item.href}

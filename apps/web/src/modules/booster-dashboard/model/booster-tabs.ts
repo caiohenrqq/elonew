@@ -2,7 +2,7 @@ export const boosterDashboardTabs = [
 	{
 		value: 'queue',
 		href: '/booster?tab=queue',
-		label: 'Fila',
+		label: 'Visão geral',
 	},
 	{
 		value: 'work',
