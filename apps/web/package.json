@@ -8,6 +8,7 @@
 		"build": "next build",
 		"test": "jest --runInBand",
 		"test:e2e": "playwright test",
+		"test:e2e:ai-dashboard": "playwright test ai-dashboard-inspection.spec.ts --reporter=line",
 		"test:e2e:ui": "playwright test --ui",
 		"test:e2e:report": "playwright show-report",
 		"biome:check": "biome check .",

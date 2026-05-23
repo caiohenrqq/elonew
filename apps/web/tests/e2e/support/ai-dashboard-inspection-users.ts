@@ -15,7 +15,7 @@ type AiDashboardInspectionAccount = {
 };
 
 const portalLabelByRole: Record<DevUser['role'], RegExp> = {
-	ADMIN: /painel admin/i,
+	ADMIN: /portal do admin/i,
 	BOOSTER: /portal do booster/i,
 	CLIENT: /portal do cliente/i,
 };
@@ -45,7 +45,18 @@ export const loginForAiDashboardInspection = async (
 	await page.goto('/login');
 	await page.getByLabel(/e-mail/i).fill(account.email);
 	await page.getByLabel(/senha/i).fill(account.password);
-	await page.getByRole('button', { name: /entrar agora/i }).click();
+	const submitButton = page.getByRole('button', { name: /entrar agora/i });
+	await expect(submitButton).toBeEnabled();
+	await submitButton.click();
+
+	const throttleMessage = page.getByText(
+		/ThrottlerException: Too Many Requests/i,
+	);
+	if (await throttleMessage.isVisible({ timeout: 1000 }).catch(() => false)) {
+		await page.waitForTimeout(61_000);
+		await expect(submitButton).toBeEnabled();
+		await submitButton.click();
+	}
 
 	await expect(page).toHaveURL(
 		new RegExp(`${account.dashboardPath}(?:$|[/?#])`),

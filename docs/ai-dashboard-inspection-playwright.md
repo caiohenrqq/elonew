@@ -40,7 +40,7 @@ After login, the MCP browser can navigate within that role's dashboard and captu
 Run the focused e2e check to verify all three dashboards are visible with seeded credentials:
 
 ```bash
-pnpm web test:e2e -- ai-dashboard-inspection.spec.ts
+pnpm web test:e2e:ai-dashboard
 ```
 
 The test captures full-page screenshots under:
@@ -50,3 +50,5 @@ apps/web/test-results/ai-dashboard-inspection/
 ```
 
 Those screenshots are generated artifacts and should not be committed.
+
+Do not use `pnpm web test:e2e:report` in automation. It starts `playwright show-report`, which serves the HTML report until the process is interrupted.
