@@ -22,10 +22,10 @@ export type ClientDashboard = Omit<ClientDashboardOrdersOutput, 'orders'> & {
 };
 
 const orderStatusLabels: Record<string, string> = {
-	awaiting_payment: 'Aguardando Pagamento',
-	pending_booster: 'Esperando Booster',
-	in_progress: 'Em Progresso',
-	completed: 'Concluído',
+	awaiting_payment: 'Pagamento Pendente',
+	pending_booster: 'Aguardando Booster',
+	in_progress: 'Em execução',
+	completed: 'Finalizado',
 	cancelled: 'Cancelado',
 };
 

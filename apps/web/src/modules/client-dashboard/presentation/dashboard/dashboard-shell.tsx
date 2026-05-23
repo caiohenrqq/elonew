@@ -33,17 +33,6 @@ export const DashboardShell = async ({
 						initialNotifications={notifications}
 						viewerRole="CLIENT"
 					/>
-					<div className="text-right">
-						<p className="text-[8px] font-medium uppercase tracking-widest text-white/40">
-							Status do Sistema
-						</p>
-						<div className="flex items-center justify-end gap-1.5">
-							<div className="h-1 w-1 rounded-full bg-emerald-500" />
-							<p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
-								Online
-							</p>
-						</div>
-					</div>
 				</div>
 			}
 		>

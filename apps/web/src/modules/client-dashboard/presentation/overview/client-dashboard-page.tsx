@@ -9,8 +9,16 @@ import {
 	TableHeader,
 	TableRow,
 } from '@packages/ui/components/table';
-import { Package, PlusCircle } from 'lucide-react';
+import {
+	Activity,
+	ArrowRight,
+	Coins,
+	Package,
+	PlusCircle,
+	Shield,
+} from 'lucide-react';
 import Link from 'next/link';
+import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
 import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
 import type { ClientDashboardOrder } from '../../model/orders';
@@ -73,11 +81,12 @@ export const ClientDashboardPage = ({
 				<DevelopmentCheckoutModal devPaymentId={devPaymentId} />
 			) : null}
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-				<div className="dashboard-animate">
+			<div className="grid flex-none grid-cols-1 gap-6 md:grid-cols-3">
+				<div className="dashboard-animate h-full">
 					<DashboardMetricCard
 						label="Pedidos Ativos"
 						value={formatMetricCount(dashboard.summary.activeOrders)}
+						icon={Activity}
 					>
 						<div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
 							<div
@@ -87,24 +96,26 @@ export const ClientDashboardPage = ({
 						</div>
 					</DashboardMetricCard>
 				</div>
-				<div className="dashboard-animate">
+				<div className="dashboard-animate h-full">
 					<DashboardMetricCard
 						label="Total Pedidos"
 						value={formatMetricCount(dashboard.summary.totalOrders)}
+						icon={Package}
 					>
-						<p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">
+						<p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
 							{dashboard.summary.totalOrders > 0
 								? 'Histórico real da sua conta'
 								: 'Nenhum pedido ainda'}
 						</p>
 					</DashboardMetricCard>
 				</div>
-				<div className="dashboard-animate">
+				<div className="dashboard-animate h-full">
 					<DashboardMetricCard
 						label="Total Investido"
 						value={formatCurrency(dashboard.summary.totalInvested)}
+						icon={Coins}
 					>
-						<p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">
+						<p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
 							{dashboard.summary.totalInvested > 0
 								? 'Soma dos pedidos finalizados no checkout'
 								: 'Nenhum pagamento registrado'}
@@ -113,8 +124,8 @@ export const ClientDashboardPage = ({
 				</div>
 			</div>
 
-			<section className="dashboard-animate space-y-6">
-				<div className="flex items-center justify-between">
+			<section className="dashboard-animate flex min-h-0 flex-1 flex-col space-y-6">
+				<div className="flex flex-none items-center justify-between">
 					<div className="space-y-1">
 						<h2 className="text-xs font-black uppercase tracking-[0.3em] text-white">
 							Pedidos Recentes
@@ -135,86 +146,181 @@ export const ClientDashboardPage = ({
 					</Link>
 				</div>
 
-				<Card className="overflow-hidden">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="text-[10px] uppercase font-black tracking-widest">
-									ID
-								</TableHead>
-								<TableHead className="text-[10px] uppercase font-black tracking-widest">
-									Serviço
-								</TableHead>
-								<TableHead className="text-[10px] uppercase font-black tracking-widest">
-									Detalhes
-								</TableHead>
-								<TableHead className="text-[10px] uppercase font-black tracking-widest">
-									Status
-								</TableHead>
-								<TableHead className="text-[10px] uppercase font-black tracking-widest">
-									Data
-								</TableHead>
-								<TableHead className="text-[10px] uppercase font-black tracking-widest text-right">
-									Ações
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{dashboard.orders.length > 0 ? (
-								dashboard.orders.map((order) => (
-									<TableRow key={order.id}>
-										<TableCell className="font-mono text-[10px] text-white/60">
-											{order.id}
-										</TableCell>
-										<TableCell className="font-black uppercase tracking-wider text-white">
-											{formatServiceType(order.serviceType)}
-										</TableCell>
-										<TableCell>
-											<div className="space-y-1">
-												<p className="font-bold text-white/80">
-													{formatOrderRoute(order)}
-												</p>
-												<p className="text-[10px] uppercase tracking-widest text-white/35">
-													{formatCurrency(order.totalAmount)}
+				<Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+					<div className="grid gap-3 p-3 md:hidden">
+						{dashboard.orders.length > 0 ? (
+							dashboard.orders.map((order) => (
+								<Link
+									key={order.id}
+									href={`/client/orders/${order.id}`}
+									className="rounded-sm border border-white/10 bg-white/[0.02] p-4 transition-colors hover:border-hextech-cyan/30 hover:bg-white/[0.04]"
+								>
+									<div className="flex items-start justify-between gap-3">
+										<div className="min-w-0">
+											<div className="flex items-center gap-2.5">
+												<Shield className="h-4 w-4 shrink-0 text-hextech-cyan/70" />
+												<p className="truncate font-black text-sm text-white uppercase tracking-wider">
+													{formatServiceType(order.serviceType)}
 												</p>
 											</div>
-										</TableCell>
-										<TableCell>
-											<Badge variant={order.statusVariant}>
-												{order.statusLabel}
-											</Badge>
-										</TableCell>
-										<TableCell className="text-white/50">
-											{formatOrderDate(order.createdAt)}
-										</TableCell>
-										<TableCell className="text-right">
-											<Link
-												href={`/client/orders/${order.id}`}
-												className="text-[10px] font-black uppercase tracking-widest text-hextech-cyan hover:text-white transition-colors"
-											>
-												Ver detalhes
-											</Link>
-										</TableCell>
-									</TableRow>
-								))
-							) : (
-								<TableRow>
-									<TableCell colSpan={6} className="h-40 text-center">
-										<div className="flex flex-col items-center justify-center space-y-3 opacity-40">
-											<Package className="w-10 h-10" />
-											<p className="text-[10px] font-black uppercase tracking-widest">
-												Nenhum pedido encontrado
-											</p>
-											<p className="max-w-sm text-[10px] text-white/50 leading-relaxed">
-												Seus pedidos reais aparecerão aqui assim que o histórico
-												estiver disponível.
+											<p className="mt-2 font-bold text-white/80">
+												{formatOrderRoute(order)}
 											</p>
 										</div>
-									</TableCell>
+										<Badge variant={order.statusVariant}>
+											{order.statusLabel}
+										</Badge>
+									</div>
+									<div className="mt-4 grid grid-cols-2 gap-3 border-white/5 border-t pt-3">
+										<div>
+											<p className="text-[10px] font-black text-white/35 uppercase tracking-widest">
+												Valor
+											</p>
+											<p className="mt-1 font-black text-white">
+												{formatCurrency(order.totalAmount)}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-black text-white/35 uppercase tracking-widest">
+												Data
+											</p>
+											<p className="mt-1 text-white/60">
+												{formatOrderDate(order.createdAt)}
+											</p>
+										</div>
+									</div>
+								</Link>
+							))
+						) : (
+							<DashboardEmptyState
+								icon={Package}
+								title="Nenhum pedido encontrado"
+								description="Crie seu primeiro pedido para acompanhar status, pagamento e progresso por aqui."
+								action={
+									<Link
+										href="/client/orders/new"
+										className={getButtonClassName({
+											size: 'sm',
+											className: 'gap-2',
+										})}
+									>
+										<PlusCircle className="h-3 w-3" />
+										Novo Pedido
+									</Link>
+								}
+							/>
+						)}
+					</div>
+
+					<div
+						data-testid="client-orders-table-scroll-area"
+						className="hidden flex-1 overflow-auto [&>div]:h-full md:block"
+					>
+						<Table
+							className={dashboard.orders.length === 0 ? 'h-full' : undefined}
+							wrapperClassName={
+								dashboard.orders.length === 0 ? 'overflow-hidden' : undefined
+							}
+						>
+							<TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur">
+								<TableRow>
+									<TableHead className="text-[10px] uppercase font-black tracking-widest">
+										ID
+									</TableHead>
+									<TableHead className="text-[10px] uppercase font-black tracking-widest">
+										Serviço
+									</TableHead>
+									<TableHead className="text-[10px] uppercase font-black tracking-widest">
+										Detalhes
+									</TableHead>
+									<TableHead className="text-[10px] uppercase font-black tracking-widest">
+										Status
+									</TableHead>
+									<TableHead className="text-[10px] uppercase font-black tracking-widest">
+										Data
+									</TableHead>
+									<TableHead className="text-[10px] uppercase font-black tracking-widest text-right">
+										Ações
+									</TableHead>
 								</TableRow>
-							)}
-						</TableBody>
-					</Table>
+							</TableHeader>
+							<TableBody
+								className={dashboard.orders.length === 0 ? 'h-full' : undefined}
+							>
+								{dashboard.orders.length > 0 ? (
+									dashboard.orders.map((order) => (
+										<TableRow key={order.id}>
+											<TableCell className="font-mono text-[10px] text-white/60">
+												{order.id}
+											</TableCell>
+											<TableCell>
+												<div className="flex items-center gap-2.5">
+													<Shield className="w-4 h-4 text-hextech-cyan/70 shrink-0" />
+													<span className="font-black uppercase tracking-wider text-white leading-none">
+														{formatServiceType(order.serviceType)}
+													</span>
+												</div>
+											</TableCell>
+											<TableCell>
+												<div className="space-y-1">
+													<p className="font-bold text-white/80">
+														{formatOrderRoute(order)}
+													</p>
+													<p className="text-[10px] uppercase tracking-widest text-white/35">
+														{formatCurrency(order.totalAmount)}
+													</p>
+												</div>
+											</TableCell>
+											<TableCell>
+												<Badge variant={order.statusVariant}>
+													{order.statusLabel}
+												</Badge>
+											</TableCell>
+											<TableCell className="text-white/50">
+												{formatOrderDate(order.createdAt)}
+											</TableCell>
+											<TableCell className="text-right">
+												<Link
+													href={`/client/orders/${order.id}`}
+													className={getButtonClassName({
+														variant: 'outline',
+														size: 'sm',
+														className:
+															'gap-2 font-black uppercase tracking-widest',
+													})}
+												>
+													Detalhes
+													<ArrowRight className="w-3 h-3" />
+												</Link>
+											</TableCell>
+										</TableRow>
+									))
+								) : (
+									<TableRow className="h-full hover:bg-transparent">
+										<TableCell colSpan={6} className="h-full p-0 text-center">
+											<DashboardEmptyState
+												icon={Package}
+												title="Nenhum pedido encontrado"
+												description="Crie seu primeiro pedido para acompanhar status, pagamento e progresso por aqui."
+												action={
+													<Link
+														href="/client/orders/new"
+														className={getButtonClassName({
+															size: 'sm',
+															className: 'gap-2',
+														})}
+													>
+														<PlusCircle className="h-3 w-3" />
+														Novo Pedido
+													</Link>
+												}
+											/>
+										</TableCell>
+									</TableRow>
+								)}
+							</TableBody>
+						</Table>
+					</div>
 				</Card>
 			</section>
 		</DashboardEntrance>

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { DashboardNavItem } from '@/shared/dashboard/dashboard-nav-item';
 
 const sidebarItems = [
-	{ href: '/client', icon: LayoutDashboard, label: 'Painel' },
+	{ href: '/client', icon: LayoutDashboard, label: 'Visão geral' },
 	{ href: '/client/orders/new', icon: PlusCircle, label: 'Novo Pedido' },
 ] as const;
 
@@ -18,7 +18,10 @@ export const DashboardNavigation = () => {
 	const pathname = usePathname();
 
 	return (
-		<nav className="flex-1 space-y-1 px-4" aria-label="Portal do Cliente">
+		<nav
+			className="grid flex-1 grid-cols-2 gap-2 px-4 lg:block lg:space-y-1"
+			aria-label="Portal do Cliente"
+		>
 			{sidebarItems.map((item) => (
 				<DashboardNavItem
 					key={item.href}
