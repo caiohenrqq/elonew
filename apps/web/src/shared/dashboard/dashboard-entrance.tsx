@@ -5,5 +5,9 @@ type DashboardEntranceProps = {
 };
 
 export const DashboardEntrance = ({ children }: DashboardEntranceProps) => {
-	return <div className="dashboard-entrance space-y-10">{children}</div>;
+	return (
+		<div className="dashboard-entrance flex min-h-0 flex-1 flex-col space-y-10">
+			{children}
+		</div>
+	);
 };

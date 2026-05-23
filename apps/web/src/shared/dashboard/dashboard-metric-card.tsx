@@ -24,7 +24,7 @@ export const DashboardMetricCard = ({
 	return (
 		<Card
 			className={cn(
-				'group relative overflow-hidden transition-colors duration-200',
+				'group relative overflow-hidden transition-colors duration-200 h-full',
 				'hover:border-hextech-cyan/40',
 			)}
 		>

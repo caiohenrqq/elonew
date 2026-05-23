@@ -2,6 +2,7 @@ import { GlitchLogo } from '@packages/ui/brand/glitch-logo';
 import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 import type { ElementType, ReactNode } from 'react';
+import { DashboardSubmitButton } from './dashboard-submit-button';
 
 type DashboardShellProps = {
 	children: ReactNode;
@@ -26,15 +27,15 @@ export const DashboardShell = ({
 	roleLabel,
 	user,
 }: DashboardShellProps) => (
-	<div className="flex min-h-screen flex-col bg-background text-white lg:flex-row">
+	<div className="flex min-h-screen flex-col bg-background text-white lg:h-screen lg:flex-row lg:overflow-hidden">
 		<aside className="z-50 flex w-full flex-col border-white/5 border-b bg-background lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:w-[240px] lg:border-r lg:border-b-0">
-			<div className="flex justify-center p-6 pb-6 lg:p-8 lg:pb-10">
+			<div className="flex justify-center p-4 pb-4 lg:p-8 lg:pb-10">
 				<Link
 					href="/"
 					aria-label="Voltar para a página inicial"
 					className="inline-flex justify-center"
 				>
-					<GlitchLogo />
+					<GlitchLogo className="h-16 lg:h-28" />
 				</Link>
 			</div>
 
@@ -56,27 +57,31 @@ export const DashboardShell = ({
 						</div>
 					</div>
 					<form action={logoutAction}>
-						<button
-							type="submit"
-							className="flex w-full cursor-pointer items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 transition-colors hover:text-red-400"
+						<DashboardSubmitButton
+							variant="ghost"
+							size="sm"
+							pendingLabel="Saindo"
+							className="h-auto w-full justify-start px-0 text-white/40 hover:bg-transparent hover:text-red-400"
 						>
 							<LogOut className="h-3 w-3" />
 							Sair
-						</button>
+						</DashboardSubmitButton>
 					</form>
 				</div>
 			</div>
 		</aside>
 
-		<main className="relative min-w-0 flex-1 lg:ml-[240px]">
-			<header className="sticky top-0 z-40 flex min-h-20 flex-wrap items-center justify-between gap-4 border-white/5 border-b bg-background/80 px-4 py-4 sm:px-6 lg:px-10">
+		<main className="relative flex min-w-0 flex-1 flex-col lg:ml-[240px]">
+			<header className="sticky top-0 z-40 flex min-h-20 flex-wrap items-center justify-between gap-4 border-white/5 border-b bg-background/80 px-4 py-4 sm:px-6 lg:px-8">
 				<h1 className="min-w-0 text-[10px] font-black uppercase tracking-[0.3em] text-white/60">
 					EloNew / <span className="text-white">{portalLabel}</span>
 				</h1>
 				{headerAside}
 			</header>
 
-			<div className="p-4 sm:p-6 lg:p-10">{children}</div>
+			<div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 sm:p-6 lg:p-8">
+				{children}
+			</div>
 		</main>
 	</div>
 );

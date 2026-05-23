@@ -7,8 +7,8 @@ export const DashboardSectionHeader = ({
 	detail,
 	title,
 }: DashboardSectionHeaderProps) => (
-	<div className="flex items-end justify-between gap-4">
-		<h2 className="text-xs font-black uppercase tracking-[0.24em] text-white">
+	<div className="flex flex-none items-end justify-between gap-4">
+		<h2 className="text-xs font-black uppercase tracking-[0.3em] text-white">
 			{title}
 		</h2>
 		{detail ? (
