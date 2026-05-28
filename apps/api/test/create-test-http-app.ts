@@ -30,7 +30,7 @@ class InjectRequestBuilder {
 
 	constructor(
 		private readonly app: ApiHttpApp,
-		private readonly method: 'GET' | 'POST',
+		private readonly method: 'GET' | 'PATCH' | 'POST',
 		private readonly url: string,
 	) {}
 
@@ -104,6 +104,9 @@ export function requestHttp(app: ApiHttpApp) {
 		},
 		post(url: string) {
 			return new InjectRequestBuilder(app, 'POST', url);
+		},
+		patch(url: string) {
+			return new InjectRequestBuilder(app, 'PATCH', url);
 		},
 	};
 }
