@@ -5,6 +5,7 @@ import { NotificationsModule } from '@modules/notifications/notifications.module
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { SystemModule } from '@modules/system/system.module';
+import { TicketsModule } from '@modules/tickets/tickets.module';
 import { UsersModule } from '@modules/users/users.module';
 import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
@@ -24,6 +25,7 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 		OrdersModule,
 		PaymentsModule,
 		SystemModule,
+		TicketsModule,
 		UsersModule,
 		WalletModule,
 	],
