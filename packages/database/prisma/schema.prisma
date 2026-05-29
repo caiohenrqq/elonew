@@ -61,6 +61,13 @@ enum NotificationType {
   CHAT_MESSAGE_CREATED
 }
 
+enum TicketStatus {
+  OPEN
+  WAITING_USER
+  WAITING_SUPPORT
+  CLOSED
+}
+
 model User {
   id               String    @id @default(cuid())
   username         String    @unique
@@ -138,6 +145,7 @@ model Order {
   extras           OrderExtra[]
   payments         Payment[]
   chat             Chat?
+  tickets          Ticket[]
   rating           Rating?
   walletTransactions WalletTransaction[]
   boosterRejections OrderBoosterRejection[]
@@ -390,12 +398,17 @@ model Ticket {
   id        String          @id @default(cuid())
   userId    String
   user      User            @relation(fields: [userId], references: [id])
+  orderId   String?
+  order     Order?          @relation(fields: [orderId], references: [id])
   subject   String
-  status    String          @default("OPEN")
+  status    TicketStatus    @default(WAITING_SUPPORT)
   messages  TicketMessage[]
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
+  @@index([userId, updatedAt])
+  @@index([orderId])
+  @@index([status, updatedAt])
   @@map("tickets")
 }
 

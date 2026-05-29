@@ -48,6 +48,9 @@ class InMemoryAuthSessionRepository implements AuthSessionRepositoryPort {
 	save = jest.fn();
 }
 
+const futureRefreshExpiry = () =>
+	new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
 describe('RefreshSessionUseCase', () => {
 	it('rotates a valid refresh token and rejects the previous token afterwards', async () => {
 		const users = new InMemoryUserRepository();
@@ -72,7 +75,7 @@ describe('RefreshSessionUseCase', () => {
 				id: 'session-1',
 				userId: 'user-1',
 				refreshTokenHash: 'current-hash',
-				expiresAt: new Date('2026-05-24T00:00:00.000Z'),
+				expiresAt: futureRefreshExpiry(),
 				revokedAt: null,
 				lastUsedAt: null,
 				createdAt: new Date('2026-03-17T00:00:00.000Z'),
@@ -136,7 +139,7 @@ describe('RefreshSessionUseCase', () => {
 			id: 'session-1',
 			userId: 'user-1',
 			refreshTokenHash: 'current-hash',
-			expiresAt: new Date('2026-05-24T00:00:00.000Z'),
+			expiresAt: futureRefreshExpiry(),
 			revokedAt: new Date('2026-03-18T00:00:00.000Z'),
 			lastUsedAt: null,
 			createdAt: new Date('2026-03-17T00:00:00.000Z'),
@@ -187,7 +190,7 @@ describe('RefreshSessionUseCase', () => {
 			id: 'session-1',
 			userId: 'user-1',
 			refreshTokenHash: 'current-hash',
-			expiresAt: new Date('2026-05-24T00:00:00.000Z'),
+			expiresAt: futureRefreshExpiry(),
 			revokedAt: null,
 			lastUsedAt: null,
 			createdAt: new Date('2026-03-17T00:00:00.000Z'),

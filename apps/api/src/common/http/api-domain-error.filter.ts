@@ -76,6 +76,14 @@ import {
 	PaymentWebhookTopicNotSupportedError,
 } from '@modules/payments/domain/payment.errors';
 import {
+	TicketAccessDeniedError,
+	TicketInvalidStatusTransitionError,
+	TicketMessageOperationInvalidError,
+	TicketNotFoundError,
+	TicketOrderAccessDeniedError,
+	TicketOrderLinkUnsupportedError,
+} from '@modules/tickets/domain/ticket.errors';
+import {
 	UserEmailAlreadyInUseError,
 	UserEmailConfirmationTokenInvalidError,
 	UsernameAlreadyInUseError,
@@ -135,6 +143,7 @@ export function mapApiDomainErrorToHttpException(
 		mapAsForbidden(AuthUserInactiveError, AuthUserBlockedError),
 		mapAsForbidden(InsufficientPermissionsError),
 		mapAsForbidden(ChatForbiddenError),
+		mapAsForbidden(TicketAccessDeniedError),
 		mapAsNotFound(
 			ChatOrderNotFoundError,
 			ChatMessageNotFoundError,
@@ -148,6 +157,7 @@ export function mapApiDomainErrorToHttpException(
 			PaymentOrderNotFoundError,
 			WalletNotFoundError,
 			NotificationNotFoundError,
+			TicketNotFoundError,
 		),
 		mapAsBadRequest(
 			OrderAlreadyExistsError,
@@ -174,6 +184,10 @@ export function mapApiDomainErrorToHttpException(
 			WalletInsufficientWithdrawableBalanceError,
 			UserEmailConfirmationTokenInvalidError,
 			AdminGovernanceReasonRequiredError,
+			TicketInvalidStatusTransitionError,
+			TicketMessageOperationInvalidError,
+			TicketOrderAccessDeniedError,
+			TicketOrderLinkUnsupportedError,
 		),
 		mapAsConflict(OrderPricingVersionActiveConflictError, ChatNotWritableError),
 		mapAsConflict(NotificationReadConflictError),
