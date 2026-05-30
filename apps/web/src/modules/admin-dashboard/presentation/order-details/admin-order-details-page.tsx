@@ -4,13 +4,19 @@ import { notFound } from 'next/navigation';
 import type { ChatMessage } from '@/shared/chat/chat.types';
 import { ChatPanel } from '@/shared/chat/chat-panel';
 import { DefinitionItem } from '@/shared/dashboard/definition-item';
-import { Badge } from '@/shared/ui/components/badge';
+import { formatCurrency } from '@/shared/format/currency';
+import { formatDateTime } from '@/shared/format/date';
+import {
+	formatGovernanceAction,
+	formatServiceType,
+} from '@/shared/format/orders';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
 } from '@/shared/ui/components/card';
+import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import {
 	forceCancelAdminOrderAction,
 	getAdminOrderChatMessages,
@@ -28,63 +34,6 @@ type AdminOrderDetailsViewProps = {
 	currentUserId: string;
 	messages: ChatMessage[];
 	order: AdminOrderOutput;
-};
-
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-	style: 'currency',
-	currency: 'BRL',
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
-	dateStyle: 'short',
-	timeStyle: 'short',
-});
-
-const formatCurrency = (value: number | null) => {
-	if (value === null) return 'Não informado';
-
-	return currencyFormatter.format(value);
-};
-
-const formatDate = (value: string | null) =>
-	value ? dateTimeFormatter.format(new Date(value)) : 'Não informado';
-
-const formatTitleCase = (value: string) =>
-	value
-		.split(/[_\s-]+/)
-		.filter(Boolean)
-		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-		.join(' ');
-
-const formatServiceType = (serviceType: string | null) => {
-	if (!serviceType) return 'Serviço indisponível';
-
-	return formatTitleCase(serviceType);
-};
-
-const formatOrderStatus = (status: string) => {
-	const labels: Record<string, string> = {
-		accepted: 'Aceito',
-		awaiting_payment: 'Aguardando pagamento',
-		cancelled: 'Cancelado',
-		completed: 'Finalizado',
-		in_progress: 'Em execução',
-		paid: 'Pago',
-		pending_booster: 'Aguardando booster',
-		rejected: 'Recusado',
-	};
-
-	return labels[status] ?? formatTitleCase(status);
-};
-
-const formatGovernanceAction = (type: string) => {
-	const labels: Record<string, string> = {
-		block_user: 'Bloqueio de usuário',
-		force_cancel_order: 'Cancelamento forçado',
-		unblock_user: 'Desbloqueio de usuário',
-	};
-
-	return labels[type] ?? formatTitleCase(type);
 };
 
 export const AdminOrderDetailsView = ({
@@ -108,7 +57,7 @@ export const AdminOrderDetailsView = ({
 						<h1 className="truncate text-2xl font-black uppercase tracking-tight text-white">
 							{formatServiceType(order.serviceType)}
 						</h1>
-						<Badge variant="warning">{formatOrderStatus(order.status)}</Badge>
+						<OrderStatusBadge status={order.status} />
 					</div>
 					<p className="break-all font-mono text-[10px] text-white/35">
 						{order.id}
@@ -122,7 +71,7 @@ export const AdminOrderDetailsView = ({
 					/>
 					<DefinitionItem
 						label="Criado em"
-						value={formatDate(order.createdAt)}
+						value={formatDateTime(order.createdAt)}
 					/>
 					<DefinitionItem
 						label="Mensagens"
@@ -142,10 +91,12 @@ export const AdminOrderDetailsView = ({
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-						<DefinitionItem
-							label="Status"
-							value={formatOrderStatus(order.status)}
-						/>
+						<div className="space-y-1">
+							<p className="text-[10px] text-white/40 uppercase tracking-widest">
+								Status
+							</p>
+							<OrderStatusBadge status={order.status} />
+						</div>
 						<DefinitionItem
 							label="Total"
 							value={formatCurrency(order.totalAmount)}
@@ -157,7 +108,7 @@ export const AdminOrderDetailsView = ({
 						/>
 						<DefinitionItem
 							label="Criado em"
-							value={formatDate(order.createdAt)}
+							value={formatDateTime(order.createdAt)}
 						/>
 					</CardContent>
 				</Card>
