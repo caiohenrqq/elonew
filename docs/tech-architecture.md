@@ -74,6 +74,8 @@ Use package imports to keep shared workspace boundaries stable as packages evolv
 Boundary rule:
 - Apps must consume shared workspace libraries as packages (dependency + package exports), not through direct `packages/*/src/*` imports.
 - Avoid TS path aliases from apps to another package `src` folder because this leaks package internals into app build output.
+- TypeScript and test runners may keep source-folder mappings only as local compilation shims when package exports point to `dist` output that may not exist before tests run.
+- `@packages/ui` is currently source-consumed by Next.js and Tailwind CSS. Moving it to `dist` exports requires a separate UI package build pipeline.
 
 ### API dev-watch stability note
 - In Docker/polling watch mode, keep `apps/api/nest-cli.json` with `compilerOptions.deleteOutDir: false`.
@@ -135,7 +137,7 @@ External provider adapters and integration logic.
 - Realtime protocol: Socket.IO for authenticated chat and notification delivery,
   documented in `docs/chat-websocket.md` and
   `docs/notifications-websocket.md`.
-- API contracts: OpenAPI/Swagger.
+- API contracts: OpenAPI/Swagger is the intended documentation strategy. The current codebase does not install or bootstrap Swagger yet, so API docs generation remains a tracked follow-up before public integration work depends on it.
 - Authentication: JWT access token + refresh token rotation.
 
 Initial backend modules:

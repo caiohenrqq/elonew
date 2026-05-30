@@ -13,8 +13,8 @@ This stack is optimized for a web-first MVP that includes payments, order lifecy
 - Database: `PostgreSQL`
 - ORM and migrations: `Prisma`
 - Queue and background jobs: `BullMQ` on `Redis`
-- API documentation: `OpenAPI` via Swagger
-- Validation: `Zod`
+- API documentation: planned `OpenAPI` via Swagger; Swagger packages are not currently installed.
+- Validation: `Zod` v4
 - Frontend forms: `React Hook Form`
 - Frontend server state: `TanStack Query`
 - Logging: `Pino` (`nestjs-pino` in API)

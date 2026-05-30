@@ -10,9 +10,12 @@ All packages are located in the `packages/` directory and should follow this nam
 
 ### Mandatory Files
 Every package must contain:
-1. `package.json`: Defines the package name, version, and dependencies.
-2. `tsconfig.json`: (If TypeScript) Configures the TypeScript compiler for the package.
-3. `src/index.ts`: The main entry point that exports the package's public API.
+1. `package.json`: Defines the package name, version, dependencies, and public `exports`.
+2. `tsconfig.json`: If TypeScript, configures the TypeScript compiler for the package.
+
+Packages should expose public entrypoints through `package.json` subpath exports.
+Do not require a broad `src/index.ts` barrel when narrower subpath exports make the
+package boundary clearer.
 
 ## How to Add a New Package
 
@@ -28,8 +31,12 @@ Create `packages/new-package/package.json`:
   "name": "@packages/new-package",
   "version": "0.0.0",
   "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "exports": {
+    "./feature": {
+      "types": "./dist/feature.d.ts",
+      "default": "./dist/feature.js"
+    }
+  },
   "dependencies": {
     "zod": "^3.23.8" 
   }
@@ -62,13 +69,10 @@ COPY packages/new-package/package.json packages/new-package/package.json
 ```
 **Failure to do this will result in the package not being linked correctly inside the Docker container.**
 
-### 6. Add TypeScript Paths
-Update the root `tsconfig.json` (or `tsconfig.base.json`) and the `tsconfig.json` of any app that will use the package to include the new path alias:
-```json
-"paths": {
-  "@packages/new-package/*": ["packages/new-package/src/*"]
-}
-```
+### 6. Add Public Exports
+Add only the package subpaths that consumers are allowed to import. Apps should
+prefer `@packages/<name>/<exported-subpath>` imports that resolve through package
+exports.
 
 ### 7. Install Dependencies
 Run from the root:
@@ -82,7 +86,9 @@ pnpm install
 - **No Circular Dependencies:** Package A cannot depend on Package B if Package B depends on Package A.
 - **Internal Aliases:** Always use `@packages/<name>` when importing from other workspace members.
 - **Framework Agnostic:** Packages like `@shared`, `@config`, and `@auth` should avoid depending on framework-specific libraries (like NestJS or Next.js) to remain portable.
-- **Version Pinning:** Use consistent versions for shared dependencies (e.g., `zod`, `typescript`) across all packages.
+- **Version Pinning:** Use consistent versions for shared dependencies. Zod is standardized on v4 across API, web, shared packages, and config.
+- **Local Compilation Exceptions:** TypeScript, Jest, and ts-jest may map workspace package subpaths to package `src` folders when a package is intentionally compiled from source before `dist` exists. These mappings are local compilation shims and must not be used as justification for app runtime imports from package internals.
+- **UI Source Consumption:** `@packages/ui` currently exports source files for Next.js consumption and Tailwind CSS source scanning. Converting it to built `dist` exports is a separate package-build-system task.
 
 ## What to Avoid
 - **"God" Packages:** Avoid creating a `utils` package that contains everything. Prefer specific packages like `math-utils`, `date-utils`, or keep them within the domain they belong to.

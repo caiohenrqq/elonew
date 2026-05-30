@@ -29,3 +29,5 @@ Start with these indexes and review them with real production query plans:
 - Keep migrations small and reversible.
 - Treat schema changes in payment/wallet tables as high-risk and release behind rollout checks.
 - Monitor slow queries early; optimize based on observed workload, not assumptions.
+- Keep migration history notes in `docs/migration-history.md` when a generated migration name is misleading and the migration may already have been applied elsewhere.
+- Chat and support retention expectations are documented in `docs/privacy-retention.md`.
