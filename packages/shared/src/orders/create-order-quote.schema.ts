@@ -44,7 +44,7 @@ export const createOrderQuoteSchema = z
 		if (!isMasterLeague(input.currentLeague) && input.currentLp > 99) {
 			context.addIssue({
 				code: z.ZodIssueCode.too_big,
-				type: 'number',
+				origin: 'number',
 				maximum: 99,
 				inclusive: true,
 				path: ['currentLp'],
