@@ -18,5 +18,8 @@
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.7"
 	}
 }

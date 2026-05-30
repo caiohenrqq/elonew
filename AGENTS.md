@@ -612,11 +612,11 @@ Use official docs first when documentation is required.
 - [x] Implement `User` domain logic and Prisma repository.
 - [x] Create `SignUp` use-case with email confirmation placeholder.
 - [x] Create `Login` use-case with JWT and Refresh Token rotation.
-- [ ] Implement `@Roles()` decorator and `AuthGuard` for RBAC.
+- [x] Implement `@Roles()` decorator and `AuthGuard` for RBAC.
 
 ### 2. Service Catalog & Pricing
 - [x] Implement Elo/Rank pricing engine (calculate subtotal based on rank difference).
-- [ ] Implement deterministic pricing modifiers for all 10+ extras (FR-035 to FR-044).
+- [x] Implement deterministic pricing modifiers for all 10+ extras (FR-035 to FR-044).
 - [x] Create Zod schemas for order creation validation in `@packages/shared`.
 
 ### 3. Core Order Flow
@@ -636,8 +636,8 @@ Use official docs first when documentation is required.
 - [x] Build background worker (BullMQ) for "Lock Period" timer to release funds.
 
 ### 6. Communication & Support
-- [ ] Implement WebSocket gateway for real-time internal Chat.
-- [ ] Create `Ticket` domain and use-cases for support history.
+- [x] Implement WebSocket gateway for real-time internal Chat.
+- [x] Create `Ticket` domain and use-cases for support history.
 - [ ] Add `Rating` system (Client rates Booster and vice-versa).
 
 ### 7. Admin Governance
@@ -651,7 +651,7 @@ Use official docs first when documentation is required.
 - [x] Implement Admin Dashboard (Metric overview, user management, support view).
 
 ### 9. API request validation hardening
-- [ ] Finish Zod + `ZodValidationPipe` coverage for Orders, Payments, and Wallet controller inputs still using compile-time-only request types.
-- [ ] Evaluate parameter-level Zod validation for route params used as IDs (`orderId`, `paymentId`, `boosterId`) after body validation coverage is complete.
-- [ ] Keep new request schemas in shared/domain packages only when reused; otherwise keep them module-local.
-- [ ] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
+- [x] Finish Zod + `ZodValidationPipe` coverage for Orders, Payments, and Wallet controller inputs still using compile-time-only request types.
+- [x] Evaluate parameter-level Zod validation for route params used as IDs (`orderId`, `paymentId`, `boosterId`) after body validation coverage is complete.
+- [x] Keep new request schemas in shared/domain packages only when reused; otherwise keep them module-local.
+- [x] Add or expand controller/integration coverage for accepted payloads and invalid-request `BadRequestException` mapping wherever boundary validation is introduced.
