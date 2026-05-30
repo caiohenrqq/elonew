@@ -645,7 +645,7 @@ Use official docs first when documentation is required.
 - [x] Create endpoints for Admin intervention (Force cancel, user block/unblock).
 
 ### 8. Frontend implementation (Next.js)
-- [x] Build shared component library in `@packages/ui`.
+- [x] Build shared web UI primitives in `apps/web/src/shared/ui`.
 - [x] Implement Client Dashboard (Order creation, active order tracking).
 - [x] Implement Booster Dashboard (Available orders queue, wallet management).
 - [x] Implement Admin Dashboard (Metric overview, user management, support view).

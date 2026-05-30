@@ -100,9 +100,9 @@ This overview is based on the current roadmap in `AGENTS.md`, the source-of-trut
 
 ### Package boundaries still point test/build tooling at package `src`
 
-**Status:** Partially addressed in issue `#70` by documenting local TypeScript/Jest source mappings as compatibility shims. A full `@packages/ui` `dist` export conversion is tracked by issue `#73`.
+**Status:** Partially addressed in issue `#70` by documenting local TypeScript/Jest source mappings as compatibility shims. The former `@packages/ui` boundary was removed by folding web-only UI into `apps/web/src/shared/ui`, so the remaining concern is limited to real shared packages.
 
-**What:** The architecture says apps should consume shared packages through package dependencies and exports, but several Jest and TypeScript mappings point directly at `packages/*/src/*`. The UI package also exports TypeScript source files instead of built output.
+**What:** The architecture says apps should consume shared packages through package dependencies and exports, but several Jest and TypeScript mappings point directly at `packages/*/src/*`.
 
 **Why it matters:** Direct source mapping weakens package boundaries. It can hide missing exports, make app builds depend on package internals, and create differences between test-time and runtime behavior.
 
@@ -110,12 +110,10 @@ This overview is based on the current roadmap in `AGENTS.md`, the source-of-trut
 - `docs/tech-architecture.md` says apps must consume shared libraries as packages, not through direct package `src` imports.
 - `apps/api/package.json`, API Jest configs, and `apps/web/package.json` map package aliases to `../../packages/*/src`.
 - `apps/web/tsconfig.json` maps `@packages/auth/*` and `@packages/shared/*` to package source folders.
-- `packages/ui/package.json` exports `./src/*.ts(x)` files directly.
 
 **Ideas to resolve:**
 - Ensure every consumed shared entrypoint is declared in the owning package `exports`.
 - Move tests toward package exports or a controlled test-only alias strategy.
-- Give `@packages/ui` a build output and export `dist` files consistently, or document why UI is intentionally source-consumed by Next.
 - Add a boundary check to CI that rejects app imports from package internals.
 
 ### Zod major versions are split across packages

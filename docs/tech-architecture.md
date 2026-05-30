@@ -54,7 +54,6 @@ Practical implications:
 │  ├─ database/
 │  ├─ config/
 │  ├─ auth/
-│  ├─ ui/
 │  ├─ testing/
 │  └─ integrations/
 ├─ pnpm-lock.yaml
@@ -67,7 +66,6 @@ Use package imports to keep shared workspace boundaries stable as packages evolv
 - `@packages/shared/...`
 - `@packages/database/...`
 - `@packages/auth/...`
-- `@packages/ui/...`
 - `@packages/testing/...`
 - `@packages/integrations/...`
 
@@ -75,7 +73,6 @@ Boundary rule:
 - Apps must consume shared workspace libraries as packages (dependency + package exports), not through direct `packages/*/src/*` imports.
 - Avoid TS path aliases from apps to another package `src` folder because this leaks package internals into app build output.
 - TypeScript and test runners may keep source-folder mappings only as local compilation shims when package exports point to `dist` output that may not exist before tests run.
-- `@packages/ui` is currently source-consumed by Next.js and Tailwind CSS. Moving it to `dist` exports requires a separate UI package build pipeline.
 
 ### API dev-watch stability note
 - In Docker/polling watch mode, keep `apps/api/nest-cli.json` with `compilerOptions.deleteOutDir: false`.
@@ -110,13 +107,6 @@ Authorization and policy rules reused by API and web.
 - Role and permission definitions.
 - Policy helpers (`can/cannot` checks).
 - Resource-level access rules (orders, tickets, admin actions).
-
-### `@ui` (`packages/ui`)
-Reusable UI components and design primitives for the web app.
-- Base components (`Button`, `Input`, `Modal`, `Table`).
-- Product-agnostic composed primitives only when they are reusable across product areas.
-- Tailwind CSS v4 theme tokens and shared styling primitives.
-- Shared design decisions must live in the UI package design-system CSS or exported style helpers before feature files use them.
 
 ### `@testing` (`packages/testing`)
 Shared testing assets.
@@ -264,6 +254,11 @@ Boundary model ownership:
 - SSR where auth/security and first-load UX benefit from server rendering.
 - Forms with React Hook Form + Zod resolver.
 - Server state with TanStack Query.
+- App-local UI primitives live in `apps/web/src/shared/ui`.
+  - Base components (`Button`, `Input`, `Table`, etc.).
+  - Web-only animation/navigation primitives.
+  - Tailwind CSS v4 theme tokens and shared style helpers.
+  - Shared visual decisions should be centralized here before feature files copy class patterns.
 
 ## Data and asynchronous processing
 - Data access and migrations: Prisma.
@@ -305,7 +300,6 @@ Testing conventions:
 
 ## Boundaries
 - `@shared` must stay framework-agnostic and import-safe for both `api` and `web`.
-- `@ui` is frontend-only and must not be imported by `api`.
 - `apps/workers` is an executable runtime and should not be modeled as a reusable package.
 - Reusable worker helpers can live in packages when needed, but processors/schedulers run from `apps/workers`.
 - Permission checks must be enforced in `api` even if `web` also hides actions by role.

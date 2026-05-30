@@ -88,7 +88,7 @@ pnpm install
 - **Framework Agnostic:** Packages like `@shared`, `@config`, and `@auth` should avoid depending on framework-specific libraries (like NestJS or Next.js) to remain portable.
 - **Version Pinning:** Use consistent versions for shared dependencies. Zod is standardized on v4 across API, web, shared packages, and config.
 - **Local Compilation Exceptions:** TypeScript, Jest, and ts-jest may map workspace package subpaths to package `src` folders when a package is intentionally compiled from source before `dist` exists. These mappings are local compilation shims and must not be used as justification for app runtime imports from package internals.
-- **UI Source Consumption:** `@packages/ui` currently exports source files for Next.js consumption and Tailwind CSS source scanning. Converting it to built `dist` exports is a separate package-build-system task.
+- **Frontend UI:** UI components, animation helpers, navigation primitives, and CSS-first design tokens live inside `apps/web/src/shared/ui` because the web app is their only runtime consumer. Promote UI code back into a package only when there is a second real consumer or a deliberate design-system release lifecycle.
 
 ## What to Avoid
 - **"God" Packages:** Avoid creating a `utils` package that contains everything. Prefer specific packages like `math-utils`, `date-utils`, or keep them within the domain they belong to.
