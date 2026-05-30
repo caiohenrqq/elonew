@@ -1,4 +1,3 @@
-import type { BadgeProps } from '@/shared/ui/components/badge';
 import type {
 	BoosterOrderOutput,
 	BoosterQueueOutput,
@@ -6,93 +5,16 @@ import type {
 	BoosterWorkOutput,
 } from '../server/booster-contracts';
 
-export type BoosterOrderStatusVariant = NonNullable<BadgeProps['variant']>;
+export type BoosterOrder = BoosterOrderOutput;
 
-export type BoosterOrder = BoosterOrderOutput & {
-	statusLabel: string;
-	statusVariant: BoosterOrderStatusVariant;
-};
+export type BoosterQueue = BoosterQueueOutput;
 
-export type BoosterQueue = Omit<BoosterQueueOutput, 'availableOrders'> & {
-	availableOrders: BoosterOrder[];
-};
+export type BoosterWork = BoosterWorkOutput;
 
-export type BoosterWork = Omit<
-	BoosterWorkOutput,
-	'activeOrders' | 'recentCompletedOrders'
-> & {
-	activeOrders: BoosterOrder[];
-	recentCompletedOrders: BoosterOrder[];
-};
+export const toBoosterQueue = (queue: BoosterQueueOutput): BoosterQueue =>
+	queue;
 
-const orderStatusLabels: Record<string, string> = {
-	pending_booster: 'Aguardando Booster',
-	in_progress: 'Em execução',
-	completed: 'Finalizado',
-	cancelled: 'Cancelado',
-};
-
-const orderStatusVariants: Record<string, BoosterOrderStatusVariant> = {
-	pending_booster: 'warning',
-	in_progress: 'warning',
-	completed: 'success',
-	cancelled: 'error',
-};
-
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-	style: 'currency',
-	currency: 'BRL',
-});
-
-const dateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' });
-
-const mapBoosterOrder = (order: BoosterOrderOutput): BoosterOrder => ({
-	...order,
-	statusLabel: orderStatusLabels[order.status] ?? 'Status indisponível',
-	statusVariant: orderStatusVariants[order.status] ?? 'default',
-});
-
-export const toBoosterQueue = (queue: BoosterQueueOutput): BoosterQueue => ({
-	...queue,
-	availableOrders: queue.availableOrders.map(mapBoosterOrder),
-});
-
-export const toBoosterWork = (work: BoosterWorkOutput): BoosterWork => ({
-	...work,
-	activeOrders: work.activeOrders.map(mapBoosterOrder),
-	recentCompletedOrders: work.recentCompletedOrders.map(mapBoosterOrder),
-});
-
-export const formatCurrency = (value: number | null) => {
-	if (value === null) return 'Não informado';
-
-	return currencyFormatter.format(value);
-};
-
-export const formatTitleCase = (value: string) =>
-	value
-		.split(/[_\s-]+/)
-		.filter(Boolean)
-		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-		.join(' ');
-
-export const formatOrderRoute = (order: BoosterOrder) => {
-	if (
-		!order.currentLeague ||
-		!order.currentDivision ||
-		!order.desiredLeague ||
-		!order.desiredDivision
-	)
-		return 'Rota indisponível';
-
-	return `${formatTitleCase(order.currentLeague)} ${order.currentDivision} -> ${formatTitleCase(order.desiredLeague)} ${order.desiredDivision}`;
-};
-
-export const formatDate = (value: string | null) => {
-	if (!value) return 'Não informado';
-
-	return dateFormatter.format(new Date(value));
-};
+export const toBoosterWork = (work: BoosterWorkOutput): BoosterWork => work;
 
 export const formatTransactionReason = (
 	reason: BoosterWalletTransactionOutput['reason'],

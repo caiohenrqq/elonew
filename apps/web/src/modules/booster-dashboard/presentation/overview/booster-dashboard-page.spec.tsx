@@ -113,7 +113,7 @@ describe('BoosterDashboardPage', () => {
 			screen.queryByText('Meus pedidos em execução'),
 		).not.toBeInTheDocument();
 		expect(screen.getAllByText('Elo Boost')).toHaveLength(2);
-		expect(screen.getAllByText('Gold II -> Platinum IV')).toHaveLength(2);
+		expect(screen.getAllByText('Gold II → Platinum IV')).toHaveLength(2);
 		expect(screen.getAllByText(/R\$\s*84,00/).length).toBeGreaterThan(0);
 		expect(screen.getByText('Carteira')).toBeInTheDocument();
 		expect(screen.queryByText('Movimentações')).not.toBeInTheDocument();

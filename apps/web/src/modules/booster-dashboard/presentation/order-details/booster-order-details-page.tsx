@@ -1,16 +1,15 @@
 import { notFound } from 'next/navigation';
 import type { ChatMessage } from '@/shared/chat/chat.types';
+import { formatCurrency } from '@/shared/format/currency';
+import { formatDate } from '@/shared/format/date';
+import { formatOrderRoute } from '@/shared/format/orders';
+import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import {
 	getBoosterOrder,
 	getBoosterOrderChatMessages,
 	getBoosterUserId,
 } from '../../actions/booster-actions';
-import {
-	formatCurrency,
-	formatDate,
-	formatOrderRoute,
-	toBoosterWork,
-} from '../../model/booster-orders';
+import { toBoosterWork } from '../../model/booster-orders';
 import type { BoosterOrderOutput } from '../../server/booster-contracts';
 import { BoosterChatPanel } from '../overview/booster-chat-panel';
 
@@ -62,9 +61,9 @@ export const BoosterOrderDetailsPage = async ({
 						<p className="text-[9px] font-black uppercase tracking-widest text-white/35">
 							Status
 						</p>
-						<p className="mt-2 text-sm font-black uppercase tracking-widest text-white">
-							{order.statusLabel}
-						</p>
+						<div className="mt-2">
+							<OrderStatusBadge status={order.status} />
+						</div>
 					</div>
 					<div className="border border-white/5 bg-white/5 p-5">
 						<p className="text-[9px] font-black uppercase tracking-widest text-white/35">

@@ -2,6 +2,8 @@ import { BadgeDollarSign, BriefcaseBusiness, ListChecks } from 'lucide-react';
 import type { ChatMessage } from '@/shared/chat/chat.types';
 import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
 import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
+import { formatCurrency } from '@/shared/format/currency';
+import { formatOrderRoute } from '@/shared/format/orders';
 import {
 	getBoosterOrderChatMessages,
 	getBoosterQueue,
@@ -13,8 +15,6 @@ import {
 import {
 	type BoosterQueue,
 	type BoosterWork,
-	formatCurrency,
-	formatOrderRoute,
 	toBoosterQueue,
 	toBoosterWork,
 } from '../../model/booster-orders';

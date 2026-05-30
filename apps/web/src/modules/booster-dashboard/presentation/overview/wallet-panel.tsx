@@ -1,11 +1,9 @@
 import { ArrowDownLeft, ArrowUpRight, ReceiptText } from 'lucide-react';
 import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
+import { formatCurrency } from '@/shared/format/currency';
+import { formatDate } from '@/shared/format/date';
 import { Card } from '@/shared/ui/components/card';
-import {
-	formatCurrency,
-	formatDate,
-	formatTransactionReason,
-} from '../../model/booster-orders';
+import { formatTransactionReason } from '../../model/booster-orders';
 import type {
 	BoosterWalletOutput,
 	BoosterWalletTransactionsOutput,
