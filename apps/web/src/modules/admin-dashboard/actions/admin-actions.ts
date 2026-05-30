@@ -16,9 +16,15 @@ import type {
 	AdminMetricsOutput,
 	AdminOrderOutput,
 	AdminSupportTicketOutput,
+	AdminTicketDetailOutput,
 	AdminUserOutput,
+	ListAdminTicketsInput,
 } from '../server/admin-contracts';
-import { adminGovernanceInputSchema } from '../server/admin-contracts';
+import {
+	adminGovernanceInputSchema,
+	replyAdminTicketInputSchema,
+	updateAdminTicketStatusInputSchema,
+} from '../server/admin-contracts';
 import {
 	blockAdminUser,
 	forceCancelAdminOrder,
@@ -27,11 +33,19 @@ import {
 	getAdminOrderChatMessages as getAdminOrderChatMessagesFromApi,
 	getAdminOrders as getAdminOrdersFromApi,
 	getAdminSupportTickets as getAdminSupportTicketsFromApi,
+	getAdminTicket as getAdminTicketFromApi,
 	getAdminUsers as getAdminUsersFromApi,
+	replyAdminTicket,
 	unblockAdminUser,
+	updateAdminTicketStatus,
 } from '../server/admin-service';
 
 export type AdminGovernanceActionState = {
+	error?: string;
+	success?: boolean;
+};
+
+export type AdminTicketActionState = {
 	error?: string;
 	success?: boolean;
 };
@@ -53,6 +67,27 @@ const parseGovernanceForm = (formData: FormData) =>
 		targetId: formData.get('targetId'),
 		reason: formData.get('reason'),
 	}) satisfies AdminGovernanceInput;
+
+const getValidationMessage = (error: unknown) => {
+	if (
+		error &&
+		typeof error === 'object' &&
+		'issues' in error &&
+		Array.isArray(error.issues)
+	) {
+		const [issue] = error.issues;
+		if (
+			issue &&
+			typeof issue === 'object' &&
+			'message' in issue &&
+			typeof issue.message === 'string'
+		) {
+			return issue.message;
+		}
+	}
+
+	return getAuthErrorMessage(error);
+};
 
 export const getAdminDashboard = async (): Promise<AdminDashboardOutput> => {
 	await getAdminSessionOrRedirect();
@@ -124,6 +159,43 @@ export const getAdminSupportTickets = async (): Promise<
 	}
 };
 
+export const getAdminSupportWorkspace = async (
+	input: Partial<ListAdminTicketsInput> & { ticketId?: string } = {},
+): Promise<{
+	tickets: AdminSupportTicketOutput[];
+	selectedTicket: AdminTicketDetailOutput | null;
+}> => {
+	await getAdminSessionOrRedirect();
+	try {
+		const selectedTicketId = input.ticketId?.trim();
+		const tickets = await getAdminSupportTicketsFromApi(renderReadApiRequest, {
+			limit: input.limit ?? 25,
+			status: input.status,
+			query: input.query,
+		});
+		const fallbackTicketId = selectedTicketId || tickets[0]?.id;
+		if (!fallbackTicketId) return { tickets, selectedTicket: null };
+
+		try {
+			return {
+				tickets,
+				selectedTicket: await getAdminTicketFromApi(
+					fallbackTicketId,
+					renderReadApiRequest,
+				),
+			};
+		} catch (error) {
+			if (error instanceof ApiRequestError && error.status === 404) {
+				return { tickets, selectedTicket: null };
+			}
+
+			throw error;
+		}
+	} catch (error) {
+		return redirectOnAuthError(error);
+	}
+};
+
 export const blockAdminUserAction = async (
 	_state: AdminGovernanceActionState,
 	formData: FormData,
@@ -137,6 +209,50 @@ export const blockAdminUserAction = async (
 		return { success: true };
 	} catch (error) {
 		return { error: getAuthErrorMessage(error) };
+	}
+};
+
+export const replyAdminTicketAction = async (
+	_state: AdminTicketActionState,
+	formData: FormData,
+): Promise<AdminTicketActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+
+		const input = replyAdminTicketInputSchema.parse({
+			ticketId: formData.get('ticketId'),
+			content: formData.get('content'),
+		});
+
+		await replyAdminTicket(input, api.request);
+		revalidatePath('/admin');
+		revalidatePath('/admin/support');
+		return { success: true };
+	} catch (error) {
+		return { error: getValidationMessage(error) };
+	}
+};
+
+export const updateAdminTicketStatusAction = async (
+	_state: AdminTicketActionState,
+	formData: FormData,
+): Promise<AdminTicketActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+
+		const input = updateAdminTicketStatusInputSchema.parse({
+			ticketId: formData.get('ticketId'),
+			status: formData.get('status'),
+		});
+
+		await updateAdminTicketStatus(input, api.request);
+		revalidatePath('/admin');
+		revalidatePath('/admin/support');
+		return { success: true };
+	} catch (error) {
+		return { error: getValidationMessage(error) };
 	}
 };
 

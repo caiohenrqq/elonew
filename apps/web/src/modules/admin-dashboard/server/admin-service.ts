@@ -6,13 +6,19 @@ import {
 	type AdminMetricsOutput,
 	type AdminOrderOutput,
 	type AdminSupportTicketOutput,
+	type AdminTicketDetailOutput,
 	type AdminUserOutput,
 	adminDashboardSchema,
 	adminGovernanceInputSchema,
 	adminMetricsSchema,
 	adminOrderSchema,
 	adminSupportTicketSchema,
+	adminTicketDetailSchema,
 	adminUserSchema,
+	type ListAdminTicketsInput,
+	listAdminTicketsInputSchema,
+	replyAdminTicketInputSchema,
+	updateAdminTicketStatusInputSchema,
 } from './admin-contracts';
 
 export type AuthenticatedApiRequest = <T>(
@@ -113,8 +119,16 @@ export const getAdminOrderChatMessages = async (
 
 export const getAdminSupportTickets = async (
 	apiRequest: AuthenticatedApiRequest,
+	input: Partial<ListAdminTicketsInput> = {},
 ): Promise<AdminSupportTicketOutput[]> => {
-	const path = '/admin/support/tickets?limit=25';
+	const params = listAdminTicketsInputSchema.parse({ limit: 25, ...input });
+	const searchParams = new URLSearchParams({
+		limit: String(params.limit),
+	});
+	if (params.status) searchParams.set('status', params.status);
+	if (params.query) searchParams.set('query', params.query);
+
+	const path = `/admin/tickets?${searchParams.toString()}`;
 	return await withAdminReadErrorContext(
 		'Admin support tickets request',
 		path,
@@ -123,6 +137,23 @@ export const getAdminSupportTickets = async (
 				auth: true,
 			});
 			return adminSupportTicketSchema.array().parse(response);
+		},
+	);
+};
+
+export const getAdminTicket = async (
+	ticketId: string,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<AdminTicketDetailOutput> => {
+	const path = `/admin/tickets/${encodeURIComponent(ticketId)}`;
+	return await withAdminReadErrorContext(
+		'Admin ticket request',
+		path,
+		async () => {
+			const response = await apiRequest<unknown>(path, {
+				auth: true,
+			});
+			return adminTicketDetailSchema.parse(response);
 		},
 	);
 };
@@ -180,4 +211,32 @@ export const forceCancelAdminOrder = async (
 			body: JSON.stringify({ reason: body.reason }),
 		},
 	);
+};
+
+export const replyAdminTicket = async (
+	input: unknown,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<AdminTicketDetailOutput> => {
+	const body = replyAdminTicketInputSchema.parse(input);
+	const path = `/admin/tickets/${encodeURIComponent(body.ticketId)}/messages`;
+	const response = await apiRequest<unknown>(path, {
+		auth: true,
+		method: 'POST',
+		body: JSON.stringify({ content: body.content }),
+	});
+	return adminTicketDetailSchema.parse(response);
+};
+
+export const updateAdminTicketStatus = async (
+	input: unknown,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<AdminTicketDetailOutput> => {
+	const body = updateAdminTicketStatusInputSchema.parse(input);
+	const path = `/admin/tickets/${encodeURIComponent(body.ticketId)}/status`;
+	const response = await apiRequest<unknown>(path, {
+		auth: true,
+		method: 'PATCH',
+		body: JSON.stringify({ status: body.status }),
+	});
+	return adminTicketDetailSchema.parse(response);
 };
