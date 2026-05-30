@@ -1,20 +1,20 @@
 import type { OrderExtraType } from '@packages/shared/orders/order-extra';
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
-import { Badge } from '@packages/ui/components/badge';
-import { Button } from '@packages/ui/components/button';
-import { Input } from '@packages/ui/components/input';
-import { Label } from '@packages/ui/components/label';
-import { NumberInput } from '@packages/ui/components/number-input';
+import { CheckCircle2, ChevronRight } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
+import { Badge } from '@/shared/ui/components/badge';
+import { Button } from '@/shared/ui/components/button';
+import { Input } from '@/shared/ui/components/input';
+import { Label } from '@/shared/ui/components/label';
+import { NumberInput } from '@/shared/ui/components/number-input';
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from '@packages/ui/components/select';
-import { cn } from '@packages/ui/utils/cn';
-import { CheckCircle2, ChevronRight } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+} from '@/shared/ui/components/select';
+import { cn } from '@/shared/ui/utils/cn';
 import { EXTRAS, QUEUES, SERVERS } from '../../model/new-order-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
 import { SelectableOption } from './selectable-option';
@@ -159,7 +159,7 @@ export const DetailsStep = ({
 					<Label htmlFor="server">Servidor</Label>
 					<Select
 						value={orderInput.server}
-						onValueChange={(value) => onChange('server', value)}
+						onValueChange={(value: string) => onChange('server', value)}
 					>
 						<SelectTrigger id="server">
 							<SelectValue placeholder="Selecione um servidor" />
@@ -177,7 +177,7 @@ export const DetailsStep = ({
 					<Label htmlFor="queue">Fila</Label>
 					<Select
 						value={orderInput.desiredQueue}
-						onValueChange={(value) => onChange('desiredQueue', value)}
+						onValueChange={(value: string) => onChange('desiredQueue', value)}
 					>
 						<SelectTrigger id="queue">
 							<SelectValue placeholder="Selecione uma fila" />

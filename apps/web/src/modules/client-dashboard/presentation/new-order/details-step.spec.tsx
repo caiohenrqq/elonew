@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { createInitialCheckoutInput } from '../../model/checkout-defaults';
 import { DetailsStep } from './details-step';
 
-jest.mock('@packages/ui/components/select', () => ({
+jest.mock('@/shared/ui/components/select', () => ({
 	Select: ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	),

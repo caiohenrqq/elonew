@@ -1,4 +1,4 @@
-import type { BadgeProps } from '@packages/ui/components/badge';
+import type { BadgeProps } from '@/shared/ui/components/badge';
 import type {
 	ClientDashboardOrderOutput,
 	ClientDashboardOrdersOutput,

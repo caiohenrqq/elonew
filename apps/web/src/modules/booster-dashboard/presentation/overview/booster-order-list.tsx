@@ -1,14 +1,3 @@
-import { Badge } from '@packages/ui/components/badge';
-import { Card } from '@packages/ui/components/card';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@packages/ui/components/table';
-import { cn } from '@packages/ui/utils/cn';
 import {
 	CheckCircle2,
 	PackageCheck,
@@ -19,6 +8,17 @@ import {
 import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import { DashboardSectionHeader } from '@/shared/dashboard/dashboard-section-header';
 import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-button';
+import { Badge } from '@/shared/ui/components/badge';
+import { Card } from '@/shared/ui/components/card';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/shared/ui/components/table';
+import { cn } from '@/shared/ui/utils/cn';
 import {
 	acceptBoosterOrderAction,
 	completeBoosterOrderAction,
@@ -209,26 +209,14 @@ export const BoosterOrderList = ({
 							</TableBody>
 						) : (
 							<>
-								<TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur">
+								<TableHeader>
 									<TableRow>
-										<TableHead className="text-[10px] uppercase font-black tracking-widest">
-											Serviço
-										</TableHead>
-										<TableHead className="text-[10px] uppercase font-black tracking-widest">
-											Rota
-										</TableHead>
-										<TableHead className="text-[10px] uppercase font-black tracking-widest">
-											Status
-										</TableHead>
-										<TableHead className="text-[10px] uppercase font-black tracking-widest">
-											Prazo
-										</TableHead>
-										<TableHead className="text-[10px] uppercase font-black tracking-widest">
-											Repasse
-										</TableHead>
-										<TableHead className="text-[10px] uppercase font-black tracking-widest text-right">
-											Ações
-										</TableHead>
+										<TableHead>Serviço</TableHead>
+										<TableHead>Rota</TableHead>
+										<TableHead>Status</TableHead>
+										<TableHead>Prazo</TableHead>
+										<TableHead>Repasse</TableHead>
+										<TableHead className="text-right">Ações</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>

@@ -1,13 +1,3 @@
-import { Badge } from '@packages/ui/components/badge';
-import { Button } from '@packages/ui/components/button';
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from '@packages/ui/components/card';
-import { Checkbox } from '@packages/ui/components/checkbox';
-import { cn } from '@packages/ui/utils/cn';
 import {
 	ArrowRight,
 	ChevronRight,
@@ -20,6 +10,16 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
+import { Badge } from '@/shared/ui/components/badge';
+import { Button } from '@/shared/ui/components/button';
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from '@/shared/ui/components/card';
+import { Checkbox } from '@/shared/ui/components/checkbox';
+import { cn } from '@/shared/ui/utils/cn';
 import {
 	EXTRA_OPTIONS_BY_ID,
 	SERVICE_TYPES,

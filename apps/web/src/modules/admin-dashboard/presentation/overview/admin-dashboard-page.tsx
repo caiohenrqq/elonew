@@ -1,14 +1,3 @@
-import { Badge } from '@packages/ui/components/badge';
-import { getButtonClassName } from '@packages/ui/components/button';
-import { Card } from '@packages/ui/components/card';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@packages/ui/components/table';
 import {
 	ArrowRight,
 	CheckCircle2,
@@ -29,6 +18,17 @@ import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
 import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
 import { DashboardSectionHeader } from '@/shared/dashboard/dashboard-section-header';
+import { Badge } from '@/shared/ui/components/badge';
+import { getButtonClassName } from '@/shared/ui/components/button';
+import { Card } from '@/shared/ui/components/card';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/shared/ui/components/table';
 import {
 	blockAdminUserAction,
 	unblockAdminUserAction,

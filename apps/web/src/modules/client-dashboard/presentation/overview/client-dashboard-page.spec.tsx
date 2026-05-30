@@ -69,10 +69,10 @@ describe('ClientDashboardPage', () => {
 		);
 
 		expect(screen.getAllByText('01')).toHaveLength(2);
-		expect(screen.getAllByText(/R\$\s*120,00/)).toHaveLength(2);
-		expect(screen.getByText('Elo Boost')).toBeInTheDocument();
-		expect(screen.getByText('Gold II → Platinum IV')).toBeInTheDocument();
-		expect(screen.getByRole('link', { name: /Ver detalhes/i })).toHaveAttribute(
+		expect(screen.getAllByText(/R\$\s*120,00/)).toHaveLength(3);
+		expect(screen.getAllByText('Elo Boost')).toHaveLength(2);
+		expect(screen.getAllByText('Gold II → Platinum IV')).toHaveLength(2);
+		expect(screen.getByRole('link', { name: /^Detalhes$/i })).toHaveAttribute(
 			'href',
 			'/client/orders/order-1',
 		);
@@ -95,7 +95,7 @@ describe('ClientDashboardPage', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Nenhum pedido encontrado')).toBeInTheDocument();
+		expect(screen.getAllByText('Nenhum pedido encontrado')).toHaveLength(2);
 	});
 
 	it('renders the development checkout tutorial and copies snippets', async () => {

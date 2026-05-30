@@ -1,6 +1,6 @@
-import { Button } from '@packages/ui/components/button';
-import { cn } from '@packages/ui/utils/cn';
 import { ChevronRight, ShieldCheck, Users } from 'lucide-react';
+import { Button } from '@/shared/ui/components/button';
+import { cn } from '@/shared/ui/utils/cn';
 import {
 	SERVICE_TYPES,
 	type ServiceTypeIcon,

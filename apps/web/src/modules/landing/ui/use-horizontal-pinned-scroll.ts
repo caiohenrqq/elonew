@@ -1,7 +1,7 @@
 'use client';
 
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import type { RefObject } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 
 export const useHorizontalPinnedScroll = (
 	sectionRef: RefObject<HTMLDivElement | null>,

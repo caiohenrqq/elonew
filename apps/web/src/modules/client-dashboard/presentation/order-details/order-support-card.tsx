@@ -1,11 +1,11 @@
-import { Button } from '@packages/ui/components/button';
+import { Clock } from 'lucide-react';
+import { Button } from '@/shared/ui/components/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
-} from '@packages/ui/components/card';
-import { Clock } from 'lucide-react';
+} from '@/shared/ui/components/card';
 
 export const OrderSupportCard = () => {
 	return (

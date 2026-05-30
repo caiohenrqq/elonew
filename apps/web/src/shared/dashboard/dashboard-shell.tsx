@@ -1,7 +1,7 @@
-import { GlitchLogo } from '@packages/ui/brand/glitch-logo';
 import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 import type { ElementType, ReactNode } from 'react';
+import { GlitchLogo } from '@/shared/ui/brand/glitch-logo';
 import { DashboardSubmitButton } from './dashboard-submit-button';
 
 type DashboardShellProps = {

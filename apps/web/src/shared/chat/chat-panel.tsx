@@ -1,8 +1,8 @@
 'use client';
 
-import { panelSurface } from '@packages/ui/styles/classes';
-import { cn } from '@packages/ui/utils/cn';
 import { type FC } from 'react';
+import { panelSurface } from '@/shared/ui/styles/classes';
+import { cn } from '@/shared/ui/utils/cn';
 import type { ChatMessage } from './chat.types';
 import { ChatComposer } from './chat-composer';
 import { ChatMessageList } from './chat-message-list';

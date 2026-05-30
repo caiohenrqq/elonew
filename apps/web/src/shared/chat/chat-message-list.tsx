@@ -1,8 +1,8 @@
 'use client';
 
-import { Badge } from '@packages/ui/components/badge';
-import { cn } from '@packages/ui/utils/cn';
 import { type CSSProperties, type FC, memo, useEffect, useRef } from 'react';
+import { Badge } from '@/shared/ui/components/badge';
+import { cn } from '@/shared/ui/utils/cn';
 import type { ChatMessage, ChatRoleLabel } from './chat.types';
 
 const chatTimeFormatter = new Intl.DateTimeFormat([], {

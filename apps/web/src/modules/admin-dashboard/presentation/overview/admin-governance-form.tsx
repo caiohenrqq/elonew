@@ -1,9 +1,9 @@
 'use client';
 
-import { getButtonClassName } from '@packages/ui/components/button';
-import { fieldSurface } from '@packages/ui/styles/classes';
-import { cn } from '@packages/ui/utils/cn';
 import { useActionState, useEffect, useId, useState } from 'react';
+import { getButtonClassName } from '@/shared/ui/components/button';
+import { fieldSurface } from '@/shared/ui/styles/classes';
+import { cn } from '@/shared/ui/utils/cn';
 import type { AdminGovernanceActionState } from '../../actions/admin-actions';
 
 type AdminGovernanceFormProps = {

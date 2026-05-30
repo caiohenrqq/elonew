@@ -1,10 +1,10 @@
 'use client';
 
-import { Button } from '@packages/ui/components/button';
-import { Input } from '@packages/ui/components/input';
-import { Label } from '@packages/ui/components/label';
 import { WalletCards } from 'lucide-react';
 import { useActionState } from 'react';
+import { Button } from '@/shared/ui/components/button';
+import { Input } from '@/shared/ui/components/input';
+import { Label } from '@/shared/ui/components/label';
 import { requestBoosterWithdrawalAction } from '../../actions/booster-actions';
 
 type WithdrawalFormProps = {

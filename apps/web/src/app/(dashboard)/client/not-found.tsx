@@ -1,5 +1,5 @@
-import { getButtonClassName } from '@packages/ui/components/button';
 import Link from 'next/link';
+import { getButtonClassName } from '@/shared/ui/components/button';
 
 const ClientDashboardNotFound = () => {
 	return (

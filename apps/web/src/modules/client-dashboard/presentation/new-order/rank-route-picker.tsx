@@ -1,9 +1,9 @@
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
-import { Label } from '@packages/ui/components/label';
-import { NumberInput } from '@packages/ui/components/number-input';
-import { cn } from '@packages/ui/utils/cn';
 import Image from 'next/image';
 import { type CSSProperties, useRef } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
+import { Label } from '@/shared/ui/components/label';
+import { NumberInput } from '@/shared/ui/components/number-input';
+import { cn } from '@/shared/ui/utils/cn';
 import {
 	DEFAULT_MASTER_PDL,
 	getMasterPdlFromDivision,

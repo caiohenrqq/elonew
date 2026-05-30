@@ -1,6 +1,6 @@
-import { Badge } from '@packages/ui/components/badge';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/shared/ui/components/badge';
 import type { ClientOrder } from '../../model/orders';
 import { ResumePaymentButton } from './resume-payment-button';
 

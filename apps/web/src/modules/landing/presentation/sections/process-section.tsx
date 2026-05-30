@@ -1,7 +1,7 @@
 'use client';
 
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { useRef } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 import { PROCESS_STEPS } from '../../model/process-steps';
 import { ProcessStepCard } from '../../ui/process-step-card';
 import { SectionHeading } from '../../ui/section-heading';

@@ -1,8 +1,5 @@
 'use client';
 
-import { Button } from '@packages/ui/components/button';
-import { fieldSurface } from '@packages/ui/styles/classes';
-import { cn } from '@packages/ui/utils/cn';
 import { Send } from 'lucide-react';
 import {
 	type ChangeEvent,
@@ -13,6 +10,9 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Button } from '@/shared/ui/components/button';
+import { fieldSurface } from '@/shared/ui/styles/classes';
+import { cn } from '@/shared/ui/utils/cn';
 
 interface ChatComposerProps {
 	onSend: (content: string) => void;

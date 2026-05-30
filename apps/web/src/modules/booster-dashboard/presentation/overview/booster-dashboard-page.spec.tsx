@@ -93,6 +93,7 @@ jest.mock('lucide-react', () => ({
 	PackageOpen: () => <svg data-testid="package-open-icon" />,
 	ReceiptText: () => <svg data-testid="receipt-icon" />,
 	Send: () => <svg data-testid="send-icon" />,
+	Shield: () => <svg data-testid="shield-icon" />,
 	XCircle: () => <svg data-testid="reject-icon" />,
 	WalletCards: () => <svg data-testid="wallet-icon" />,
 	ArrowDownLeft: () => <svg data-testid="credit-icon" />,
@@ -111,8 +112,8 @@ describe('BoosterDashboardPage', () => {
 		expect(
 			screen.queryByText('Meus pedidos em execução'),
 		).not.toBeInTheDocument();
-		expect(screen.getByText('Elo Boost')).toBeInTheDocument();
-		expect(screen.getByText('Gold II -> Platinum IV')).toBeInTheDocument();
+		expect(screen.getAllByText('Elo Boost')).toHaveLength(2);
+		expect(screen.getAllByText('Gold II -> Platinum IV')).toHaveLength(2);
 		expect(screen.getAllByText(/R\$\s*84,00/).length).toBeGreaterThan(0);
 		expect(screen.getByText('Carteira')).toBeInTheDocument();
 		expect(screen.queryByText('Movimentações')).not.toBeInTheDocument();

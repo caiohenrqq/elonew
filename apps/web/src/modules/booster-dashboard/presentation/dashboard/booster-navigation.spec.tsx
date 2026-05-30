@@ -64,7 +64,7 @@ describe('BoosterNavigation', () => {
 	it('defaults the active tab to queue', () => {
 		render(<BoosterNavigation />);
 
-		expect(screen.getByRole('link', { name: /Fila/i })).toHaveAttribute(
+		expect(screen.getByRole('link', { name: /Visão geral/i })).toHaveAttribute(
 			'aria-current',
 			'page',
 		);
@@ -82,8 +82,8 @@ describe('BoosterNavigation', () => {
 			'aria-current',
 			'page',
 		);
-		expect(screen.getByRole('link', { name: /Fila/i })).not.toHaveAttribute(
-			'aria-current',
-		);
+		expect(
+			screen.getByRole('link', { name: /Visão geral/i }),
+		).not.toHaveAttribute('aria-current');
 	});
 });

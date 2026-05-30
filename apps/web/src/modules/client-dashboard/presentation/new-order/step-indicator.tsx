@@ -1,4 +1,4 @@
-import { cn } from '@packages/ui/utils/cn';
+import { cn } from '@/shared/ui/utils/cn';
 
 type StepIndicatorProps = {
 	step: number;

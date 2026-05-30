@@ -1,9 +1,9 @@
 'use client';
 
-import { cn } from '@packages/ui/utils/cn';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import type { ElementType, ReactNode } from 'react';
+import { cn } from '@/shared/ui/utils/cn';
 
 type DashboardNavItemProps = {
 	children: ReactNode;

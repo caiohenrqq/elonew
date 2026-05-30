@@ -1,16 +1,16 @@
-import { Badge } from '@packages/ui/components/badge';
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from '@packages/ui/components/card';
 import { ArrowLeft, FileText, ShieldCheck, Users } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ChatMessage } from '@/shared/chat/chat.types';
 import { ChatPanel } from '@/shared/chat/chat-panel';
 import { DefinitionItem } from '@/shared/dashboard/definition-item';
+import { Badge } from '@/shared/ui/components/badge';
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from '@/shared/ui/components/card';
 import {
 	forceCancelAdminOrderAction,
 	getAdminOrderChatMessages,

@@ -1,13 +1,13 @@
 'use client';
 
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
-import { Button } from '@packages/ui/components/button';
 import { CheckCircle2, Lock, Mail, User, UserPlus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { registerAction } from '@/modules/auth/actions/auth-actions';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
+import { Button } from '@/shared/ui/components/button';
 import type { RegisterFormInput } from '../model/auth-schemas';
 import {
 	AuthCheckboxField,

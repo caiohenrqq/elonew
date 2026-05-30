@@ -1,16 +1,13 @@
 'use client';
 
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
-import { GradientNoise } from '@packages/ui/backgrounds/gradient-noise';
-import { Navbar } from '@packages/ui/navigation/navbar';
-import { useSectionScroll } from '@packages/ui/navigation/use-section-scroll';
-import {
-	useWordSwapAnimation,
-	WordSwapText,
-} from '@packages/ui/text/word-swap';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useRef } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
+import { GradientNoise } from '@/shared/ui/backgrounds/gradient-noise';
+import { Navbar } from '@/shared/ui/navigation/navbar';
+import { useSectionScroll } from '@/shared/ui/navigation/use-section-scroll';
+import { useWordSwapAnimation, WordSwapText } from '@/shared/ui/text/word-swap';
 
 type HeroSectionProps = {
 	isAuthenticated?: boolean;

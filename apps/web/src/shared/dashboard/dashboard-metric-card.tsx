@@ -1,12 +1,12 @@
+import type { ElementType, ReactNode } from 'react';
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from '@packages/ui/components/card';
-import { cn } from '@packages/ui/utils/cn';
-import type { ElementType, ReactNode } from 'react';
+} from '@/shared/ui/components/card';
+import { cn } from '@/shared/ui/utils/cn';
 
 type DashboardMetricCardProps = {
 	children?: ReactNode;

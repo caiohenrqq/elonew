@@ -1,14 +1,3 @@
-import { Badge } from '@packages/ui/components/badge';
-import { getButtonClassName } from '@packages/ui/components/button';
-import { Card } from '@packages/ui/components/card';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@packages/ui/components/table';
 import {
 	Activity,
 	ArrowRight,
@@ -21,6 +10,17 @@ import Link from 'next/link';
 import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
 import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
+import { Badge } from '@/shared/ui/components/badge';
+import { getButtonClassName } from '@/shared/ui/components/button';
+import { Card } from '@/shared/ui/components/card';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/shared/ui/components/table';
 import type { ClientDashboardOrder } from '../../model/orders';
 import { type ClientDashboard, formatCurrency } from '../../model/orders';
 import { ClientDashboardLiveRefresh } from './client-dashboard-live-refresh';
@@ -222,26 +222,14 @@ export const ClientDashboardPage = ({
 								dashboard.orders.length === 0 ? 'overflow-hidden' : undefined
 							}
 						>
-							<TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur">
+							<TableHeader>
 								<TableRow>
-									<TableHead className="text-[10px] uppercase font-black tracking-widest">
-										ID
-									</TableHead>
-									<TableHead className="text-[10px] uppercase font-black tracking-widest">
-										Serviço
-									</TableHead>
-									<TableHead className="text-[10px] uppercase font-black tracking-widest">
-										Detalhes
-									</TableHead>
-									<TableHead className="text-[10px] uppercase font-black tracking-widest">
-										Status
-									</TableHead>
-									<TableHead className="text-[10px] uppercase font-black tracking-widest">
-										Data
-									</TableHead>
-									<TableHead className="text-[10px] uppercase font-black tracking-widest text-right">
-										Ações
-									</TableHead>
+									<TableHead>ID</TableHead>
+									<TableHead>Serviço</TableHead>
+									<TableHead>Detalhes</TableHead>
+									<TableHead>Status</TableHead>
+									<TableHead>Data</TableHead>
+									<TableHead className="text-right">Ações</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody

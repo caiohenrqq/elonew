@@ -28,7 +28,7 @@ jest.mock('@/modules/notifications/presentation/notification-popover', () => ({
 	NotificationPopover: () => <div data-testid="notification-popover" />,
 }));
 
-jest.mock('@packages/ui/brand/glitch-logo', () => ({
+jest.mock('@/shared/ui/brand/glitch-logo', () => ({
 	GlitchLogo: () => <div data-testid="glitch-logo" />,
 }));
 
@@ -109,7 +109,7 @@ describe('DashboardShell', () => {
 	it('should render sidebar navigation items', async () => {
 		await renderShell(<div>Content</div>);
 
-		expect(screen.getByText('Painel')).toBeInTheDocument();
+		expect(screen.getByText('Visão geral')).toBeInTheDocument();
 		expect(screen.getByText('Novo Pedido')).toBeInTheDocument();
 	});
 

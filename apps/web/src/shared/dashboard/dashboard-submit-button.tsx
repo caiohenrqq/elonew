@@ -1,14 +1,14 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useFormStatus } from 'react-dom';
 import {
 	type ButtonSize,
 	type ButtonVariant,
 	getButtonClassName,
-} from '@packages/ui/components/button';
-import { cn } from '@packages/ui/utils/cn';
-import { Loader2 } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { useFormStatus } from 'react-dom';
+} from '@/shared/ui/components/button';
+import { cn } from '@/shared/ui/utils/cn';
 
 type DashboardSubmitButtonProps = {
 	children: ReactNode;

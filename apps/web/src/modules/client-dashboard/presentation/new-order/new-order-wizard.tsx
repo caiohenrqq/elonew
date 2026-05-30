@@ -1,11 +1,11 @@
 'use client';
 
 import type { OrderExtraType } from '@packages/shared/orders/order-extra';
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { AnimatePresence } from 'motion/react';
 import dynamic from 'next/dynamic';
 import type { CSSProperties } from 'react';
 import { useCallback, useRef, useState } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 import { createInitialCheckoutInput } from '../../model/checkout-defaults';
 import { getRankOption } from '../../model/rank-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';

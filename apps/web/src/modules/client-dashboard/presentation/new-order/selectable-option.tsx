@@ -1,5 +1,5 @@
-import { cn } from '@packages/ui/utils/cn';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { cn } from '@/shared/ui/utils/cn';
 
 type SelectableOptionLayout = 'card' | 'row';
 

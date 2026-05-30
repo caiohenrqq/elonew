@@ -1,10 +1,10 @@
+import { Shield, User } from 'lucide-react';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
-} from '@packages/ui/components/card';
-import { Shield, User } from 'lucide-react';
+} from '@/shared/ui/components/card';
 
 export const OrderBoosterCard = () => {
 	return (

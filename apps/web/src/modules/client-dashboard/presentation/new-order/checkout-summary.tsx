@@ -1,7 +1,10 @@
 'use client';
 
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
-import { Button } from '@packages/ui/components/button';
+import { Target } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
+import { Button } from '@/shared/ui/components/button';
 import {
 	Card,
 	CardContent,
@@ -9,13 +12,10 @@ import {
 	CardFooter,
 	CardHeader,
 	CardTitle,
-} from '@packages/ui/components/card';
-import { Input } from '@packages/ui/components/input';
-import { Label } from '@packages/ui/components/label';
-import { cn } from '@packages/ui/utils/cn';
-import { Target } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+} from '@/shared/ui/components/card';
+import { Input } from '@/shared/ui/components/input';
+import { Label } from '@/shared/ui/components/label';
+import { cn } from '@/shared/ui/utils/cn';
 import {
 	EXTRA_OPTIONS_BY_ID,
 	getExtraLabel,

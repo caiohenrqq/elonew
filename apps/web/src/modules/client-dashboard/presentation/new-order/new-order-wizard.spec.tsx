@@ -7,7 +7,7 @@ jest.mock('../../actions/order-actions', () => ({
 	startCheckoutAction: jest.fn(),
 }));
 
-jest.mock('@packages/ui/animation/gsap', () => ({
+jest.mock('@/shared/ui/animation/gsap', () => ({
 	gsap: {
 		to: jest.fn(),
 	},

@@ -18,7 +18,7 @@ jest.mock('next/navigation', () => ({
 	useRouter: jest.fn(),
 }));
 
-jest.mock('@packages/ui/animation/gsap', () => ({
+jest.mock('@/shared/ui/animation/gsap', () => ({
 	gsap: {
 		from: jest.fn(),
 	},

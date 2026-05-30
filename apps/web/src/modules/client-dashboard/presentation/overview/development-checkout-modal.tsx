@@ -1,6 +1,5 @@
 'use client';
 
-import { getButtonClassName } from '@packages/ui/components/button';
 import {
 	Check,
 	Copy,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { getButtonClassName } from '@/shared/ui/components/button';
 
 type DevelopmentCheckoutModalProps = {
 	devPaymentId: string;

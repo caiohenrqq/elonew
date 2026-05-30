@@ -1,7 +1,7 @@
 'use client';
 
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
 import { type ReactNode, useRef } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 
 type WizardStepTransitionProps = {
 	children: ReactNode;

@@ -1,8 +1,8 @@
 'use client';
 
-import { getButtonClassName } from '@packages/ui/components/button';
 import { CreditCard } from 'lucide-react';
 import { useActionState } from 'react';
+import { getButtonClassName } from '@/shared/ui/components/button';
 import { resumePaymentCheckoutAction } from '../../actions/order-actions';
 
 type ResumePaymentButtonProps = {

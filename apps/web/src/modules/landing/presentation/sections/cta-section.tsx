@@ -1,13 +1,10 @@
 'use client';
 
-import { gsap, useGSAP } from '@packages/ui/animation/gsap';
-import { useSectionScroll } from '@packages/ui/navigation/use-section-scroll';
-import {
-	useWordSwapAnimation,
-	WordSwapText,
-} from '@packages/ui/text/word-swap';
 import Link from 'next/link';
 import { useRef } from 'react';
+import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
+import { useSectionScroll } from '@/shared/ui/navigation/use-section-scroll';
+import { useWordSwapAnimation, WordSwapText } from '@/shared/ui/text/word-swap';
 import { CTA_STATS } from '../../model/cta-stats';
 import { MagneticButton } from '../../ui/magnetic-button';
 

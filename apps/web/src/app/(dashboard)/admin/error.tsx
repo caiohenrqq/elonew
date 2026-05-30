@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@packages/ui/components/button';
 import Link from 'next/link';
 import { useEffect } from 'react';
+import { Button } from '@/shared/ui/components/button';
 
 const AdminDashboardError = ({
 	error,

@@ -1,12 +1,12 @@
-import { getButtonClassName } from '@packages/ui/components/button';
-import { Checkbox, type CheckboxProps } from '@packages/ui/components/checkbox';
-import { Input, type InputProps } from '@packages/ui/components/input';
-import { Label } from '@packages/ui/components/label';
-import { cn } from '@packages/ui/utils/cn';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import type { ElementType, ReactNode } from 'react';
+import { getButtonClassName } from '@/shared/ui/components/button';
+import { Checkbox, type CheckboxProps } from '@/shared/ui/components/checkbox';
+import { Input, type InputProps } from '@/shared/ui/components/input';
+import { Label } from '@/shared/ui/components/label';
+import { cn } from '@/shared/ui/utils/cn';
 
 type AuthFieldProps = InputProps & {
 	error?: string;

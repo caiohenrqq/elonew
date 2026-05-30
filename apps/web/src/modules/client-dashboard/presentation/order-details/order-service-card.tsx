@@ -1,11 +1,11 @@
+import { FileText } from 'lucide-react';
+import { DefinitionItem } from '@/shared/dashboard/definition-item';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
-} from '@packages/ui/components/card';
-import { FileText } from 'lucide-react';
-import { DefinitionItem } from '@/shared/dashboard/definition-item';
+} from '@/shared/ui/components/card';
 import { type ClientOrder, formatCurrency } from '../../model/orders';
 
 type OrderServiceCardProps = {

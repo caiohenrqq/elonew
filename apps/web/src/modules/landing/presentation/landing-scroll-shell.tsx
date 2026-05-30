@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 const SmoothScroll = dynamic(
 	() =>
-		import('@packages/ui/providers/smooth-scroll').then(
+		import('@/shared/ui/providers/smooth-scroll').then(
 			(module) => module.SmoothScroll,
 		),
 	{ ssr: false },

@@ -1,6 +1,6 @@
-import { Card } from '@packages/ui/components/card';
 import { ArrowDownLeft, ArrowUpRight, ReceiptText } from 'lucide-react';
 import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
+import { Card } from '@/shared/ui/components/card';
 import {
 	formatCurrency,
 	formatDate,

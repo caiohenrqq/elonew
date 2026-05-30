@@ -1,7 +1,5 @@
 'use client';
 
-import { getButtonClassName } from '@packages/ui/components/button';
-import { cn } from '@packages/ui/utils/cn';
 import { Bell, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
@@ -9,6 +7,8 @@ import type {
 	ListNotificationsResponse,
 	NotificationOutput,
 } from '@/shared/notifications/notification-contracts';
+import { getButtonClassName } from '@/shared/ui/components/button';
+import { cn } from '@/shared/ui/utils/cn';
 import {
 	markAllDashboardNotificationsReadAction,
 	markDashboardNotificationReadAction,

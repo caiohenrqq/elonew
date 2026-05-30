@@ -1,10 +1,10 @@
 'use client';
 
-import { GradientNoise } from '@packages/ui/backgrounds/gradient-noise';
-import { GlitchLogo } from '@packages/ui/brand/glitch-logo';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { GradientNoise } from '@/shared/ui/backgrounds/gradient-noise';
+import { GlitchLogo } from '@/shared/ui/brand/glitch-logo';
 
 type AuthShellProps = {
 	children: ReactNode;

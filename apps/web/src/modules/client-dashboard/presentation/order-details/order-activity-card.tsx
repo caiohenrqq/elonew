@@ -1,10 +1,10 @@
+import { Activity } from 'lucide-react';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
-} from '@packages/ui/components/card';
-import { Activity } from 'lucide-react';
+} from '@/shared/ui/components/card';
 
 export const OrderActivityCard = () => {
 	return (

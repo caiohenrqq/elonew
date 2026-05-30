@@ -1,4 +1,3 @@
-import { getButtonClassName } from '@packages/ui/components/button';
 import { User, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -6,6 +5,7 @@ import { logoutAction } from '@/modules/auth/actions/auth-actions';
 import { getDashboardNotifications } from '@/modules/notifications/actions/notification-actions';
 import { NotificationPopover } from '@/modules/notifications/presentation/notification-popover';
 import { DashboardShell as SharedDashboardShell } from '@/shared/dashboard/dashboard-shell';
+import { getButtonClassName } from '@/shared/ui/components/button';
 import { BoosterNavigation } from './booster-navigation';
 
 type BoosterDashboardShellProps = {
