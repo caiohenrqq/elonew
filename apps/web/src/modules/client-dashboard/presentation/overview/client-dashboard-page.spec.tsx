@@ -41,8 +41,6 @@ describe('ClientDashboardPage', () => {
 						{
 							id: 'order-1',
 							status: 'awaiting_payment',
-							statusLabel: 'Aguardando Pagamento',
-							statusVariant: 'warning',
 							serviceType: 'elo_boost',
 							currentLeague: 'gold',
 							currentDivision: 'II',

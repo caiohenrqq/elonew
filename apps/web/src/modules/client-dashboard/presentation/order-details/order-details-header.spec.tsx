@@ -22,8 +22,6 @@ jest.mock('../../actions/order-actions', () => ({
 const makeOrder = (status: string) => ({
 	id: 'order-1',
 	status,
-	statusLabel: status,
-	statusVariant: 'warning' as const,
 	subtotal: 100,
 	totalAmount: 100,
 	discountAmount: 0,

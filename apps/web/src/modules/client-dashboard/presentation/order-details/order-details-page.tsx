@@ -3,7 +3,7 @@ import { ApiRequestError } from '@/shared/api-client-management/http';
 import { getAuthSession } from '@/shared/auth/session';
 import type { ChatMessage } from '@/shared/chat/chat.types';
 import { getOrder, getOrderChatMessages } from '../../actions/order-actions';
-import { type ClientOrder, toClientOrder } from '../../model/orders';
+import type { ClientOrder } from '../../model/orders';
 import { OrderActivityCard } from './order-activity-card';
 import { OrderBoosterCard } from './order-booster-card';
 import { OrderChatPanel } from './order-chat-panel';
@@ -24,7 +24,7 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 			getOrder(orderId),
 			getOrderChatMessages(orderId),
 		]);
-		order = toClientOrder(orderResult);
+		order = orderResult;
 		chatMessages = chatResult.items;
 	} catch (error) {
 		if (error instanceof ApiRequestError) {

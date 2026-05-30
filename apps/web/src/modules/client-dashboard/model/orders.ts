@@ -1,66 +1,11 @@
-import type { BadgeProps } from '@/shared/ui/components/badge';
 import type {
 	ClientDashboardOrderOutput,
 	ClientDashboardOrdersOutput,
 	GetOrderOutput,
 } from '../server/order-contracts';
 
-export type OrderStatusVariant = NonNullable<BadgeProps['variant']>;
+export type ClientOrder = GetOrderOutput;
 
-export type ClientOrder = GetOrderOutput & {
-	statusLabel: string;
-	statusVariant: OrderStatusVariant;
-};
+export type ClientDashboardOrder = ClientDashboardOrderOutput;
 
-export type ClientDashboardOrder = ClientDashboardOrderOutput & {
-	statusLabel: string;
-	statusVariant: OrderStatusVariant;
-};
-
-export type ClientDashboard = Omit<ClientDashboardOrdersOutput, 'orders'> & {
-	orders: ClientDashboardOrder[];
-};
-
-const orderStatusLabels: Record<string, string> = {
-	awaiting_payment: 'Pagamento Pendente',
-	pending_booster: 'Aguardando Booster',
-	in_progress: 'Em execução',
-	completed: 'Finalizado',
-	cancelled: 'Cancelado',
-};
-
-const orderStatusVariants: Record<string, OrderStatusVariant> = {
-	awaiting_payment: 'warning',
-	pending_booster: 'warning',
-	in_progress: 'warning',
-	completed: 'success',
-	cancelled: 'error',
-};
-
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-	style: 'currency',
-	currency: 'BRL',
-});
-
-export const toClientOrder = (order: GetOrderOutput): ClientOrder => ({
-	...order,
-	statusLabel: orderStatusLabels[order.status] ?? 'Status indisponível',
-	statusVariant: orderStatusVariants[order.status] ?? 'default',
-});
-
-export const toClientDashboard = (
-	dashboard: ClientDashboardOrdersOutput,
-): ClientDashboard => ({
-	...dashboard,
-	orders: dashboard.orders.map((order) => ({
-		...order,
-		statusLabel: orderStatusLabels[order.status] ?? 'Status indisponível',
-		statusVariant: orderStatusVariants[order.status] ?? 'default',
-	})),
-});
-
-export const formatCurrency = (value: number | null) => {
-	if (value === null) return 'Não informado';
-
-	return currencyFormatter.format(value);
-};
+export type ClientDashboard = ClientDashboardOrdersOutput;

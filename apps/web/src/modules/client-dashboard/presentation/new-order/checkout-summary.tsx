@@ -3,6 +3,7 @@
 import { Target } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { formatBRL } from '@/shared/format/currency';
 import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 import { Button } from '@/shared/ui/components/button';
 import {
@@ -33,13 +34,6 @@ type CheckoutSummaryProps = {
 	quotePreviewError?: string | null;
 };
 
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-	style: 'currency',
-	currency: 'BRL',
-});
-
-const formatCurrency = (value: number) => currencyFormatter.format(value);
-
 const AnimatedCurrency = ({
 	className,
 	value,
@@ -65,13 +59,13 @@ const AnimatedCurrency = ({
 				overwrite: 'auto',
 				onUpdate: () => {
 					if (textRef.current) {
-						textRef.current.textContent = formatCurrency(counter.value);
+						textRef.current.textContent = formatBRL(counter.value);
 					}
 				},
 				onComplete: () => {
 					previousValue.current = value;
 					if (textRef.current) {
-						textRef.current.textContent = formatCurrency(value);
+						textRef.current.textContent = formatBRL(value);
 					}
 				},
 			});
@@ -81,7 +75,7 @@ const AnimatedCurrency = ({
 
 	return (
 		<span ref={textRef} className={className}>
-			{value === null ? '...' : formatCurrency(value)}
+			{value === null ? '...' : formatBRL(value)}
 		</span>
 	);
 };

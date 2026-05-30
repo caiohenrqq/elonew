@@ -1,12 +1,14 @@
 import { FileText } from 'lucide-react';
 import { DefinitionItem } from '@/shared/dashboard/definition-item';
+import { formatCurrency } from '@/shared/format/currency';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
 } from '@/shared/ui/components/card';
-import { type ClientOrder, formatCurrency } from '../../model/orders';
+import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
+import type { ClientOrder } from '../../model/orders';
 
 type OrderServiceCardProps = {
 	order: ClientOrder;
@@ -22,7 +24,12 @@ export const OrderServiceCard = ({ order }: OrderServiceCardProps) => {
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="grid grid-cols-2 md:grid-cols-4 gap-8">
-				<DefinitionItem label="Status" value={order.statusLabel} />
+				<div className="space-y-1">
+					<p className="text-[10px] text-white/40 uppercase tracking-widest">
+						Status
+					</p>
+					<OrderStatusBadge status={order.status} />
+				</div>
 				<DefinitionItem
 					label="Subtotal"
 					value={formatCurrency(order.subtotal)}

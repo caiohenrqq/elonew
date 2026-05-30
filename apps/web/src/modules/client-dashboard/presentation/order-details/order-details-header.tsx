@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Badge } from '@/shared/ui/components/badge';
+import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import type { ClientOrder } from '../../model/orders';
 import { ResumePaymentButton } from './resume-payment-button';
 
@@ -27,7 +27,7 @@ export const OrderDetailsHeader = ({ order }: OrderDetailsHeaderProps) => {
 						<h1 className="text-2xl font-black uppercase tracking-tight">
 							{order.id}
 						</h1>
-						<Badge variant={order.statusVariant}>{order.statusLabel}</Badge>
+						<OrderStatusBadge status={order.status} />
 					</div>
 					<p className="text-xs text-white/40 tracking-wider">
 						Os dados disponíveis deste pedido vieram da sua conta.

@@ -1,5 +1,4 @@
 import { getClientDashboardOrders } from '@/modules/client-dashboard/actions/order-actions';
-import { toClientDashboard } from '@/modules/client-dashboard/model/orders';
 import { ClientDashboardPage } from '@/modules/client-dashboard/presentation/overview/client-dashboard-page';
 
 type ClientPageProps = {
@@ -10,7 +9,7 @@ type ClientPageProps = {
 
 const ClientPage = async ({ searchParams }: ClientPageProps) => {
 	const params = await searchParams;
-	const dashboard = toClientDashboard(await getClientDashboardOrders());
+	const dashboard = await getClientDashboardOrders();
 
 	return (
 		<ClientDashboardPage
