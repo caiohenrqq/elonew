@@ -6,7 +6,11 @@ import {
 	getAdminDashboard,
 	getAdminMetrics,
 	getAdminOrderChatMessages,
+	getAdminSupportTickets,
+	getAdminTicket,
+	replyAdminTicket,
 	unblockAdminUser,
+	updateAdminTicketStatus,
 } from './admin-service';
 
 describe('admin service', () => {
@@ -47,13 +51,14 @@ describe('admin service', () => {
 					},
 				] as T;
 			}
-			if (path === '/admin/support/tickets?limit=25') {
+			if (path === '/admin/tickets?limit=25') {
 				return [
 					{
 						id: 'ticket-1',
 						userId: 'user-1',
+						orderId: null,
 						subject: 'Payment question',
-						status: 'OPEN',
+						status: 'WAITING_SUPPORT',
 						createdAt: '2026-04-10T10:00:00.000Z',
 						updatedAt: '2026-04-10T10:05:00.000Z',
 						messageCount: 2,
@@ -150,6 +155,92 @@ describe('admin service', () => {
 			'/admin/orders/order-1/chat/messages?limit=50',
 			{ auth: true },
 		);
+	});
+
+	it('loads admin support tickets from the lifecycle endpoint with filters', async () => {
+		const apiRequest = jest.fn(async <T>(path: string): Promise<T> => {
+			expect(path).toBe(
+				'/admin/tickets?limit=25&status=WAITING_SUPPORT&query=pagamento',
+			);
+			return [
+				{
+					id: 'ticket-1',
+					userId: 'user-1',
+					orderId: 'order-1',
+					subject: 'Pagamento pendente',
+					status: 'WAITING_SUPPORT',
+					createdAt: '2026-04-10T10:00:00.000Z',
+					updatedAt: '2026-04-10T10:05:00.000Z',
+					messageCount: 2,
+					latestMessageAt: '2026-04-10T10:05:00.000Z',
+				},
+			] as T;
+		});
+
+		await expect(
+			getAdminSupportTickets(apiRequest as AuthenticatedApiRequest, {
+				query: 'pagamento',
+				status: 'WAITING_SUPPORT',
+			}),
+		).resolves.toEqual([
+			expect.objectContaining({
+				id: 'ticket-1',
+				orderId: 'order-1',
+				status: 'WAITING_SUPPORT',
+			}),
+		]);
+	});
+
+	it('loads admin ticket details and submits lifecycle actions', async () => {
+		const ticketResponse = {
+			id: 'ticket-1',
+			userId: 'user-1',
+			orderId: null,
+			subject: 'Payment question',
+			status: 'WAITING_USER',
+			createdAt: '2026-04-10T10:00:00.000Z',
+			updatedAt: '2026-04-10T10:05:00.000Z',
+			messages: [
+				{
+					id: 'message-1',
+					ticketId: 'ticket-1',
+					senderId: 'admin-1',
+					senderRole: 'ADMIN',
+					content: 'Vamos verificar.',
+					createdAt: '2026-04-10T10:05:00.000Z',
+				},
+			],
+		};
+		const apiRequest = jest.fn(async <T>(): Promise<T> => ticketResponse as T);
+
+		await expect(
+			getAdminTicket('ticket-1', apiRequest as AuthenticatedApiRequest),
+		).resolves.toEqual(expect.objectContaining({ id: 'ticket-1' }));
+		await replyAdminTicket(
+			{ ticketId: 'ticket-1', content: 'Vamos verificar.' },
+			apiRequest as AuthenticatedApiRequest,
+		);
+		await updateAdminTicketStatus(
+			{ ticketId: 'ticket-1', status: 'CLOSED' },
+			apiRequest as AuthenticatedApiRequest,
+		);
+
+		expect(apiRequest).toHaveBeenCalledWith('/admin/tickets/ticket-1', {
+			auth: true,
+		});
+		expect(apiRequest).toHaveBeenCalledWith(
+			'/admin/tickets/ticket-1/messages',
+			{
+				auth: true,
+				method: 'POST',
+				body: JSON.stringify({ content: 'Vamos verificar.' }),
+			},
+		);
+		expect(apiRequest).toHaveBeenCalledWith('/admin/tickets/ticket-1/status', {
+			auth: true,
+			method: 'PATCH',
+			body: JSON.stringify({ status: 'CLOSED' }),
+		});
 	});
 
 	it('adds admin endpoint context to non-auth read failures', async () => {

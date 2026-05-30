@@ -109,7 +109,8 @@ const formatTicketStatus = (status: string) => {
 	const labels: Record<string, string> = {
 		CLOSED: 'Fechado',
 		OPEN: 'Aberto',
-		PENDING: 'Pendente',
+		WAITING_SUPPORT: 'Aguardando suporte',
+		WAITING_USER: 'Aguardando usuário',
 	};
 
 	return labels[status] ?? formatTitleCase(status);
@@ -590,12 +591,8 @@ export const AdminSupportPage = ({ tickets }: AdminSupportPageProps) => {
 		(ticket) => ticket.status === 'OPEN',
 	).length;
 	const pendingTickets = tickets.filter(
-		(ticket) => ticket.status === 'PENDING',
+		(ticket) => ticket.status === 'WAITING_SUPPORT',
 	).length;
-	const totalMessages = tickets.reduce(
-		(total, ticket) => total + ticket.messageCount,
-		0,
-	);
 
 	return (
 		<DashboardEntrance>
@@ -604,7 +601,7 @@ export const AdminSupportPage = ({ tickets }: AdminSupportPageProps) => {
 					title="Suporte"
 					detail={`${tickets.length} tickets`}
 				/>
-				<div className="grid gap-4 md:grid-cols-3">
+				<div className="grid gap-4 md:grid-cols-2">
 					<DashboardMetricCard
 						label="Abertos"
 						value={formatMetricCount(openTickets)}
@@ -612,10 +609,6 @@ export const AdminSupportPage = ({ tickets }: AdminSupportPageProps) => {
 					<DashboardMetricCard
 						label="Pendentes"
 						value={formatMetricCount(pendingTickets)}
-					/>
-					<DashboardMetricCard
-						label="Mensagens"
-						value={formatMetricCount(totalMessages)}
 					/>
 				</div>
 				<Card className="overflow-hidden border-white/10">

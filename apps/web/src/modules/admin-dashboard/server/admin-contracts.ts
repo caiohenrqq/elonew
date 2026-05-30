@@ -39,15 +39,60 @@ export const adminOrderSchema = z.object({
 		.nullable(),
 });
 
+export const adminTicketStatusSchema = z.enum([
+	'OPEN',
+	'WAITING_USER',
+	'WAITING_SUPPORT',
+	'CLOSED',
+]);
+
+export const adminTicketSenderRoleSchema = z.enum([
+	'ADMIN',
+	'BOOSTER',
+	'CLIENT',
+]);
+
 export const adminSupportTicketSchema = z.object({
 	id: z.string(),
 	userId: z.string(),
+	orderId: z.string().nullable().default(null),
 	subject: z.string(),
-	status: z.string(),
+	status: adminTicketStatusSchema,
 	createdAt: z.string(),
 	updatedAt: z.string(),
 	messageCount: z.number().int().nonnegative(),
 	latestMessageAt: z.string().nullable(),
+});
+
+export const adminTicketMessageSchema = z.object({
+	id: z.string(),
+	ticketId: z.string(),
+	senderId: z.string(),
+	senderRole: adminTicketSenderRoleSchema,
+	content: z.string(),
+	createdAt: z.string(),
+});
+
+export const adminTicketDetailSchema = adminSupportTicketSchema
+	.omit({ messageCount: true, latestMessageAt: true })
+	.extend({
+		messages: z.array(adminTicketMessageSchema),
+	});
+
+export const listAdminTicketsInputSchema = z.object({
+	limit: z.number().int().min(1).max(100).default(25),
+	status: adminTicketStatusSchema.optional(),
+	query: z.string().trim().min(1).max(120).optional(),
+});
+
+export const replyAdminTicketInputSchema = z.object({
+	ticketId: z.string().trim().min(1),
+	content: z.string().trim().min(1).max(5000),
+});
+
+export const updateAdminTicketStatusInputSchema = z.object({
+	ticketId: z.string().trim().min(1),
+	status: adminTicketStatusSchema,
 });
 
 export const adminDashboardSchema = z.object({
@@ -60,5 +105,14 @@ export const adminDashboardSchema = z.object({
 export type AdminMetricsOutput = z.infer<typeof adminMetricsSchema>;
 export type AdminUserOutput = z.infer<typeof adminUserSchema>;
 export type AdminOrderOutput = z.infer<typeof adminOrderSchema>;
+export type AdminTicketStatus = z.infer<typeof adminTicketStatusSchema>;
+export type AdminTicketSenderRole = z.infer<typeof adminTicketSenderRoleSchema>;
 export type AdminSupportTicketOutput = z.infer<typeof adminSupportTicketSchema>;
+export type AdminTicketMessageOutput = z.infer<typeof adminTicketMessageSchema>;
+export type AdminTicketDetailOutput = z.infer<typeof adminTicketDetailSchema>;
+export type ListAdminTicketsInput = z.infer<typeof listAdminTicketsInputSchema>;
+export type ReplyAdminTicketInput = z.infer<typeof replyAdminTicketInputSchema>;
+export type UpdateAdminTicketStatusInput = z.infer<
+	typeof updateAdminTicketStatusInputSchema
+>;
 export type AdminDashboardOutput = z.infer<typeof adminDashboardSchema>;

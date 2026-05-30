@@ -173,8 +173,9 @@ describe('admin dashboard pages', () => {
 					{
 						id: 'ticket-1',
 						userId: 'client-1',
+						orderId: null,
 						subject: 'Preciso de ajuda',
-						status: 'OPEN',
+						status: 'WAITING_SUPPORT',
 						createdAt: '2026-05-01T00:00:00.000Z',
 						updatedAt: '2026-05-02T00:00:00.000Z',
 						messageCount: 2,
@@ -186,7 +187,7 @@ describe('admin dashboard pages', () => {
 
 		expect(screen.getByText('Suporte')).toBeInTheDocument();
 		expect(screen.getByText('Preciso de ajuda')).toBeInTheDocument();
-		expect(screen.getByText('Aberto')).toBeInTheDocument();
+		expect(screen.getByText('Aguardando suporte')).toBeInTheDocument();
 		expect(screen.getByText('2 mensagens')).toBeInTheDocument();
 	});
 
