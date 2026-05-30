@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
 	experimental: {
 		optimizePackageImports: ['lucide-react'],
 	},
-	transpilePackages: ['@packages/auth', '@packages/shared', '@packages/ui'],
+	transpilePackages: ['@packages/auth', '@packages/shared'],
 	turbopack: {
 		resolveAlias: {
 			'lenis/react': './node_modules/lenis/dist/lenis-react.mjs',

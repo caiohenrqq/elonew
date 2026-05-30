@@ -19,7 +19,7 @@
 		"@hookform/resolvers": "^5.2.2",
 		"@packages/auth": "workspace:*",
 		"@packages/shared": "workspace:*",
-		"@packages/ui": "workspace:*",
+		"@radix-ui/react-select": "^2.2.6",
 		"clsx": "^2.1.1",
 		"gsap": "^3.14.2",
 		"lenis": "^1.3.21",

@@ -1,10 +1,9 @@
 @import "tailwindcss";
-@import "@packages/ui/styles/design-system.css";
+@import "../shared/ui/styles/design-system.css";
 
 @source "../app";
 @source "../modules";
 @source "../shared";
-@source "../../../../packages/ui/src";
 
 html.lenis,
 html.lenis body {
