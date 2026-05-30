@@ -17,6 +17,5 @@ COPY packages/config/package.json packages/config/package.json
 COPY packages/database/package.json packages/database/package.json
 COPY packages/integrations/package.json packages/integrations/package.json
 COPY packages/shared/package.json packages/shared/package.json
-COPY packages/ui/package.json packages/ui/package.json
 
 RUN CI=true pnpm install --frozen-lockfile --prod=false --config.confirmModulesPurge=false
