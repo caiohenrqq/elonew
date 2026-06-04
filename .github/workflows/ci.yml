@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, typecheck, build & tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Provision local env files
+        run: |
+          cp apps/api/.env.example apps/api/.env
+          cp apps/web/.env.example apps/web/.env
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Lint & format
+        run: pnpm biome:check:all
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Typecheck API
+        run: pnpm api exec tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck web
+        run: pnpm web exec tsc --noEmit -p tsconfig.json
+
+      - name: API unit tests
+        run: pnpm api test:unit
+
+      - name: API integration tests
+        run: pnpm api test:integration
+
+      - name: Web tests
+        run: pnpm web test
+
+      - name: Worker tests
+        run: pnpm workers test
+
+      - name: Build API & web
+        run: pnpm api build && pnpm web build
+
+  database:
+    name: DB-backed API tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: elonew_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d elonew_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/elonew_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Generate Prisma client
+        run: pnpm --filter @packages/database exec prisma generate
+
+      - name: Apply migrations
+        run: pnpm --filter @packages/database exec prisma migrate deploy
+
+      - name: API integration (db) tests
+        run: pnpm --filter api exec jest --config ./test/jest-integration-db.json --runInBand
+
+      - name: API e2e (db) tests
+        run: pnpm --filter api exec jest --config ./test/jest-e2e-db.json --runInBand
