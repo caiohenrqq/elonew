@@ -81,15 +81,15 @@ export const RegisterForm = () => {
 
 				<div className="space-y-2">
 					<h2 className="text-xl font-black uppercase tracking-[0.2em] text-white">
-						Cadastro Realizado!
+						Confirme seu e-mail
 					</h2>
 					<p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed max-w-[280px] mx-auto">
-						Sua conta foi criada com sucesso. Redirecionando você para o login
-						em instantes.
+						Enviamos um código de confirmação para o seu e-mail. Verifique sua
+						caixa de entrada antes de acessar a conta.
 					</p>
 				</div>
 
-				<AuthSuccessText>Seja bem-vindo à EloNew.</AuthSuccessText>
+				<AuthSuccessText>Redirecionando para o login.</AuthSuccessText>
 			</div>
 		);
 	}
