@@ -1,0 +1,33 @@
+name: Setup workspace
+description: Install dependencies, provision env files, build shared packages and generate the Prisma client.
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Provision local env files
+      shell: bash
+      run: |
+        cp apps/api/.env.example apps/api/.env
+        cp apps/api/.env.example apps/api/.env.test
+        sed -i 's/^NODE_ENV=.*/NODE_ENV=test/' apps/api/.env.test
+        sed -i 's|^DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5432/elonew_test|' apps/api/.env.test
+        cp apps/web/.env.example apps/web/.env
+
+    - name: Build shared packages
+      shell: bash
+      run: pnpm build:packages
+
+    - name: Generate Prisma client
+      shell: bash
+      run: pnpm db:generate

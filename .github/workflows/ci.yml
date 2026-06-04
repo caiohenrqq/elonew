@@ -5,9 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -17,32 +18,14 @@ jobs:
   checks:
     name: Lint, typecheck, build & tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Provision local env files
-        run: |
-          cp apps/api/.env.example apps/api/.env
-          cp apps/web/.env.example apps/web/.env
-
-      - name: Generate Prisma client
-        run: pnpm db:generate
+      - uses: ./.github/actions/setup-workspace
 
       - name: Lint & format
         run: pnpm biome:check:all
-
-      - name: Build shared packages
-        run: pnpm build:packages
 
       - name: Typecheck API
         run: pnpm api exec tsc --noEmit -p tsconfig.json
@@ -68,6 +51,7 @@ jobs:
   database:
     name: DB-backed API tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16-alpine
@@ -96,21 +80,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared packages
-        run: pnpm build:packages
-
-      - name: Generate Prisma client
-        run: pnpm --filter @packages/database exec prisma generate
+      - uses: ./.github/actions/setup-workspace
 
       - name: Apply migrations
         run: pnpm --filter @packages/database exec prisma migrate deploy
