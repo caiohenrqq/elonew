@@ -10,6 +10,8 @@ type BoosterChatPanelProps = {
 	orderLabel: string;
 	currentUserId: string;
 	initialMessages: ChatMessage[];
+	isReadOnly?: boolean;
+	statusText?: string;
 };
 
 export const BoosterChatPanel = ({
@@ -17,6 +19,8 @@ export const BoosterChatPanel = ({
 	orderLabel,
 	currentUserId,
 	initialMessages,
+	isReadOnly,
+	statusText = 'Ativo',
 }: BoosterChatPanelProps) => {
 	const [messages, setMessages] = useState(initialMessages);
 	const [error, setError] = useState<string | null>(null);
@@ -50,12 +54,13 @@ export const BoosterChatPanel = ({
 				currentUserId={currentUserId}
 				onSendMessage={handleSendMessage}
 				isSending={isPending}
-				isDisabled={isPending}
+				isDisabled={isPending || isReadOnly}
+				isReadOnly={isReadOnly}
 				title={orderLabel}
-				statusText="Ativo"
+				statusText={statusText}
 				emptyTitle="Nenhuma mensagem"
 				emptyDescription="Envie a primeira mensagem para alinhar este pedido com o cliente."
-				className="h-[360px] max-w-none"
+				className="h-[min(720px,calc(100dvh-15rem))] min-h-[520px] max-w-none"
 			/>
 			{error ? (
 				<p className="text-[10px] font-bold uppercase tracking-wider text-red-400">

@@ -1,10 +1,13 @@
+import { CheckCircle2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import type { ChatMessage } from '@/shared/chat/chat.types';
+import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-button';
 import { formatCurrency } from '@/shared/format/currency';
 import { formatDate } from '@/shared/format/date';
 import { formatOrderRoute } from '@/shared/format/orders';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import {
+	completeBoosterOrderAction,
 	getBoosterOrder,
 	getBoosterOrderChatMessages,
 	getBoosterUserId,
@@ -28,6 +31,9 @@ const toSingleOrderWork = (order: BoosterOrderOutput) =>
 		},
 	}).activeOrders[0];
 
+const isReadOnlyOrder = (status: string) =>
+	status === 'completed' || status === 'cancelled';
+
 export const BoosterOrderDetailsPage = async ({
 	orderId,
 }: BoosterOrderDetailsPageProps) => {
@@ -40,24 +46,47 @@ export const BoosterOrderDetailsPage = async ({
 
 	const order = toSingleOrderWork(orderOutput);
 	const chatMessages: ChatMessage[] = chatResult.items;
+	const isReadOnly = isReadOnlyOrder(order.status);
 
 	return (
 		<div className="space-y-8">
-			<section className="space-y-3">
-				<p className="text-[10px] font-black uppercase tracking-[0.2em] text-hextech-cyan">
-					Pedido em execução
-				</p>
-				<div>
+			<section className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+				<div className="space-y-3">
+					<p className="text-[10px] font-black uppercase tracking-[0.2em] text-hextech-cyan">
+						Pedido do booster
+					</p>
 					<h1 className="font-display text-3xl font-black text-white">
 						{formatOrderRoute(order)}
 					</h1>
 					<p className="mt-2 font-mono text-xs text-white/35">{order.id}</p>
 				</div>
+				{isReadOnly ? null : (
+					<form action={completeBoosterOrderAction.bind(null, order.id)}>
+						<DashboardSubmitButton
+							variant="outline"
+							size="md"
+							pendingLabel="Finalizando"
+							className="gap-2"
+						>
+							<CheckCircle2 className="h-4 w-4" />
+							Finalizar pedido
+						</DashboardSubmitButton>
+					</form>
+				)}
 			</section>
 
-			<div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-				<section className="grid gap-4 sm:grid-cols-3">
-					<div className="border border-white/5 bg-white/5 p-5">
+			<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+				<BoosterChatPanel
+					orderId={order.id}
+					orderLabel="Chat do pedido"
+					currentUserId={currentUserId}
+					initialMessages={chatMessages}
+					isReadOnly={isReadOnly}
+					statusText={isReadOnly ? 'Somente leitura' : 'Ativo'}
+				/>
+
+				<section className="grid content-start gap-4 sm:grid-cols-3 xl:grid-cols-1">
+					<div className="rounded-sm border border-white/10 bg-white/[0.03] p-5">
 						<p className="text-[9px] font-black uppercase tracking-widest text-white/35">
 							Status
 						</p>
@@ -65,7 +94,7 @@ export const BoosterOrderDetailsPage = async ({
 							<OrderStatusBadge status={order.status} />
 						</div>
 					</div>
-					<div className="border border-white/5 bg-white/5 p-5">
+					<div className="rounded-sm border border-white/10 bg-white/[0.03] p-5">
 						<p className="text-[9px] font-black uppercase tracking-widest text-white/35">
 							Prazo
 						</p>
@@ -73,7 +102,7 @@ export const BoosterOrderDetailsPage = async ({
 							{formatDate(order.deadline)}
 						</p>
 					</div>
-					<div className="border border-white/5 bg-white/5 p-5">
+					<div className="rounded-sm border border-white/10 bg-white/[0.03] p-5">
 						<p className="text-[9px] font-black uppercase tracking-widest text-white/35">
 							Repasse
 						</p>
@@ -82,13 +111,6 @@ export const BoosterOrderDetailsPage = async ({
 						</p>
 					</div>
 				</section>
-
-				<BoosterChatPanel
-					orderId={order.id}
-					orderLabel={formatOrderRoute(order)}
-					currentUserId={currentUserId}
-					initialMessages={chatMessages}
-				/>
 			</div>
 		</div>
 	);

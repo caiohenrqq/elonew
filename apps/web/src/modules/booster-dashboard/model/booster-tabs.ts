@@ -7,7 +7,7 @@ export const boosterDashboardTabs = [
 	{
 		value: 'work',
 		href: '/booster?tab=work',
-		label: 'Trabalho',
+		label: 'Pedidos',
 	},
 ] as const;
 

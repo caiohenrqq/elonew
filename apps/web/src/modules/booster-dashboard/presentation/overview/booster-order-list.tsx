@@ -1,10 +1,12 @@
 import {
 	CheckCircle2,
+	ExternalLink,
 	PackageCheck,
 	PackageOpen,
 	Shield,
 	XCircle,
 } from 'lucide-react';
+import Link from 'next/link';
 import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import { DashboardSectionHeader } from '@/shared/dashboard/dashboard-section-header';
 import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-button';
@@ -12,6 +14,7 @@ import { DashboardTableSection } from '@/shared/dashboard/dashboard-table-sectio
 import { formatCurrency } from '@/shared/format/currency';
 import { formatDate } from '@/shared/format/date';
 import { formatOrderRoute, formatServiceType } from '@/shared/format/orders';
+import { getButtonClassName } from '@/shared/ui/components/button';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import {
 	TableBody,
@@ -88,16 +91,45 @@ const BoosterOrderActions = ({
 
 	if (mode === 'active') {
 		return (
-			<form action={completeBoosterOrderAction.bind(null, order.id)}>
-				<DashboardSubmitButton
-					variant="outline"
-					size="sm"
-					pendingLabel="Finalizando"
+			<>
+				<Link
+					href={`/booster/orders/${order.id}`}
+					className={getButtonClassName({
+						variant: 'primary',
+						size: 'sm',
+						className: 'gap-2',
+					})}
 				>
-					<CheckCircle2 className="h-3 w-3" />
-					Finalizar
-				</DashboardSubmitButton>
-			</form>
+					<ExternalLink className="h-3 w-3" />
+					Abrir pedido
+				</Link>
+				<form action={completeBoosterOrderAction.bind(null, order.id)}>
+					<DashboardSubmitButton
+						variant="outline"
+						size="sm"
+						pendingLabel="Finalizando"
+					>
+						<CheckCircle2 className="h-3 w-3" />
+						Finalizar
+					</DashboardSubmitButton>
+				</form>
+			</>
+		);
+	}
+
+	if (mode === 'completed') {
+		return (
+			<Link
+				href={`/booster/orders/${order.id}`}
+				className={getButtonClassName({
+					variant: 'outline',
+					size: 'sm',
+					className: 'gap-2',
+				})}
+			>
+				<ExternalLink className="h-3 w-3" />
+				Ver pedido
+			</Link>
 		);
 	}
 
@@ -144,11 +176,9 @@ const BoosterOrderCard = ({
 			</div>
 		</div>
 
-		{mode !== 'completed' ? (
-			<div className="mt-4 flex flex-wrap justify-end gap-2">
-				<BoosterOrderActions mode={mode} order={order} />
-			</div>
-		) : null}
+		<div className="mt-4 flex flex-wrap justify-end gap-2">
+			<BoosterOrderActions mode={mode} order={order} />
+		</div>
 	</article>
 );
 
@@ -171,7 +201,7 @@ const BoosterOrderRow = ({
 				</div>
 			</div>
 		</TableCell>
-		<TableCell className="font-bold text-white/70">
+		<TableCell className="font-bold text-white/70 whitespace-nowrap">
 			{formatOrderRoute(order)}
 		</TableCell>
 		<TableCell>
@@ -183,7 +213,7 @@ const BoosterOrderRow = ({
 		<TableCell className="font-black text-hextech-gold">
 			{formatCurrency(order.boosterAmount)}
 		</TableCell>
-		<TableCell>
+		<TableCell className="whitespace-nowrap">
 			<div className="flex items-center justify-end gap-2">
 				<BoosterOrderActions mode={mode} order={order} />
 			</div>
@@ -225,11 +255,11 @@ export const BoosterOrderList = ({
 			<TableHeader>
 				<TableRow>
 					<TableHead>Serviço</TableHead>
-					<TableHead>Rota</TableHead>
+					<TableHead className="min-w-44">Rota</TableHead>
 					<TableHead>Status</TableHead>
 					<TableHead>Prazo</TableHead>
 					<TableHead>Repasse</TableHead>
-					<TableHead className="text-right">Ações</TableHead>
+					<TableHead className="min-w-56 text-right">Ações</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>

@@ -68,7 +68,7 @@ describe('BoosterNavigation', () => {
 			'aria-current',
 			'page',
 		);
-		expect(screen.getByRole('link', { name: /Trabalho/i })).not.toHaveAttribute(
+		expect(screen.getByRole('link', { name: /Pedidos/i })).not.toHaveAttribute(
 			'aria-current',
 		);
 	});
@@ -78,7 +78,7 @@ describe('BoosterNavigation', () => {
 
 		render(<BoosterNavigation />);
 
-		expect(screen.getByRole('link', { name: /Trabalho/i })).toHaveAttribute(
+		expect(screen.getByRole('link', { name: /Pedidos/i })).toHaveAttribute(
 			'aria-current',
 			'page',
 		);
