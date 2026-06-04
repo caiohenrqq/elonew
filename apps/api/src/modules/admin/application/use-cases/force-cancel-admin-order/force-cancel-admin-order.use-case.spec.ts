@@ -4,7 +4,10 @@ import type {
 } from '@modules/admin/application/ports/admin-governance.repository';
 import { ForceCancelAdminOrderUseCase } from '@modules/admin/application/use-cases/force-cancel-admin-order/force-cancel-admin-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
-import { OrderCancellationNotAllowedError } from '@modules/orders/domain/order.errors';
+import {
+	OrderCancellationNotAllowedError,
+	OrderInvalidTransitionError,
+} from '@modules/orders/domain/order.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import { User } from '@modules/users/domain/user.entity';
 
@@ -83,6 +86,27 @@ describe('ForceCancelAdminOrderUseCase', () => {
 			}),
 		).rejects.toThrow(OrderCancellationNotAllowedError);
 		expect(repository.order.status).toBe(OrderStatus.IN_PROGRESS);
+		expect(repository.actions).toEqual([]);
+	});
+
+	it('rejects cancelling an already cancelled order', async () => {
+		const repository = new AdminGovernanceRepositoryStub();
+		repository.order = Order.rehydrate({
+			id: 'order-1',
+			clientId: 'client-1',
+			status: OrderStatus.CANCELLED,
+		});
+		const useCase = new ForceCancelAdminOrderUseCase(repository);
+
+		await expect(
+			useCase.execute({
+				adminUserId: 'admin-1',
+				orderId: 'order-1',
+				reason: 'manual review',
+				now: new Date('2026-05-05T12:00:00.000Z'),
+			}),
+		).rejects.toThrow(OrderInvalidTransitionError);
+		expect(repository.order.status).toBe(OrderStatus.CANCELLED);
 		expect(repository.actions).toEqual([]);
 	});
 });
