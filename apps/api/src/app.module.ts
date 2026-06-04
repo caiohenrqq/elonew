@@ -11,12 +11,14 @@ import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { ApiDomainErrorFilter } from './common/http/api-domain-error.filter';
+import { LoggingModule } from './common/logging/logging.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AppSettingsModule } from './common/settings/app-settings.module';
 
 @Module({
 	imports: [
 		AppSettingsModule,
+		LoggingModule,
 		PrismaModule,
 		AdminModule,
 		AuthModule,
