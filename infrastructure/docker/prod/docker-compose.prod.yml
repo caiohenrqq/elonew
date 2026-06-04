@@ -111,6 +111,8 @@ services:
       NODE_ENV: production
       PORT: 3001
       API_URL: http://api:3000
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_ORIGIN}
+      NEXT_PUBLIC_APP_URL: ${PUBLIC_WEB_ORIGIN}
       WEB_SESSION_SECRET: ${WEB_SESSION_SECRET:?set WEB_SESSION_SECRET in infrastructure/docker/prod/.env}
     networks: [public-edge]
     healthcheck:
