@@ -1,4 +1,8 @@
 import {
+	EMAIL_SENDER_KEY,
+	type EmailSenderPort,
+} from '@app/common/email/ports/email-sender.port';
+import {
 	EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY,
 	type EmailConfirmationTokenServicePort,
 } from '@modules/users/application/ports/email-confirmation-token.port';
@@ -15,7 +19,7 @@ import {
 	UserEmailAlreadyInUseError,
 	UsernameAlreadyInUseError,
 } from '@modules/users/domain/user.errors';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 
 type SignUpInput = {
@@ -36,6 +40,8 @@ type SignUpOutput = {
 
 @Injectable()
 export class SignUpUseCase {
+	private readonly logger = new Logger(SignUpUseCase.name);
+
 	constructor(
 		@Inject(USER_REPOSITORY_KEY)
 		private readonly userRepository: UserRepositoryPort,
@@ -43,6 +49,8 @@ export class SignUpUseCase {
 		private readonly passwordHasher: PasswordHasherPort,
 		@Inject(EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY)
 		private readonly emailConfirmationTokenService: EmailConfirmationTokenServicePort,
+		@Inject(EMAIL_SENDER_KEY)
+		private readonly emailSender: EmailSenderPort,
 	) {}
 
 	async execute(input: SignUpInput): Promise<SignUpOutput> {
@@ -67,6 +75,12 @@ export class SignUpUseCase {
 			}),
 		);
 
+		await this.sendConfirmationEmail({
+			email: createdUser.email,
+			token: emailConfirmationToken.rawToken,
+			username: createdUser.username,
+		});
+
 		return {
 			id: createdUser.id,
 			username: createdUser.username,
@@ -77,4 +91,38 @@ export class SignUpUseCase {
 			emailConfirmationPreviewToken: emailConfirmationToken.rawToken,
 		};
 	}
+
+	private async sendConfirmationEmail(input: {
+		email: string;
+		token: string;
+		username: string;
+	}) {
+		try {
+			await this.emailSender.send({
+				to: input.email,
+				subject: 'Confirme seu e-mail na EloNew',
+				html: `
+					<p>Olá, ${escapeHtml(input.username)}.</p>
+					<p>Use o código abaixo para confirmar seu e-mail na EloNew:</p>
+					<p><strong>${escapeHtml(input.token)}</strong></p>
+				`,
+				text: `Olá, ${input.username}.\n\nUse este código para confirmar seu e-mail na EloNew: ${input.token}`,
+			});
+		} catch (error) {
+			this.logger.warn(
+				`Failed to send email confirmation to ${input.email}: ${formatEmailError(error)}`,
+			);
+		}
+	}
 }
+
+const formatEmailError = (error: unknown) =>
+	error instanceof Error ? error.message : 'Unknown email delivery error';
+
+const escapeHtml = (value: string) =>
+	value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#039;');

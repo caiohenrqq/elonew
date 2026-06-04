@@ -1,3 +1,4 @@
+import type { EmailSenderPort } from '@app/common/email/ports/email-sender.port';
 import type { AuthSessionRepositoryPort } from '@modules/auth/application/ports/auth-session-repository.port';
 import type {
 	AccessTokenServicePort,
@@ -124,12 +125,16 @@ describe('LoginUseCase', () => {
 			}),
 			hash: jest.fn(),
 		};
+		const emailSender: EmailSenderPort = {
+			send: jest.fn().mockResolvedValue(undefined),
+		};
 		const useCase = new LoginUseCase(
 			users,
 			passwordHasher,
 			authSessions,
 			accessTokenService,
 			refreshTokenService,
+			emailSender,
 		);
 
 		await expect(
@@ -154,6 +159,12 @@ describe('LoginUseCase', () => {
 			'hashed-password',
 		);
 		expect(authSessions.create).toHaveBeenCalled();
+		expect(emailSender.send).toHaveBeenCalledWith(
+			expect.objectContaining({
+				to: 'summoner1@example.com',
+				subject: 'Novo acesso na sua conta EloNew',
+			}),
+		);
 	});
 
 	it('rejects invalid credentials', async () => {
@@ -171,12 +182,16 @@ describe('LoginUseCase', () => {
 			generate: jest.fn(),
 			hash: jest.fn(),
 		};
+		const emailSender: EmailSenderPort = {
+			send: jest.fn().mockResolvedValue(undefined),
+		};
 		const useCase = new LoginUseCase(
 			users,
 			passwordHasher,
 			authSessions,
 			accessTokenService,
 			refreshTokenService,
+			emailSender,
 		);
 
 		await expect(
@@ -211,12 +226,16 @@ describe('LoginUseCase', () => {
 			generate: jest.fn(),
 			hash: jest.fn(),
 		};
+		const emailSender: EmailSenderPort = {
+			send: jest.fn().mockResolvedValue(undefined),
+		};
 		const useCase = new LoginUseCase(
 			users,
 			passwordHasher,
 			authSessions,
 			accessTokenService,
 			refreshTokenService,
+			emailSender,
 		);
 
 		await expect(
@@ -258,12 +277,16 @@ describe('LoginUseCase', () => {
 			generate: jest.fn(),
 			hash: jest.fn(),
 		};
+		const emailSender: EmailSenderPort = {
+			send: jest.fn().mockResolvedValue(undefined),
+		};
 		const useCase = new LoginUseCase(
 			users,
 			passwordHasher,
 			authSessions,
 			accessTokenService,
 			refreshTokenService,
+			emailSender,
 		);
 
 		await expect(

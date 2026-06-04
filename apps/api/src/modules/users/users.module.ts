@@ -1,3 +1,4 @@
+import { EmailModule } from '@app/common/email/email.module';
 import { HttpThrottlingModule } from '@app/common/http/http-throttling.module';
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY } from '@modules/users/application/ports/email-confirmation-token.port';
@@ -13,7 +14,7 @@ import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, HttpThrottlingModule],
+	imports: [PrismaModule, HttpThrottlingModule, EmailModule],
 	controllers: [UsersController],
 	providers: [
 		PrismaUserRepository,

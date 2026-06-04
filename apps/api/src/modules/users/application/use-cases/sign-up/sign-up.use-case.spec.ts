@@ -1,3 +1,4 @@
+import type { EmailSenderPort } from '@app/common/email/ports/email-sender.port';
 import type { EmailConfirmationTokenServicePort } from '@modules/users/application/ports/email-confirmation-token.port';
 import type { PasswordHasherPort } from '@modules/users/application/ports/password-hasher.port';
 import type { UserRepositoryPort } from '@modules/users/application/ports/user-repository.port';
@@ -79,10 +80,14 @@ describe('SignUpUseCase', () => {
 			}),
 			hash: jest.fn(),
 		};
+		const emailSender: EmailSenderPort = {
+			send: jest.fn().mockResolvedValue(undefined),
+		};
 		const useCase = new SignUpUseCase(
 			repository,
 			passwordHasher,
 			emailConfirmationTokenService,
+			emailSender,
 		);
 
 		const createdUser = await useCase.execute({
@@ -113,6 +118,13 @@ describe('SignUpUseCase', () => {
 			emailConfirmationTokenExpiresAt: new Date('2026-12-31T01:00:00.000Z'),
 		});
 		expect(persistedUser?.passwordHash).toBe('hashed-password');
+		expect(emailSender.send).toHaveBeenCalledWith(
+			expect.objectContaining({
+				to: 'summoner1@example.com',
+				subject: 'Confirme seu e-mail na EloNew',
+				html: expect.stringContaining('preview-token'),
+			}),
+		);
 	});
 
 	it('rejects sign-up when the email is already in use', async () => {
@@ -129,10 +141,14 @@ describe('SignUpUseCase', () => {
 			}),
 			hash: jest.fn(),
 		};
+		const emailSender: EmailSenderPort = {
+			send: jest.fn().mockResolvedValue(undefined),
+		};
 		const useCase = new SignUpUseCase(
 			repository,
 			passwordHasher,
 			emailConfirmationTokenService,
+			emailSender,
 		);
 
 		await useCase.execute({
@@ -164,10 +180,14 @@ describe('SignUpUseCase', () => {
 			}),
 			hash: jest.fn(),
 		};
+		const emailSender: EmailSenderPort = {
+			send: jest.fn().mockResolvedValue(undefined),
+		};
 		const useCase = new SignUpUseCase(
 			repository,
 			passwordHasher,
 			emailConfirmationTokenService,
+			emailSender,
 		);
 
 		await useCase.execute({

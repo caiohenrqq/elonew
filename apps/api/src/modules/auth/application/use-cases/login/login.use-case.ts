@@ -1,4 +1,8 @@
 import {
+	EMAIL_SENDER_KEY,
+	type EmailSenderPort,
+} from '@app/common/email/ports/email-sender.port';
+import {
 	AUTH_SESSION_REPOSITORY_KEY,
 	type AuthSessionRepositoryPort,
 } from '@modules/auth/application/ports/auth-session-repository.port';
@@ -21,7 +25,7 @@ import {
 	USER_REPOSITORY_KEY,
 	type UserRepositoryPort,
 } from '@modules/users/application/ports/user-repository.port';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 type LoginInput = {
 	email: string;
@@ -43,6 +47,8 @@ type LoginOutput = {
 
 @Injectable()
 export class LoginUseCase {
+	private readonly logger = new Logger(LoginUseCase.name);
+
 	constructor(
 		@Inject(USER_REPOSITORY_KEY)
 		private readonly userRepository: UserRepositoryPort,
@@ -54,6 +60,8 @@ export class LoginUseCase {
 		private readonly accessTokenService: AccessTokenServicePort,
 		@Inject(REFRESH_TOKEN_SERVICE_KEY)
 		private readonly refreshTokenService: RefreshTokenServicePort,
+		@Inject(EMAIL_SENDER_KEY)
+		private readonly emailSender: EmailSenderPort,
 	) {}
 
 	async execute(input: LoginInput): Promise<LoginOutput> {
@@ -80,6 +88,11 @@ export class LoginUseCase {
 			role: user.role,
 		});
 
+		await this.sendLoginEmail({
+			email: user.email,
+			username: user.username,
+		});
+
 		return {
 			accessToken: accessToken.token,
 			refreshToken: refreshToken.rawToken,
@@ -93,4 +106,34 @@ export class LoginUseCase {
 			},
 		};
 	}
+
+	private async sendLoginEmail(input: { email: string; username: string }) {
+		try {
+			await this.emailSender.send({
+				to: input.email,
+				subject: 'Novo acesso na sua conta EloNew',
+				html: `
+					<p>Olá, ${escapeHtml(input.username)}.</p>
+					<p>Um novo login foi realizado na sua conta EloNew.</p>
+					<p>Se foi você, nenhuma ação é necessária.</p>
+				`,
+				text: `Olá, ${input.username}.\n\nUm novo login foi realizado na sua conta EloNew. Se foi você, nenhuma ação é necessária.`,
+			});
+		} catch (error) {
+			this.logger.warn(
+				`Failed to send login notification to ${input.email}: ${formatEmailError(error)}`,
+			);
+		}
+	}
 }
+
+const formatEmailError = (error: unknown) =>
+	error instanceof Error ? error.message : 'Unknown email delivery error';
+
+const escapeHtml = (value: string) =>
+	value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#039;');

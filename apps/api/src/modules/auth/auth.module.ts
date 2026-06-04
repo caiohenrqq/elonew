@@ -1,3 +1,4 @@
+import { EmailModule } from '@app/common/email/email.module';
 import { HttpThrottlingModule } from '@app/common/http/http-throttling.module';
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AUTH_SESSION_REPOSITORY_KEY } from '@modules/auth/application/ports/auth-session-repository.port';
@@ -21,7 +22,7 @@ import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, HttpThrottlingModule, UsersModule],
+	imports: [PrismaModule, HttpThrottlingModule, UsersModule, EmailModule],
 	controllers: [AuthController],
 	providers: [
 		PrismaAuthSessionRepository,
