@@ -48,3 +48,21 @@
 	- avoids port-collision instability seen with `nest start --watch` in Docker polling setups.
 - Used by API script:
 	- `pnpm --filter api run start:dev:stable`
+
+## Docker layouts (`infrastructure/docker`)
+
+### Dev (`dev/`)
+- `docker-compose.dev.yml` + `Dockerfile.dev`: hot-reload stack with the repo
+  bind-mounted into a single shared image. Managed by `pnpm docker:dev:*`.
+
+### Prod / beta (`prod/`)
+- `Dockerfile.prod`: multi-stage build (`base` → `deps` → `build` → `runtime`)
+  that compiles packages, the API (`nest build`), and the web app (`next build`),
+  producing one image used by all app services with different commands.
+- `docker-compose.prod.yml`: production-like stack — `database`, `redis`, a
+  one-shot `migrate` job (`prisma migrate deploy`), `api`, `web`, `workers`, and a
+  `cloudflared` connector that fronts the stack through a named Cloudflare Tunnel.
+- Config lives in git-ignored env files alongside the compose file (templates are
+  the committed `*.env.example`).
+- Managed by `pnpm docker:prod:*` (`build`, `up`, `down`, `logs`).
+- Full setup and operation: see `docs/beta-hosting.md`.
