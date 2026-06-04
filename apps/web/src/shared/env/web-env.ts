@@ -75,3 +75,6 @@ export const getWebAppUrl = () => {
 
 export const isProductionRuntime = () =>
 	validateWebEnv().NODE_ENV === 'production';
+
+export const isDevelopmentRuntime = () =>
+	validateWebEnv().NODE_ENV === 'development';

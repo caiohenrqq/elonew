@@ -1,7 +1,13 @@
 'use server';
 
+import {
+	DEV_USER_PASSWORD,
+	DEV_USERS,
+	type DevUserRole,
+} from '@packages/shared/testing/dev-users';
 import { redirect } from 'next/navigation';
 import { getAuthErrorMessage } from '@/shared/api-client-management/user-messages';
+import { isDevelopmentRuntime } from '@/shared/env/web-env';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import {
 	type LoginFormInput,
@@ -15,6 +21,8 @@ export type AuthActionState = {
 	error?: string;
 	success?: boolean;
 };
+
+export type DevLoginRole = DevUserRole;
 
 export const loginAction = async (
 	input: LoginFormInput,
@@ -37,6 +45,31 @@ export const loginAction = async (
 	}
 
 	redirect(redirectPath);
+};
+
+export const devLoginAction = async (
+	role: DevLoginRole,
+): Promise<AuthActionState> => {
+	if (!isDevelopmentRuntime()) {
+		return { error: 'Login rápido disponível apenas em desenvolvimento.' };
+	}
+
+	const devUser = DEV_USERS.find((user) => user.role === role);
+	if (!devUser) return { error: 'Perfil de desenvolvimento inválido.' };
+
+	try {
+		await assertSameOriginRequest();
+		await login({
+			email: devUser.email,
+			password: DEV_USER_PASSWORD,
+		});
+	} catch (error) {
+		return {
+			error: getAuthErrorMessage(error, 'login'),
+		};
+	}
+
+	redirect(devUser.dashboardPath);
 };
 
 export const registerAction = async (

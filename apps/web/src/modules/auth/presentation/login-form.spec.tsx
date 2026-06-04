@@ -1,9 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { HTMLAttributes, PropsWithChildren } from 'react';
-import { loginAction } from '@/modules/auth/actions/auth-actions';
+import {
+	devLoginAction,
+	loginAction,
+} from '@/modules/auth/actions/auth-actions';
 import { LoginForm } from './login-form';
 
 jest.mock('@/modules/auth/actions/auth-actions', () => ({
+	devLoginAction: jest.fn(),
 	loginAction: jest.fn(),
 }));
 
@@ -54,6 +58,33 @@ describe('LoginForm', () => {
 		expect(
 			screen.getByRole('button', { name: /Entrar Agora/i }),
 		).toBeInTheDocument();
+	});
+
+	it('should hide development login shortcuts by default', () => {
+		render(<LoginForm />);
+
+		expect(
+			screen.queryByRole('button', { name: /client@elojob\.com/i }),
+		).not.toBeInTheDocument();
+	});
+
+	it('should call devLoginAction from development shortcuts', async () => {
+		(devLoginAction as jest.Mock).mockResolvedValue({ success: true });
+
+		render(<LoginForm showDevLogin />);
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: /open development login shortcuts/i,
+			}),
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: /client@elojob\.com/i }),
+		);
+
+		await waitFor(() => {
+			expect(devLoginAction).toHaveBeenCalledWith('CLIENT');
+		});
 	});
 
 	it('should show validation errors for empty fields', async () => {
