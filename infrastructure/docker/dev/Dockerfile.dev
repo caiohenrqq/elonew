@@ -6,7 +6,10 @@ ENV PATH=$PNPM_HOME:$PATH
 
 WORKDIR /workspace
 
-RUN corepack enable
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
+  && rm -rf /var/lib/apt/lists/* \
+  && npm install -g pnpm@10.30.2
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/package.json
