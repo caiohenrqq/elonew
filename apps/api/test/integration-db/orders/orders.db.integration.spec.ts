@@ -108,6 +108,8 @@ describe('Orders module integration (db)', () => {
 		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
 		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
+		await prisma.ticketMessage.deleteMany();
+		await prisma.ticket.deleteMany();
 		await prisma.notification.deleteMany();
 		await prisma.chatMessage.deleteMany();
 		await prisma.chat.deleteMany();

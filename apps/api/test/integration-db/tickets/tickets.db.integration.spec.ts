@@ -26,7 +26,17 @@ describe('Tickets module integration (db)', () => {
 		prisma = moduleRef.get(PrismaService);
 		await prisma.ticketMessage.deleteMany();
 		await prisma.ticket.deleteMany();
+		await prisma.processedWebhookEvent.deleteMany();
+		await prisma.notification.deleteMany();
+		await prisma.chatMessage.deleteMany();
+		await prisma.chat.deleteMany();
+		await prisma.walletTransaction.deleteMany();
+		await prisma.payment.deleteMany();
+		await prisma.orderCredentials.deleteMany();
+		await prisma.orderQuote.deleteMany();
 		await prisma.order.deleteMany();
+		await prisma.authSession.deleteMany();
+		await prisma.wallet.deleteMany();
 		await prisma.user.deleteMany();
 
 		const user = await prisma.user.create({
