@@ -60,14 +60,14 @@ describe('admin dashboard pages', () => {
 		);
 
 		expect(screen.getByText('Usuários')).toBeInTheDocument();
-		expect(screen.getByText('CLIENTE')).toBeInTheDocument();
-		expect(screen.getByText('ATIVO')).toBeInTheDocument();
-		expect(screen.getByText('LIBERADO')).toBeInTheDocument();
+		expect(screen.getAllByText('CLIENTE').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('ATIVO').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('LIBERADO').length).toBeGreaterThan(0);
 		expect(
 			screen.queryByPlaceholderText('Motivo obrigatório da auditoria'),
 		).not.toBeInTheDocument();
 
-		await user.click(screen.getByRole('button', { name: 'Bloquear' }));
+		await user.click(screen.getAllByRole('button', { name: 'Bloquear' })[0]);
 
 		expect(
 			screen.getByRole('dialog', { name: 'Bloquear' }),
@@ -166,6 +166,45 @@ describe('admin dashboard pages', () => {
 		).not.toBeInTheDocument();
 	});
 
+	it('disables force cancel on already cancelled orders', async () => {
+		const user = userEvent.setup();
+
+		render(
+			<AdminOrderDetailsView
+				currentUserId="admin-1"
+				messages={[]}
+				order={{
+					id: 'order-1',
+					clientId: 'client-1',
+					boosterId: null,
+					status: 'cancelled',
+					serviceType: 'elo_boost',
+					totalAmount: 120,
+					createdAt: '2026-05-01T00:00:00.000Z',
+					latestGovernanceAction: {
+						type: 'force_cancel_order',
+						reason: 'Pagamento duplicado',
+						createdAt: '2026-05-02T00:00:00.000Z',
+					},
+				}}
+			/>,
+		);
+
+		const cancelButton = screen.getByRole('button', {
+			name: 'Cancelar pedido',
+		});
+		expect(cancelButton).toBeDisabled();
+		expect(
+			screen.getByText('Pedido já cancelado. Nenhuma nova ação é necessária.'),
+		).toBeInTheDocument();
+
+		await user.click(cancelButton);
+
+		expect(
+			screen.queryByPlaceholderText('Motivo obrigatório do cancelamento'),
+		).not.toBeInTheDocument();
+	});
+
 	it('renders support tickets on the dedicated support page', () => {
 		render(
 			<AdminSupportPage
@@ -185,21 +224,27 @@ describe('admin dashboard pages', () => {
 		);
 
 		expect(screen.getByText('Suporte')).toBeInTheDocument();
-		expect(screen.getByText('Preciso de ajuda')).toBeInTheDocument();
-		expect(screen.getByText('Aberto')).toBeInTheDocument();
+		expect(screen.getAllByText('Preciso de ajuda').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('Aberto').length).toBeGreaterThan(0);
 		expect(screen.getByText('2 mensagens')).toBeInTheDocument();
 	});
 
 	it('renders polished empty states on dedicated pages', () => {
 		const { rerender } = render(<AdminUsersPage users={[]} />);
 
-		expect(screen.getByText('Nenhum usuário encontrado')).toBeInTheDocument();
+		expect(
+			screen.getAllByText('Nenhum usuário encontrado').length,
+		).toBeGreaterThan(0);
 
 		rerender(<AdminOrdersPage orders={[]} />);
-		expect(screen.getByText('Nenhum pedido encontrado')).toBeInTheDocument();
+		expect(
+			screen.getAllByText('Nenhum pedido encontrado').length,
+		).toBeGreaterThan(0);
 
 		rerender(<AdminSupportPage tickets={[]} />);
-		expect(screen.getByText('Nenhum ticket encontrado')).toBeInTheDocument();
+		expect(
+			screen.getAllByText('Nenhum ticket encontrado').length,
+		).toBeGreaterThan(0);
 		expect(screen.queryByText(/returned by the API/i)).not.toBeInTheDocument();
 	});
 });

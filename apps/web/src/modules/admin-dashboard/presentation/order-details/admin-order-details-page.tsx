@@ -40,142 +40,152 @@ export const AdminOrderDetailsView = ({
 	currentUserId,
 	messages,
 	order,
-}: AdminOrderDetailsViewProps) => (
-	<div className="space-y-8">
-		<Link
-			href="/admin/orders"
-			className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 transition-colors hover:text-white"
-		>
-			<ArrowLeft className="h-3 w-3" />
-			Voltar aos pedidos
-		</Link>
+}: AdminOrderDetailsViewProps) => {
+	const isForceCancelDisabled = order.status === 'cancelled';
 
-		<header className="rounded-sm border border-white/10 bg-white/[0.025] p-6">
-			<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-				<div className="min-w-0 space-y-2">
-					<div className="flex flex-wrap items-center gap-3">
-						<h1 className="truncate text-2xl font-black uppercase tracking-tight text-white">
-							{formatServiceType(order.serviceType)}
-						</h1>
-						<OrderStatusBadge status={order.status} />
-					</div>
-					<p className="break-all font-mono text-[10px] text-white/35">
-						{order.id}
-					</p>
-				</div>
-				<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:min-w-[420px]">
-					<DefinitionItem
-						label="Valor"
-						value={formatCurrency(order.totalAmount)}
-						valueClassName="text-hextech-cyan"
-					/>
-					<DefinitionItem
-						label="Criado em"
-						value={formatDateTime(order.createdAt)}
-					/>
-					<DefinitionItem
-						label="Mensagens"
-						value={messages.length.toString().padStart(2, '0')}
-					/>
-				</div>
-			</div>
-		</header>
+	return (
+		<div className="space-y-8">
+			<Link
+				href="/admin/orders"
+				className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 transition-colors hover:text-white"
+			>
+				<ArrowLeft className="h-3 w-3" />
+				Voltar aos pedidos
+			</Link>
 
-		<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
-			<div className="space-y-8">
-				<Card className="border-white/10">
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2">
-							<FileText className="h-4 w-4 text-hextech-cyan" />
-							Dados do pedido
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-						<div className="space-y-1">
-							<p className="text-[10px] text-white/40 uppercase tracking-widest">
-								Status
-							</p>
+			<header className="rounded-sm border border-white/10 bg-white/[0.025] p-6">
+				<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+					<div className="min-w-0 space-y-2">
+						<div className="flex flex-wrap items-center gap-3">
+							<h1 className="truncate text-2xl font-black uppercase tracking-tight text-white">
+								{formatServiceType(order.serviceType)}
+							</h1>
 							<OrderStatusBadge status={order.status} />
 						</div>
+						<p className="break-all font-mono text-[10px] text-white/35">
+							{order.id}
+						</p>
+					</div>
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:min-w-[420px]">
 						<DefinitionItem
-							label="Total"
+							label="Valor"
 							value={formatCurrency(order.totalAmount)}
 							valueClassName="text-hextech-cyan"
-						/>
-						<DefinitionItem
-							label="Serviço"
-							value={formatServiceType(order.serviceType)}
 						/>
 						<DefinitionItem
 							label="Criado em"
 							value={formatDateTime(order.createdAt)}
 						/>
-					</CardContent>
-				</Card>
-
-				<Card className="border-white/10">
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2">
-							<Users className="h-4 w-4 text-hextech-cyan" />
-							Partes envolvidas
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="grid gap-6 md:grid-cols-2">
 						<DefinitionItem
-							label="Cliente"
-							value={order.clientId ?? 'Não informado'}
+							label="Mensagens"
+							value={messages.length.toString().padStart(2, '0')}
 						/>
-						<DefinitionItem
-							label="Booster"
-							value={order.boosterId ?? 'Não informado'}
-						/>
-					</CardContent>
-				</Card>
+					</div>
+				</div>
+			</header>
 
-				<Card className="border-white/10">
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2">
-							<ShieldCheck className="h-4 w-4 text-red-300" />
-							Admin
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<AdminGovernanceForm
-							action={forceCancelAdminOrderAction}
-							targetId={order.id}
-							label="Cancelar pedido"
-							placeholder="Motivo obrigatório do cancelamento"
-							tone="danger"
-						/>
-						{order.latestGovernanceAction ? (
-							<p className="text-xs text-white/45">
-								{formatGovernanceAction(order.latestGovernanceAction.type)} /{' '}
-								{order.latestGovernanceAction.reason}
-							</p>
-						) : (
-							<p className="text-xs text-white/35">
-								Nenhuma ação administrativa registrada.
-							</p>
-						)}
-					</CardContent>
-				</Card>
-			</div>
+			<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+				<div className="space-y-8">
+					<Card className="border-white/10">
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<FileText className="h-4 w-4 text-hextech-cyan" />
+								Dados do pedido
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+							<div className="space-y-1">
+								<p className="text-[10px] text-white/40 uppercase tracking-widest">
+									Status
+								</p>
+								<OrderStatusBadge status={order.status} />
+							</div>
+							<DefinitionItem
+								label="Total"
+								value={formatCurrency(order.totalAmount)}
+								valueClassName="text-hextech-cyan"
+							/>
+							<DefinitionItem
+								label="Serviço"
+								value={formatServiceType(order.serviceType)}
+							/>
+							<DefinitionItem
+								label="Criado em"
+								value={formatDateTime(order.createdAt)}
+							/>
+						</CardContent>
+					</Card>
 
-			<div className="space-y-8">
-				<ChatPanel
-					messages={messages}
-					currentUserId={currentUserId}
-					isReadOnly
-					title="Chat do pedido"
-					statusText="Admin leitura"
-					emptyTitle="Sem mensagens"
-					emptyDescription="Nenhuma conversa foi registrada para este pedido."
-					className="h-[560px] max-w-none border-white/10"
-				/>
+					<Card className="border-white/10">
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Users className="h-4 w-4 text-hextech-cyan" />
+								Partes envolvidas
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="grid gap-6 md:grid-cols-2">
+							<DefinitionItem
+								label="Cliente"
+								value={order.clientId ?? 'Não informado'}
+							/>
+							<DefinitionItem
+								label="Booster"
+								value={order.boosterId ?? 'Não informado'}
+							/>
+						</CardContent>
+					</Card>
+
+					<Card className="border-white/10">
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<ShieldCheck className="h-4 w-4 text-red-300" />
+								Admin
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<AdminGovernanceForm
+								action={forceCancelAdminOrderAction}
+								targetId={order.id}
+								label="Cancelar pedido"
+								placeholder="Motivo obrigatório do cancelamento"
+								disabled={isForceCancelDisabled}
+								disabledReason={
+									isForceCancelDisabled
+										? 'Pedido já cancelado. Nenhuma nova ação é necessária.'
+										: undefined
+								}
+								tone="danger"
+							/>
+							{order.latestGovernanceAction ? (
+								<p className="text-xs text-white/45">
+									{formatGovernanceAction(order.latestGovernanceAction.type)} /{' '}
+									{order.latestGovernanceAction.reason}
+								</p>
+							) : (
+								<p className="text-xs text-white/35">
+									Nenhuma ação administrativa registrada.
+								</p>
+							)}
+						</CardContent>
+					</Card>
+				</div>
+
+				<div className="space-y-8">
+					<ChatPanel
+						messages={messages}
+						currentUserId={currentUserId}
+						isReadOnly
+						title="Chat do pedido"
+						statusText="Admin leitura"
+						emptyTitle="Sem mensagens"
+						emptyDescription="Nenhuma conversa foi registrada para este pedido."
+						className="h-[560px] max-w-none border-white/10"
+					/>
+				</div>
 			</div>
 		</div>
-	</div>
-);
+	);
+};
 
 export const AdminOrderDetailsPage = async ({
 	orderId,

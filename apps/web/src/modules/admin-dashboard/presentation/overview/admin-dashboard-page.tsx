@@ -5,7 +5,6 @@ import {
 	ClipboardCheck,
 	Clock,
 	FileClock,
-	MessageSquare,
 	Package,
 	Play,
 	Shield,
@@ -122,6 +121,117 @@ const summarizeOrders = (orders: AdminOrderOutput[]) => {
 
 	return { active, completed, pending };
 };
+
+const AdminUserCard = ({ user }: { user: AdminUserOutput }) => (
+	<article className="rounded-sm border border-white/10 bg-white/[0.02] p-4">
+		<div className="flex items-start justify-between gap-3">
+			<div className="min-w-0">
+				<p className="truncate text-sm font-black text-white">
+					{user.username}
+				</p>
+				<p className="mt-1 truncate text-xs text-white/45">{user.email}</p>
+			</div>
+			<Badge>{roleLabels[user.role] ?? user.role}</Badge>
+		</div>
+		<div className="mt-4 grid grid-cols-2 gap-3 border-white/5 border-t pt-3">
+			<Badge variant={user.isActive ? 'success' : 'outline'}>
+				{user.isActive ? 'ATIVO' : 'INATIVO'}
+			</Badge>
+			<Badge variant={user.isBlocked ? 'error' : 'success'}>
+				{user.isBlocked ? 'BLOQUEADO' : 'LIBERADO'}
+			</Badge>
+		</div>
+		<div className="mt-4">
+			<AdminGovernanceForm
+				action={user.isBlocked ? unblockAdminUserAction : blockAdminUserAction}
+				targetId={user.id}
+				label={user.isBlocked ? 'Desbloquear' : 'Bloquear'}
+				placeholder="Motivo obrigatório da auditoria"
+				tone={user.isBlocked ? 'neutral' : 'danger'}
+			/>
+		</div>
+	</article>
+);
+
+const AdminOrderCard = ({ order }: { order: AdminOrderOutput }) => (
+	<Link
+		href={`/admin/orders/${encodeURIComponent(order.id)}`}
+		className={`rounded-sm border border-white/10 border-l-2 bg-white/[0.02] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.04] ${getOrderAccentClassName(order.status)}`}
+	>
+		<div className="flex items-start justify-between gap-3">
+			<div className="min-w-0">
+				<div className="flex items-center gap-2.5">
+					<Shield className="h-4 w-4 shrink-0 text-hextech-cyan/70" />
+					<p className="truncate text-sm font-black uppercase tracking-wider text-white">
+						{formatServiceType(order.serviceType)}
+					</p>
+				</div>
+				<p className="mt-2 break-all font-mono text-[10px] text-white/35">
+					{order.id}
+				</p>
+			</div>
+			<OrderStatusBadge status={order.status} />
+		</div>
+		<div className="mt-4 grid grid-cols-2 gap-3 border-white/5 border-t pt-3">
+			<div>
+				<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
+					Valor
+				</p>
+				<p className="mt-1 font-black text-white">
+					{formatCurrency(order.totalAmount ?? 0)}
+				</p>
+			</div>
+			<div>
+				<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
+					Partes
+				</p>
+				<p className="mt-1 text-[10px] text-white/45">
+					Cliente {order.clientId ?? 'não informado'}
+				</p>
+				<p className="mt-1 text-[10px] text-white/45">
+					Booster {order.boosterId ?? 'não informado'}
+				</p>
+			</div>
+		</div>
+		{order.latestGovernanceAction ? (
+			<p className="mt-4 border-white/5 border-t pt-3 text-xs text-white/50">
+				{formatGovernanceAction(order.latestGovernanceAction.type)} /{' '}
+				{order.latestGovernanceAction.reason}
+			</p>
+		) : null}
+	</Link>
+);
+
+const AdminSupportTicketCard = ({
+	ticket,
+}: {
+	ticket: AdminSupportTicketOutput;
+}) => (
+	<article className="rounded-sm border border-white/10 bg-white/[0.02] p-4">
+		<div className="flex items-start justify-between gap-3">
+			<p className="min-w-0 truncate text-sm font-black text-white">
+				{ticket.subject}
+			</p>
+			<TicketStatusBadge status={ticket.status} />
+		</div>
+		<div className="mt-4 grid grid-cols-2 gap-3 border-white/5 border-t pt-3">
+			<div>
+				<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
+					Mensagens
+				</p>
+				<p className="mt-1 text-white/60">{ticket.messageCount}</p>
+			</div>
+			<div>
+				<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
+					Última
+				</p>
+				<p className="mt-1 text-[10px] text-white/45">
+					{formatDateTime(ticket.latestMessageAt)}
+				</p>
+			</div>
+		</div>
+	</article>
+);
 
 export const AdminDashboardPage = ({
 	metrics,
@@ -366,6 +476,9 @@ export const AdminUsersPage = ({ users }: AdminUsersPageProps) => {
 			<DashboardTableSection
 				isEmpty={users.length === 0}
 				colSpan={5}
+				mobileContent={users.map((user) => (
+					<AdminUserCard key={user.id} user={user} />
+				))}
 				emptyState={
 					<DashboardEmptyState
 						icon={Users}
@@ -438,7 +551,7 @@ export const AdminOrdersPage = ({ orders }: AdminOrdersPageProps) => (
 				/>
 			}
 			isEmpty={orders.length === 0}
-			colSpan={7}
+			colSpan={6}
 			emptyState={
 				<DashboardEmptyState
 					icon={Package}
@@ -446,6 +559,9 @@ export const AdminOrdersPage = ({ orders }: AdminOrdersPageProps) => (
 					description="Pedidos recentes retornados pela API aparecerão aqui."
 				/>
 			}
+			mobileContent={orders.map((order) => (
+				<AdminOrderCard key={order.id} order={order} />
+			))}
 		>
 			<TableHeader>
 				<TableRow>
@@ -453,7 +569,6 @@ export const AdminOrdersPage = ({ orders }: AdminOrdersPageProps) => (
 					<TableHead>Status</TableHead>
 					<TableHead>Valor</TableHead>
 					<TableHead>Partes</TableHead>
-					<TableHead>Chat</TableHead>
 					<TableHead>Última ação</TableHead>
 					<TableHead className="text-right">Detalhes</TableHead>
 				</TableRow>
@@ -487,12 +602,6 @@ export const AdminOrdersPage = ({ orders }: AdminOrdersPageProps) => (
 							<p className="mt-1 text-[10px] uppercase tracking-widest text-white/35">
 								Booster {order.boosterId ?? 'não informado'}
 							</p>
-						</TableCell>
-						<TableCell>
-							<div className="flex items-center gap-2 text-[10px] font-bold text-white/45">
-								<MessageSquare className="h-3.5 w-3.5 text-hextech-cyan/70" />
-								Histórico
-							</div>
 						</TableCell>
 						<TableCell className="max-w-[240px] text-xs text-white/55">
 							{order.latestGovernanceAction ? (
@@ -561,6 +670,9 @@ export const AdminSupportPage = ({ tickets }: AdminSupportPageProps) => {
 			<DashboardTableSection
 				isEmpty={tickets.length === 0}
 				colSpan={4}
+				mobileContent={tickets.map((ticket) => (
+					<AdminSupportTicketCard key={ticket.id} ticket={ticket} />
+				))}
 				emptyState={
 					<DashboardEmptyState
 						icon={Ticket}

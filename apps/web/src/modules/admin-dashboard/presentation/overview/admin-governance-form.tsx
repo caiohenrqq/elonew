@@ -14,6 +14,8 @@ type AdminGovernanceFormProps = {
 	targetId: string;
 	label: string;
 	placeholder: string;
+	disabled?: boolean;
+	disabledReason?: string;
 	tone?: 'danger' | 'neutral';
 };
 
@@ -22,6 +24,8 @@ export const AdminGovernanceForm = ({
 	targetId,
 	label,
 	placeholder,
+	disabled = false,
+	disabledReason,
 	tone = 'neutral',
 }: AdminGovernanceFormProps) => {
 	const [state, formAction, pending] = useActionState(action, {});
@@ -37,7 +41,11 @@ export const AdminGovernanceForm = ({
 		<>
 			<button
 				type="button"
-				onClick={() => setIsOpen(true)}
+				disabled={disabled}
+				aria-describedby={disabledReason ? `${fieldId}-disabled` : undefined}
+				onClick={() => {
+					if (!disabled) setIsOpen(true);
+				}}
 				className={getButtonClassName({
 					variant: tone === 'danger' ? 'danger' : 'outline',
 					size: 'sm',
@@ -46,6 +54,14 @@ export const AdminGovernanceForm = ({
 			>
 				{label}
 			</button>
+			{disabledReason ? (
+				<p
+					id={`${fieldId}-disabled`}
+					className="mt-2 text-right text-[10px] font-medium text-white/35"
+				>
+					{disabledReason}
+				</p>
+			) : null}
 
 			{isOpen ? (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
