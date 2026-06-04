@@ -3,7 +3,7 @@ import { cn } from '../utils/cn';
 export const focusRing =
 	'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-hextech-cyan';
 
-export const disabledState = 'disabled:pointer-events-none disabled:opacity-50';
+export const disabledState = 'disabled:cursor-not-allowed disabled:opacity-50';
 
 export const labelText = {
 	control:
