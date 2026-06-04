@@ -105,6 +105,11 @@ export const envSchema = z
 		MERCADO_PAGO_WEBHOOK_SECRET: z.string().trim().min(1),
 		MERCADO_PAGO_WEBHOOK_URL: z.string().trim().url(),
 		SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE: booleanEnvSchema,
+		DEV_CHECKOUT_APP_URL: z
+			.string()
+			.trim()
+			.url()
+			.default('http://localhost:3001'),
 		ORDER_QUOTE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
 		AUTH_LOGIN_THROTTLE_LIMIT: z.coerce.number().int().positive().default(5),
 		AUTH_LOGIN_THROTTLE_TTL_SECONDS: z.coerce

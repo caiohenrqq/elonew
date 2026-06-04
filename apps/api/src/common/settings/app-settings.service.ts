@@ -113,6 +113,12 @@ export class AppSettingsService {
 		});
 	}
 
+	get devCheckoutAppUrl() {
+		return this.config.getOrThrow('DEV_CHECKOUT_APP_URL', {
+			infer: true,
+		});
+	}
+
 	get orderQuoteTtlMinutes() {
 		return this.config.getOrThrow('ORDER_QUOTE_TTL_MINUTES', {
 			infer: true,

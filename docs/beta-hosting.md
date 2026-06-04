@@ -58,7 +58,9 @@ Fill them in:
 - **`.env`** — `POSTGRES_PASSWORD`, `PUBLIC_WEB_ORIGIN` (`https://app.<domain>`),
   `PUBLIC_API_ORIGIN` (`https://api.<domain>`), `WEB_SESSION_SECRET`, `TUNNEL_TOKEN`.
 - **`api.env`** — the API secrets (production validation rejects the dev
-  placeholders) and Mercado Pago credentials.
+  placeholders), Resend email settings, Mercado Pago credentials, and payment
+  checkout settings. Keep `SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE=false` for
+  beta/prod so real Mercado Pago checkout is used.
 - **`web.env`** — usually nothing; only an optional cookie domain.
 - **`workers.env`** — usually nothing; optional tunables.
 

@@ -20,6 +20,8 @@ describe('AppSettingsService', () => {
 						return 'EloNew <onboarding@resend.dev>';
 					case 'SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE':
 						return true;
+					case 'DEV_CHECKOUT_APP_URL':
+						return 'http://localhost:3001';
 					default:
 						throw new Error(`Unexpected config key: ${key}`);
 				}
@@ -42,6 +44,7 @@ describe('AppSettingsService', () => {
 		expect(appSettings.resendApiKey).toBe('re_test_key');
 		expect(appSettings.emailFrom).toBe('EloNew <onboarding@resend.dev>');
 		expect(appSettings.skipMercadoPagoCheckoutInDevMode).toBe(true);
+		expect(appSettings.devCheckoutAppUrl).toBe('http://localhost:3001');
 	});
 
 	it('parses the dev Mercado Pago checkout skip flag as a strict boolean string', () => {
@@ -58,12 +61,17 @@ describe('AppSettingsService', () => {
 			RESEND_API_KEY: '',
 			EMAIL_FROM: 'onboarding@resend.dev',
 			SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE: 'true',
+			DEV_CHECKOUT_APP_URL: 'https://beta.elonew.com.br',
 		});
 
 		expect(result.success).toBe(true);
 		if (result.success) expect(result.data.RESEND_API_KEY).toBeUndefined();
 		if (result.success)
 			expect(result.data.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE).toBe(true);
+		if (result.success)
+			expect(result.data.DEV_CHECKOUT_APP_URL).toBe(
+				'https://beta.elonew.com.br',
+			);
 		if (result.success)
 			expect(result.data.CHAT_SOCKET_ALLOWED_ORIGINS).toEqual([
 				'https://app.example.com',

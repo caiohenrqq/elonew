@@ -22,6 +22,7 @@ runs:
         cp apps/api/.env.example apps/api/.env.test
         sed -i 's/^NODE_ENV=.*/NODE_ENV=test/' apps/api/.env.test
         sed -i 's|^DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5432/elonew_test|' apps/api/.env.test
+        sed -i 's/^SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE=.*/SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE=false/' apps/api/.env.test
         cp apps/web/.env.example apps/web/.env
 
     - name: Build shared packages

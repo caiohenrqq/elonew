@@ -1,3 +1,4 @@
+import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import type {
 	FetchPaymentNotificationInput,
 	FetchPaymentNotificationOutput,
@@ -9,9 +10,14 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class DevPaymentGatewayAdapter implements PaymentGatewayPort {
+	constructor(private readonly appSettings: AppSettingsService) {}
+
 	initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentOutput> {
+		const checkoutUrl = new URL('/client', this.appSettings.devCheckoutAppUrl);
+		checkoutUrl.searchParams.set('devPaymentId', input.paymentId);
+
 		return Promise.resolve({
-			checkoutUrl: `http://localhost:3001/client?devPaymentId=${encodeURIComponent(input.paymentId)}`,
+			checkoutUrl: checkoutUrl.toString(),
 			gatewayReferenceId: `dev-${input.paymentId}`,
 			gatewayStatus: 'pending',
 		});
