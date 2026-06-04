@@ -41,7 +41,12 @@
 		"docker:dev:build": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml build",
 		"docker:dev:down": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down",
 		"docker:dev:logs": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml logs -f",
-		"docker:dev:reset": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down -v && docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d --build"
+		"docker:dev:reset": "docker compose -f infrastructure/docker/dev/docker-compose.dev.yml down -v && docker compose -f infrastructure/docker/dev/docker-compose.dev.yml up -d --build",
+
+		"docker:prod:build": "docker compose --env-file infrastructure/docker/prod/.env -f infrastructure/docker/prod/docker-compose.prod.yml build",
+		"docker:prod:up": "docker compose --env-file infrastructure/docker/prod/.env -f infrastructure/docker/prod/docker-compose.prod.yml up -d --build",
+		"docker:prod:down": "docker compose --env-file infrastructure/docker/prod/.env -f infrastructure/docker/prod/docker-compose.prod.yml down",
+		"docker:prod:logs": "docker compose --env-file infrastructure/docker/prod/.env -f infrastructure/docker/prod/docker-compose.prod.yml logs -f"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.5",

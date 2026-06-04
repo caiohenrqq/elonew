@@ -1,0 +1,148 @@
+name: elonew-prod
+
+x-app-build: &app-build
+  context: ../../..
+  dockerfile: infrastructure/docker/prod/Dockerfile.prod
+  args:
+    NEXT_PUBLIC_API_URL: ${PUBLIC_API_ORIGIN:?set PUBLIC_API_ORIGIN in infrastructure/docker/prod/.env}
+    NEXT_PUBLIC_APP_URL: ${PUBLIC_WEB_ORIGIN:?set PUBLIC_WEB_ORIGIN in infrastructure/docker/prod/.env}
+
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: elonew
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infrastructure/docker/prod/.env}
+    volumes:
+      - elonew_postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d elonew']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build: *app-build
+    image: elonew-prod:latest
+    restart: 'no'
+    working_dir: /workspace/packages/database
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/elonew
+    command: ['pnpm', 'exec', 'prisma', 'migrate', 'deploy']
+
+  api:
+    build: *app-build
+    image: elonew-prod:latest
+    restart: unless-stopped
+    working_dir: /workspace/apps/api
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - ./api.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/elonew
+      REDIS_URL: redis://redis:6379
+      CHAT_SOCKET_ALLOWED_ORIGINS: ${PUBLIC_WEB_ORIGIN}
+      WEB_SESSION_SECRET: ${WEB_SESSION_SECRET:?set WEB_SESSION_SECRET in infrastructure/docker/prod/.env}
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:3000/api/health/api'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    command: ['node', 'dist/main']
+
+  web:
+    build: *app-build
+    image: elonew-prod:latest
+    restart: unless-stopped
+    working_dir: /workspace/apps/web
+    depends_on:
+      api:
+        condition: service_healthy
+    env_file:
+      - ./web.env
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      API_URL: http://api:3000
+      WEB_SESSION_SECRET: ${WEB_SESSION_SECRET:?set WEB_SESSION_SECRET in infrastructure/docker/prod/.env}
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:3001/'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    command: ['pnpm', 'exec', 'next', 'start', '--hostname', '0.0.0.0', '--port', '3001']
+
+  workers:
+    build: *app-build
+    image: elonew-prod:latest
+    restart: unless-stopped
+    working_dir: /workspace/apps/workers
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    env_file:
+      - ./workers.env
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_BASE_URL: http://api:3000
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/elonew
+      REDIS_URL: redis://redis:6379
+    command: ['pnpm', 'exec', 'tsx', 'src/main.ts']
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command:
+      [
+        'tunnel',
+        '--no-autoupdate',
+        'run',
+        '--token',
+        '${TUNNEL_TOKEN:?set TUNNEL_TOKEN in infrastructure/docker/prod/.env}',
+      ]
+    depends_on:
+      api:
+        condition: service_started
+      web:
+        condition: service_started
+
+volumes:
+  elonew_postgres_prod_data:
