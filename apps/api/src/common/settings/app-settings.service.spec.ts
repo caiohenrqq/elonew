@@ -16,11 +16,17 @@ describe('AppSettingsService', () => {
 						return 'webhook-secret';
 					case 'MERCADO_PAGO_WEBHOOK_URL':
 						return 'https://example.com/payments/webhooks/mercadopago';
+					case 'EMAIL_FROM':
+						return 'EloNew <onboarding@resend.dev>';
 					case 'SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE':
 						return true;
 					default:
 						throw new Error(`Unexpected config key: ${key}`);
 				}
+			}),
+			get: jest.fn((key: keyof AppEnv) => {
+				if (key === 'RESEND_API_KEY') return 're_test_key';
+				throw new Error(`Unexpected config key: ${key}`);
 			}),
 		} as unknown as ConfigService<AppEnv, true>;
 		const appSettings = new AppSettingsService(config);
@@ -33,6 +39,8 @@ describe('AppSettingsService', () => {
 		expect(appSettings.mercadoPagoWebhookUrl).toBe(
 			'https://example.com/payments/webhooks/mercadopago',
 		);
+		expect(appSettings.resendApiKey).toBe('re_test_key');
+		expect(appSettings.emailFrom).toBe('EloNew <onboarding@resend.dev>');
 		expect(appSettings.skipMercadoPagoCheckoutInDevMode).toBe(true);
 	});
 
@@ -47,10 +55,13 @@ describe('AppSettingsService', () => {
 			MERCADO_PAGO_WEBHOOK_SECRET: 'webhook-secret',
 			MERCADO_PAGO_WEBHOOK_URL:
 				'https://example.com/payments/webhooks/mercadopago',
+			RESEND_API_KEY: '',
+			EMAIL_FROM: 'onboarding@resend.dev',
 			SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE: 'true',
 		});
 
 		expect(result.success).toBe(true);
+		if (result.success) expect(result.data.RESEND_API_KEY).toBeUndefined();
 		if (result.success)
 			expect(result.data.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE).toBe(true);
 		if (result.success)

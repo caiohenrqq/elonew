@@ -81,6 +81,12 @@ export const envSchema = z
 			.trim()
 			.min(1)
 			.default(DEFAULT_EMAIL_CONFIRMATION_TOKEN_SECRET),
+		RESEND_API_KEY: z
+			.string()
+			.trim()
+			.optional()
+			.transform((value) => value || undefined),
+		EMAIL_FROM: z.string().trim().min(1).default('onboarding@resend.dev'),
 		WEB_SESSION_SECRET: z
 			.string()
 			.trim()

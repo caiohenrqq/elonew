@@ -63,6 +63,14 @@ export class AppSettingsService {
 		});
 	}
 
+	get resendApiKey() {
+		return this.config.get('RESEND_API_KEY', { infer: true });
+	}
+
+	get emailFrom() {
+		return this.config.getOrThrow('EMAIL_FROM', { infer: true });
+	}
+
 	get webSessionSecret() {
 		return this.config.getOrThrow('WEB_SESSION_SECRET', {
 			infer: true,
