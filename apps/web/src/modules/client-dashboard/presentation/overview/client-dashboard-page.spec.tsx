@@ -2,6 +2,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { ClientDashboardPage } from './client-dashboard-page';
 
+jest.mock('../../actions/order-actions', () => ({
+	createSupportTicketAction: jest.fn(),
+}));
+
 jest.mock('next/link', () => ({
 	__esModule: true,
 	default: ({
@@ -33,7 +37,7 @@ describe('ClientDashboardPage', () => {
 		});
 	});
 
-	it('renders dashboard metrics and recent order rows', () => {
+	it('renders overview metrics and recent order rows by default', () => {
 		render(
 			<ClientDashboardPage
 				dashboard={{
@@ -56,27 +60,114 @@ describe('ClientDashboardPage', () => {
 							discountAmount: 0,
 							createdAt: '2026-04-01T00:00:00.000Z',
 						},
+						{
+							id: 'order-2',
+							status: 'completed',
+							serviceType: 'duo_boost',
+							currentLeague: 'silver',
+							currentDivision: 'I',
+							currentLp: 0,
+							desiredLeague: 'gold',
+							desiredDivision: 'IV',
+							server: 'br',
+							desiredQueue: 'solo_duo',
+							lpGain: 20,
+							deadline: '2026-05-03T00:00:00.000Z',
+							subtotal: 90,
+							totalAmount: 90,
+							discountAmount: 0,
+							createdAt: '2026-04-03T00:00:00.000Z',
+						},
 					],
 					summary: {
 						activeOrders: 1,
-						totalOrders: 1,
-						totalInvested: 120,
+						totalOrders: 2,
+						totalInvested: 210,
 					},
 				}}
 			/>,
 		);
 
-		expect(screen.getAllByText('01')).toHaveLength(2);
-		expect(screen.getAllByText(/R\$\s*120,00/)).toHaveLength(3);
+		expect(screen.getAllByText('Pedidos ativos').length).toBeGreaterThan(0);
+		expect(screen.getByText('Pedidos recentes')).toBeInTheDocument();
+		expect(screen.queryByText('Suporte')).not.toBeInTheDocument();
+		expect(screen.getAllByText(/R\$\s*120,00/).length).toBeGreaterThan(0);
+		expect(screen.getByText(/R\$\s*210,00/)).toBeInTheDocument();
 		expect(screen.getAllByText('Elo Boost')).toHaveLength(2);
 		expect(screen.getAllByText('Gold II → Platinum IV')).toHaveLength(2);
-		expect(screen.getByRole('link', { name: /^Detalhes$/i })).toHaveAttribute(
+		expect(screen.getAllByText('Duo Boost')).toHaveLength(2);
+		expect(screen.getByRole('link', { name: /^Pagar$/i })).toHaveAttribute(
 			'href',
 			'/client/orders/order-1',
 		);
 		expect(
 			screen.queryByText('Nenhum pedido encontrado'),
 		).not.toBeInTheDocument();
+	});
+
+	it('renders orders when the orders tab is selected', () => {
+		render(
+			<ClientDashboardPage
+				tab="orders"
+				dashboard={{
+					orders: [
+						{
+							id: 'order-1',
+							status: 'awaiting_payment',
+							serviceType: 'elo_boost',
+							currentLeague: 'gold',
+							currentDivision: 'II',
+							currentLp: 40,
+							desiredLeague: 'platinum',
+							desiredDivision: 'IV',
+							server: 'br',
+							desiredQueue: 'solo_duo',
+							lpGain: 20,
+							deadline: '2026-05-01T00:00:00.000Z',
+							subtotal: 120,
+							totalAmount: 120,
+							discountAmount: 0,
+							createdAt: '2026-04-01T00:00:00.000Z',
+						},
+						{
+							id: 'order-2',
+							status: 'completed',
+							serviceType: 'duo_boost',
+							currentLeague: 'silver',
+							currentDivision: 'I',
+							currentLp: 0,
+							desiredLeague: 'gold',
+							desiredDivision: 'IV',
+							server: 'br',
+							desiredQueue: 'solo_duo',
+							lpGain: 20,
+							deadline: '2026-05-03T00:00:00.000Z',
+							subtotal: 90,
+							totalAmount: 90,
+							discountAmount: 0,
+							createdAt: '2026-04-03T00:00:00.000Z',
+						},
+					],
+					summary: {
+						activeOrders: 1,
+						totalOrders: 2,
+						totalInvested: 210,
+					},
+				}}
+			/>,
+		);
+
+		expect(
+			screen.getByText('Todos os pedidos carregados para consulta.'),
+		).toBeInTheDocument();
+		expect(screen.getAllByText('Duo Boost')).toHaveLength(2);
+		expect(screen.getAllByText('Gold II → Platinum IV')).toHaveLength(2);
+		expect(screen.getByRole('link', { name: /^Detalhes$/i })).toHaveAttribute(
+			'href',
+			'/client/orders/order-2',
+		);
+		expect(screen.queryByText('Total investido')).not.toBeInTheDocument();
+		expect(screen.queryByText('Suporte')).not.toBeInTheDocument();
 	});
 
 	it('keeps the empty state when no orders exist', () => {

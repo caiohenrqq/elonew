@@ -30,6 +30,12 @@ import {
 	type StartCheckoutInput,
 	startCheckoutSchema,
 } from '../server/order-contracts';
+import type { SupportTicketOutput } from '../server/ticket-contracts';
+import { createSupportTicketInputSchema } from '../server/ticket-contracts';
+import {
+	createSupportTicket,
+	listSupportTickets,
+} from '../server/ticket-service';
 
 export type CheckoutActionState = {
 	checkoutUrl?: string;
@@ -40,6 +46,11 @@ export type CheckoutActionState = {
 
 export type ResumePaymentCheckoutActionState = {
 	error?: string;
+};
+
+export type CreateSupportTicketActionState = {
+	error?: string;
+	success?: string;
 };
 
 export type QuotePreviewActionState =
@@ -114,6 +125,52 @@ export const getClientDashboardOrders =
 			return redirectOnAuthError(error);
 		}
 	};
+
+export const getSupportTickets = async (): Promise<SupportTicketOutput[]> => {
+	try {
+		return await listSupportTickets((path, init) =>
+			api.request(path, { ...init, allowSessionRefresh: false }),
+		);
+	} catch (error) {
+		return redirectOnAuthError(error);
+	}
+};
+
+export const createSupportTicketAction = async (
+	_state: CreateSupportTicketActionState,
+	formData: FormData,
+): Promise<CreateSupportTicketActionState> => {
+	const rawOrderId = formData.get('orderId')?.toString().trim();
+	const parsed = createSupportTicketInputSchema.safeParse({
+		subject: formData.get('subject'),
+		content: formData.get('content'),
+		...(rawOrderId ? { orderId: rawOrderId } : {}),
+	});
+	if (!parsed.success) {
+		return {
+			error: parsed.error.issues[0]?.message ?? 'Revise os dados do ticket.',
+		};
+	}
+
+	try {
+		const session = await getAuthSession();
+		if (!session) return { error: 'Sessão expirada. Entre novamente.' };
+
+		await assertSameOriginRequest();
+		await createSupportTicket(parsed.data, api.request);
+
+		return { success: 'Ticket enviado. O suporte vai responder em breve.' };
+	} catch (error) {
+		if (
+			error instanceof ApiRequestError &&
+			(error.status === 401 || error.status === 403)
+		) {
+			return { error: 'Entre novamente para continuar.' };
+		}
+
+		return { error: 'Não foi possível criar o ticket agora.' };
+	}
+};
 
 export const getOrderChatMessages = async (
 	orderId: string,

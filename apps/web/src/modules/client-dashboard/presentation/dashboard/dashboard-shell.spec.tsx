@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import type {
 	AnchorHTMLAttributes,
 	HTMLAttributes,
@@ -10,6 +10,7 @@ import { DashboardShell } from './dashboard-shell';
 
 jest.mock('next/navigation', () => ({
 	usePathname: jest.fn(),
+	useSearchParams: jest.fn(),
 }));
 
 jest.mock('@/modules/auth/actions/auth-actions', () => ({
@@ -77,6 +78,7 @@ describe('DashboardShell', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		(usePathname as jest.Mock).mockReturnValue('/client');
+		(useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams());
 	});
 
 	const renderShell = async (children: ReactNode) => {
@@ -110,6 +112,8 @@ describe('DashboardShell', () => {
 		await renderShell(<div>Content</div>);
 
 		expect(screen.getByText('Visão geral')).toBeInTheDocument();
+		expect(screen.getByText('Pedidos')).toBeInTheDocument();
+		expect(screen.getByText('Tickets')).toBeInTheDocument();
 		expect(screen.getByText('Novo Pedido')).toBeInTheDocument();
 	});
 
