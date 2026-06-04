@@ -1,14 +1,26 @@
 name: elonew-prod
 
-x-app-build: &app-build
+x-shared-app-image: &shared-app-image ${APP_IMAGE:-elonew-prod:latest}
+
+x-app-image-build: &app-image-build
   context: ../../..
   dockerfile: infrastructure/docker/prod/Dockerfile.prod
   args:
     NEXT_PUBLIC_API_URL: ${PUBLIC_API_ORIGIN:?set PUBLIC_API_ORIGIN in infrastructure/docker/prod/.env}
     NEXT_PUBLIC_APP_URL: ${PUBLIC_WEB_ORIGIN:?set PUBLIC_WEB_ORIGIN in infrastructure/docker/prod/.env}
 
+x-postgres-connection-url: &postgres-connection-url postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infrastructure/docker/prod/.env}@database:5432/elonew
+
+x-log-rotation: &log-rotation
+  logging:
+    driver: json-file
+    options:
+      max-size: '10m'
+      max-file: '3'
+
 services:
   database:
+    <<: *log-rotation
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -17,6 +29,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infrastructure/docker/prod/.env}
     volumes:
       - elonew_postgres_prod_data:/var/lib/postgresql/data
+    networks: [private-backend]
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d elonew']
       interval: 5s
@@ -24,8 +37,10 @@ services:
       retries: 20
 
   redis:
+    <<: *log-rotation
     image: redis:7-alpine
     restart: unless-stopped
+    networks: [private-backend]
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -33,20 +48,23 @@ services:
       retries: 20
 
   migrate:
-    build: *app-build
-    image: elonew-prod:latest
+    <<: *log-rotation
+    build: *app-image-build
+    image: *shared-app-image
     restart: 'no'
     working_dir: /workspace/packages/database
     depends_on:
       database:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/elonew
+      DATABASE_URL: *postgres-connection-url
+    networks: [private-backend]
     command: ['pnpm', 'exec', 'prisma', 'migrate', 'deploy']
 
   api:
-    build: *app-build
-    image: elonew-prod:latest
+    <<: *log-rotation
+    build: *app-image-build
+    image: *shared-app-image
     restart: unless-stopped
     working_dir: /workspace/apps/api
     depends_on:
@@ -61,10 +79,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/elonew
+      DATABASE_URL: *postgres-connection-url
       REDIS_URL: redis://redis:6379
       CHAT_SOCKET_ALLOWED_ORIGINS: ${PUBLIC_WEB_ORIGIN}
       WEB_SESSION_SECRET: ${WEB_SESSION_SECRET:?set WEB_SESSION_SECRET in infrastructure/docker/prod/.env}
+    networks: [private-backend, public-edge]
     healthcheck:
       test:
         [
@@ -78,8 +97,9 @@ services:
     command: ['node', 'dist/main']
 
   web:
-    build: *app-build
-    image: elonew-prod:latest
+    <<: *log-rotation
+    build: *app-image-build
+    image: *shared-app-image
     restart: unless-stopped
     working_dir: /workspace/apps/web
     depends_on:
@@ -92,6 +112,7 @@ services:
       PORT: 3001
       API_URL: http://api:3000
       WEB_SESSION_SECRET: ${WEB_SESSION_SECRET:?set WEB_SESSION_SECRET in infrastructure/docker/prod/.env}
+    networks: [public-edge]
     healthcheck:
       test:
         [
@@ -105,8 +126,9 @@ services:
     command: ['pnpm', 'exec', 'next', 'start', '--hostname', '0.0.0.0', '--port', '3001']
 
   workers:
-    build: *app-build
-    image: elonew-prod:latest
+    <<: *log-rotation
+    build: *app-image-build
+    image: *shared-app-image
     restart: unless-stopped
     working_dir: /workspace/apps/workers
     depends_on:
@@ -123,12 +145,14 @@ services:
     environment:
       NODE_ENV: production
       API_INTERNAL_BASE_URL: http://api:3000
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/elonew
+      DATABASE_URL: *postgres-connection-url
       REDIS_URL: redis://redis:6379
+    networks: [private-backend]
     command: ['pnpm', 'exec', 'tsx', 'src/main.ts']
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    <<: *log-rotation
+    image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:-2026.5.2}
     restart: unless-stopped
     command:
       [
@@ -138,11 +162,17 @@ services:
         '--token',
         '${TUNNEL_TOKEN:?set TUNNEL_TOKEN in infrastructure/docker/prod/.env}',
       ]
+    networks: [public-edge]
     depends_on:
       api:
         condition: service_started
       web:
         condition: service_started
+
+networks:
+  public-edge:
+  private-backend:
+    internal: true
 
 volumes:
   elonew_postgres_prod_data:

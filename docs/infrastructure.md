@@ -64,5 +64,13 @@
   `cloudflared` connector that fronts the stack through a named Cloudflare Tunnel.
 - Config lives in git-ignored env files alongside the compose file (templates are
   the committed `*.env.example`).
+- Two networks: `public-edge` (`cloudflared`, `web`, `api`) and `private-backend`
+  (`internal: true`: `database`, `redis`, `api`, `workers`, `migrate`), so the data
+  stores are not on the public edge; `api` bridges both.
+- Pinned images and a parameterized app tag (`APP_IMAGE`, `CLOUDFLARED_VERSION`), plus
+  `json-file` log rotation on every service.
 - Managed by `pnpm docker:prod:*` (`build`, `up`, `down`, `logs`).
 - Full setup and operation: see `docs/beta-hosting.md`.
+
+The tree (`infrastructure/docker`, `infrastructure/scripts`) leaves room for an
+`infrastructure/terraform/` sibling to manage the host, DNS, and the tunnel later.
