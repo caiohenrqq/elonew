@@ -275,6 +275,8 @@ Initial background jobs:
 - Nest integration through `nestjs-pino`.
 - Correlation identifiers propagated across API requests and jobs.
 - OpenTelemetry for tracing/metrics and cross-service visibility.
+- Production logging rules and lifecycle event contracts are defined in
+  `docs/observability.md`.
 
 Primary telemetry focus:
 - Order and payment path tracing end-to-end.
