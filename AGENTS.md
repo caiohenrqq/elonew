@@ -360,6 +360,8 @@ Reference implementation:
 
 Before finalizing any code task, pass the smallest relevant quality gate.
 
+ALERT: Before ending any code task, always check every test suite for the system, not only the targeted tests. Run all available API, web, worker, integration, e2e, and database-backed test commands that apply to the repository state. If any full-system test command cannot be run, report the exact command, the reason it was skipped, and the remaining risk. A task is not done when only narrow tests have passed unless the user explicitly limits verification.
+
 If a command cannot be run, report:
 - the exact command that was not run
 - why it was not run
@@ -553,6 +555,7 @@ For payment, order, and auth flows:
 ### Phase 5: Verify
 
 - Run targeted tests.
+- Run all available system test suites before finishing the task, including API, web, worker, integration, e2e, and database-backed suites when local prerequisites are available.
 - Run the relevant quality gate.
 - Run `pnpm biome:fix:all` after medium or large code changes.
 - Verify TypeScript or TSX correctness.
@@ -586,7 +589,7 @@ A task is done when:
 - Verification commands were run, or skipped with a clear reason.
 - Build or typecheck was attempted when source code changed.
 - Linting or formatting was run when source code changed.
-- Tests were run when behavior changed.
+- All available system test suites were run when source code changed, including API, web, worker, integration, e2e, and database-backed suites where applicable; skipped suites are listed with exact reasons and residual risk.
 - Documentation was updated when behavior, commands, or architecture changed.
 - Impact is explained:
   - what changed
