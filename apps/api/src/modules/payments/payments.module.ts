@@ -2,6 +2,7 @@ import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { AuthModule } from '@modules/auth/auth.module';
 import { OrdersModule } from '@modules/orders/orders.module';
+import { PaymentLifecycleLogger } from '@modules/payments/application/logging/payment-lifecycle.logger';
 import { ORDER_CREDENTIAL_CLEANUP_PORT_KEY } from '@modules/payments/application/ports/order-credential-cleanup.port';
 import { ORDER_PAYMENT_AMOUNT_PORT_KEY } from '@modules/payments/application/ports/order-payment-amount.port';
 import { ORDER_PAYMENT_CONFIRMATION_PORT_KEY } from '@modules/payments/application/ports/order-payment-confirmation.port';
@@ -133,6 +134,7 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 		ConfirmPaymentUseCase,
 		FailPaymentUseCase,
 		HandlePaymentConfirmedWebhookUseCase,
+		PaymentLifecycleLogger,
 		ReleasePaymentHoldUseCase,
 		ResumePaymentCheckoutUseCase,
 		SimulateDevPaymentOutcomeUseCase,
