@@ -1,5 +1,6 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { Injectable, Logger } from '@nestjs/common';
+import { RESEND_API_KEY_PLACEHOLDER } from '@packages/config/env/env.schema';
 import type {
 	EmailSenderPort,
 	SendEmailInput,
@@ -13,7 +14,7 @@ export class ResendEmailSender implements EmailSenderPort {
 
 	async send(input: SendEmailInput): Promise<void> {
 		const apiKey = this.appSettings.resendApiKey;
-		if (!apiKey || apiKey === 're_xxxxxxxxx') {
+		if (!apiKey || apiKey === RESEND_API_KEY_PLACEHOLDER) {
 			this.logger.debug(`Email delivery skipped for ${input.to}.`);
 			return;
 		}

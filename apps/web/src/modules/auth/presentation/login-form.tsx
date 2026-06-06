@@ -4,6 +4,7 @@ import type { DevUserRole } from '@packages/shared/testing/dev-users';
 import { Lock, Mail, ShieldCheck, Terminal } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useRef, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -17,6 +18,7 @@ import {
 	AuthCheckboxField,
 	AuthErrorText,
 	AuthField,
+	AuthSuccessText,
 	AuthSwitchLink,
 } from './auth-form-fields';
 
@@ -35,6 +37,8 @@ type LoginFormProps = {
 };
 
 export const LoginForm = ({ showDevLogin = false }: LoginFormProps) => {
+	const searchParams = useSearchParams();
+	const isEmailConfirmed = searchParams.get('confirmed') === 'true';
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [formError, setFormError] = useState<string | null>(null);
 	const [isDevLoginOpen, setIsDevLoginOpen] = useState(false);
@@ -91,6 +95,14 @@ export const LoginForm = ({ showDevLogin = false }: LoginFormProps) => {
 				</p>
 			</div>
 
+			{isEmailConfirmed ? (
+				<div className="auth-animate">
+					<AuthSuccessText>
+						E-mail confirmado! Faça login para acessar sua conta.
+					</AuthSuccessText>
+				</div>
+			) : null}
+
 			<form className="space-y-6" noValidate onSubmit={handleSubmit}>
 				<div className="space-y-4">
 					<div className="auth-animate">
@@ -99,7 +111,7 @@ export const LoginForm = ({ showDevLogin = false }: LoginFormProps) => {
 							type="email"
 							label="E-mail"
 							icon={Mail}
-							autoComplete="email"
+							autoComplete="username"
 							placeholder="exemplo@elonew.com"
 							{...form.register('email')}
 						/>

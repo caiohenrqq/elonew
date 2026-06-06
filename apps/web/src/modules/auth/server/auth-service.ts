@@ -33,6 +33,13 @@ export const register = async (input: RegisterInput) => {
 	});
 };
 
+export const confirmEmail = async (token: string) => {
+	await api.request('/users/confirm-email', {
+		method: 'POST',
+		body: JSON.stringify({ token }),
+	});
+};
+
 export const logout = async () => {
 	const session = await getAuthSession();
 

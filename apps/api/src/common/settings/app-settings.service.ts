@@ -119,6 +119,12 @@ export class AppSettingsService {
 		});
 	}
 
+	get webAppUrl() {
+		return this.config.getOrThrow('WEB_APP_URL', {
+			infer: true,
+		});
+	}
+
 	get orderQuoteTtlMinutes() {
 		return this.config.getOrThrow('ORDER_QUOTE_TTL_MINUTES', {
 			infer: true,

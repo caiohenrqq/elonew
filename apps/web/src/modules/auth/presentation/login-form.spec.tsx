@@ -11,6 +11,10 @@ jest.mock('@/modules/auth/actions/auth-actions', () => ({
 	loginAction: jest.fn(),
 }));
 
+jest.mock('next/navigation', () => ({
+	useSearchParams: () => new URLSearchParams(),
+}));
+
 jest.mock('@/shared/ui/animation/gsap', () => ({
 	gsap: {
 		from: jest.fn(),

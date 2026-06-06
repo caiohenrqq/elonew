@@ -141,7 +141,7 @@ describe('RegisterForm', () => {
 		await waitFor(() => {
 			expect(screen.getByText(/Confirme seu e-mail/i)).toBeInTheDocument();
 		});
-		expect(screen.getByText(/Enviamos um código/i)).toBeInTheDocument();
+		expect(screen.getByText(/Enviamos um link/i)).toBeInTheDocument();
 
 		act(() => {
 			jest.advanceTimersByTime(3000);

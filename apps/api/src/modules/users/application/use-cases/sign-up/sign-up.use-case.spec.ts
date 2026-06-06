@@ -1,4 +1,5 @@
 import type { EmailSenderPort } from '@app/common/email/ports/email-sender.port';
+import type { AppSettingsService } from '@app/common/settings/app-settings.service';
 import type { EmailConfirmationTokenServicePort } from '@modules/users/application/ports/email-confirmation-token.port';
 import type { PasswordHasherPort } from '@modules/users/application/ports/password-hasher.port';
 import type { UserRepositoryPort } from '@modules/users/application/ports/user-repository.port';
@@ -8,6 +9,12 @@ import {
 	UserEmailAlreadyInUseError,
 	UsernameAlreadyInUseError,
 } from '@modules/users/domain/user.errors';
+
+const createAppSettingsStub = () =>
+	({
+		webAppUrl: 'https://app.elonew.com',
+		emailConfirmationTokenTtlMinutes: 30,
+	}) as unknown as AppSettingsService;
 
 class InMemoryUserRepository implements UserRepositoryPort {
 	private readonly users = new Map<string, User>();
@@ -88,6 +95,7 @@ describe('SignUpUseCase', () => {
 			passwordHasher,
 			emailConfirmationTokenService,
 			emailSender,
+			createAppSettingsStub(),
 		);
 
 		const createdUser = await useCase.execute({
@@ -149,6 +157,7 @@ describe('SignUpUseCase', () => {
 			passwordHasher,
 			emailConfirmationTokenService,
 			emailSender,
+			createAppSettingsStub(),
 		);
 
 		await useCase.execute({
@@ -188,6 +197,7 @@ describe('SignUpUseCase', () => {
 			passwordHasher,
 			emailConfirmationTokenService,
 			emailSender,
+			createAppSettingsStub(),
 		);
 
 		await useCase.execute({

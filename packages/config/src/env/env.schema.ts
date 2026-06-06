@@ -19,6 +19,8 @@ const DEFAULT_WEB_SESSION_SECRET =
 const DEFAULT_ORDER_CREDENTIALS_ENCRYPTION_KEY =
 	'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=';
 
+export const RESEND_API_KEY_PLACEHOLDER = 're_xxxxxxxxx';
+
 const PRODUCTION_ONLY_DEFAULT_SECRETS = {
 	JWT_ACCESS_TOKEN_SECRET: DEFAULT_JWT_ACCESS_TOKEN_SECRET,
 	INTERNAL_API_KEY: DEFAULT_INTERNAL_API_KEY,
@@ -110,6 +112,7 @@ export const envSchema = z
 			.trim()
 			.url()
 			.default('http://localhost:3001'),
+		WEB_APP_URL: z.string().trim().url().default('http://localhost:3001'),
 		ORDER_QUOTE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
 		AUTH_LOGIN_THROTTLE_LIMIT: z.coerce.number().int().positive().default(5),
 		AUTH_LOGIN_THROTTLE_TTL_SECONDS: z.coerce
@@ -172,6 +175,18 @@ export const envSchema = z
 				path: ['CHAT_SOCKET_ALLOWED_ORIGINS'],
 				message:
 					'Production environment must override development chat socket origins.',
+			});
+		}
+
+		if (
+			!env.RESEND_API_KEY ||
+			env.RESEND_API_KEY === RESEND_API_KEY_PLACEHOLDER
+		) {
+			context.addIssue({
+				code: 'custom',
+				path: ['RESEND_API_KEY'],
+				message:
+					'Production environment requires a valid RESEND_API_KEY for email delivery.',
 			});
 		}
 	});

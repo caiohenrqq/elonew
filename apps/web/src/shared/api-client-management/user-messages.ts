@@ -20,6 +20,8 @@ const authMessages = {
 	login: 'Não foi possível entrar. Confira seus dados e tente novamente.',
 	register:
 		'Não foi possível criar sua conta. Confira os dados e tente novamente.',
+	confirmEmail:
+		'Não foi possível confirmar seu e-mail. O link pode ter expirado ou já ter sido utilizado.',
 };
 
 const checkoutMessages = {

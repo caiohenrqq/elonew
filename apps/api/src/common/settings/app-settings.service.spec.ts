@@ -1,6 +1,10 @@
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import type { ConfigService } from '@nestjs/config';
-import { type AppEnv, envSchema } from '@packages/config/env/env.schema';
+import {
+	type AppEnv,
+	envSchema,
+	RESEND_API_KEY_PLACEHOLDER,
+} from '@packages/config/env/env.schema';
 import { ORDER_CREDENTIALS_ENCRYPTION_KEY_ERROR_MESSAGE } from '@packages/config/env/order-credentials-encryption-key';
 
 describe('AppSettingsService', () => {
@@ -202,6 +206,58 @@ describe('AppSettingsService', () => {
 		});
 
 		expect(result.success).toBe(false);
+	});
+
+	const buildValidProductionEnv = () => ({
+		NODE_ENV: 'production',
+		DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/elonew',
+		CHAT_SOCKET_ALLOWED_ORIGINS: 'https://app.example.com',
+		JWT_ACCESS_TOKEN_SECRET: 'prod-access-secret',
+		INTERNAL_API_KEY: 'prod-internal-key',
+		JWT_REFRESH_TOKEN_SECRET: 'prod-refresh-secret',
+		EMAIL_CONFIRMATION_TOKEN_SECRET: 'prod-email-secret',
+		WEB_SESSION_SECRET: 'prod-session-secret-key-that-is-long-enough',
+		ORDER_CREDENTIALS_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64url'),
+		MERCADO_PAGO_ACCESS_TOKEN: 'mp-access-token',
+		MERCADO_PAGO_WEBHOOK_SECRET: 'webhook-secret',
+		MERCADO_PAGO_WEBHOOK_URL:
+			'https://example.com/payments/webhooks/mercadopago',
+	});
+
+	it('rejects production env when the Resend API key is missing', () => {
+		const result = envSchema.safeParse(buildValidProductionEnv());
+
+		expect(result.success).toBe(false);
+		if (result.success) return;
+		expect(result.error.issues).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ path: ['RESEND_API_KEY'] }),
+			]),
+		);
+	});
+
+	it('rejects production env when the Resend API key is still the placeholder', () => {
+		const result = envSchema.safeParse({
+			...buildValidProductionEnv(),
+			RESEND_API_KEY: RESEND_API_KEY_PLACEHOLDER,
+		});
+
+		expect(result.success).toBe(false);
+		if (result.success) return;
+		expect(result.error.issues).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ path: ['RESEND_API_KEY'] }),
+			]),
+		);
+	});
+
+	it('accepts production env when a real Resend API key is provided', () => {
+		const result = envSchema.safeParse({
+			...buildValidProductionEnv(),
+			RESEND_API_KEY: 're_live_realkey',
+		});
+
+		expect(result.success).toBe(true);
 	});
 
 	it('rejects malformed order credentials encryption keys during env parsing', () => {

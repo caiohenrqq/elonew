@@ -15,7 +15,7 @@ import {
 	type RegisterFormInput,
 	registerFormSchema,
 } from '../model/auth-schemas';
-import { login, logout, register } from '../server/auth-service';
+import { confirmEmail, login, logout, register } from '../server/auth-service';
 
 export type AuthActionState = {
 	error?: string;
@@ -88,6 +88,23 @@ export const registerAction = async (
 	} catch (error) {
 		return {
 			error: getAuthErrorMessage(error, 'register'),
+		};
+	}
+};
+
+export const confirmEmailAction = async (
+	token: string,
+): Promise<AuthActionState> => {
+	const trimmedToken = token.trim();
+	if (!trimmedToken) return { error: 'Token de confirmação ausente.' };
+
+	try {
+		await assertSameOriginRequest();
+		await confirmEmail(trimmedToken);
+		return { success: true };
+	} catch (error) {
+		return {
+			error: getAuthErrorMessage(error, 'confirmEmail'),
 		};
 	}
 };

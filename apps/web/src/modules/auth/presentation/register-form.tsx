@@ -84,8 +84,8 @@ export const RegisterForm = () => {
 						Confirme seu e-mail
 					</h2>
 					<p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed max-w-[280px] mx-auto">
-						Enviamos um código de confirmação para o seu e-mail. Verifique sua
-						caixa de entrada antes de acessar a conta.
+						Enviamos um link de confirmação para o seu e-mail. Abra a mensagem e
+						clique no link para ativar sua conta.
 					</p>
 				</div>
 
@@ -113,7 +113,7 @@ export const RegisterForm = () => {
 							type="text"
 							label="Nome de usuário"
 							icon={User}
-							autoComplete="username"
+							autoComplete="nickname"
 							placeholder="Como devemos te chamar?"
 							{...form.register('username')}
 						/>
@@ -125,7 +125,7 @@ export const RegisterForm = () => {
 							type="email"
 							label="E-mail"
 							icon={Mail}
-							autoComplete="email"
+							autoComplete="username"
 							placeholder="exemplo@elonew.com"
 							{...form.register('email')}
 						/>

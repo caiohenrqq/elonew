@@ -2,6 +2,8 @@ import {
 	EMAIL_SENDER_KEY,
 	type EmailSenderPort,
 } from '@app/common/email/ports/email-sender.port';
+import { AppSettingsService } from '@app/common/settings/app-settings.service';
+import { buildEmailConfirmationEmail } from '@modules/users/application/emails/build-email-confirmation-email';
 import {
 	EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY,
 	type EmailConfirmationTokenServicePort,
@@ -51,6 +53,7 @@ export class SignUpUseCase {
 		private readonly emailConfirmationTokenService: EmailConfirmationTokenServicePort,
 		@Inject(EMAIL_SENDER_KEY)
 		private readonly emailSender: EmailSenderPort,
+		private readonly appSettings: AppSettingsService,
 	) {}
 
 	async execute(input: SignUpInput): Promise<SignUpOutput> {
@@ -92,22 +95,24 @@ export class SignUpUseCase {
 		};
 	}
 
+	private buildConfirmationUrl(token: string) {
+		const url = new URL('/users/confirm-email', this.appSettings.webAppUrl);
+		url.searchParams.set('token', token);
+		return url.toString();
+	}
+
 	private async sendConfirmationEmail(input: {
 		email: string;
 		token: string;
 		username: string;
 	}) {
 		try {
-			await this.emailSender.send({
-				to: input.email,
-				subject: 'Confirme seu e-mail na EloNew',
-				html: `
-					<p>Olá, ${escapeHtml(input.username)}.</p>
-					<p>Use o código abaixo para confirmar seu e-mail na EloNew:</p>
-					<p><strong>${escapeHtml(input.token)}</strong></p>
-				`,
-				text: `Olá, ${input.username}.\n\nUse este código para confirmar seu e-mail na EloNew: ${input.token}`,
+			const email = buildEmailConfirmationEmail({
+				username: input.username,
+				confirmationUrl: this.buildConfirmationUrl(input.token),
+				expiresInMinutes: this.appSettings.emailConfirmationTokenTtlMinutes,
 			});
+			await this.emailSender.send({ to: input.email, ...email });
 		} catch (error) {
 			this.logger.warn(
 				`Failed to send email confirmation to ${input.email}: ${formatEmailError(error)}`,
@@ -118,11 +123,3 @@ export class SignUpUseCase {
 
 const formatEmailError = (error: unknown) =>
 	error instanceof Error ? error.message : 'Unknown email delivery error';
-
-const escapeHtml = (value: string) =>
-	value
-		.replaceAll('&', '&amp;')
-		.replaceAll('<', '&lt;')
-		.replaceAll('>', '&gt;')
-		.replaceAll('"', '&quot;')
-		.replaceAll("'", '&#039;');
