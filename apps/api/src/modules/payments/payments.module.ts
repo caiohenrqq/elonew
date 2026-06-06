@@ -1,3 +1,4 @@
+import { LoggingModule } from '@app/common/logging/logging.module';
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { AuthModule } from '@modules/auth/auth.module';
@@ -34,7 +35,7 @@ import { MercadoPagoSdkAdapter } from '@packages/integrations/mercadopago/mercad
 import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 
 @Module({
-	imports: [PrismaModule, AuthModule, OrdersModule],
+	imports: [PrismaModule, LoggingModule, AuthModule, OrdersModule],
 	controllers: [PaymentsController],
 	providers: [
 		PrismaPaymentRepository,

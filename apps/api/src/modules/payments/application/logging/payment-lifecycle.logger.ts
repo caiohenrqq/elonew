@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import { PinoLogger } from 'nestjs-pino';
 
 export type PaymentLifecycleLogEvent = {
 	event: 'payment.lifecycle';
@@ -54,10 +54,9 @@ export function markPaymentLifecycleLogError(
 
 @Injectable()
 export class PaymentLifecycleLogger {
-	constructor(
-		@InjectPinoLogger(PaymentLifecycleLogger.name)
-		private readonly logger: PinoLogger,
-	) {}
+	constructor(private readonly logger: PinoLogger) {
+		this.logger.setContext(PaymentLifecycleLogger.name);
+	}
 
 	emit(event: PaymentLifecycleLogEvent, startedAt: number): void {
 		event.duration_ms = Date.now() - startedAt;
