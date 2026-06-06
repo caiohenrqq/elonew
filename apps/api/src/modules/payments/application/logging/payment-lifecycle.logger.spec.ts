@@ -10,6 +10,7 @@ describe('PaymentLifecycleLogger', () => {
 		const pinoLogger = {
 			info: jest.fn(),
 			error: jest.fn(),
+			setContext: jest.fn(),
 		} as unknown as PinoLogger;
 		const logger = new PaymentLifecycleLogger(pinoLogger);
 		const event: PaymentLifecycleLogEvent = {
@@ -21,6 +22,9 @@ describe('PaymentLifecycleLogger', () => {
 
 		logger.emit(event, Date.now() - 10);
 
+		expect(pinoLogger.setContext).toHaveBeenCalledWith(
+			PaymentLifecycleLogger.name,
+		);
 		expect(pinoLogger.info).toHaveBeenCalledWith({
 			...event,
 			duration_ms: expect.any(Number),
@@ -32,6 +36,7 @@ describe('PaymentLifecycleLogger', () => {
 		const pinoLogger = {
 			info: jest.fn(),
 			error: jest.fn(),
+			setContext: jest.fn(),
 		} as unknown as PinoLogger;
 		const logger = new PaymentLifecycleLogger(pinoLogger);
 		const event: PaymentLifecycleLogEvent = {
