@@ -33,7 +33,7 @@ describe('RequestWithdrawalUseCase', () => {
 
 		wallet.creditLocked({
 			orderId: 'order-1',
-			amount: 70,
+			amount: 7000,
 			availableAt: new Date('2026-03-10T12:00:00.000Z'),
 		});
 		wallet.releaseMaturedFunds(new Date('2026-03-12T12:00:00.000Z'));
@@ -42,23 +42,23 @@ describe('RequestWithdrawalUseCase', () => {
 		const useCase = new RequestWithdrawalUseCase(repository);
 		await useCase.execute({
 			boosterId: 'booster-1',
-			amount: 0.01,
+			amount: 1,
 			requestedAt: new Date('2026-03-12T13:00:00.000Z'),
 		});
 
 		await expect(repository.findByBoosterId('booster-1')).resolves.toEqual(
 			expect.objectContaining({
 				balanceLocked: 0,
-				balanceWithdrawable: 69.99,
+				balanceWithdrawable: 6999,
 				transactions: expect.arrayContaining([
 					expect.objectContaining({
-						amount: 0.01,
+						amount: 1,
 						type: 'debit',
 						reason: 'withdrawal_request',
 					}),
 					expect.objectContaining({
 						orderId: 'order-1',
-						amount: 70,
+						amount: 7000,
 						type: 'credit',
 						reason: 'order_completion',
 					}),

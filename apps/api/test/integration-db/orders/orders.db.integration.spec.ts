@@ -156,8 +156,8 @@ describe('Orders module integration (db)', () => {
 		expect(createdOrder).toMatchObject({
 			id: expect.any(String),
 			status: 'awaiting_payment',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 		const persistedOrder = await prisma.order.findUnique({
@@ -176,16 +176,16 @@ describe('Orders module integration (db)', () => {
 			server: 'br',
 			desiredQueue: 'solo_duo',
 			lpGain: 20,
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 
 		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'awaiting_payment',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 	});
@@ -241,9 +241,9 @@ describe('Orders module integration (db)', () => {
 		);
 
 		expect(quote).toMatchObject({
-			subtotal: 25.2,
-			totalAmount: 22.68,
-			discountAmount: 2.52,
+			subtotal: 2520,
+			totalAmount: 2268,
+			discountAmount: 252,
 		});
 
 		const persistedQuote = await prisma.orderQuote.findUnique({
@@ -253,8 +253,8 @@ describe('Orders module integration (db)', () => {
 			id: quote.quoteId,
 			couponId: coupon.id,
 			pricingVersionId: expect.any(String),
-			discountAmount: 2.52,
-			totalAmount: 22.68,
+			discountAmount: 252,
+			totalAmount: 2268,
 		});
 
 		const createdOrder = await controller.create(
@@ -271,8 +271,8 @@ describe('Orders module integration (db)', () => {
 			id: createdOrder.id,
 			couponId: coupon.id,
 			pricingVersionId: expect.any(String),
-			discountAmount: 2.52,
-			totalAmount: 22.68,
+			discountAmount: 252,
+			totalAmount: 2268,
 		});
 	});
 
@@ -345,8 +345,8 @@ describe('Orders module integration (db)', () => {
 			id: createdOrder.id,
 			status: 'completed',
 			extras: [
-				{ type: 'mmr_buffed', price: 8.82 },
-				{ type: 'priority_service', price: 2.52 },
+				{ type: 'mmr_buffed', price: 882 },
+				{ type: 'priority_service', price: 252 },
 				{ type: 'offline_chat', price: 0 },
 			],
 		});
@@ -400,8 +400,8 @@ describe('Orders module integration (db)', () => {
 			controller.create({ quoteId: firstQuote.quoteId }, clientUser),
 		).resolves.toMatchObject({
 			status: 'awaiting_payment',
-			totalAmount: 22.68,
-			discountAmount: 2.52,
+			totalAmount: 2268,
+			discountAmount: 252,
 		});
 
 		await expect(
@@ -412,7 +412,7 @@ describe('Orders module integration (db)', () => {
 			prisma.order.count({
 				where: {
 					clientId: clientUser.id,
-					discountAmount: 2.52,
+					discountAmount: 252,
 				},
 			}),
 		).resolves.toBe(1);
@@ -486,8 +486,8 @@ describe('Orders module integration (db)', () => {
 		expect(failedResults).toHaveLength(1);
 		expect(successfulResults[0]?.value).toMatchObject({
 			status: 'awaiting_payment',
-			totalAmount: 22.68,
-			discountAmount: 2.52,
+			totalAmount: 2268,
+			discountAmount: 252,
 		});
 		expect(failedResults[0]?.reason).toBeInstanceOf(OrderCouponInvalidError);
 
@@ -495,7 +495,7 @@ describe('Orders module integration (db)', () => {
 			prisma.order.count({
 				where: {
 					clientId: clientUser.id,
-					discountAmount: 2.52,
+					discountAmount: 252,
 				},
 			}),
 		).resolves.toBe(1);
@@ -556,8 +556,8 @@ describe('Orders module integration (db)', () => {
 		expect(successfulResults[0]?.value).toMatchObject({
 			id: expect.any(String),
 			status: 'awaiting_payment',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 		expect(failedResults[0]?.reason).toBeInstanceOf(OrderQuoteAlreadyUsedError);
@@ -628,8 +628,8 @@ describe('Orders module integration (db)', () => {
 		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'in_progress',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 	});
@@ -750,8 +750,8 @@ describe('Orders module integration (db)', () => {
 		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'completed',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 	});

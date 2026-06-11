@@ -8,8 +8,9 @@ import {
 import { formatTitleCase } from './text';
 
 describe('currency formatters', () => {
-	it('formats numbers as BRL', () => {
-		expect(formatBRL(120)).toMatch(/R\$\s*120,00/);
+	it('formats integer cents as BRL', () => {
+		expect(formatBRL(12000)).toMatch(/R\$\s*120,00/);
+		expect(formatBRL(1259)).toMatch(/R\$\s*12,59/);
 	});
 
 	it('returns a fallback for null amounts', () => {

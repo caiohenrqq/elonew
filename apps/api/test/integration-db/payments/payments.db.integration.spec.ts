@@ -155,8 +155,8 @@ describe('Payments module integration (db)', () => {
 		expect(createdPayment).toMatchObject({
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
-			grossAmount: 25.2,
-			boosterAmount: 17.64,
+			grossAmount: 2520,
+			boosterAmount: 1764,
 			paymentMethod: 'pix',
 			checkoutUrl: expect.stringContaining('/checkout/'),
 		});
@@ -168,8 +168,8 @@ describe('Payments module integration (db)', () => {
 			id: createdPayment.id,
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
-			grossAmount: 25.2,
-			boosterAmount: 17.64,
+			grossAmount: 2520,
+			boosterAmount: 1764,
 			paymentMethod: 'pix',
 		});
 	});
@@ -220,8 +220,8 @@ describe('Payments module integration (db)', () => {
 		).resolves.toMatchObject({
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
-			grossAmount: 22.68,
-			boosterAmount: 15.88,
+			grossAmount: 2268,
+			boosterAmount: 1588,
 			paymentMethod: 'boleto',
 		});
 	});

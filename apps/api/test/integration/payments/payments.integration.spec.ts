@@ -163,8 +163,8 @@ describe('Payments module integration', () => {
 		expect(createdPayment).toMatchObject({
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
-			grossAmount: 25.2,
-			boosterAmount: 17.64,
+			grossAmount: 2520,
+			boosterAmount: 1764,
 			paymentMethod: 'pix',
 			checkoutUrl: expect.stringContaining('/checkout/'),
 		});
@@ -176,8 +176,8 @@ describe('Payments module integration', () => {
 			id: createdPayment.id,
 			orderId: createdOrder.id,
 			status: 'awaiting_confirmation',
-			grossAmount: 25.2,
-			boosterAmount: 17.64,
+			grossAmount: 2520,
+			boosterAmount: 1764,
 			paymentMethod: 'pix',
 		});
 	});

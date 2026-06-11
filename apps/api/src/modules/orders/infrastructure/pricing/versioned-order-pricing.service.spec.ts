@@ -52,10 +52,10 @@ describe('VersionedOrderPricingService', () => {
 			}),
 		).resolves.toMatchObject({
 			pricingVersionId: version.id,
-			subtotal: 27.72,
-			totalAmount: 27.72,
+			subtotal: 2772,
+			totalAmount: 2772,
 			discountAmount: 0,
-			extras: [{ type: 'priority_service', price: 2.52 }],
+			extras: [{ type: 'priority_service', price: 252 }],
 		});
 	});
 
@@ -87,8 +87,8 @@ describe('VersionedOrderPricingService', () => {
 			}),
 		).resolves.toMatchObject({
 			pricingVersionId: version.id,
-			subtotal: 307.3,
-			totalAmount: 307.3,
+			subtotal: 30730,
+			totalAmount: 30730,
 			discountAmount: 0,
 			extras: [],
 		});
@@ -101,7 +101,7 @@ describe('VersionedOrderPricingService', () => {
 			...defaultPricing,
 			steps: defaultPricing.steps.map((step) =>
 				step.serviceType === 'elo_boost' && step.league === 'master'
-					? { ...step, priceToNext: 80 }
+					? { ...step, priceToNext: 8000 }
 					: step,
 			),
 		});
@@ -126,8 +126,8 @@ describe('VersionedOrderPricingService', () => {
 			}),
 		).resolves.toMatchObject({
 			pricingVersionId: version.id,
-			subtotal: 80,
-			totalAmount: 80,
+			subtotal: 8000,
+			totalAmount: 8000,
 			discountAmount: 0,
 			extras: [],
 		});

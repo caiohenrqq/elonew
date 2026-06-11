@@ -9,6 +9,7 @@ import {
 } from '@modules/orders/application/ports/order-repository.port';
 import { OrderCouponInvalidError } from '@modules/orders/domain/order-pricing.errors';
 import { Inject, Injectable } from '@nestjs/common';
+import { Money } from '@packages/shared/money/money';
 
 export const ORDER_COUPON_SERVICE_KEY = Symbol('ORDER_COUPON_SERVICE_KEY');
 
@@ -58,24 +59,21 @@ export class ApplyOrderCouponService implements OrderCouponService {
 		)
 			throw new OrderCouponInvalidError();
 
+		const subtotal = Money.fromCents(input.pricing.subtotal);
 		const rawDiscount =
 			coupon.discountType === 'percentage'
-				? input.pricing.subtotal * (coupon.discount / 100)
-				: coupon.discount;
-		const discountAmount = Number(
-			Math.min(input.pricing.subtotal, rawDiscount).toFixed(2),
-		);
-		const totalAmount = Number(
-			Math.max(0, input.pricing.subtotal - discountAmount).toFixed(2),
-		);
+				? subtotal.percentage(coupon.discount / 100)
+				: Money.fromDecimal(coupon.discount);
+		const discount = subtotal.min(rawDiscount);
+		const totalAmount = Money.zero().max(subtotal.subtract(discount));
 
 		return {
 			couponId: coupon.id,
 			pricing: {
 				pricingVersionId: input.pricing.pricingVersionId,
 				subtotal: input.pricing.subtotal,
-				totalAmount,
-				discountAmount,
+				totalAmount: totalAmount.cents,
+				discountAmount: discount.cents,
 				extras: input.pricing.extras,
 			},
 		};

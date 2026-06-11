@@ -11,6 +11,10 @@
 			"types": "./dist/chat/send-chat-message.schema.d.ts",
 			"default": "./dist/chat/send-chat-message.schema.js"
 		},
+		"./money/money": {
+			"types": "./dist/money/money.d.ts",
+			"default": "./dist/money/money.js"
+		},
 		"./notifications/notification.schema": {
 			"types": "./dist/notifications/notification.schema.d.ts",
 			"default": "./dist/notifications/notification.schema.js"

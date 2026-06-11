@@ -15,7 +15,7 @@ export type ListWalletTransactionsQuerySchemaInput = z.infer<
 export const creditCompletedOrderEarningsSchema = z.object({
 	orderId: z.string().trim().min(1),
 	boosterId: z.string().trim().min(1),
-	amount: z.number().positive(),
+	amount: z.number().int().positive(),
 	completedAt: z.string().datetime(),
 	lockPeriodInHours: z.number().int().nonnegative(),
 });
@@ -35,7 +35,7 @@ export type ReleaseMaturedWalletFundsSchemaInput = z.infer<
 >;
 
 export const requestWithdrawalSchema = z.object({
-	amount: z.number().positive(),
+	amount: z.number().int().positive(),
 	requestedAt: z.string().datetime(),
 });
 

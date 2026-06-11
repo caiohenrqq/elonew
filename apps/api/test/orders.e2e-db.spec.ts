@@ -117,8 +117,8 @@ describe('Orders (e2e db)', () => {
 			.expect(200, {
 				id: orderId,
 				status: 'awaiting_payment',
-				subtotal: 25.2,
-				totalAmount: 25.2,
+				subtotal: 2520,
+				totalAmount: 2520,
 				discountAmount: 0,
 			})
 			.execute();

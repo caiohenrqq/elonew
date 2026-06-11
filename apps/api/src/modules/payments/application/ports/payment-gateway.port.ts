@@ -3,7 +3,7 @@ import type { PaymentMethod } from '@packages/shared/payments/payment-method';
 export type InitiatePaymentInput = {
 	paymentId: string;
 	orderId: string;
-	amount: number;
+	amount: number; // decimal major units (reais), provider-facing
 	paymentMethod: PaymentMethod;
 };
 

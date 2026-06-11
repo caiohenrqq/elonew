@@ -26,7 +26,7 @@ export const WithdrawalForm = ({ maxAmount }: WithdrawalFormProps) => {
 					name="amount"
 					type="number"
 					min="0.01"
-					max={maxAmount}
+					max={maxAmount / 100}
 					step="0.01"
 					placeholder="0,00"
 					disabled={maxAmount <= 0 || isPending}

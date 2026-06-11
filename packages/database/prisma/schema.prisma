@@ -132,9 +132,9 @@ model Order {
   lpGain           Int?
   deadline         DateTime?
   
-  subtotal         Float?
-  totalAmount      Float?
-  discountAmount   Float        @default(0)
+  subtotal         Int?
+  totalAmount      Int?
+  discountAmount   Int          @default(0)
   couponId         String?
   coupon           Coupon?      @relation(fields: [couponId], references: [id])
   pricingVersionId String?
@@ -190,9 +190,9 @@ model OrderQuote {
   desiredQueue     String
   lpGain           Int
   deadline         DateTime
-  subtotal         Float
-  totalAmount      Float
-  discountAmount   Float        @default(0)
+  subtotal         Int
+  totalAmount      Int
+  discountAmount   Int          @default(0)
   pricingVersionId String
   pricingVersion   PricingVersion @relation(fields: [pricingVersionId], references: [id])
   extras           OrderQuoteExtra[]
@@ -227,7 +227,7 @@ model OrderExtra {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   type    String
-  price   Float
+  price   Int
 
   @@unique([orderId, type])
   @@map("order_extras")
@@ -238,7 +238,7 @@ model OrderQuoteExtra {
   orderQuoteId String
   orderQuote   OrderQuote @relation(fields: [orderQuoteId], references: [id], onDelete: Cascade)
   type         String
-  price        Float
+  price        Int
 
   @@unique([orderQuoteId, type])
   @@map("order_quote_extras")
@@ -249,8 +249,8 @@ model Payment {
   orderId       String
   order         Order         @relation(fields: [orderId], references: [id])
   status        PaymentStatus @default(awaiting_confirmation)
-  grossAmount   Float
-  boosterAmount Float
+  grossAmount   Int
+  boosterAmount Int
   paymentMethod PaymentMethod
   gateway       String        @default("MERCADO_PAGO")
   gatewayReferenceId String?
@@ -269,8 +269,8 @@ model Wallet {
   id                 String   @id @default(cuid())
   boosterId          String   @unique
   booster            User     @relation(fields: [boosterId], references: [id])
-  balanceLocked      Float    @default(0)
-  balanceWithdrawable Float   @default(0)
+  balanceLocked      Int      @default(0)
+  balanceWithdrawable Int     @default(0)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -285,7 +285,7 @@ model WalletTransaction {
   wallet      Wallet                @relation(fields: [walletId], references: [id])
   orderId     String?
   order       Order?                @relation(fields: [orderId], references: [id])
-  amount      Float
+  amount      Int
   type        WalletTransactionType
   reason      String
   availableAt DateTime
@@ -337,7 +337,7 @@ model PricingStep {
   serviceType      ServiceType
   league           String
   division         String
-  priceToNext      Float
+  priceToNext      Int
 
   @@unique([pricingVersionId, serviceType, league, division])
   @@map("pricing_steps")
