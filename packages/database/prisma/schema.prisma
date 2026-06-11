@@ -326,7 +326,7 @@ model PricingVersion {
   orderQuotes OrderQuote[]
 
   @@index([status])
-  @@unique([status], map: "pricing_versions_single_active_key", where: raw("\"status\" = 'ACTIVE'"))
+  @@unique([status], map: "pricing_versions_single_active_key", where: raw("(status = 'ACTIVE'::\"PricingVersionStatus\")"))
   @@map("pricing_versions")
 }
 
