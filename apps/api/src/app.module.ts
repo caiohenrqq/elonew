@@ -12,6 +12,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { ApiDomainErrorFilter } from './common/http/api-domain-error.filter';
 import { LoggingModule } from './common/logging/logging.module';
+import { OutboxModule } from './common/outbox/outbox.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AppSettingsModule } from './common/settings/app-settings.module';
 
@@ -20,6 +21,7 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 		AppSettingsModule,
 		LoggingModule,
 		PrismaModule,
+		OutboxModule,
 		AdminModule,
 		AuthModule,
 		ChatModule,

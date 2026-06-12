@@ -1,3 +1,4 @@
+import { OutboxModule } from '@app/common/outbox/outbox.module';
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { CHAT_REPOSITORY_KEY } from '@modules/chat/application/ports/chat-repository.port';
@@ -12,7 +13,7 @@ import { NotificationsModule } from '@modules/notifications/notifications.module
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, AuthModule, NotificationsModule],
+	imports: [PrismaModule, AuthModule, NotificationsModule, OutboxModule],
 	controllers: [AdminChatController, ChatController],
 	providers: [
 		PrismaChatRepository,
