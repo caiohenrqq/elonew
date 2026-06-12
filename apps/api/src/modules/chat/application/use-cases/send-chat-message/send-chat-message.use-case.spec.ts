@@ -12,13 +12,14 @@ import {
 	ChatNotWritableError,
 	ChatOrderNotFoundError,
 } from '@modules/chat/domain/chat.errors';
-import type { NotificationEventsPort } from '@modules/notifications/application/ports/notification-events.port';
 import { Role } from '@packages/auth/roles/role';
 
 class InMemoryChatRepository implements ChatRepositoryPort {
 	order: ChatOrderRecord | null = null;
 	readonly messages: ChatMessageRecord[] = [];
 	failNotificationPersistence = false;
+	notificationRequested = false;
+	lastNotificationRecipientId: string | null = null;
 
 	async findOrderChat(_orderId: string): Promise<ChatOrderRecord | null> {
 		return this.order;
@@ -51,6 +52,8 @@ class InMemoryChatRepository implements ChatRepositoryPort {
 		content: string;
 		notification?: { recipientId: string };
 	}): Promise<ChatMessageWriteResult> {
+		this.notificationRequested = Boolean(input.notification);
+		this.lastNotificationRecipientId = input.notification?.recipientId ?? null;
 		if (input.notification && this.failNotificationPersistence)
 			throw new Error('notification persistence failed');
 
@@ -103,42 +106,6 @@ class InMemoryChatRepository implements ChatRepositoryPort {
 	}
 }
 
-type NotificationUpdatedSpyEvent = {
-	notification: { id: string };
-	unreadCount: number;
-};
-
-type NotificationsReadAllSpyEvent = {
-	unreadCount: number;
-};
-
-class NotificationEventsSpy implements NotificationEventsPort {
-	readonly updated: Array<{
-		recipientId: string;
-		notificationId: string;
-		unreadCount: number;
-	}> = [];
-	readonly readAll: Array<{ recipientId: string; unreadCount: number }> = [];
-
-	emitNotificationUpdated(
-		recipientId: string,
-		event: NotificationUpdatedSpyEvent,
-	): void {
-		this.updated.push({
-			recipientId,
-			notificationId: event.notification.id,
-			unreadCount: event.unreadCount,
-		});
-	}
-
-	emitNotificationsReadAll(
-		recipientId: string,
-		event: NotificationsReadAllSpyEvent,
-	): void {
-		this.readAll.push({ recipientId, unreadCount: event.unreadCount });
-	}
-}
-
 const makeWritableOrder = (): ChatOrderRecord => ({
 	orderId: 'order-1',
 	clientId: 'client-1',
@@ -148,11 +115,10 @@ const makeWritableOrder = (): ChatOrderRecord => ({
 });
 
 describe('SendChatMessageUseCase', () => {
-	it('persists a client message for an in-progress participant order', async () => {
+	it('persists a client message and requests a notification for the booster', async () => {
 		const repository = new InMemoryChatRepository();
 		repository.order = makeWritableOrder();
-		const notifications = new NotificationEventsSpy();
-		const useCase = new SendChatMessageUseCase(repository, notifications);
+		const useCase = new SendChatMessageUseCase(repository);
 
 		const message = await useCase.execute({
 			orderId: 'order-1',
@@ -166,20 +132,13 @@ describe('SendChatMessageUseCase', () => {
 			chatId: 'chat-1',
 			content: 'Olá booster',
 		});
-		expect(notifications.updated).toEqual([
-			{
-				recipientId: 'booster-1',
-				notificationId: 'notification-message-1',
-				unreadCount: 1,
-			},
-		]);
+		expect(repository.lastNotificationRecipientId).toBe('booster-1');
 	});
 
-	it('persists a booster message for an assigned in-progress order', async () => {
+	it('persists a booster message and requests a notification for the client', async () => {
 		const repository = new InMemoryChatRepository();
 		repository.order = makeWritableOrder();
-		const notifications = new NotificationEventsSpy();
-		const useCase = new SendChatMessageUseCase(repository, notifications);
+		const useCase = new SendChatMessageUseCase(repository);
 
 		await expect(
 			useCase.execute({
@@ -191,21 +150,16 @@ describe('SendChatMessageUseCase', () => {
 		).resolves.toMatchObject({
 			content: 'Começando agora',
 		});
-		expect(notifications.updated).toEqual([
-			expect.objectContaining({
-				recipientId: 'client-1',
-			}),
-		]);
+		expect(repository.lastNotificationRecipientId).toBe('client-1');
 	});
 
-	it('does not create a notification when the opposite participant is missing', async () => {
+	it('does not request a notification when the opposite participant is missing', async () => {
 		const repository = new InMemoryChatRepository();
 		repository.order = {
 			...makeWritableOrder(),
 			boosterId: null,
 		};
-		const notifications = new NotificationEventsSpy();
-		const useCase = new SendChatMessageUseCase(repository, notifications);
+		const useCase = new SendChatMessageUseCase(repository);
 
 		await useCase.execute({
 			orderId: 'order-1',
@@ -214,17 +168,15 @@ describe('SendChatMessageUseCase', () => {
 			content: 'sem booster',
 		});
 
-		expect(notifications.updated).toEqual([]);
+		expect(repository.notificationRequested).toBe(false);
+		expect(repository.lastNotificationRecipientId).toBeNull();
 	});
 
 	it('does not leave a persisted message when notification persistence fails', async () => {
 		const repository = new InMemoryChatRepository();
 		repository.order = makeWritableOrder();
 		repository.failNotificationPersistence = true;
-		const useCase = new SendChatMessageUseCase(
-			repository,
-			new NotificationEventsSpy(),
-		);
+		const useCase = new SendChatMessageUseCase(repository);
 
 		await expect(
 			useCase.execute({
@@ -240,10 +192,7 @@ describe('SendChatMessageUseCase', () => {
 	it('hides orders from unrelated participants', async () => {
 		const repository = new InMemoryChatRepository();
 		repository.order = makeWritableOrder();
-		const useCase = new SendChatMessageUseCase(
-			repository,
-			new NotificationEventsSpy(),
-		);
+		const useCase = new SendChatMessageUseCase(repository);
 
 		await expect(
 			useCase.execute({
@@ -258,10 +207,7 @@ describe('SendChatMessageUseCase', () => {
 	it('rejects admin writes', async () => {
 		const repository = new InMemoryChatRepository();
 		repository.order = makeWritableOrder();
-		const useCase = new SendChatMessageUseCase(
-			repository,
-			new NotificationEventsSpy(),
-		);
+		const useCase = new SendChatMessageUseCase(repository);
 
 		await expect(
 			useCase.execute({
@@ -279,10 +225,7 @@ describe('SendChatMessageUseCase', () => {
 			...makeWritableOrder(),
 			status: 'completed',
 		};
-		const useCase = new SendChatMessageUseCase(
-			repository,
-			new NotificationEventsSpy(),
-		);
+		const useCase = new SendChatMessageUseCase(repository);
 
 		await expect(
 			useCase.execute({

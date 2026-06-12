@@ -1,14 +1,9 @@
 import {
-	NOTIFICATION_EVENTS_KEY,
-	type NotificationEventsPort,
-} from '@modules/notifications/application/ports/notification-events.port';
-import {
 	NOTIFICATION_REPOSITORY_KEY,
 	type NotificationRepositoryPort,
 } from '@modules/notifications/application/ports/notification-repository.port';
 import {
 	mapNotificationResponse,
-	mapNotificationUpdatedEventResponse,
 	type NotificationResponse,
 } from '@modules/notifications/application/use-cases/notification-response';
 import { Inject, Injectable } from '@nestjs/common';
@@ -26,8 +21,6 @@ export class UpsertChatNotificationUseCase {
 	constructor(
 		@Inject(NOTIFICATION_REPOSITORY_KEY)
 		private readonly notificationRepository: NotificationRepositoryPort,
-		@Inject(NOTIFICATION_EVENTS_KEY)
-		private readonly notificationEvents: NotificationEventsPort,
 	) {}
 
 	async execute(
@@ -47,16 +40,7 @@ export class UpsertChatNotificationUseCase {
 				},
 			},
 		});
-		const unreadCount = await this.notificationRepository.countUnread(
-			input.recipientId,
-		);
-		const notification = mapNotificationResponse(notificationRecord);
 
-		void this.notificationEvents.emitNotificationUpdated(
-			input.recipientId,
-			mapNotificationUpdatedEventResponse(notificationRecord, unreadCount),
-		);
-
-		return notification;
+		return mapNotificationResponse(notificationRecord);
 	}
 }

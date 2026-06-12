@@ -1,7 +1,7 @@
-import type { NotificationEventsPort } from '@modules/notifications/application/ports/notification-events.port';
 import type {
 	ListNotificationsInput,
 	ListNotificationsOutput,
+	MarkAllNotificationsReadResult,
 	NotificationRecord,
 	NotificationRepositoryPort,
 	UpsertNotificationInput,
@@ -67,8 +67,8 @@ class InMemoryNotificationRepository implements NotificationRepositoryPort {
 		recipientId: string;
 		readAt: Date;
 		cutoffActivityAt: Date;
-	}): Promise<number> {
-		let count = 0;
+	}): Promise<MarkAllNotificationsReadResult> {
+		let updatedCount = 0;
 		for (const notification of this.notifications.values()) {
 			if (notification.recipientId !== input.recipientId || notification.readAt)
 				continue;
@@ -78,10 +78,13 @@ class InMemoryNotificationRepository implements NotificationRepositoryPort {
 				...notification,
 				readAt: input.readAt,
 			});
-			count++;
+			updatedCount++;
 		}
 
-		return count;
+		return {
+			updatedCount,
+			unreadCount: await this.countUnread(input.recipientId),
+		};
 	}
 
 	async upsert(input: UpsertNotificationInput): Promise<NotificationRecord> {
@@ -108,46 +111,10 @@ class InMemoryNotificationRepository implements NotificationRepositoryPort {
 	}
 }
 
-class NotificationEventsSpy implements NotificationEventsPort {
-	readonly updated: Array<{
-		recipientId: string;
-		notificationId: string;
-		unreadCount: number;
-	}> = [];
-	readonly readAll: Array<{
-		recipientId: string;
-		cutoffActivityAt?: string;
-		unreadCount: number;
-	}> = [];
-
-	emitNotificationUpdated(
-		recipientId: string,
-		event: { notification: { id: string }; unreadCount: number },
-	): void {
-		this.updated.push({
-			recipientId,
-			notificationId: event.notification.id,
-			unreadCount: event.unreadCount,
-		});
-	}
-
-	emitNotificationsReadAll(
-		recipientId: string,
-		event: { cutoffActivityAt?: string; unreadCount: number },
-	): void {
-		this.readAll.push({
-			recipientId,
-			cutoffActivityAt: event.cutoffActivityAt,
-			unreadCount: event.unreadCount,
-		});
-	}
-}
-
 describe('notification use-cases', () => {
-	it('coalesces chat notifications per recipient and order and emits recipient-scoped updates', async () => {
+	it('coalesces chat notifications per recipient and order', async () => {
 		const repository = new InMemoryNotificationRepository();
-		const events = new NotificationEventsSpy();
-		const useCase = new UpsertChatNotificationUseCase(repository, events);
+		const useCase = new UpsertChatNotificationUseCase(repository);
 
 		const first = await useCase.execute({
 			recipientId: 'booster-1',
@@ -167,10 +134,6 @@ describe('notification use-cases', () => {
 		expect(second.id).toBe(first.id);
 		expect(second.readAt).toBeNull();
 		expect(second.payload.metadata.chatMessageId).toBe('message-2');
-		expect(events.updated).toEqual([
-			{ recipientId: 'booster-1', notificationId: first.id, unreadCount: 1 },
-			{ recipientId: 'booster-1', notificationId: second.id, unreadCount: 1 },
-		]);
 	});
 
 	it('lists only recipient-owned notifications with unread count', async () => {
@@ -230,8 +193,7 @@ describe('notification use-cases', () => {
 				},
 			},
 		});
-		const events = new NotificationEventsSpy();
-		const useCase = new MarkNotificationReadUseCase(repository, events);
+		const useCase = new MarkNotificationReadUseCase(repository);
 
 		const first = await useCase.execute({
 			notificationId: notification.id,
@@ -245,7 +207,6 @@ describe('notification use-cases', () => {
 		});
 
 		expect(second.readAt).toBe(first.readAt);
-		expect(events.updated[0]).toMatchObject({ unreadCount: 0 });
 		await expect(
 			useCase.execute({
 				notificationId: notification.id,
@@ -272,10 +233,7 @@ describe('notification use-cases', () => {
 				},
 			},
 		});
-		const useCase = new MarkNotificationReadUseCase(
-			repository,
-			new NotificationEventsSpy(),
-		);
+		const useCase = new MarkNotificationReadUseCase(repository);
 
 		await expect(
 			useCase.execute({
@@ -303,8 +261,7 @@ describe('notification use-cases', () => {
 				},
 			},
 		});
-		const events = new NotificationEventsSpy();
-		const useCase = new MarkAllNotificationsReadUseCase(repository, events);
+		const useCase = new MarkAllNotificationsReadUseCase(repository);
 
 		await expect(
 			useCase.execute({
@@ -326,21 +283,9 @@ describe('notification use-cases', () => {
 			unreadCount: 0,
 			updatedCount: 0,
 		});
-		expect(events.readAll).toEqual([
-			{
-				recipientId: 'client-1',
-				cutoffActivityAt: '2026-05-18T12:00:00.000Z',
-				unreadCount: 0,
-			},
-			{
-				recipientId: 'client-1',
-				cutoffActivityAt: '2026-05-18T13:00:00.000Z',
-				unreadCount: 0,
-			},
-		]);
 	});
 
-	it('emits the remaining unread count after a cutoff-limited bulk read', async () => {
+	it('reports the remaining unread count after a cutoff-limited bulk read', async () => {
 		const repository = new InMemoryNotificationRepository();
 		const oldNotification = await repository.upsert({
 			recipientId: 'client-1',
@@ -383,8 +328,7 @@ describe('notification use-cases', () => {
 			recipientId: 'client-1',
 			readAt: new Date('2026-05-18T12:00:00.000Z'),
 		});
-		const events = new NotificationEventsSpy();
-		const useCase = new MarkAllNotificationsReadUseCase(repository, events);
+		const useCase = new MarkAllNotificationsReadUseCase(repository);
 
 		await expect(
 			useCase.execute({
@@ -396,13 +340,6 @@ describe('notification use-cases', () => {
 			unreadCount: 1,
 			updatedCount: 0,
 		});
-		expect(events.readAll).toEqual([
-			{
-				recipientId: 'client-1',
-				cutoffActivityAt: '2026-05-18T12:00:00.000Z',
-				unreadCount: 1,
-			},
-		]);
 		await expect(
 			repository.markRead({
 				notificationId: newNotification.id,

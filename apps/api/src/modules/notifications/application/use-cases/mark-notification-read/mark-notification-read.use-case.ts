@@ -1,14 +1,9 @@
 import {
-	NOTIFICATION_EVENTS_KEY,
-	type NotificationEventsPort,
-} from '@modules/notifications/application/ports/notification-events.port';
-import {
 	NOTIFICATION_REPOSITORY_KEY,
 	type NotificationRepositoryPort,
 } from '@modules/notifications/application/ports/notification-repository.port';
 import {
 	mapNotificationResponse,
-	mapNotificationUpdatedEventResponse,
 	type NotificationResponse,
 } from '@modules/notifications/application/use-cases/notification-response';
 import {
@@ -29,8 +24,6 @@ export class MarkNotificationReadUseCase {
 	constructor(
 		@Inject(NOTIFICATION_REPOSITORY_KEY)
 		private readonly notificationRepository: NotificationRepositoryPort,
-		@Inject(NOTIFICATION_EVENTS_KEY)
-		private readonly notificationEvents: NotificationEventsPort,
 	) {}
 
 	async execute(
@@ -39,14 +32,6 @@ export class MarkNotificationReadUseCase {
 		const notification = await this.notificationRepository.markRead(input);
 		if (notification === 'changed') throw new NotificationReadConflictError();
 		if (!notification) throw new NotificationNotFoundError();
-
-		const unreadCount = await this.notificationRepository.countUnread(
-			input.recipientId,
-		);
-		void this.notificationEvents.emitNotificationUpdated(
-			input.recipientId,
-			mapNotificationUpdatedEventResponse(notification, unreadCount),
-		);
 
 		return mapNotificationResponse(notification);
 	}
