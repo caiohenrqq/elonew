@@ -16,6 +16,7 @@ import {
 	OrderUnsupportedPricingServiceTypeError,
 } from '@modules/orders/domain/order-pricing.errors';
 import { Inject, Injectable } from '@nestjs/common';
+import { Money } from '@packages/shared/money/money';
 import { isOrderExtraType } from '@packages/shared/orders/order-extra';
 
 type PriceEntry = {
@@ -58,17 +59,23 @@ export class VersionedOrderPricingService implements OrderPricingService {
 			input.currentDivision,
 			input.currentLp,
 		);
-		const currentValue =
-			this.getCumulativeValue(priceTable, currentEntry) +
-			(currentEntry.priceToNext * currentProgress) / 100;
-		const desiredValue = this.getTargetValue(
-			priceTable,
-			input.desiredLeague,
-			input.desiredDivision,
-			desiredEntry,
+		const currentValue = Money.fromCents(
+			this.getCumulativeValue(priceTable, currentEntry),
+		).add(
+			Money.fromCents(currentEntry.priceToNext).percentage(
+				currentProgress / 100,
+			),
 		);
-		const baseSubtotal = Number((desiredValue - currentValue).toFixed(2));
-		if (baseSubtotal <= 0) throw new OrderRankProgressionInvalidError();
+		const desiredValue = Money.fromCents(
+			this.getTargetValue(
+				priceTable,
+				input.desiredLeague,
+				input.desiredDivision,
+				desiredEntry,
+			),
+		);
+		const baseSubtotal = desiredValue.subtract(currentValue);
+		if (baseSubtotal.cents <= 0) throw new OrderRankProgressionInvalidError();
 
 		const extras = (input.extras ?? []).map((extraType) => {
 			if (!isOrderExtraType(extraType))
@@ -81,18 +88,18 @@ export class VersionedOrderPricingService implements OrderPricingService {
 
 			return {
 				type: extraType,
-				price: Number((baseSubtotal * extraDefinition.modifierRate).toFixed(2)),
+				price: baseSubtotal.percentage(extraDefinition.modifierRate).cents,
 			};
 		});
-		const extrasTotal = Number(
-			extras.reduce((total, extra) => total + extra.price, 0).toFixed(2),
+		const subtotal = extras.reduce(
+			(total, extra) => total.add(Money.fromCents(extra.price)),
+			baseSubtotal,
 		);
-		const subtotal = Number((baseSubtotal + extrasTotal).toFixed(2));
 
 		return {
 			pricingVersionId: activeVersion.id,
-			subtotal,
-			totalAmount: subtotal,
+			subtotal: subtotal.cents,
+			totalAmount: subtotal.cents,
 			discountAmount: 0,
 			extras,
 		};
@@ -145,12 +152,9 @@ export class VersionedOrderPricingService implements OrderPricingService {
 		);
 		if (targetIndex < 0) throw new OrderRankNotPricedError();
 
-		return Number(
-			priceTable
-				.slice(0, targetIndex)
-				.reduce((total, item) => total + item.priceToNext, 0)
-				.toFixed(2),
-		);
+		return priceTable
+			.slice(0, targetIndex)
+			.reduce((total, item) => total + item.priceToNext, 0);
 	}
 
 	private getTargetValue(
@@ -163,20 +167,15 @@ export class VersionedOrderPricingService implements OrderPricingService {
 			const targetValue = this.getCumulativeValue(priceTable, entry);
 			if (!this.isMasterRank(league, division)) return targetValue;
 
-			return Number(
-				(
-					targetValue +
-					(entry.priceToNext * this.getMasterPdlFromDivision(division)) / 100
-				).toFixed(2),
-			);
+			return Money.fromCents(targetValue).add(
+				Money.fromCents(entry.priceToNext).percentage(
+					this.getMasterPdlFromDivision(division) / 100,
+				),
+			).cents;
 		}
 
 		if (this.isMasterRank(league, division)) {
-			return Number(
-				priceTable
-					.reduce((total, item) => total + item.priceToNext, 0)
-					.toFixed(2),
-			);
+			return priceTable.reduce((total, item) => total + item.priceToNext, 0);
 		}
 
 		throw new OrderRankNotPricedError();

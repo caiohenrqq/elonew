@@ -56,7 +56,7 @@ describe('ClientDashboardPage', () => {
 							lpGain: 20,
 							deadline: '2026-05-01T00:00:00.000Z',
 							subtotal: 120,
-							totalAmount: 120,
+							totalAmount: 12000,
 							discountAmount: 0,
 							createdAt: '2026-04-01T00:00:00.000Z',
 						},
@@ -74,7 +74,7 @@ describe('ClientDashboardPage', () => {
 							lpGain: 20,
 							deadline: '2026-05-03T00:00:00.000Z',
 							subtotal: 90,
-							totalAmount: 90,
+							totalAmount: 9000,
 							discountAmount: 0,
 							createdAt: '2026-04-03T00:00:00.000Z',
 						},
@@ -82,7 +82,7 @@ describe('ClientDashboardPage', () => {
 					summary: {
 						activeOrders: 1,
 						totalOrders: 2,
-						totalInvested: 210,
+						totalInvested: 21000,
 					},
 				}}
 			/>,
@@ -125,7 +125,7 @@ describe('ClientDashboardPage', () => {
 							lpGain: 20,
 							deadline: '2026-05-01T00:00:00.000Z',
 							subtotal: 120,
-							totalAmount: 120,
+							totalAmount: 12000,
 							discountAmount: 0,
 							createdAt: '2026-04-01T00:00:00.000Z',
 						},
@@ -143,7 +143,7 @@ describe('ClientDashboardPage', () => {
 							lpGain: 20,
 							deadline: '2026-05-03T00:00:00.000Z',
 							subtotal: 90,
-							totalAmount: 90,
+							totalAmount: 9000,
 							discountAmount: 0,
 							createdAt: '2026-04-03T00:00:00.000Z',
 						},
@@ -151,7 +151,7 @@ describe('ClientDashboardPage', () => {
 					summary: {
 						activeOrders: 1,
 						totalOrders: 2,
-						totalInvested: 210,
+						totalInvested: 21000,
 					},
 				}}
 			/>,

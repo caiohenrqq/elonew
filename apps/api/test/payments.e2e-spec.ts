@@ -387,8 +387,8 @@ describe('Payments (e2e)', () => {
 					id: paymentId,
 					orderId: createdOrder.id,
 					status: 'held',
-					grossAmount: 25.2,
-					boosterAmount: 17.64,
+					grossAmount: 2520,
+					boosterAmount: 1764,
 					paymentMethod: 'pix',
 				});
 			})

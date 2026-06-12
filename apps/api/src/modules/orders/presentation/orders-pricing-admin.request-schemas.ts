@@ -6,7 +6,7 @@ const pricingStepSchema = z.object({
 	serviceType: z.enum(rankPricedOrderServiceTypes),
 	league: z.string().trim().min(1),
 	division: z.string().trim().min(1),
-	priceToNext: z.number().finite().nonnegative(),
+	priceToNext: z.number().int().nonnegative(),
 });
 
 const pricingExtraSchema = z.object({

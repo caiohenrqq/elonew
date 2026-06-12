@@ -27,6 +27,7 @@ import {
 } from '@modules/payments/domain/payment.errors';
 import type { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Money } from '@packages/shared/money/money';
 import type { PaymentMethod } from '@packages/shared/payments/payment-method';
 
 type CreatePaymentInput = {
@@ -100,10 +101,11 @@ export class CreatePaymentUseCase {
 			logEvent.payment_status_before = payment.status;
 			logEvent.gross_amount = payment.grossAmount;
 			logEvent.booster_amount = payment.boosterAmount;
+			const grossAmountInReais = Money.fromCents(grossAmount).toDecimal();
 			const gatewayPayment = await this.paymentGatewayPort.initiatePayment({
 				paymentId: payment.id,
 				orderId: input.orderId,
-				amount: grossAmount,
+				amount: grossAmountInReais,
 				paymentMethod: input.paymentMethod,
 			});
 			payment.attachGatewayDetails({

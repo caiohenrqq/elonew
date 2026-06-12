@@ -199,8 +199,8 @@ describe('Orders (e2e)', () => {
 			.expect(200, {
 				id: createdOrder.id,
 				status: 'awaiting_payment',
-				subtotal: 25.2,
-				totalAmount: 25.2,
+				subtotal: 2520,
+				totalAmount: 2520,
 				discountAmount: 0,
 			})
 			.execute();
@@ -238,14 +238,14 @@ describe('Orders (e2e)', () => {
 						id: newerOrder.id,
 						status: 'pending_booster',
 						serviceType: 'elo_boost',
-						totalAmount: 25.2,
+						totalAmount: 2520,
 					}),
 				);
 				expect(body.orders[0]?.createdAt).toEqual(expect.any(String));
 				expect(body.summary).toEqual({
 					activeOrders: 2,
 					totalOrders: 2,
-					totalInvested: 50.4,
+					totalInvested: 5040,
 				});
 			})
 			.execute();
@@ -318,8 +318,8 @@ describe('Orders (e2e)', () => {
 			.expect(200, {
 				id: createdOrder.id,
 				status: 'in_progress',
-				subtotal: 25.2,
-				totalAmount: 25.2,
+				subtotal: 2520,
+				totalAmount: 2520,
 				discountAmount: 0,
 			})
 			.execute();
@@ -603,11 +603,11 @@ describe('Orders (e2e)', () => {
 				extras: ['priority_service', 'offline_chat'],
 			})
 			.expect(201, {
-				subtotal: 27.72,
-				totalAmount: 27.72,
+				subtotal: 2772,
+				totalAmount: 2772,
 				discountAmount: 0,
 				extras: [
-					{ type: 'priority_service', price: 2.52 },
+					{ type: 'priority_service', price: 252 },
 					{ type: 'offline_chat', price: 0 },
 				],
 			})
@@ -629,8 +629,8 @@ describe('Orders (e2e)', () => {
 				desiredDivision: 'MASTER',
 			})
 			.expect(201, {
-				subtotal: 307.3,
-				totalAmount: 307.3,
+				subtotal: 30730,
+				totalAmount: 30730,
 				discountAmount: 0,
 				extras: [],
 			})

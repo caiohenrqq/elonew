@@ -63,7 +63,7 @@ describe('GetPaymentUseCase', () => {
 			Payment.create({
 				id: 'payment-1',
 				orderId: 'order-1',
-				grossAmount: 25.2,
+				grossAmount: 2520,
 				paymentMethod: 'pix',
 			}),
 			'client-1',
@@ -77,8 +77,8 @@ describe('GetPaymentUseCase', () => {
 			id: 'payment-1',
 			orderId: 'order-1',
 			status: 'awaiting_confirmation',
-			grossAmount: 25.2,
-			boosterAmount: 17.64,
+			grossAmount: 2520,
+			boosterAmount: 1764,
 			paymentMethod: 'pix',
 		});
 	});
@@ -89,7 +89,7 @@ describe('GetPaymentUseCase', () => {
 			Payment.create({
 				id: 'payment-1',
 				orderId: 'order-1',
-				grossAmount: 25.2,
+				grossAmount: 2520,
 				paymentMethod: 'pix',
 			}),
 			'client-2',

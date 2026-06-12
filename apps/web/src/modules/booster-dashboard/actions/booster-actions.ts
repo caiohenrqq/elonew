@@ -1,5 +1,6 @@
 'use server';
 
+import { Money } from '@packages/shared/money/money';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { api } from '@/shared/api-client-management/api-client';
@@ -200,7 +201,10 @@ export const requestBoosterWithdrawalAction = async (
 	_state: BoosterActionState,
 	formData: FormData,
 ): Promise<BoosterActionState> => {
-	const amount = Number(formData.get('amount'));
+	const amountInReais = Number(formData.get('amount'));
+	const amount = Number.isFinite(amountInReais)
+		? Money.fromDecimal(amountInReais).cents
+		: Number.NaN;
 
 	try {
 		await assertSameOriginRequest();

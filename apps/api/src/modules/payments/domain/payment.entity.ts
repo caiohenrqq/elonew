@@ -5,7 +5,10 @@ import {
 	PaymentInvalidTransitionError,
 } from '@modules/payments/domain/payment.errors';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
+import { Money } from '@packages/shared/money/money';
 import type { PaymentMethod } from '@packages/shared/payments/payment-method';
+
+export const BOOSTER_SHARE_RATE = 0.7;
 
 type AllowedTransitionMap = Record<PaymentStatus, readonly PaymentStatus[]>;
 
@@ -41,10 +44,12 @@ export class Payment {
 		grossAmount: number;
 		paymentMethod: PaymentMethod;
 	}): Payment {
-		if (!Number.isFinite(input.grossAmount) || input.grossAmount <= 0)
+		if (!Number.isInteger(input.grossAmount) || input.grossAmount <= 0)
 			throw new PaymentAmountInvalidError();
 
-		const boosterAmount = Number((input.grossAmount * 0.7).toFixed(2));
+		const boosterAmount = Money.fromCents(input.grossAmount).percentage(
+			BOOSTER_SHARE_RATE,
+		).cents;
 		return new Payment(
 			input.id,
 			input.orderId,

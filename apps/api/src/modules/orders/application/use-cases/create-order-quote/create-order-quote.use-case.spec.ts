@@ -54,8 +54,8 @@ class OrderCouponServiceStub implements OrderCouponService {
 				pricing: {
 					pricingVersionId: input.pricing.pricingVersionId,
 					subtotal: input.pricing.subtotal,
-					totalAmount: 22.68,
-					discountAmount: 2.52,
+					totalAmount: 2268,
+					discountAmount: 252,
 					extras: input.pricing.extras,
 				},
 			};
@@ -111,8 +111,8 @@ describe('CreateOrderQuoteUseCase', () => {
 			}),
 		).resolves.toEqual({
 			quoteId: 'quote-1',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 
@@ -121,8 +121,8 @@ describe('CreateOrderQuoteUseCase', () => {
 			couponId: null,
 			pricing: {
 				pricingVersionId: expect.any(String),
-				subtotal: 25.2,
-				totalAmount: 25.2,
+				subtotal: 2520,
+				totalAmount: 2520,
 				discountAmount: 0,
 				extras: [],
 			},
@@ -133,8 +133,8 @@ describe('CreateOrderQuoteUseCase', () => {
 			couponCode: undefined,
 			pricing: {
 				pricingVersionId: expect.any(String),
-				subtotal: 25.2,
-				totalAmount: 25.2,
+				subtotal: 2520,
+				totalAmount: 2520,
 				discountAmount: 0,
 				extras: [],
 			},
@@ -171,9 +171,9 @@ describe('CreateOrderQuoteUseCase', () => {
 			}),
 		).resolves.toEqual({
 			quoteId: 'quote-1',
-			subtotal: 25.2,
-			totalAmount: 22.68,
-			discountAmount: 2.52,
+			subtotal: 2520,
+			totalAmount: 2268,
+			discountAmount: 252,
 		});
 
 		expect(couponService.lastInput).toMatchObject({
@@ -181,8 +181,8 @@ describe('CreateOrderQuoteUseCase', () => {
 			couponCode: 'WELCOME10',
 			pricing: {
 				pricingVersionId: expect.any(String),
-				subtotal: 25.2,
-				totalAmount: 25.2,
+				subtotal: 2520,
+				totalAmount: 2520,
 				discountAmount: 0,
 				extras: [],
 			},
@@ -191,9 +191,9 @@ describe('CreateOrderQuoteUseCase', () => {
 			couponId: 'coupon-1',
 			pricing: {
 				pricingVersionId: expect.any(String),
-				subtotal: 25.2,
-				totalAmount: 22.68,
-				discountAmount: 2.52,
+				subtotal: 2520,
+				totalAmount: 2268,
+				discountAmount: 252,
 				extras: [],
 			},
 		});
@@ -229,20 +229,20 @@ describe('CreateOrderQuoteUseCase', () => {
 			}),
 		).resolves.toEqual({
 			quoteId: 'quote-1',
-			subtotal: 36.54,
-			totalAmount: 36.54,
+			subtotal: 3654,
+			totalAmount: 3654,
 			discountAmount: 0,
 		});
 
 		expect(couponService.lastInput).toMatchObject({
 			pricing: {
 				pricingVersionId: expect.any(String),
-				subtotal: 36.54,
-				totalAmount: 36.54,
+				subtotal: 3654,
+				totalAmount: 3654,
 				discountAmount: 0,
 				extras: [
-					{ type: 'mmr_buffed', price: 8.82 },
-					{ type: 'priority_service', price: 2.52 },
+					{ type: 'mmr_buffed', price: 882 },
+					{ type: 'priority_service', price: 252 },
 					{ type: 'offline_chat', price: 0 },
 				],
 			},
@@ -253,12 +253,12 @@ describe('CreateOrderQuoteUseCase', () => {
 			},
 			pricing: {
 				pricingVersionId: expect.any(String),
-				subtotal: 36.54,
-				totalAmount: 36.54,
+				subtotal: 3654,
+				totalAmount: 3654,
 				discountAmount: 0,
 				extras: [
-					{ type: 'mmr_buffed', price: 8.82 },
-					{ type: 'priority_service', price: 2.52 },
+					{ type: 'mmr_buffed', price: 882 },
+					{ type: 'priority_service', price: 252 },
 					{ type: 'offline_chat', price: 0 },
 				],
 			},

@@ -2,6 +2,7 @@ import {
 	WalletInsufficientWithdrawableBalanceError,
 	WalletInvalidAmountError,
 } from '@modules/wallet/domain/wallet.errors';
+import { Money } from '@packages/shared/money/money';
 
 export type WalletTransactionType = 'credit' | 'debit';
 
@@ -57,7 +58,9 @@ export class Wallet {
 	creditLocked(input: CreditLockedInput): void {
 		this.assertPositiveAmount(input.amount);
 
-		this.balanceLocked = this.roundToCents(this.balanceLocked + input.amount);
+		this.balanceLocked = Money.fromCents(this.balanceLocked).add(
+			Money.fromCents(input.amount),
+		).cents;
 		this.transactions.push({
 			orderId: input.orderId,
 			amount: input.amount,
@@ -87,12 +90,12 @@ export class Wallet {
 			if (transaction.availableAt > now) continue;
 
 			transaction.releasedAt = now;
-			this.balanceLocked = this.roundToCents(
-				this.balanceLocked - transaction.amount,
-			);
-			this.balanceWithdrawable = this.roundToCents(
-				this.balanceWithdrawable + transaction.amount,
-			);
+			this.balanceLocked = Money.fromCents(this.balanceLocked).subtract(
+				Money.fromCents(transaction.amount),
+			).cents;
+			this.balanceWithdrawable = Money.fromCents(this.balanceWithdrawable).add(
+				Money.fromCents(transaction.amount),
+			).cents;
 		}
 	}
 
@@ -104,12 +107,12 @@ export class Wallet {
 			if (transaction.availableAt > input.now) continue;
 
 			transaction.releasedAt = input.now;
-			this.balanceLocked = this.roundToCents(
-				this.balanceLocked - transaction.amount,
-			);
-			this.balanceWithdrawable = this.roundToCents(
-				this.balanceWithdrawable + transaction.amount,
-			);
+			this.balanceLocked = Money.fromCents(this.balanceLocked).subtract(
+				Money.fromCents(transaction.amount),
+			).cents;
+			this.balanceWithdrawable = Money.fromCents(this.balanceWithdrawable).add(
+				Money.fromCents(transaction.amount),
+			).cents;
 		}
 	}
 
@@ -119,9 +122,9 @@ export class Wallet {
 		if (input.amount > this.balanceWithdrawable)
 			throw new WalletInsufficientWithdrawableBalanceError();
 
-		this.balanceWithdrawable = this.roundToCents(
-			this.balanceWithdrawable - input.amount,
-		);
+		this.balanceWithdrawable = Money.fromCents(
+			this.balanceWithdrawable,
+		).subtract(Money.fromCents(input.amount)).cents;
 		this.transactions.unshift({
 			orderId: null,
 			amount: input.amount,
@@ -134,11 +137,7 @@ export class Wallet {
 	}
 
 	private assertPositiveAmount(amount: number): void {
-		if (!Number.isFinite(amount) || amount <= 0)
+		if (!Number.isInteger(amount) || amount <= 0)
 			throw new WalletInvalidAmountError();
-	}
-
-	private roundToCents(amount: number): number {
-		return Number(amount.toFixed(2));
 	}
 }

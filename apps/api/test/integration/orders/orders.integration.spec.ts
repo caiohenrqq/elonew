@@ -87,7 +87,7 @@ describe('Orders module integration', () => {
 				step.serviceType === 'elo_boost' &&
 				step.league === 'gold' &&
 				step.division === 'I'
-					? { ...step, priceToNext: 30 }
+					? { ...step, priceToNext: 3000 }
 					: step,
 			),
 		};
@@ -152,16 +152,16 @@ describe('Orders module integration', () => {
 		expect(createdOrder).toMatchObject({
 			id: expect.any(String),
 			status: 'awaiting_payment',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 
 		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'awaiting_payment',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 
@@ -187,8 +187,8 @@ describe('Orders module integration', () => {
 		);
 
 		expect(quote).toMatchObject({
-			subtotal: 36.54,
-			totalAmount: 36.54,
+			subtotal: 3654,
+			totalAmount: 3654,
 			discountAmount: 0,
 		});
 
@@ -201,8 +201,8 @@ describe('Orders module integration', () => {
 
 		expect(createdOrder).toMatchObject({
 			id: expect.any(String),
-			subtotal: 36.54,
-			totalAmount: 36.54,
+			subtotal: 3654,
+			totalAmount: 3654,
 			discountAmount: 0,
 		});
 
@@ -210,8 +210,8 @@ describe('Orders module integration', () => {
 			orderRepository.findById(createdOrder.id),
 		).resolves.toMatchObject({
 			extras: [
-				{ type: 'mmr_buffed', price: 8.82 },
-				{ type: 'priority_service', price: 2.52 },
+				{ type: 'mmr_buffed', price: 882 },
+				{ type: 'priority_service', price: 252 },
 				{ type: 'offline_chat', price: 0 },
 			],
 		});
@@ -264,8 +264,8 @@ describe('Orders module integration', () => {
 		).resolves.toMatchObject({
 			status: 'completed',
 			extras: [
-				{ type: 'mmr_buffed', price: 8.82 },
-				{ type: 'priority_service', price: 2.52 },
+				{ type: 'mmr_buffed', price: 882 },
+				{ type: 'priority_service', price: 252 },
 				{ type: 'offline_chat', price: 0 },
 			],
 		});
@@ -290,14 +290,14 @@ describe('Orders module integration', () => {
 		await expect(
 			orderRepository.findById(firstOrder.id),
 		).resolves.toMatchObject({
-			subtotal: 25.2,
+			subtotal: 2520,
 			pricingVersionId: expect.any(String),
 		});
 
 		const secondQuote = await controller.quote(makeQuotePayload(), clientUser);
 		expect(secondQuote).toMatchObject({
-			subtotal: 38.4,
-			totalAmount: 38.4,
+			subtotal: 3840,
+			totalAmount: 3840,
 			discountAmount: 0,
 		});
 
@@ -316,12 +316,12 @@ describe('Orders module integration', () => {
 			persistedFirstOrder?.pricingVersionId,
 		);
 		expect(persistedFirstOrder).toMatchObject({
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 		});
 		expect(persistedSecondOrder).toMatchObject({
-			subtotal: 38.4,
-			totalAmount: 38.4,
+			subtotal: 3840,
+			totalAmount: 3840,
 		});
 	});
 
@@ -361,8 +361,8 @@ describe('Orders module integration', () => {
 		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'completed',
-			subtotal: 25.2,
-			totalAmount: 25.2,
+			subtotal: 2520,
+			totalAmount: 2520,
 			discountAmount: 0,
 		});
 	});

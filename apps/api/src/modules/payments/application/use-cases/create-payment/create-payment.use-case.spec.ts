@@ -139,7 +139,7 @@ describe('CreatePaymentUseCase', () => {
 		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
 		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
 		orderStatusPort.set('order-1', 'client-1', OrderStatus.AWAITING_PAYMENT);
-		orderPaymentAmountPort.set('order-1', 'client-1', 100);
+		orderPaymentAmountPort.set('order-1', 'client-1', 10000);
 		const useCase = new CreatePaymentUseCase(
 			repository,
 			orderStatusPort,
@@ -156,8 +156,8 @@ describe('CreatePaymentUseCase', () => {
 		).resolves.toMatchObject({
 			orderId: 'order-1',
 			status: 'awaiting_confirmation',
-			grossAmount: 100,
-			boosterAmount: 70,
+			grossAmount: 10000,
+			boosterAmount: 7000,
 			paymentMethod: 'pix',
 			checkoutUrl: expect.stringContaining('/checkout/'),
 		});
@@ -175,7 +175,7 @@ describe('CreatePaymentUseCase', () => {
 		const orderPaymentAmountPort = new InMemoryOrderPaymentAmountPort();
 		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
 		orderStatusPort.set('order-1', 'client-2', OrderStatus.AWAITING_PAYMENT);
-		orderPaymentAmountPort.set('order-1', 'client-2', 100);
+		orderPaymentAmountPort.set('order-1', 'client-2', 10000);
 		const useCase = new CreatePaymentUseCase(
 			repository,
 			orderStatusPort,
@@ -202,7 +202,7 @@ describe('CreatePaymentUseCase', () => {
 			'client-1',
 			OrderStatus.AWAITING_PAYMENT,
 		);
-		orderPaymentAmountPort.set('order-generated-id', 'client-1', 100);
+		orderPaymentAmountPort.set('order-generated-id', 'client-1', 10000);
 		const useCase = new CreatePaymentUseCase(
 			repository,
 			orderStatusPort,
@@ -230,12 +230,12 @@ describe('CreatePaymentUseCase', () => {
 			'client-1',
 			OrderStatus.AWAITING_PAYMENT,
 		);
-		orderPaymentAmountPort.set('order-duplicate', 'client-1', 100);
+		orderPaymentAmountPort.set('order-duplicate', 'client-1', 10000);
 		repository.insert(
 			Payment.create({
 				id: 'payment-existing',
 				orderId: 'order-duplicate',
-				grossAmount: 100,
+				grossAmount: 10000,
 				paymentMethod: 'pix',
 			}),
 		);
@@ -286,7 +286,7 @@ describe('CreatePaymentUseCase', () => {
 			'client-1',
 			OrderStatus.AWAITING_PAYMENT,
 		);
-		orderPaymentAmountPort.set('order-reference', 'client-1', 100);
+		orderPaymentAmountPort.set('order-reference', 'client-1', 10000);
 		const useCase = new CreatePaymentUseCase(
 			repository,
 			orderStatusPort,
