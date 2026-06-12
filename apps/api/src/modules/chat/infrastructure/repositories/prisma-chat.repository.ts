@@ -1,3 +1,4 @@
+import { OutboxWriter } from '@app/common/outbox/outbox-writer';
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type {
 	ChatMessageRecord,
@@ -8,6 +9,7 @@ import type {
 	ListChatMessagesOutput,
 } from '@modules/chat/application/ports/chat-repository.port';
 import { ChatMessageNotFoundError } from '@modules/chat/domain/chat.errors';
+import { buildNotificationUpdatedOutboxEvent } from '@modules/notifications/infrastructure/outbox/notification-outbox.events';
 import { Injectable } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
@@ -18,7 +20,10 @@ import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaChatRepository implements ChatRepositoryPort {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(
+		private readonly prisma: PrismaService,
+		private readonly outbox: OutboxWriter,
+	) {}
 
 	async findOrderChat(orderId: string): Promise<ChatOrderRecord | null> {
 		const order = await this.prisma.order.findUnique({
@@ -106,11 +111,19 @@ export class PrismaChatRepository implements ChatRepositoryPort {
 					readAt: null,
 				},
 			});
+			const mappedNotification = this.mapNotification(notification);
+			await this.outbox.write(
+				transaction,
+				buildNotificationUpdatedOutboxEvent(input.notification.recipientId, {
+					notification: mappedNotification,
+					unreadCount,
+				}),
+			);
 
 			return {
 				message: this.mapMessage(message),
 				notification: {
-					notification: this.mapNotification(notification),
+					notification: mappedNotification,
 					unreadCount,
 				},
 			};

@@ -4,6 +4,7 @@ import { NOTIFICATION_EVENTS_KEY } from '@modules/notifications/application/port
 import type {
 	ListNotificationsInput,
 	ListNotificationsOutput,
+	MarkAllNotificationsReadResult,
 	NotificationRecord,
 	NotificationRepositoryPort,
 	UpsertNotificationInput,
@@ -68,7 +69,7 @@ class InMemoryNotificationRepository implements NotificationRepositoryPort {
 		recipientId: string;
 		readAt: Date;
 		cutoffActivityAt: Date;
-	}): Promise<number> {
+	}): Promise<MarkAllNotificationsReadResult> {
 		let updatedCount = 0;
 		for (const notification of this.notifications.values()) {
 			if (
@@ -85,7 +86,10 @@ class InMemoryNotificationRepository implements NotificationRepositoryPort {
 			updatedCount++;
 		}
 
-		return updatedCount;
+		return {
+			updatedCount,
+			unreadCount: await this.countUnread(input.recipientId),
+		};
 	}
 
 	async upsert(input: UpsertNotificationInput): Promise<NotificationRecord> {
@@ -206,7 +210,7 @@ describe('Notifications module integration', () => {
 		).rejects.toThrow(NotificationNotFoundError);
 	});
 
-	it('marks all owned notifications read and emits the remaining unread count', async () => {
+	it('marks all owned notifications read and returns the remaining unread count', async () => {
 		await repository.upsert({
 			recipientId: 'client-1',
 			type: 'CHAT_MESSAGE_CREATED',
@@ -218,8 +222,5 @@ describe('Notifications module integration', () => {
 			unreadCount: 0,
 			updatedCount: 1,
 		});
-		expect(events.readAll).toEqual([
-			{ recipientId: 'client-1', unreadCount: 0 },
-		]);
 	});
 });

@@ -38,6 +38,11 @@ export type UpsertNotificationInput = {
 	payload: NotificationPayload;
 };
 
+export type MarkAllNotificationsReadResult = {
+	updatedCount: number;
+	unreadCount: number;
+};
+
 export interface NotificationRepositoryPort {
 	countUnread(recipientId: string): Promise<number>;
 	list(input: ListNotificationsInput): Promise<ListNotificationsOutput>;
@@ -51,6 +56,6 @@ export interface NotificationRepositoryPort {
 		recipientId: string;
 		readAt: Date;
 		cutoffActivityAt: Date;
-	}): Promise<number>;
+	}): Promise<MarkAllNotificationsReadResult>;
 	upsert(input: UpsertNotificationInput): Promise<NotificationRecord>;
 }

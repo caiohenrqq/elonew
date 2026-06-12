@@ -11,10 +11,6 @@ import {
 	ChatNotWritableError,
 	ChatOrderNotFoundError,
 } from '@modules/chat/domain/chat.errors';
-import {
-	NOTIFICATION_EVENTS_KEY,
-	type NotificationEventsPort,
-} from '@modules/notifications/application/ports/notification-events.port';
 import { Inject, Injectable } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 
@@ -32,8 +28,6 @@ export class SendChatMessageUseCase {
 	constructor(
 		@Inject(CHAT_REPOSITORY_KEY)
 		private readonly chatRepository: ChatRepositoryPort,
-		@Inject(NOTIFICATION_EVENTS_KEY)
-		private readonly notificationEvents: NotificationEventsPort,
 	) {}
 
 	async execute(input: SendChatMessageInput): Promise<ChatMessageResponse> {
@@ -45,25 +39,20 @@ export class SendChatMessageUseCase {
 		if (!order.chatId) throw new ChatOrderNotFoundError();
 
 		const recipientId = this.getRecipientId(input, order);
-		const result = await this.chatRepository.createMessageWithNotification({
-			chatId: order.chatId,
-			senderId: input.userId,
-			content: input.content,
-			...(recipientId
-				? {
-						notification: {
-							recipientId,
-						},
-					}
-				: {}),
-		});
-		const { message } = result;
-		if (recipientId && result.notification) {
-			void this.notificationEvents.emitNotificationUpdated(recipientId, {
-				notification: result.notification.notification,
-				unreadCount: result.notification.unreadCount,
-			});
-		}
+		const { message } = await this.chatRepository.createMessageWithNotification(
+			{
+				chatId: order.chatId,
+				senderId: input.userId,
+				content: input.content,
+				...(recipientId
+					? {
+							notification: {
+								recipientId,
+							},
+						}
+					: {}),
+			},
+		);
 
 		return mapChatMessageResponse(message);
 	}

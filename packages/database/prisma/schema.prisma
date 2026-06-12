@@ -68,6 +68,12 @@ enum TicketStatus {
   CLOSED
 }
 
+enum OutboxEventStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
 model User {
   id               String    @id @default(cuid())
   username         String    @unique
@@ -478,4 +484,22 @@ model AuthSession {
   @@index([userId])
   @@index([expiresAt])
   @@map("auth_sessions")
+}
+
+model OutboxEvent {
+  id            String            @id @default(cuid())
+  aggregateType String
+  aggregateId   String
+  eventType     String
+  payload       Json
+  status        OutboxEventStatus @default(PENDING)
+  attempts      Int               @default(0)
+  availableAt   DateTime          @default(now())
+  publishedAt   DateTime?
+  lastError     String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([status, availableAt])
+  @@map("outbox_events")
 }
