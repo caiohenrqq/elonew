@@ -7,6 +7,7 @@
 		"dev": "pnpm build:deps && tsx watch src/main.ts",
 		"start": "pnpm build:deps && tsx src/main.ts",
 		"test": "pnpm build:deps && tsx --test src/**/*.spec.ts",
+		"test:ci": "tsx --test src/**/*.spec.ts",
 		"biome:check": "biome check .",
 		"biome:fix": "biome check --write ."
 	},

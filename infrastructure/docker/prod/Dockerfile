@@ -25,7 +25,8 @@ COPY packages/database/package.json packages/database/package.json
 COPY packages/integrations/package.json packages/integrations/package.json
 COPY packages/shared/package.json packages/shared/package.json
 
-RUN CI=true pnpm install --frozen-lockfile --prod=false --config.confirmModulesPurge=false
+RUN --mount=type=cache,target=/pnpm/store \
+  CI=true pnpm install --frozen-lockfile --prod=false --config.confirmModulesPurge=false
 
 FROM deps AS build
 
