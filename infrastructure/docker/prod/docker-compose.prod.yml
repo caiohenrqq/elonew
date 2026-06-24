@@ -138,6 +138,25 @@ services:
       api:
         condition: service_started
 
+  alloy:
+    <<: *log-rotation
+    image: grafana/alloy:${ALLOY_VERSION:-v1.17.0}
+    restart: unless-stopped
+    environment:
+      GCLOUD_HOSTED_LOGS_ID: ${GCLOUD_HOSTED_LOGS_ID:?set GCLOUD_HOSTED_LOGS_ID in infrastructure/docker/prod/.env}
+      GCLOUD_HOSTED_LOGS_URL: ${GCLOUD_HOSTED_LOGS_URL:?set GCLOUD_HOSTED_LOGS_URL in infrastructure/docker/prod/.env}
+      GCLOUD_RW_API_KEY: ${GCLOUD_RW_API_KEY:?set GCLOUD_RW_API_KEY in infrastructure/docker/prod/.env}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - elonew_alloy_prod_data:/var/lib/alloy/data
+    command:
+      [
+        'run',
+        '--storage.path=/var/lib/alloy/data',
+        '/etc/alloy/config.alloy',
+      ]
+
 networks:
   public-edge:
   private-backend:
@@ -146,3 +165,4 @@ networks:
 volumes:
   elonew_postgres_prod_data:
   elonew_redis_prod_data:
+  elonew_alloy_prod_data:

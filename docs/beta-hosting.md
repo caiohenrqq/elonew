@@ -119,5 +119,9 @@ curl https://api.elonew.com.br/health
 ```
 
 Data persists in the `elonew_postgres_prod_data` and
-`elonew_redis_prod_data` volumes. Never use `docker compose down -v` unless
-you intend to delete beta data and queued jobs.
+`elonew_redis_prod_data` volumes. Alloy forwards API and worker logs to Grafana
+Cloud using `GCLOUD_HOSTED_LOGS_ID`, `GCLOUD_HOSTED_LOGS_URL`, and
+`GCLOUD_RW_API_KEY` from the ignored production `.env`.
+
+Never use `docker compose down -v` unless you intend to delete beta data,
+queued jobs, and Alloy log positions.
