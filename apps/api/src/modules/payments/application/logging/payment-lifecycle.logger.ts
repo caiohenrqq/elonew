@@ -1,3 +1,4 @@
+import { PaymentGatewayError } from '@modules/payments/domain/payment.errors';
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 
@@ -39,6 +40,9 @@ export type PaymentLifecycleLogEvent = {
 	side_effects?: string[];
 	error_type?: string;
 	error_message?: string;
+	gateway_error_operation?: string;
+	gateway_error_status?: number;
+	gateway_error_cause?: string[];
 };
 
 export function markPaymentLifecycleLogError(
@@ -50,6 +54,15 @@ export function markPaymentLifecycleLogError(
 		error instanceof Error ? error.constructor.name : typeof error;
 	event.error_message =
 		error instanceof Error ? error.message : 'Unknown error';
+
+	if (error instanceof PaymentGatewayError) {
+		event.gateway_error_operation = error.operation;
+		if (error.gatewayStatus !== null)
+			event.gateway_error_status = error.gatewayStatus;
+		if (error.gatewayCause.length > 0)
+			event.gateway_error_cause = error.gatewayCause;
+		if (error.cause instanceof Error) event.error_message = error.cause.message;
+	}
 }
 
 @Injectable()

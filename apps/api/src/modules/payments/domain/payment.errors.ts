@@ -42,6 +42,17 @@ export class PaymentOrderNotFoundError extends Error {
 	}
 }
 
+export class PaymentGatewayError extends Error {
+	constructor(
+		readonly operation: 'initiate_payment' | 'fetch_notification',
+		readonly gatewayStatus: number | null,
+		readonly gatewayCause: string[],
+		readonly cause?: unknown,
+	) {
+		super('Payment gateway request failed.');
+	}
+}
+
 export class PaymentWebhookSignatureInvalidError extends Error {
 	constructor() {
 		super('Invalid payment webhook signature.');
