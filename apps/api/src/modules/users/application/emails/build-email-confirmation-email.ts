@@ -12,9 +12,9 @@ type EmailConfirmationEmailContent = Pick<
 >;
 
 const BRAND_NAME = 'EloNew';
-const ACCENT_COLOR = '#f59e0b';
-const BACKGROUND_COLOR = '#090d12';
-const SURFACE_COLOR = '#0f141b';
+const ACCENT_COLOR = '#0ea5e9';
+const BACKGROUND_COLOR = '#09090b';
+const SURFACE_COLOR = '#0d0d0f';
 const TEXT_COLOR = '#ffffff';
 const MUTED_TEXT_COLOR = 'rgba(255,255,255,0.55)';
 

@@ -113,11 +113,36 @@ export class LoginUseCase {
 				to: input.email,
 				subject: 'Novo acesso na sua conta EloNew',
 				html: `
-					<p>Olá, ${escapeHtml(input.username)}.</p>
-					<p>Um novo login foi realizado na sua conta EloNew.</p>
-					<p>Se foi você, nenhuma ação é necessária.</p>
+					<!doctype html>
+					<html lang="pt-BR">
+						<body style="margin:0;padding:0;background-color:#09090b;">
+							<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#09090b;padding:32px 16px;">
+								<tr>
+									<td align="center">
+										<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#0d0d0f;border:1px solid #27272a;border-radius:12px;overflow:hidden;">
+											<tr>
+												<td style="height:4px;background-color:#0ea5e9;"></td>
+											</tr>
+											<tr>
+												<td style="padding:40px;font-family:Arial,Helvetica,sans-serif;">
+													<p style="margin:0;color:#0ea5e9;font-size:12px;font-weight:bold;letter-spacing:4px;text-transform:uppercase;">EloNew</p>
+													<h1 style="margin:16px 0;color:#fafafa;font-size:22px;">Novo acesso detectado</h1>
+													<p style="margin:0;color:#a1a1aa;font-size:14px;line-height:1.6;">
+														Olá, <strong style="color:#fafafa;">${escapeHtml(input.username)}</strong>. Um novo login foi realizado na sua conta EloNew.
+													</p>
+													<p style="margin:24px 0 0;padding-top:24px;border-top:1px solid #27272a;color:#71717a;font-size:12px;line-height:1.6;">
+														Se foi você, nenhuma ação é necessária. Se não reconhece este acesso, altere sua senha.
+													</p>
+												</td>
+											</tr>
+										</table>
+									</td>
+								</tr>
+							</table>
+						</body>
+					</html>
 				`,
-				text: `Olá, ${input.username}.\n\nUm novo login foi realizado na sua conta EloNew. Se foi você, nenhuma ação é necessária.`,
+				text: `Olá, ${input.username}.\n\nUm novo login foi realizado na sua conta EloNew. Se foi você, nenhuma ação é necessária. Se não reconhece este acesso, altere sua senha.`,
 			});
 		} catch (error) {
 			this.logger.warn(
