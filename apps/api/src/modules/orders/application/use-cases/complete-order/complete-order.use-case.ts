@@ -36,7 +36,8 @@ export class CompleteOrderUseCase {
 		if (!order) throw new OrderNotFoundError();
 		if (order.boosterId !== input.boosterId) throw new OrderNotFoundError();
 
-		order.complete();
+		const completedAt = new Date();
+		order.complete(completedAt);
 		await this.orderRepository.save(order);
 		await this.orderEventPublisher?.publish(
 			createOrderEvent('order.completed', order, {
@@ -48,7 +49,7 @@ export class CompleteOrderUseCase {
 		await this.orderCompletionEarningsPort.creditCompletedOrderEarnings({
 			orderId: order.id,
 			boosterId: order.boosterId,
-			completedAt: new Date(),
+			completedAt,
 		});
 	}
 }

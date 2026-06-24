@@ -61,6 +61,7 @@ export class Order {
 		private readonly currentTotalAmount: number | null,
 		private readonly currentDiscountAmount: number,
 		private readonly currentExtras: OrderPricedExtra[],
+		private currentCompletedAt: Date | null = null,
 	) {}
 
 	static create(
@@ -130,6 +131,7 @@ export class Order {
 		totalAmount?: number | null;
 		discountAmount?: number;
 		extras?: OrderPricedExtra[];
+		completedAt?: Date | null;
 	}): Order {
 		return new Order(
 			input.id,
@@ -144,6 +146,7 @@ export class Order {
 			input.totalAmount ?? null,
 			input.discountAmount ?? 0,
 			(input.extras ?? []).map((extra) => ({ ...extra })),
+			input.completedAt ?? null,
 		);
 	}
 
@@ -191,6 +194,10 @@ export class Order {
 		return this.currentExtras.map((extra) => ({ ...extra }));
 	}
 
+	get completedAt(): Date | null {
+		return this.currentCompletedAt;
+	}
+
 	confirmPayment(): void {
 		this.transitionTo(OrderStatus.PENDING_BOOSTER);
 	}
@@ -215,9 +222,10 @@ export class Order {
 		this.currentBoosterId = null;
 	}
 
-	complete(): void {
+	complete(now: Date = new Date()): void {
 		this.transitionTo(OrderStatus.COMPLETED);
 		this.currentCredentials = null;
+		this.currentCompletedAt = now;
 	}
 
 	cancel(): void {

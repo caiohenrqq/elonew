@@ -5,6 +5,9 @@ import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-butto
 import { formatCurrency } from '@/shared/format/currency';
 import { formatDate } from '@/shared/format/date';
 import { formatOrderRoute } from '@/shared/format/orders';
+import { getOrderRatings } from '@/shared/ratings/rating-actions';
+import { RatingCard } from '@/shared/ratings/rating-card';
+import type { RatingOutput } from '@/shared/ratings/rating-contracts';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import {
 	completeBoosterOrderAction,
@@ -47,6 +50,11 @@ export const BoosterOrderDetailsPage = async ({
 	const order = toSingleOrderWork(orderOutput);
 	const chatMessages: ChatMessage[] = chatResult.items;
 	const isReadOnly = isReadOnlyOrder(order.status);
+
+	let ratings: RatingOutput[] = [];
+	if (order.status === 'completed') {
+		ratings = await getOrderRatings(order.id);
+	}
 
 	return (
 		<div className="space-y-8">
@@ -110,6 +118,13 @@ export const BoosterOrderDetailsPage = async ({
 							{formatCurrency(order.boosterAmount)}
 						</p>
 					</div>
+					{order.status === 'completed' ? (
+						<RatingCard
+							orderId={order.id}
+							currentUserId={currentUserId}
+							initialRatings={ratings}
+						/>
+					) : null}
 				</section>
 			</div>
 		</div>

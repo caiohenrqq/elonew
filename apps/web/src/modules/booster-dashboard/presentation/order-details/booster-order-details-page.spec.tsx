@@ -13,6 +13,11 @@ jest.mock('next/navigation', () => ({
 	}),
 }));
 
+jest.mock('@/shared/ratings/rating-actions', () => ({
+	getOrderRatings: jest.fn().mockResolvedValue([]),
+	submitRatingAction: jest.fn(),
+}));
+
 jest.mock('../../actions/booster-actions', () => ({
 	completeBoosterOrderAction: jest.fn(),
 	getBoosterOrder: jest.fn().mockResolvedValue({
@@ -57,6 +62,7 @@ jest.mock('../../actions/booster-actions', () => ({
 jest.mock('lucide-react', () => ({
 	CheckCircle2: () => <svg data-testid="check-icon" />,
 	Send: () => <svg data-testid="send-icon" />,
+	Star: () => <svg data-testid="star-icon" />,
 }));
 
 describe('BoosterOrderDetailsPage', () => {
