@@ -58,6 +58,9 @@ describe('Ratings (e2e db)', () => {
 
 	afterEach(async () => {
 		await prisma.rating.deleteMany();
+		await prisma.order.deleteMany();
+		await prisma.profile.deleteMany();
+		await prisma.user.deleteMany();
 		await app.close();
 	});
 
