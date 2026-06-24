@@ -1,15 +1,14 @@
-name: CI
+name: CI/CD
 
 on:
   push:
-    branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
-  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -90,3 +89,55 @@ jobs:
 
       - name: API e2e (db) tests
         run: pnpm --filter api exec jest --config ./test/jest-e2e-db.json --runInBand
+
+  deploy:
+    name: Deploy production
+    if: github.ref_type == 'tag'
+    needs: [checks, database]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag belongs to main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Build Vercel production artifact
+        run: |
+          npm install --global vercel@latest
+          vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+          vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Configure VPS SSH access
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Deploy VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          ssh -p 22022 admin@"$VPS_HOST" 'bash -s' -- "$GITHUB_REF_NAME" <<'REMOTE'
+          set -euo pipefail
+          tag=$1
+          cd "$HOME/code/elonew"
+          git fetch --force --tags origin
+          git checkout --detach "refs/tags/$tag"
+          pnpm docker:prod:up
+          curl --fail --silent --show-error https://api.elonew.com.br/health
+          REMOTE
+
+      - name: Deploy Vercel
+        run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"

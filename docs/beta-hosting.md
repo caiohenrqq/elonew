@@ -71,18 +71,37 @@ If cross-subdomain session cookies require it, also set:
 WEB_SESSION_COOKIE_DOMAIN=.elonew.com.br
 ```
 
-## Deploy the VPS stack
+Automatic Vercel Git deployments are disabled in `apps/web/vercel.json`.
+Production is deployed only by the tag workflow.
 
-From the repository root:
+## Production deployment
 
-```bash
-git pull --ff-only
-pnpm docker:prod:up
-pnpm docker:prod:logs
+Add these GitHub Actions repository secrets:
+
+```text
+VERCEL_TOKEN
+VERCEL_ORG_ID
+VERCEL_PROJECT_ID
+VPS_HOST
+VPS_SSH_PRIVATE_KEY
+VPS_KNOWN_HOSTS
 ```
 
-The stack starts PostgreSQL and Redis, applies Prisma migrations, then starts
-the API, workers, and Cloudflare Tunnel.
+`VPS_KNOWN_HOSTS` must contain the VPS SSH host key for port `22022`. The SSH
+key must let `admin` access the VPS without a password.
+
+Pull requests targeting `main` run CI without creating Vercel previews. Direct
+pushes to `main` trigger no GitHub Actions workflow. Production deploys only
+from SemVer-style `v*` tags:
+
+```bash
+git tag -a v0.1.0 -m "v0.1.0"
+git push origin v0.1.0
+```
+
+The tag must point to a commit contained in `main`. CI runs first, then the
+workflow deploys that exact tag to the VPS and Vercel. The VPS stack applies
+Prisma migrations before starting the API and workers.
 
 Check it with:
 

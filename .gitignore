@@ -12,3 +12,6 @@ node_modules/
 .codex
 .codex/
 *.tsbuildinfo
+.vercel/
+apps/web/.vercel/
+apps/web/.env.local
