@@ -23,41 +23,32 @@ const prisma = new PrismaClient({
 });
 
 const main = async () => {
-	const existingDevUsers = await prisma.user.findMany({
-		where: {
-			email: {
-				in: DEV_USERS.map((user) => user.email),
-			},
-		},
-		select: {
-			email: true,
-		},
-	});
-	if (existingDevUsers.length > 0) {
-		console.warn('Dev seed skipped. These accounts already exist:');
-		for (const user of existingDevUsers) {
-			console.warn(`- ${user.email}`);
-		}
-		console.warn(
-			'Delete those users first if you need to recreate dev accounts.',
-		);
-		return;
-	}
-
 	const passwordHash = await argon2.hash(DEV_USER_PASSWORD);
 	const confirmedAt = new Date();
 
 	for (const user of DEV_USERS) {
-		await prisma.user.create({
-			data: {
+		const data = {
+			username: user.username,
+			password: passwordHash,
+			role: prismaRoleByDevUserRole[user.role],
+			isActive: true,
+			emailConfirmedAt: confirmedAt,
+		};
+		const seededUser = await prisma.user.upsert({
+			where: { email: user.email },
+			create: {
 				email: user.email,
-				username: user.username,
-				password: passwordHash,
-				role: prismaRoleByDevUserRole[user.role],
-				isActive: true,
-				emailConfirmedAt: confirmedAt,
+				...data,
 			},
+			update: data,
 		});
+		if (user.role === 'BOOSTER') {
+			await prisma.wallet.upsert({
+				where: { boosterId: seededUser.id },
+				create: { boosterId: seededUser.id },
+				update: {},
+			});
+		}
 	}
 
 	console.log('Seeded dev accounts:');

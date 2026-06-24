@@ -49,7 +49,6 @@ services:
 
   migrate:
     <<: *log-rotation
-    build: *app-image-build
     image: *shared-app-image
     restart: 'no'
     working_dir: /workspace/packages/database
@@ -98,7 +97,6 @@ services:
 
   workers:
     <<: *log-rotation
-    build: *app-image-build
     image: *shared-app-image
     restart: unless-stopped
     working_dir: /workspace/apps/workers

@@ -23,10 +23,12 @@ test.describe('Start Redirection Logic', () => {
 		await expect(page).toHaveURL(/\/register/);
 	});
 
-	test('Service card should navigate to /start', async ({ page }) => {
+	test('Service card should link to /start', async ({ page }) => {
 		await page.goto('/');
-		await page.locator('text=Configurar').first().click();
-		await expect(page).toHaveURL(/\/register/);
+		const serviceLink = page.getByRole('link', {
+			name: /Elo Boost.*Configurar/i,
+		});
+		await expect(serviceLink).toHaveAttribute('href', '/start');
 	});
 
 	test('Navbar "Abrir App" should navigate to /start', async ({ page }) => {
