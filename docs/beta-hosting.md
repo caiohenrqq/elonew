@@ -89,6 +89,7 @@ VPS_KNOWN_HOSTS
 
 `VPS_KNOWN_HOSTS` must contain the VPS SSH host key for port `22022`. The SSH
 key must let `admin` access the VPS without a password.
+The VPS repository must exist at `/opt/elonew/elonew`.
 
 Pull requests targeting `main` run CI without creating Vercel previews. Direct
 pushes to `main` trigger no GitHub Actions workflow. Production deploys only

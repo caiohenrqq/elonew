@@ -132,10 +132,11 @@ jobs:
           ssh -p 22022 admin@"$VPS_HOST" 'bash -s' -- "$GITHUB_REF_NAME" <<'REMOTE'
           set -euo pipefail
           tag=$1
-          cd "$HOME/code/elonew"
+          cd /opt/elonew/elonew
           git fetch --force --tags origin
           git checkout --detach "refs/tags/$tag"
-          pnpm docker:prod:up
+          docker compose --env-file infrastructure/docker/prod/.env \
+            -f infrastructure/docker/prod/docker-compose.prod.yml up -d --build
           curl --fail --silent --show-error https://api.elonew.com.br/health
           REMOTE
 
