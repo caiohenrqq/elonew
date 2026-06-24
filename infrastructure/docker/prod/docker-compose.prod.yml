@@ -5,9 +5,6 @@ x-shared-app-image: &shared-app-image ${APP_IMAGE:-elonew-prod:latest}
 x-app-image-build: &app-image-build
   context: ../../..
   dockerfile: infrastructure/docker/prod/Dockerfile.prod
-  args:
-    NEXT_PUBLIC_API_URL: ${PUBLIC_API_ORIGIN:?set PUBLIC_API_ORIGIN in infrastructure/docker/prod/.env}
-    NEXT_PUBLIC_APP_URL: ${PUBLIC_WEB_ORIGIN:?set PUBLIC_WEB_ORIGIN in infrastructure/docker/prod/.env}
 
 x-postgres-connection-url: &postgres-connection-url postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infrastructure/docker/prod/.env}@database:5432/elonew
 
@@ -40,6 +37,9 @@ services:
     <<: *log-rotation
     image: redis:7-alpine
     restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - elonew_redis_prod_data:/data
     networks: [private-backend]
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
@@ -96,37 +96,6 @@ services:
       start_period: 30s
     command: ['node', 'dist/main']
 
-  web:
-    <<: *log-rotation
-    build: *app-image-build
-    image: *shared-app-image
-    restart: unless-stopped
-    working_dir: /workspace/apps/web
-    depends_on:
-      api:
-        condition: service_healthy
-    env_file:
-      - ./web.env
-    environment:
-      NODE_ENV: production
-      PORT: 3001
-      API_URL: http://api:3000
-      NEXT_PUBLIC_API_URL: ${PUBLIC_API_ORIGIN}
-      NEXT_PUBLIC_APP_URL: ${PUBLIC_WEB_ORIGIN}
-      WEB_SESSION_SECRET: ${WEB_SESSION_SECRET:?set WEB_SESSION_SECRET in infrastructure/docker/prod/.env}
-    networks: [public-edge]
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'node -e "fetch(''http://127.0.0.1:3001/'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 30s
-    command: ['pnpm', 'exec', 'next', 'start', '--hostname', '0.0.0.0', '--port', '3001']
-
   workers:
     <<: *log-rotation
     build: *app-image-build
@@ -168,8 +137,6 @@ services:
     depends_on:
       api:
         condition: service_started
-      web:
-        condition: service_started
 
 networks:
   public-edge:
@@ -178,3 +145,4 @@ networks:
 
 volumes:
   elonew_postgres_prod_data:
+  elonew_redis_prod_data:

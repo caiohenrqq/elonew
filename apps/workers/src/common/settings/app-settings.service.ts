@@ -17,6 +17,10 @@ export class AppSettingsService {
 		return this.config.getOrThrow('API_INTERNAL_BASE_URL', { infer: true });
 	}
 
+	get internalApiKey() {
+		return this.config.getOrThrow('INTERNAL_API_KEY', { infer: true });
+	}
+
 	get redisUrl() {
 		return this.config.getOrThrow('REDIS_URL', { infer: true });
 	}

@@ -18,6 +18,7 @@ test('InternalApiWalletFundsReleaseExecutorAdapter posts the targeted release pa
 	try {
 		const adapter = new InternalApiWalletFundsReleaseExecutorAdapter({
 			apiInternalBaseUrl: 'http://localhost:3000',
+			internalApiKey: 'internal-api-key',
 		} as never);
 		await adapter.execute({
 			orderId: 'order-1',
@@ -35,6 +36,7 @@ test('InternalApiWalletFundsReleaseExecutorAdapter posts the targeted release pa
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
+					'x-internal-api-key': 'internal-api-key',
 				},
 				body: JSON.stringify({
 					orderId: 'order-1',

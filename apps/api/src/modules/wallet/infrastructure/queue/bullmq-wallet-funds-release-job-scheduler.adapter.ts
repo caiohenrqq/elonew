@@ -12,6 +12,16 @@ export function createWalletFundsReleaseJobId(input: {
 	return `${input.boosterId}__${input.orderId}`;
 }
 
+export const WALLET_FUNDS_RELEASE_JOB_OPTIONS = {
+	attempts: 5,
+	backoff: {
+		type: 'exponential' as const,
+		delay: 5_000,
+	},
+	removeOnComplete: 100,
+	removeOnFail: 100,
+};
+
 @Injectable()
 export class BullmqWalletFundsReleaseJobSchedulerAdapter
 	implements WalletFundsReleaseJobSchedulerPort, OnModuleDestroy
@@ -35,10 +45,9 @@ export class BullmqWalletFundsReleaseJobSchedulerAdapter
 				availableAt: input.availableAt.toISOString(),
 			},
 			{
+				...WALLET_FUNDS_RELEASE_JOB_OPTIONS,
 				jobId: createWalletFundsReleaseJobId(input),
 				delay: Math.max(input.availableAt.getTime() - Date.now(), 0),
-				removeOnComplete: 100,
-				removeOnFail: 100,
 			},
 		);
 	}

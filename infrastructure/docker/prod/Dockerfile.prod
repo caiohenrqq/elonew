@@ -29,13 +29,7 @@ RUN CI=true pnpm install --frozen-lockfile --prod=false --config.confirmModulesP
 
 FROM deps AS build
 
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_APP_URL
-
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
 
 RUN npm install -g typescript@5.9.3
@@ -44,13 +38,11 @@ COPY . .
 
 RUN pnpm build:packages \
   && pnpm --filter @packages/database exec prisma generate \
-  && pnpm --filter api exec nest build \
-  && pnpm --filter web exec next build
+  && pnpm --filter api exec nest build
 
 FROM base AS runtime
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=build --chown=node:node /workspace /workspace
 

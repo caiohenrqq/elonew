@@ -22,6 +22,7 @@ export class InternalApiWalletFundsReleaseExecutorAdapter
 					method: 'POST',
 					headers: {
 						'content-type': 'application/json',
+						'x-internal-api-key': this.appSettings.internalApiKey,
 					},
 					body: JSON.stringify({
 						orderId: input.orderId,

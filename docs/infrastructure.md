@@ -57,14 +57,17 @@
 
 ### Prod / beta (`prod/`)
 - `Dockerfile.prod`: multi-stage build (`base` → `deps` → `build` → `runtime`)
-  that compiles packages, the API (`nest build`), and the web app (`next build`),
-  producing one image used by all app services with different commands.
+  that compiles packages and the API (`nest build`), producing one image used by
+  the API, migration, and worker services.
 - `docker-compose.prod.yml`: production-like stack — `database`, `redis`, a
-  one-shot `migrate` job (`prisma migrate deploy`), `api`, `web`, `workers`, and a
-  `cloudflared` connector that fronts the stack through a named Cloudflare Tunnel.
+  one-shot `migrate` job (`prisma migrate deploy`), `api`, `workers`, and a
+  `cloudflared` connector that fronts the API through a named Cloudflare Tunnel.
+- The Next.js frontend runs on Vercel and is not built or started by the VPS
+  Compose stack.
+- Redis uses AOF persistence in the `elonew_redis_prod_data` volume.
 - Config lives in git-ignored env files alongside the compose file (templates are
   the committed `*.env.example`).
-- Two networks: `public-edge` (`cloudflared`, `web`, `api`) and `private-backend`
+- Two networks: `public-edge` (`cloudflared`, `api`) and `private-backend`
   (`internal: true`: `database`, `redis`, `api`, `workers`, `migrate`), so the data
   stores are not on the public edge; `api` bridges both.
 - Pinned images and a parameterized app tag (`APP_IMAGE`, `CLOUDFLARED_VERSION`), plus

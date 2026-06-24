@@ -10,6 +10,7 @@ test('InternalApiWalletFundsReleaseExecutorAdapter throws when the internal API 
 	try {
 		const adapter = new InternalApiWalletFundsReleaseExecutorAdapter({
 			apiInternalBaseUrl: 'http://localhost:3000',
+			internalApiKey: 'internal-api-key',
 		} as never);
 		const availableAt = new Date('2026-03-12T12:00:00.000Z');
 
@@ -28,6 +29,32 @@ test('InternalApiWalletFundsReleaseExecutorAdapter throws when the internal API 
 	}
 });
 
+test('InternalApiWalletFundsReleaseExecutorAdapter authenticates internal API requests', async () => {
+	const originalFetch = globalThis.fetch;
+	let requestHeaders: Headers | undefined;
+	globalThis.fetch = async (_input, init) => {
+		requestHeaders = new Headers(init?.headers);
+		return new Response(null, { status: 200 });
+	};
+
+	try {
+		const adapter = new InternalApiWalletFundsReleaseExecutorAdapter({
+			apiInternalBaseUrl: 'http://localhost:3000',
+			internalApiKey: 'internal-api-key',
+		} as never);
+
+		await adapter.execute({
+			orderId: 'order-1',
+			boosterId: 'booster-1',
+			availableAt: new Date('2026-03-12T12:00:00.000Z'),
+		});
+
+		assert.equal(requestHeaders?.get('x-internal-api-key'), 'internal-api-key');
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
 test('InternalApiWalletFundsReleaseExecutorAdapter wraps transport failures in a typed execution error', async () => {
 	const originalFetch = globalThis.fetch;
 	globalThis.fetch = async () => {
@@ -37,6 +64,7 @@ test('InternalApiWalletFundsReleaseExecutorAdapter wraps transport failures in a
 	try {
 		const adapter = new InternalApiWalletFundsReleaseExecutorAdapter({
 			apiInternalBaseUrl: 'http://localhost:3000',
+			internalApiKey: 'internal-api-key',
 		} as never);
 
 		await assert.rejects(
