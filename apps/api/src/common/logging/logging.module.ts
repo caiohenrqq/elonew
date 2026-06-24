@@ -21,6 +21,7 @@ import { LoggerModule } from 'nestjs-pino';
 					},
 					autoLogging: {
 						ignore: (req: IncomingMessage) =>
+							req.url === '/health' ||
 							(req.url ?? '').startsWith('/api/health'),
 					},
 					redact: {

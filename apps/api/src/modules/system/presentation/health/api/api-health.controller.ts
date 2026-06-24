@@ -3,7 +3,7 @@ import { ApiHealthUseCase } from '@modules/system/application/use-cases/health/a
 import { Controller, Get } from '@nestjs/common';
 
 @Public()
-@Controller('api/health/api')
+@Controller('health')
 export class ApiHealthController {
 	constructor(private readonly apiHealthUseCase: ApiHealthUseCase) {}
 

@@ -233,7 +233,7 @@ describe('Users (e2e)', () => {
 
 		for (let index = 0; index < 3; index++) {
 			await requestHttp(app)
-				.get('/api/health/api')
+				.get('/health')
 				.expect((response) => {
 					expect(response.status).toBe(200);
 					expect(response.body).toEqual({

@@ -89,7 +89,7 @@ Check it with:
 ```bash
 docker compose --env-file infrastructure/docker/prod/.env \
   -f infrastructure/docker/prod/docker-compose.prod.yml ps
-curl https://api.elonew.com.br/api/health/api
+curl https://api.elonew.com.br/health
 ```
 
 Data persists in the `elonew_postgres_prod_data` and
