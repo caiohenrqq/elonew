@@ -1,11 +1,8 @@
 import { isProductionRuntime } from '@/shared/env/web-env';
 import {
 	type ClientDashboardOrdersOutput,
-	type CreateOrderOutput,
-	type CreatePaymentOutput,
+	checkoutResultSchema,
 	clientDashboardOrdersSchema,
-	createOrderSchema,
-	createPaymentSchema,
 	type GetOrderOutput,
 	type OrderQuoteOutput,
 	type OrderQuotePreviewOutput,
@@ -58,32 +55,6 @@ export const previewOrderQuote = async (
 	});
 };
 
-export const createOrder = async (
-	input: unknown,
-	apiRequest: AuthenticatedApiRequest,
-) => {
-	const body = createOrderSchema.parse(input);
-
-	return await apiRequest<CreateOrderOutput>('/orders', {
-		auth: true,
-		method: 'POST',
-		body: JSON.stringify(body),
-	});
-};
-
-export const createPayment = async (
-	input: unknown,
-	apiRequest: AuthenticatedApiRequest,
-) => {
-	const body = createPaymentSchema.parse(input);
-
-	return await apiRequest<CreatePaymentOutput>('/payments', {
-		auth: true,
-		method: 'POST',
-		body: JSON.stringify(body),
-	});
-};
-
 export const getOrder = async (
 	orderId: string,
 	apiRequest: AuthenticatedApiRequest,
@@ -119,16 +90,17 @@ export const startCheckout = async (
 ) => {
 	const { paymentMethod, ...quoteInput } = startCheckoutSchema.parse(input);
 	const quote = await createOrderQuote(quoteInput, apiRequest);
-	const order = await createOrder({ quoteId: quote.quoteId }, apiRequest);
-	const payment = await createPayment(
-		{ orderId: order.id, paymentMethod },
-		apiRequest,
-	);
+	const checkout = await apiRequest<unknown>('/payments/checkout', {
+		auth: true,
+		method: 'POST',
+		body: JSON.stringify({ quoteId: quote.quoteId, paymentMethod }),
+	});
+	const result = checkoutResultSchema.parse(checkout);
 
 	return {
-		checkoutUrl: getSafeCheckoutUrl(payment.checkoutUrl),
-		orderId: order.id,
-		paymentId: payment.id,
+		checkoutUrl: getSafeCheckoutUrl(result.checkoutUrl),
+		orderId: result.orderId,
+		paymentId: result.paymentId,
 	};
 };
 

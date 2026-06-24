@@ -92,7 +92,7 @@ describe('previewOrderQuote', () => {
 });
 
 describe('startCheckout', () => {
-	it('creates the quote, order, and payment through the API in sequence', async () => {
+	it('creates the quote then the order and payment atomically through the API', async () => {
 		const apiRequest = jest
 			.fn()
 			.mockResolvedValueOnce({
@@ -102,19 +102,8 @@ describe('startCheckout', () => {
 				discountAmount: 0,
 			})
 			.mockResolvedValueOnce({
-				id: 'order-1',
-				status: 'awaiting_payment',
-				subtotal: 120,
-				totalAmount: 120,
-				discountAmount: 0,
-			})
-			.mockResolvedValueOnce({
-				id: 'payment-1',
 				orderId: 'order-1',
-				status: 'pending',
-				grossAmount: 120,
-				boosterAmount: 80,
-				paymentMethod: 'pix',
+				paymentId: 'payment-1',
 				checkoutUrl: 'https://checkout.example/pay',
 			});
 
@@ -146,15 +135,10 @@ describe('startCheckout', () => {
 			method: 'POST',
 			body: expect.any(String),
 		});
-		expect(apiRequest).toHaveBeenNthCalledWith(2, '/orders', {
+		expect(apiRequest).toHaveBeenNthCalledWith(2, '/payments/checkout', {
 			auth: true,
 			method: 'POST',
-			body: JSON.stringify({ quoteId: 'quote-1' }),
-		});
-		expect(apiRequest).toHaveBeenNthCalledWith(3, '/payments', {
-			auth: true,
-			method: 'POST',
-			body: JSON.stringify({ orderId: 'order-1', paymentMethod: 'pix' }),
+			body: JSON.stringify({ quoteId: 'quote-1', paymentMethod: 'pix' }),
 		});
 	});
 
@@ -168,19 +152,8 @@ describe('startCheckout', () => {
 				discountAmount: 0,
 			})
 			.mockResolvedValueOnce({
-				id: 'order-1',
-				status: 'awaiting_payment',
-				subtotal: 120,
-				totalAmount: 120,
-				discountAmount: 0,
-			})
-			.mockResolvedValueOnce({
-				id: 'payment-1',
 				orderId: 'order-1',
-				status: 'pending',
-				grossAmount: 120,
-				boosterAmount: 80,
-				paymentMethod: 'pix',
+				paymentId: 'payment-1',
 				checkoutUrl: 'http://checkout.example/pay',
 			});
 
@@ -215,19 +188,8 @@ describe('startCheckout', () => {
 				discountAmount: 0,
 			})
 			.mockResolvedValueOnce({
-				id: 'order-1',
-				status: 'awaiting_payment',
-				subtotal: 120,
-				totalAmount: 120,
-				discountAmount: 0,
-			})
-			.mockResolvedValueOnce({
-				id: 'payment-1',
 				orderId: 'order-1',
-				status: 'pending',
-				grossAmount: 120,
-				boosterAmount: 80,
-				paymentMethod: 'pix',
+				paymentId: 'payment-1',
 				checkoutUrl: 'http://localhost:3001/client?devPaymentId=payment-1',
 			});
 

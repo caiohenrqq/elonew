@@ -25,6 +25,14 @@ export const startCheckoutSchema = createOrderQuoteSchema.and(
 	}),
 );
 
+export const checkoutResultSchema = z.object({
+	orderId: z.string().trim().min(1),
+	paymentId: z.string().trim().min(1),
+	checkoutUrl: z.string().trim().url(),
+});
+
+export type CheckoutResultOutput = z.infer<typeof checkoutResultSchema>;
+
 export type OrderQuoteInput = CreateOrderQuoteSchemaInput;
 export type CreateOrderInput = CreateOrderSchemaInput;
 export type CreatePaymentInput = CreatePaymentSchemaInput;
