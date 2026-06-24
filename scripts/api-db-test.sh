@@ -6,7 +6,7 @@ if [[ $# -lt 1 ]]; then
 	exit 1
 fi
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 JEST_CONFIG="$1"
 shift
 
@@ -23,16 +23,13 @@ export TEST_DB_NAME
 export DATABASE_URL="${DB_BASE_URL}/${TEST_DB_NAME}"
 
 cleanup() {
-	docker compose -f infrastructure/docker/dev/docker-compose.dev.yml exec -T "${TEST_DB_SERVICE:-database}" \
+	docker compose -f infrastructure/docker/dev/compose.yml exec -T "${TEST_DB_SERVICE:-database}" \
 		psql -U "${TEST_DB_USER:-postgres}" -d postgres -v ON_ERROR_STOP=1 -c \
 		"DROP DATABASE IF EXISTS ${TEST_DB_NAME} WITH (FORCE);" >/dev/null 2>&1 || true
 }
 
 trap cleanup EXIT
 
-pnpm -w config:build
-pnpm -w shared:build
-pnpm -w auth:build
-pnpm -w integrations:build
-pnpm -w db:test:prepare
+pnpm -w build:packages
+bash scripts/database-test-setup.sh
 pnpm --filter api exec jest --config "$JEST_CONFIG" --runInBand -- "$@"

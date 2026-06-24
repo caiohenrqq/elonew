@@ -138,7 +138,7 @@ jobs:
           git fetch --force --tags origin
           git checkout --detach "refs/tags/$tag"
           docker compose --env-file infrastructure/docker/prod/.env \
-            -f infrastructure/docker/prod/docker-compose.prod.yml up -d --build
+            -f infrastructure/docker/prod/compose.yml up -d --build
           curl --fail --silent --show-error https://api.elonew.com.br/health
           REMOTE
 

@@ -5,10 +5,7 @@
 		"^@app/(.*)$": "<rootDir>/../src/$1",
 		"^@modules/(.*)$": "<rootDir>/../src/modules/$1",
 		"^@packages/shared/(.*)$": "<rootDir>/../../../packages/shared/src/$1",
-		"^@database/(.*)$": "<rootDir>/../../../packages/database/src/$1",
-		"^@testing/(.*)$": "<rootDir>/../../../packages/testing/src/$1",
-		"^@packages/integrations/(.*)$": "<rootDir>/../../../packages/integrations/src/$1",
-		"^@integrations/(.*)$": "<rootDir>/../../../packages/integrations/src/$1"
+		"^@packages/integrations/(.*)$": "<rootDir>/../../../packages/integrations/src/$1"
 	},
 	"testEnvironment": "node",
 	"setupFiles": ["<rootDir>/load-test-env.ts"],

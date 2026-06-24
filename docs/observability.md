@@ -135,6 +135,8 @@ Use only:
 
 Do not use warning/debug logs for normal business workflows. If an event matters
 in production, it must be queryable at `info` or `error` with enough context.
+Collectors may preserve Pino's numeric `level` while adding normalized
+`detected_level` and `severity_text` metadata for log backends and UIs.
 
 ## Correlation
 

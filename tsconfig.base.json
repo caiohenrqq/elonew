@@ -15,12 +15,7 @@
 		"paths": {
 			"@app/*": ["./apps/api/src/*"],
 			"@modules/*": ["./apps/api/src/modules/*"],
-			"@database/*": ["./packages/database/src/*"],
-			"@config/*": ["./packages/config/src/*"],
-			"@auth/*": ["./packages/auth/src/*"],
-			"@packages/integrations/*": ["./packages/integrations/src/*"],
-			"@testing/*": ["./packages/testing/src/*"],
-			"@integrations/*": ["./packages/integrations/src/*"]
+			"@packages/integrations/*": ["./packages/integrations/src/*"]
 		}
 	},
 	"exclude": ["node_modules", "dist"]

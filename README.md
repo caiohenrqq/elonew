@@ -1,33 +1,49 @@
 # EloNew
 
-EloNew is a monorepo for a League of Legends boosting platform.
+League of Legends boosting platform built as a TypeScript monorepo.
 
-## Structure
+## Repository
 
-- `apps/api`: NestJS backend API
-- `apps/web`: Next.js frontend
-- `apps/workers`: background jobs runtime
-- `packages/*`: shared packages (`shared`, `database`, `config`, `auth`, `ui`, `testing`, `integrations`)
+```text
+apps/
+├── api/       NestJS API and Socket.IO
+├── web/       Next.js frontend
+└── workers/   BullMQ workers
+packages/
+├── auth/
+├── config/
+├── database/
+├── integrations/
+└── shared/
+infrastructure/docker/
+├── dev/
+└── prod/
+scripts/
+docs/
+```
 
-## Documentation
-
-- `docs/requirements.md`: product requirements
-- `docs/tech-architecture.md`: technical architecture and design patterns
-- `docs/database.md`: database guidelines
-- `docs/stack.md`: stack overview
-- `docs/commits.md`: commit conventions
-- `AGENTS.md`: agent execution and project rules
-
-## Quick start
+## Start
 
 ```bash
 pnpm install
-pnpm docker:dev:down
+cp apps/api/.env.example apps/api/.env
+cp apps/api/.env.example apps/api/.env.test
+cp apps/web/.env.example apps/web/.env
+cp apps/workers/.env.example apps/workers/.env
 pnpm docker:dev:up
-pnpm docker:dev:logs
-pnpm dev:api
-pnpm dev:web
-pnpm dev:workers
 ```
 
-When dependencies are added or changed with `pnpm install`, restart the Docker dev stack before continuing so the containers pick up the updated workspace state.
+Open `http://localhost:3001`.
+
+## Documentation
+
+- [Requirements](docs/requirements.md)
+- [Architecture](docs/architecture.md)
+- [Development](docs/development.md)
+- [Deployment](docs/deployment.md)
+- [Observability](docs/observability.md)
+- [Realtime](docs/realtime.md)
+- [Privacy](docs/privacy.md)
+- [Contributing](docs/contributing.md)
+
+`package.json` files own commands. GitHub Issues own roadmap and future work.

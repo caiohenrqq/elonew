@@ -12,8 +12,7 @@
 		"prestart": "pnpm build:deps",
 		"start": "nest start",
 		"start:dev": "pnpm build:deps && nest start --watch",
-		"start:dev:clean": "pnpm build:deps && rm -rf dist && nest start --watch",
-		"start:dev:stable": "bash ../../infrastructure/scripts/api-dev-watch-runner.sh",
+		"start:dev:stable": "bash ../../scripts/api-dev-watch.sh",
 		"start:debug": "pnpm build:deps && nest start --debug --watch",
 		"start:prod": "node dist/main",
 		"biome:check": "biome check .",
@@ -22,18 +21,13 @@
 		"test": "jest",
 		"test:unit": "pnpm build:deps && jest \"src/.*\\.spec\\.ts$\" --runInBand",
 		"test:integration": "pnpm build:deps && jest \"test/integration/.*\\.integration\\.spec\\.ts$\" --runInBand",
-		"test:integration:db": "bash ../../infrastructure/scripts/api-db-test-runner.sh ./test/jest-integration-db.json",
+		"test:integration:db": "bash ../../scripts/api-db-test.sh ./test/jest-integration-db.json",
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"test:e2e": "pnpm build:deps && jest --config ./test/jest-e2e.json",
-		"test:e2e:db": "bash ../../infrastructure/scripts/api-db-test-runner.sh ./test/jest-e2e-db.json",
-		"seed:dev-users": "dotenv -e .env -- ts-node scripts/seed-dev-users.ts",
-		"prisma:generate": "pnpm -w db:generate",
-		"prisma:validate": "pnpm -w db:validate",
-		"prisma:migrate:dev": "pnpm -w db:migrate:dev",
-		"prisma:migrate:deploy": "pnpm -w db:migrate:deploy",
-		"prisma:studio": "pnpm -w db:studio"
+		"test:e2e:db": "bash ../../scripts/api-db-test.sh ./test/jest-e2e-db.json",
+		"seed:dev-users": "dotenv -e .env -- ts-node scripts/seed-dev-users.ts"
 	},
 	"dependencies": {
 		"@nestjs/common": "^11.0.1",
@@ -91,10 +85,7 @@
 			"^@modules/(.*)$": "<rootDir>/src/modules/$1",
 			"^@packages/config/(.*)$": "<rootDir>/../../packages/config/src/$1",
 			"^@packages/shared/(.*)$": "<rootDir>/../../packages/shared/src/$1",
-			"^@database/(.*)$": "<rootDir>/../../packages/database/src/$1",
-			"^@testing/(.*)$": "<rootDir>/../../packages/testing/src/$1",
-			"^@packages/integrations/(.*)$": "<rootDir>/../../packages/integrations/src/$1",
-			"^@integrations/(.*)$": "<rootDir>/../../packages/integrations/src/$1"
+			"^@packages/integrations/(.*)$": "<rootDir>/../../packages/integrations/src/$1"
 		},
 		"rootDir": ".",
 		"testRegex": "(src/.*\\.spec\\.ts$|test/integration/.*\\.integration\\.spec\\.ts$)",

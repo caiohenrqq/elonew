@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-COMPOSE_FILE="infrastructure/docker/dev/docker-compose.dev.yml"
+set -a
+source apps/api/.env.test
+set +a
+
+COMPOSE_FILE="infrastructure/docker/dev/compose.yml"
 DB_SERVICE="${TEST_DB_SERVICE:-database}"
 DB_NAME="${TEST_DB_NAME:-elonew_test}"
 DB_USER="${TEST_DB_USER:-postgres}"
@@ -21,6 +25,7 @@ if [[ "$DB_EXISTS" != "1" ]]; then
 	echo "Creating database '${DB_NAME}'..."
 	docker compose -f "$COMPOSE_FILE" exec -T "$DB_SERVICE" \
 		psql -U "$DB_USER" -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE ${DB_NAME};"
-else
-	echo "Database '${DB_NAME}' already exists."
 fi
+
+export DATABASE_URL="${DATABASE_URL%/*}/${DB_NAME}"
+pnpm --filter @packages/database exec prisma migrate deploy

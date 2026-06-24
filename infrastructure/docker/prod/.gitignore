@@ -1,3 +1,0 @@
-# Real env files with secrets live here but must never be committed.
-*.env
-!*.env.example

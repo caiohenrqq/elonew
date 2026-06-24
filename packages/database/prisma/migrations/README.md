@@ -1,7 +1,7 @@
-# Migration History Notes
+# Migration History
 
-This file records migration-history notes that should not be fixed by editing
-already-applied Prisma migration SQL.
+These notes live beside the immutable migrations they describe. Never rename or
+edit an applied migration; add a corrective migration instead.
 
 ## 2026-05 pricing-version index migrations
 
@@ -20,9 +20,3 @@ instead of adding support ticket lifecycle changes.
 `20260528140000_add_support_ticket_lifecycle` is the migration that actually
 adds `TicketStatus`, `tickets.orderId`, ticket status migration SQL, ticket
 indexes, and the order foreign key.
-
-## Operational rule
-
-Do not rename or edit these migration directories if they may have been applied
-outside a disposable local database. Use new corrective migrations for schema
-changes and keep this note as the audit trail for the misleading name.

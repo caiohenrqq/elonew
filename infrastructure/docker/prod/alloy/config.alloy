@@ -31,7 +31,34 @@ discovery.relabel "production_logs" {
 loki.source.docker "production" {
 	host       = "unix:///var/run/docker.sock"
 	targets    = discovery.relabel.production_logs.output
+	forward_to = [loki.process.pino.receiver]
+}
+
+loki.process "pino" {
 	forward_to = [loki.write.grafana_cloud.receiver]
+
+	stage.json {
+		expressions = {
+			pino_level = "level",
+		}
+	}
+
+	stage.template {
+		source   = "detected_level"
+		template = "{{ if eq (printf \"%v\" .pino_level) \"10\" }}trace{{ else if eq (printf \"%v\" .pino_level) \"20\" }}debug{{ else if eq (printf \"%v\" .pino_level) \"30\" }}info{{ else if eq (printf \"%v\" .pino_level) \"40\" }}warn{{ else if eq (printf \"%v\" .pino_level) \"50\" }}error{{ else if eq (printf \"%v\" .pino_level) \"60\" }}fatal{{ else }}unknown{{ end }}"
+	}
+
+	stage.template {
+		source   = "severity_text"
+		template = "{{ ToUpper .detected_level }}"
+	}
+
+	stage.structured_metadata {
+		values = {
+			detected_level = "",
+			severity_text  = "",
+		}
+	}
 }
 
 loki.write "grafana_cloud" {
