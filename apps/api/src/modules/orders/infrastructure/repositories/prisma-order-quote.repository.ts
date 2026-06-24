@@ -140,6 +140,33 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		});
 	}
 
+	async cleanupExpiredUnused(input: {
+		expiresBefore: Date;
+		limit: number;
+	}): Promise<{ deletedCount: number }> {
+		const quotes = await this.prisma.orderQuote.findMany({
+			where: {
+				expiresAt: { lt: input.expiresBefore },
+				consumedAt: null,
+				orderId: null,
+			},
+			select: { id: true },
+			orderBy: { expiresAt: 'asc' },
+			take: input.limit,
+		});
+		if (quotes.length === 0) return { deletedCount: 0 };
+
+		const result = await this.prisma.orderQuote.deleteMany({
+			where: {
+				id: { in: quotes.map((quote) => quote.id) },
+				consumedAt: null,
+				orderId: null,
+			},
+		});
+
+		return { deletedCount: result.count };
+	}
+
 	private mapSnapshot(record: OrderQuoteRecord): OrderQuoteSnapshot {
 		return {
 			couponId: record.couponId,

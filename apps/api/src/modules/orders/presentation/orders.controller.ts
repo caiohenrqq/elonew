@@ -2,10 +2,12 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
+import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
+import { CleanupExpiredOrderQuotesUseCase } from '@modules/orders/application/use-cases/cleanup-expired-order-quotes/cleanup-expired-order-quotes.use-case';
 import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/complete-order/complete-order.use-case';
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
@@ -36,6 +38,8 @@ import {
 	createOrderQuoteSchema,
 } from '@packages/shared/orders/create-order-quote.schema';
 import {
+	type CleanupExpiredOrderQuotesSchemaInput,
+	cleanupExpiredOrderQuotesSchema,
 	type ListBoosterOrdersQuerySchemaInput,
 	type ListClientOrdersQuerySchemaInput,
 	listBoosterOrdersQuerySchema,
@@ -61,6 +65,7 @@ export class OrdersController {
 		private readonly cancelOrderUseCase: CancelOrderUseCase,
 		private readonly completeOrderUseCase: CompleteOrderUseCase,
 		private readonly saveOrderCredentialsUseCase: SaveOrderCredentialsUseCase,
+		private readonly cleanupExpiredOrderQuotesUseCase: CleanupExpiredOrderQuotesUseCase,
 	) {}
 
 	@Post('quote/preview')
@@ -146,6 +151,19 @@ export class OrdersController {
 			boosterId: body.boosterId,
 			quoteId: body.quoteId,
 			now: new Date(),
+		});
+	}
+
+	@Post('internal/quotes/cleanup-expired')
+	@UseGuards(InternalApiKeyGuard)
+	@HttpCode(200)
+	async cleanupExpiredQuotes(
+		@Body(new ZodValidationPipe(cleanupExpiredOrderQuotesSchema))
+		body: CleanupExpiredOrderQuotesSchemaInput,
+	): Promise<{ deletedCount: number; expiresBefore: string }> {
+		return await this.cleanupExpiredOrderQuotesUseCase.execute({
+			now: new Date(body.now),
+			limit: body.limit,
 		});
 	}
 

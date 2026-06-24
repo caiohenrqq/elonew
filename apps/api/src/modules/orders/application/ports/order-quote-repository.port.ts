@@ -21,4 +21,8 @@ export interface OrderQuoteRepositoryPort {
 		clientId: string;
 		orderId: string;
 	}): Promise<void>;
+	cleanupExpiredUnused(input: {
+		expiresBefore: Date;
+		limit: number;
+	}): Promise<{ deletedCount: number }>;
 }

@@ -80,4 +80,28 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		quote.orderId = null;
 		return Promise.resolve();
 	}
+
+	cleanupExpiredUnused(input: {
+		expiresBefore: Date;
+		limit: number;
+	}): Promise<{ deletedCount: number }> {
+		let deletedCount = 0;
+		const quotes = [...this.quotes.values()]
+			.filter(
+				(quote) =>
+					quote.expiresAt < input.expiresBefore &&
+					!quote.consumedAt &&
+					!quote.orderId,
+			)
+			.sort(
+				(left, right) => left.expiresAt.getTime() - right.expiresAt.getTime(),
+			)
+			.slice(0, input.limit);
+
+		for (const quote of quotes) {
+			if (this.quotes.delete(quote.id)) deletedCount++;
+		}
+
+		return Promise.resolve({ deletedCount });
+	}
 }

@@ -32,6 +32,10 @@ class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 	}
 
 	async restoreConsumedByIdForClient(): Promise<void> {}
+
+	async cleanupExpiredUnused(): Promise<{ deletedCount: number }> {
+		return { deletedCount: 0 };
+	}
 }
 
 class OrderCouponServiceStub implements OrderCouponService {
