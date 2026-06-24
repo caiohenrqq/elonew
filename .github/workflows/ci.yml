@@ -1,10 +1,10 @@
 name: CI/CD
 
 on:
-  push:
-    tags: ['v*']
   pull_request:
     branches: [main]
+  release:
+    types: [released]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -92,7 +92,7 @@ jobs:
 
   deploy:
     name: Deploy production
-    if: github.ref_type == 'tag'
+    if: github.event_name == 'release'
     needs: [checks, database]
     runs-on: ubuntu-latest
     timeout-minutes: 20

@@ -92,17 +92,23 @@ key must let `admin` access the VPS without a password.
 The VPS repository must exist at `/opt/elonew/elonew`.
 
 Pull requests targeting `main` run CI without creating Vercel previews. Direct
-pushes to `main` trigger no GitHub Actions workflow. Production deploys only
-from SemVer-style `v*` tags:
+pushes and tags trigger no GitHub Actions workflow. Production deploys only
+when a stable GitHub Release is published:
 
 ```bash
-git tag -a v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
+gh release create v0.1.0 --generate-notes --verify-tag
 ```
 
-The tag must point to a commit contained in `main`. CI runs first, then the
-workflow deploys that exact tag to the VPS and Vercel. The VPS stack applies
-Prisma migrations before starting the API and workers.
+Alpha, beta, and release-candidate tags should be published as GitHub
+prereleases and do not deploy production:
+
+```bash
+gh release create v0.1.0-alpha.1 --prerelease --generate-notes --verify-tag
+```
+
+The stable release tag must point to a commit contained in `main`. CI runs
+first, then the workflow deploys that exact tag to the VPS and Vercel. The VPS
+stack applies Prisma migrations before starting the API and workers.
 
 Check it with:
 
