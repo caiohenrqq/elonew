@@ -36,6 +36,8 @@ describe('Orders (e2e)', () => {
 	let chatRepository: InMemoryChatRepository;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
 	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
+	const testInternalApiKey =
+		process.env.INTERNAL_API_KEY ?? 'test-internal-api-key';
 
 	class CouponLookupStub {
 		public coupons = new Map<string, StoredCoupon>();
@@ -203,6 +205,47 @@ describe('Orders (e2e)', () => {
 				totalAmount: 2520,
 				discountAmount: 0,
 			})
+			.execute();
+	});
+
+	it('cleans expired order quotes through the internal endpoint', async () => {
+		await requestHttp(app)
+			.post('/orders/internal/quotes/cleanup-expired')
+			.set('x-internal-api-key', testInternalApiKey)
+			.send({
+				now: '2026-06-12T12:00:00.000Z',
+				limit: 500,
+			})
+			.expect(200, {
+				deletedCount: 0,
+				expiresBefore: '2026-06-05T12:00:00.000Z',
+			})
+			.execute();
+	});
+
+	it('rejects expired quote cleanup without the internal API key', async () => {
+		await requestHttp(app)
+			.post('/orders/internal/quotes/cleanup-expired')
+			.send({
+				now: '2026-06-12T12:00:00.000Z',
+			})
+			.expect(401, {
+				message: 'Internal API key required.',
+				error: 'Unauthorized',
+				statusCode: 401,
+			})
+			.execute();
+	});
+
+	it('validates expired quote cleanup input', async () => {
+		await requestHttp(app)
+			.post('/orders/internal/quotes/cleanup-expired')
+			.set('x-internal-api-key', testInternalApiKey)
+			.send({
+				now: 'not-a-date',
+				limit: 0,
+			})
+			.expect(400)
 			.execute();
 	});
 

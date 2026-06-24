@@ -136,6 +136,10 @@ class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 		quote.orderId = null;
 	}
 
+	async cleanupExpiredUnused(): Promise<{ deletedCount: number }> {
+		return { deletedCount: 0 };
+	}
+
 	insert(quote: StoredQuote): void {
 		this.quotes.set(quote.id, quote);
 	}

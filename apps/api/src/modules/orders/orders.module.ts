@@ -1,6 +1,8 @@
+import { LoggingModule } from '@app/common/logging/logging.module';
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { ChatModule } from '@modules/chat/chat.module';
+import { OrderQuoteCleanupLifecycleLogger } from '@modules/orders/application/logging/order-quote-cleanup-lifecycle.logger';
 import { BOOSTER_ORDER_READER_KEY } from '@modules/orders/application/ports/booster-order-reader.port';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
 import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
@@ -18,6 +20,7 @@ import { ORDER_PRICING_SERVICE_KEY } from '@modules/orders/application/services/
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { ActivateOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/activate-order-pricing-version/activate-order-pricing-version.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
+import { CleanupExpiredOrderQuotesUseCase } from '@modules/orders/application/use-cases/cleanup-expired-order-quotes/cleanup-expired-order-quotes.use-case';
 import { ClearOrderCredentialsUseCase } from '@modules/orders/application/use-cases/clear-order-credentials/clear-order-credentials.use-case';
 import { CompleteOrderUseCase } from '@modules/orders/application/use-cases/complete-order/complete-order.use-case';
 import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create-order/create-order.use-case';
@@ -50,7 +53,7 @@ import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, AuthModule, ChatModule, WalletModule],
+	imports: [PrismaModule, AuthModule, ChatModule, WalletModule, LoggingModule],
 	controllers: [
 		OrdersEventsController,
 		OrdersController,
@@ -63,6 +66,7 @@ import { Module } from '@nestjs/common';
 		PrismaOrderPricingVersionRepository,
 		PrismaOrderRepository,
 		PrismaOrderQuoteRepository,
+		OrderQuoteCleanupLifecycleLogger,
 		InMemoryOrderEventBus,
 		OrderCredentialsCipherService,
 		{
@@ -160,6 +164,7 @@ import { Module } from '@nestjs/common';
 		AcceptOrderUseCase,
 		RejectOrderUseCase,
 		CancelOrderUseCase,
+		CleanupExpiredOrderQuotesUseCase,
 		ClearOrderCredentialsUseCase,
 		CompleteOrderUseCase,
 		SaveOrderCredentialsUseCase,

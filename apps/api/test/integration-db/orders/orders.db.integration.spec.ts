@@ -5,6 +5,10 @@ import {
 	type OrderPricingVersionRepositoryPort,
 } from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import {
+	ORDER_QUOTE_REPOSITORY_KEY,
+	type OrderQuoteRepositoryPort,
+} from '@modules/orders/application/ports/order-quote-repository.port';
+import {
 	ORDER_REPOSITORY_KEY,
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
@@ -34,6 +38,7 @@ describe('Orders module integration (db)', () => {
 	let prisma: PrismaService;
 	let orderRepository: OrderRepositoryPort;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
+	let orderQuoteRepository: OrderQuoteRepositoryPort;
 	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
 	let clientUser: AuthenticatedUser;
 	let boosterUser: AuthenticatedUser;
@@ -107,6 +112,7 @@ describe('Orders module integration (db)', () => {
 		prisma = moduleRef.get(PrismaService);
 		orderRepository = moduleRef.get(ORDER_REPOSITORY_KEY);
 		pricingVersions = moduleRef.get(ORDER_PRICING_VERSION_REPOSITORY_KEY);
+		orderQuoteRepository = moduleRef.get(ORDER_QUOTE_REPOSITORY_KEY);
 		markOrderAsPaidUseCase = moduleRef.get(MarkOrderAsPaidUseCase);
 		await prisma.ticketMessage.deleteMany();
 		await prisma.ticket.deleteMany();
@@ -188,6 +194,119 @@ describe('Orders module integration (db)', () => {
 			totalAmount: 2520,
 			discountAmount: 0,
 		});
+	});
+
+	it('cleans up only expired unused quotes older than the cutoff', async () => {
+		const oldUnusedQuote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+		await prisma.orderQuote.update({
+			where: { id: oldUnusedQuote.quoteId },
+			data: { expiresAt: new Date('2026-06-01T00:00:00.000Z') },
+		});
+		const recentExpiredQuote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+		await prisma.orderQuote.update({
+			where: { id: recentExpiredQuote.quoteId },
+			data: { expiresAt: new Date('2026-06-10T00:00:00.000Z') },
+		});
+		const linkedOrder = await createQuotedOrder();
+		const linkedQuote = await prisma.orderQuote.findFirstOrThrow({
+			where: { orderId: linkedOrder.id },
+		});
+		await prisma.orderQuote.update({
+			where: { id: linkedQuote.id },
+			data: { expiresAt: new Date('2026-06-01T00:00:00.000Z') },
+		});
+
+		await expect(
+			orderQuoteRepository.cleanupExpiredUnused({
+				expiresBefore: new Date('2026-06-05T00:00:00.000Z'),
+				limit: 500,
+			}),
+		).resolves.toEqual({ deletedCount: 1 });
+
+		await expect(
+			prisma.orderQuote.findUnique({ where: { id: oldUnusedQuote.quoteId } }),
+		).resolves.toBeNull();
+		await expect(
+			prisma.orderQuote.findUnique({
+				where: { id: recentExpiredQuote.quoteId },
+			}),
+		).resolves.toMatchObject({ id: recentExpiredQuote.quoteId });
+		await expect(
+			prisma.orderQuote.findUnique({ where: { id: linkedQuote.id } }),
+		).resolves.toMatchObject({ id: linkedQuote.id, orderId: linkedOrder.id });
+	});
+
+	it('limits expired unused quote cleanup batches', async () => {
+		const firstQuote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+		const secondQuote = await controller.quote(
+			{
+				serviceType: 'elo_boost',
+				currentLeague: 'gold',
+				currentDivision: 'II',
+				currentLp: 50,
+				desiredLeague: 'platinum',
+				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: '2026-03-31T00:00:00.000Z',
+			},
+			clientUser,
+		);
+		await prisma.orderQuote.updateMany({
+			where: { id: { in: [firstQuote.quoteId, secondQuote.quoteId] } },
+			data: { expiresAt: new Date('2026-06-01T00:00:00.000Z') },
+		});
+
+		await expect(
+			orderQuoteRepository.cleanupExpiredUnused({
+				expiresBefore: new Date('2026-06-05T00:00:00.000Z'),
+				limit: 1,
+			}),
+		).resolves.toEqual({ deletedCount: 1 });
+		await expect(prisma.orderQuote.count()).resolves.toBe(1);
 	});
 
 	it('persists a selected booster on create-order', async () => {
