@@ -84,6 +84,10 @@ class OrderCheckoutStub implements OrderCheckoutPort {
 			discountAmount: this.nextOrder.discountAmount,
 		});
 	}
+
+	async findOwnedQuoteTotalAmount(): Promise<number | null> {
+		return this.nextOrder.totalAmount;
+	}
 }
 
 describe('CreateOrderUseCase', () => {

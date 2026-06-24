@@ -15,6 +15,7 @@ import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/applicat
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
 import { SimulateDevPaymentOutcomeUseCase } from '@modules/payments/application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
+import { StartCheckoutUseCase } from '@modules/payments/application/use-cases/start-checkout/start-checkout.use-case';
 import {
 	Body,
 	Controller,
@@ -38,7 +39,9 @@ import {
 	type PaymentIdParamSchemaInput,
 	paymentIdParamSchema,
 	type SimulateDevPaymentOutcomeSchemaInput,
+	type StartCheckoutSchemaInput,
 	simulateDevPaymentOutcomeSchema,
+	startCheckoutSchema,
 } from './payments.request-schemas';
 
 @Controller('payments')
@@ -52,6 +55,7 @@ export class PaymentsController {
 		private readonly releasePaymentHoldUseCase: ReleasePaymentHoldUseCase,
 		private readonly resumePaymentCheckoutUseCase: ResumePaymentCheckoutUseCase,
 		private readonly simulateDevPaymentOutcomeUseCase: SimulateDevPaymentOutcomeUseCase,
+		private readonly startCheckoutUseCase: StartCheckoutUseCase,
 		private readonly appSettings: AppSettingsService,
 	) {}
 
@@ -74,6 +78,30 @@ export class PaymentsController {
 		return await this.createPaymentUseCase.execute({
 			clientId: currentUser.id,
 			...body,
+		});
+	}
+
+	@Post('checkout')
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles(Role.CLIENT)
+	async checkout(
+		@Body(new ZodValidationPipe(startCheckoutSchema))
+		body: StartCheckoutSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<{
+		orderId: string;
+		paymentId: string;
+		status: string;
+		grossAmount: number;
+		boosterAmount: number;
+		paymentMethod: PaymentMethod;
+		checkoutUrl: string;
+	}> {
+		return await this.startCheckoutUseCase.execute({
+			clientId: currentUser.id,
+			quoteId: body.quoteId,
+			paymentMethod: body.paymentMethod,
+			now: new Date(),
 		});
 	}
 

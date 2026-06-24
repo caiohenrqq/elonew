@@ -70,6 +70,10 @@ export class InMemoryOrderCheckoutRepository implements OrderCheckoutPort {
 		}
 	}
 
+	async findOwnedQuoteTotalAmount(): Promise<number | null> {
+		throw new Error('not implemented in in-memory checkout repository');
+	}
+
 	private async validateCouponForCheckout(input: {
 		clientId: string;
 		couponId: string | null;

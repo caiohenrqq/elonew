@@ -171,6 +171,7 @@ import { Module } from '@nestjs/common';
 	],
 	exports: [
 		ORDER_REPOSITORY_KEY,
+		ORDER_CHECKOUT_PORT_KEY,
 		MarkOrderAsPaidUseCase,
 		ClearOrderCredentialsUseCase,
 	],

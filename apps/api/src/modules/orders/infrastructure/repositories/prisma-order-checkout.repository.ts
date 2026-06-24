@@ -1,5 +1,8 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
-import type { OrderCheckoutPort } from '@modules/orders/application/ports/order-checkout.port';
+import type {
+	CheckoutPaymentPayload,
+	OrderCheckoutPort,
+} from '@modules/orders/application/ports/order-checkout.port';
 import { Order } from '@modules/orders/domain/order.entity';
 import {
 	OrderCouponInvalidError,
@@ -11,8 +14,14 @@ import { OrderStatus } from '@modules/orders/domain/order-status';
 import { Injectable } from '@nestjs/common';
 import { isOrderExtraType } from '@packages/shared/orders/order-extra';
 import type { OrderServiceType } from '@packages/shared/orders/service-type';
+import type { PaymentMethod } from '@packages/shared/payments/payment-method';
 import { ensurePersistedEnum } from '@packages/shared/utils/enum.utils';
-import { CouponDiscountType, Prisma, ServiceType } from '@prisma/client';
+import {
+	CouponDiscountType,
+	Prisma,
+	PaymentMethod as PrismaPaymentMethod,
+	ServiceType,
+} from '@prisma/client';
 
 type QuoteRecord = {
 	id: string;
@@ -135,11 +144,31 @@ type CouponDelegate = {
 	findUnique(args: { where: { id: string } }): Promise<CouponRecord | null>;
 };
 
+type PaymentDelegate = {
+	create(args: {
+		data: {
+			id: string;
+			orderId: string;
+			status: string;
+			grossAmount: number;
+			boosterAmount: number;
+			paymentMethod: PrismaPaymentMethod;
+			gateway: string;
+			gatewayReferenceId: string | null;
+			gatewayId: string | null;
+			gatewayStatus: string | null;
+			gatewayStatusDetail: string | null;
+			checkoutUrl: string | null;
+		};
+	}): Promise<unknown>;
+};
+
 type OrdersTransactionClient = {
 	$queryRaw<T>(query: Prisma.Sql): Promise<T>;
 	orderQuote: OrderQuoteDelegate;
 	order: OrderDelegate;
 	coupon: CouponDelegate;
+	payment: PaymentDelegate;
 };
 
 @Injectable()
@@ -152,6 +181,7 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 		boosterId?: string;
 		quoteId: string;
 		now: Date;
+		payment?: CheckoutPaymentPayload;
 	}): Promise<Order> {
 		return await this.prisma.$transaction(async (tx) => {
 			const client = tx as unknown as OrdersTransactionClient;
@@ -220,8 +250,54 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 			});
 			if (consumeResult.count === 0) throw new OrderQuoteAlreadyUsedError();
 
+			if (input.payment) {
+				await client.payment.create({
+					data: {
+						id: input.payment.id,
+						orderId: order.id,
+						status: input.payment.status,
+						grossAmount: input.payment.grossAmount,
+						boosterAmount: input.payment.boosterAmount,
+						paymentMethod: this.mapPaymentMethodToPersistence(
+							input.payment.paymentMethod,
+						),
+						gateway: input.payment.gateway,
+						gatewayReferenceId: input.payment.gatewayReferenceId,
+						gatewayId: input.payment.gatewayId,
+						gatewayStatus: input.payment.gatewayStatus,
+						gatewayStatusDetail: input.payment.gatewayStatusDetail,
+						checkoutUrl: input.payment.checkoutUrl,
+					},
+				});
+			}
+
 			return this.mapOrderFromRecord(order);
 		});
+	}
+
+	async findOwnedQuoteTotalAmount(input: {
+		quoteId: string;
+		clientId: string;
+	}): Promise<number | null> {
+		const quote = await this.prisma.orderQuote.findFirst({
+			where: { id: input.quoteId, clientId: input.clientId },
+			select: { totalAmount: true },
+		});
+
+		return quote?.totalAmount ?? null;
+	}
+
+	private mapPaymentMethodToPersistence(
+		paymentMethod: PaymentMethod,
+	): PrismaPaymentMethod {
+		switch (paymentMethod) {
+			case 'credit_card':
+				return PrismaPaymentMethod.CREDIT_CARD;
+			case 'pix':
+				return PrismaPaymentMethod.PIX;
+			case 'boleto':
+				return PrismaPaymentMethod.BOLETO;
+		}
 	}
 
 	private async validateCouponForCheckout(
