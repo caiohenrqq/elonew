@@ -105,6 +105,49 @@ describe('useQuotePreview', () => {
 		expect(result.current.quotePreview).toEqual(latestQuote);
 	});
 
+	it('keeps the last price when a later coupon makes the preview fail', async () => {
+		const pricedQuote = {
+			subtotal: 120,
+			totalAmount: 120,
+			discountAmount: 0,
+			extras: [],
+		};
+		(previewOrderQuoteAction as jest.Mock)
+			.mockResolvedValueOnce({ quote: pricedQuote })
+			.mockResolvedValueOnce({ error: 'O cupom informado é inválido.' });
+
+		const initialInput = createInitialCheckoutInput();
+		const { rerender, result } = renderHook(
+			({ orderInput }) => useQuotePreview(orderInput),
+			{ initialProps: { orderInput: initialInput } },
+		);
+
+		await act(async () => {
+			jest.advanceTimersByTime(300);
+			await flushPromiseQueue();
+		});
+
+		await waitFor(() => {
+			expect(result.current.quotePreview).toEqual(pricedQuote);
+		});
+
+		rerender({
+			orderInput: { ...initialInput, couponCode: 'NOPE' },
+		});
+
+		await act(async () => {
+			jest.advanceTimersByTime(300);
+			await flushPromiseQueue();
+		});
+
+		await waitFor(() => {
+			expect(result.current.quotePreviewError).toBe(
+				'O cupom informado é inválido.',
+			);
+		});
+		expect(result.current.quotePreview).toEqual(pricedQuote);
+	});
+
 	it('clears pending state when preview request fails', async () => {
 		(previewOrderQuoteAction as jest.Mock).mockRejectedValue(
 			new Error('Preview failed'),

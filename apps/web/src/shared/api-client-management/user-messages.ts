@@ -28,6 +28,8 @@ const checkoutMessages = {
 	default:
 		'Não foi possível iniciar o pagamento. Tente novamente em instantes.',
 	invalidInput: 'Confira os dados do pedido e tente novamente.',
+	invalidCoupon:
+		'O cupom informado é inválido ou não existe. Remova-o ou tente outro.',
 };
 
 export const getAuthErrorMessage = (
@@ -53,6 +55,9 @@ export const getAuthErrorMessage = (
 
 export const getCheckoutErrorMessage = (error: unknown) => {
 	if (error instanceof ApiRequestError && error.status === 400) {
+		if (error.message === 'Coupon is invalid.')
+			return checkoutMessages.invalidCoupon;
+
 		return checkoutMessages.invalidInput;
 	}
 

@@ -62,7 +62,8 @@ export const useQuotePreview = (orderInput: StartCheckoutInput) => {
 				if (isCancelled || previewRequestId.current !== requestId) return;
 
 				if ('error' in result) {
-					setQuotePreview(null);
+					// Keep the last good price so an invalid coupon surfaces an error
+					// without wiping the amount the client was already seeing.
 					setQuotePreviewError(result.error ?? quotePreviewFallbackError);
 				} else {
 					setQuotePreview(result.quote);
@@ -71,7 +72,6 @@ export const useQuotePreview = (orderInput: StartCheckoutInput) => {
 			} catch {
 				if (isCancelled || previewRequestId.current !== requestId) return;
 
-				setQuotePreview(null);
 				setQuotePreviewError(quotePreviewFallbackError);
 			} finally {
 				if (!isCancelled && previewRequestId.current === requestId) {
