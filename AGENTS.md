@@ -641,7 +641,7 @@ Use official docs first when documentation is required.
 ### 6. Communication & Support
 - [x] Implement WebSocket gateway for real-time internal Chat.
 - [x] Create `Ticket` domain and use-cases for support history.
-- [ ] Add `Rating` system (Client rates Booster and vice-versa).
+- [x] Add `Rating` system (Client rates Booster and vice-versa).
 
 ### 7. Admin Governance
 - [x] Implement Admin Dashboard API (Financial metrics: Revenue, active orders).

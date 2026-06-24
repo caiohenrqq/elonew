@@ -152,11 +152,12 @@ model Order {
   payments         Payment[]
   chat             Chat?
   tickets          Ticket[]
-  rating           Rating?
+  ratings          Rating[]
   walletTransactions WalletTransaction[]
   boosterRejections OrderBoosterRejection[]
   adminGovernanceActions AdminGovernanceAction[]
 
+  completedAt      DateTime?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -450,7 +451,7 @@ model AdminGovernanceAction {
 
 model Rating {
   id         String   @id @default(cuid())
-  orderId    String   @unique
+  orderId    String
   order      Order    @relation(fields: [orderId], references: [id])
   fromUserId String
   fromUser   User     @relation("RatingsGiven", fields: [fromUserId], references: [id])
@@ -460,6 +461,8 @@ model Rating {
   comment    String?
   createdAt  DateTime @default(now())
 
+  @@unique([orderId, fromUserId])
+  @@index([toUserId])
   @@map("ratings")
 }
 

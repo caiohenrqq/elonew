@@ -43,6 +43,7 @@ type OrderRecord = {
 	subtotal: number | null;
 	totalAmount: number | null;
 	discountAmount: number;
+	completedAt: Date | null;
 	extras: Array<{
 		type: string;
 		price: number;
@@ -108,6 +109,7 @@ type OrderDelegate = {
 			subtotal: number | null;
 			totalAmount: number | null;
 			discountAmount: number;
+			completedAt?: Date | null;
 			extras?: {
 				create: Array<{
 					type: string;
@@ -148,6 +150,7 @@ type OrderDelegate = {
 			subtotal: number | null;
 			totalAmount: number | null;
 			discountAmount: number;
+			completedAt?: Date | null;
 			extras?: {
 				create: Array<{
 					type: string;
@@ -183,6 +186,7 @@ type OrderDelegate = {
 			subtotal: number | null;
 			totalAmount: number | null;
 			discountAmount: number;
+			completedAt?: Date | null;
 			extras?: {
 				deleteMany: Record<string, never>;
 				create: Array<{
@@ -251,6 +255,7 @@ export class PrismaOrderRepository
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
+				completedAt: order.completedAt,
 				extras: this.mapExtrasCreate(order.extras),
 				credentials: this.mapCredentialsCreate(order.credentials),
 			},
@@ -438,6 +443,7 @@ export class PrismaOrderRepository
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
+				completedAt: order.completedAt,
 				extras: this.mapExtrasCreate(order.extras),
 				credentials: credentialsCreate,
 			},
@@ -449,6 +455,7 @@ export class PrismaOrderRepository
 				status: order.status,
 				...this.mapRequestDetails(order.requestDetails),
 				...this.mapPricing(order),
+				completedAt: order.completedAt,
 				extras: this.mapExtrasUpdate(order.extras),
 				credentials: credentialsUpdate,
 			},
@@ -476,6 +483,7 @@ export class PrismaOrderRepository
 			subtotal: record.subtotal,
 			totalAmount: record.totalAmount,
 			discountAmount: record.discountAmount,
+			completedAt: record.completedAt,
 			extras: (record.extras ?? []).map((extra) =>
 				this.mapExtraFromRecord(extra),
 			),

@@ -2,6 +2,9 @@ import { notFound, redirect } from 'next/navigation';
 import { ApiRequestError } from '@/shared/api-client-management/http';
 import { getAuthSession } from '@/shared/auth/session';
 import type { ChatMessage } from '@/shared/chat/chat.types';
+import { getOrderRatings } from '@/shared/ratings/rating-actions';
+import { RatingCard } from '@/shared/ratings/rating-card';
+import type { RatingOutput } from '@/shared/ratings/rating-contracts';
 import { getOrder, getOrderChatMessages } from '../../actions/order-actions';
 import type { ClientOrder } from '../../model/orders';
 import { OrderActivityCard } from './order-activity-card';
@@ -37,6 +40,11 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 	const session = await getAuthSession();
 	if (!session?.userId) redirect('/login');
 
+	let ratings: RatingOutput[] = [];
+	if (order.status === 'completed') {
+		ratings = await getOrderRatings(order.id);
+	}
+
 	return (
 		<div className="space-y-8">
 			<OrderDetailsHeader order={order} />
@@ -56,6 +64,13 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 						initialMessages={chatMessages}
 					/>
 					<OrderSupportCard />
+					{order.status === 'completed' ? (
+						<RatingCard
+							orderId={order.id}
+							currentUserId={session.userId}
+							initialRatings={ratings}
+						/>
+					) : null}
 				</div>
 			</div>
 		</div>

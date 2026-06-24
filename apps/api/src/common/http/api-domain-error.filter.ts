@@ -76,6 +76,14 @@ import {
 	PaymentWebhookTopicNotSupportedError,
 } from '@modules/payments/domain/payment.errors';
 import {
+	InvalidRatingScoreError,
+	OrderNotRatableError,
+	RatingAlreadySubmittedError,
+	RatingNotAllowedError,
+	RatingOrderNotFoundError,
+	RatingWindowClosedError,
+} from '@modules/ratings/domain/rating.errors';
+import {
 	TicketAccessDeniedError,
 	TicketInvalidStatusTransitionError,
 	TicketMessageOperationInvalidError,
@@ -144,6 +152,7 @@ export function mapApiDomainErrorToHttpException(
 		mapAsForbidden(InsufficientPermissionsError),
 		mapAsForbidden(ChatForbiddenError),
 		mapAsForbidden(TicketAccessDeniedError),
+		mapAsForbidden(RatingNotAllowedError),
 		mapAsNotFound(
 			ChatOrderNotFoundError,
 			ChatMessageNotFoundError,
@@ -158,6 +167,7 @@ export function mapApiDomainErrorToHttpException(
 			WalletNotFoundError,
 			NotificationNotFoundError,
 			TicketNotFoundError,
+			RatingOrderNotFoundError,
 		),
 		mapAsBadRequest(
 			OrderAlreadyExistsError,
@@ -188,9 +198,13 @@ export function mapApiDomainErrorToHttpException(
 			TicketMessageOperationInvalidError,
 			TicketOrderAccessDeniedError,
 			TicketOrderLinkUnsupportedError,
+			OrderNotRatableError,
+			RatingWindowClosedError,
+			InvalidRatingScoreError,
 		),
 		mapAsConflict(OrderPricingVersionActiveConflictError, ChatNotWritableError),
 		mapAsConflict(NotificationReadConflictError),
+		mapAsConflict(RatingAlreadySubmittedError),
 	]);
 }
 
