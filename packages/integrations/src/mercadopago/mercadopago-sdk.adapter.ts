@@ -22,9 +22,6 @@ type MercadoPagoPreferenceClient = {
 				unit_price: number;
 			}>;
 			notification_url: string;
-			payment_methods?: {
-				excluded_payment_types?: Array<{ id: string }>;
-			};
 		};
 	}): Promise<PreferenceResponse>;
 };
@@ -32,35 +29,6 @@ type MercadoPagoPreferenceClient = {
 type MercadoPagoPaymentClient = {
 	get(input: { id: string }): Promise<PaymentResponse>;
 };
-
-function buildExcludedPaymentTypes(
-	input: MercadoPagoCreatePaymentInput,
-): Array<{
-	id: string;
-}> {
-	switch (input.paymentMethod) {
-		case 'credit_card':
-			return [{ id: 'ticket' }, { id: 'bank_transfer' }, { id: 'atm' }];
-		case 'pix':
-			return [
-				{ id: 'credit_card' },
-				{ id: 'debit_card' },
-				{ id: 'ticket' },
-				{ id: 'atm' },
-			];
-		case 'boleto':
-			return [
-				{ id: 'credit_card' },
-				{ id: 'debit_card' },
-				{ id: 'bank_transfer' },
-				{ id: 'atm' },
-			];
-		default:
-			throw new Error(
-				`Unsupported Mercado Pago payment method: ${input.paymentMethod}`,
-			);
-	}
-}
 
 export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 	private readonly preferenceClient: MercadoPagoPreferenceClient;
@@ -108,9 +76,6 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 					},
 				],
 				notification_url: this.webhookUrl,
-				payment_methods: {
-					excluded_payment_types: buildExcludedPaymentTypes(input),
-				},
 			},
 		});
 		if (!response.id || !response.init_point)
