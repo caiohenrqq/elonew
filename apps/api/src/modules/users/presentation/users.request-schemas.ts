@@ -17,3 +17,10 @@ export const confirmEmailSchema = z.object({
 });
 
 export type ConfirmEmailSchemaInput = z.infer<typeof confirmEmailSchema>;
+
+export const setPasswordSchema = z.object({
+	token: z.string().trim().min(1),
+	password: z.string().min(12).max(128),
+});
+
+export type SetPasswordSchemaInput = z.infer<typeof setPasswordSchema>;

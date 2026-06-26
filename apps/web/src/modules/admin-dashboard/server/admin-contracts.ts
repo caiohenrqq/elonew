@@ -5,6 +5,12 @@ export {
 
 import { z } from 'zod';
 
+export const adminCreateUserInputSchema = z.object({
+	username: z.string().trim().min(1, 'Informe o nome de usuário.'),
+	email: z.string().trim().email('Informe um e-mail válido.'),
+	role: z.enum(['CLIENT', 'BOOSTER', 'ADMIN']),
+});
+
 export const adminMetricsSchema = z.object({
 	revenueTotal: z.number(),
 	ordersTotal: z.number().int().nonnegative(),
@@ -19,6 +25,7 @@ export const adminUserSchema = z.object({
 	role: z.string(),
 	isActive: z.boolean(),
 	isBlocked: z.boolean(),
+	activationStatus: z.enum(['ACTIVE', 'PENDING_ACTIVATION', 'INACTIVE']),
 	createdAt: z.string(),
 });
 
@@ -58,6 +65,7 @@ export const adminDashboardSchema = z.object({
 });
 
 export type AdminMetricsOutput = z.infer<typeof adminMetricsSchema>;
+export type AdminCreateUserInput = z.infer<typeof adminCreateUserInputSchema>;
 export type AdminUserOutput = z.infer<typeof adminUserSchema>;
 export type AdminOrderOutput = z.infer<typeof adminOrderSchema>;
 export type AdminSupportTicketOutput = z.infer<typeof adminSupportTicketSchema>;

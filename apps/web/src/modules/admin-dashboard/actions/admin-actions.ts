@@ -11,6 +11,7 @@ import { getAuthSession } from '@/shared/auth/session';
 import type { ListChatMessagesResponseOutput } from '@/shared/chat/chat-contracts';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import type {
+	AdminCreateUserInput,
 	AdminDashboardOutput,
 	AdminGovernanceInput,
 	AdminMetricsOutput,
@@ -18,9 +19,13 @@ import type {
 	AdminSupportTicketOutput,
 	AdminUserOutput,
 } from '../server/admin-contracts';
-import { adminGovernanceInputSchema } from '../server/admin-contracts';
+import {
+	adminCreateUserInputSchema,
+	adminGovernanceInputSchema,
+} from '../server/admin-contracts';
 import {
 	blockAdminUser,
+	createAdminUser,
 	forceCancelAdminOrder,
 	getAdminDashboard as getAdminDashboardFromApi,
 	getAdminMetrics as getAdminMetricsFromApi,
@@ -28,6 +33,7 @@ import {
 	getAdminOrders as getAdminOrdersFromApi,
 	getAdminSupportTickets as getAdminSupportTicketsFromApi,
 	getAdminUsers as getAdminUsersFromApi,
+	resendAdminUserPasswordSetup,
 	unblockAdminUser,
 } from '../server/admin-service';
 
@@ -35,6 +41,8 @@ export type AdminGovernanceActionState = {
 	error?: string;
 	success?: boolean;
 };
+
+export type AdminCreateUserActionState = AdminGovernanceActionState;
 
 const getAdminSessionOrRedirect = async () => {
 	const session = await getAuthSession();
@@ -53,6 +61,13 @@ const parseGovernanceForm = (formData: FormData) =>
 		targetId: formData.get('targetId'),
 		reason: formData.get('reason'),
 	}) satisfies AdminGovernanceInput;
+
+const parseCreateUserForm = (formData: FormData) =>
+	adminCreateUserInputSchema.parse({
+		username: formData.get('username'),
+		email: formData.get('email'),
+		role: formData.get('role'),
+	}) satisfies AdminCreateUserInput;
 
 export const getAdminDashboard = async (): Promise<AdminDashboardOutput> => {
 	await getAdminSessionOrRedirect();
@@ -134,6 +149,38 @@ export const blockAdminUserAction = async (
 		await blockAdminUser(parseGovernanceForm(formData), api.request);
 		revalidatePath('/admin');
 		revalidatePath('/admin/users');
+		return { success: true };
+	} catch (error) {
+		return { error: getAuthErrorMessage(error) };
+	}
+};
+
+export const createAdminUserAction = async (
+	_state: AdminCreateUserActionState,
+	formData: FormData,
+): Promise<AdminCreateUserActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+		await createAdminUser(parseCreateUserForm(formData), api.request);
+		revalidatePath('/admin');
+		revalidatePath('/admin/users');
+		return { success: true };
+	} catch (error) {
+		return { error: getAuthErrorMessage(error) };
+	}
+};
+
+export const resendAdminUserPasswordSetupAction = async (
+	_state: AdminGovernanceActionState,
+	formData: FormData,
+): Promise<AdminGovernanceActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+		const targetId = String(formData.get('targetId') ?? '').trim();
+		if (!targetId) return { error: 'Usuário inválido.' };
+		await resendAdminUserPasswordSetup(targetId, api.request);
 		return { success: true };
 	} catch (error) {
 		return { error: getAuthErrorMessage(error) };

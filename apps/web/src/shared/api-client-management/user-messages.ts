@@ -4,12 +4,17 @@ const apiErrorMap: Record<string, string> = {
 	'User email is already in use.': 'Este e-mail já está sendo utilizado.',
 	'Username is already in use.':
 		'Este nome de usuário já está sendo utilizado.',
-	'Invalid credentials.': 'E-mail ou senha incorretos.',
-	'Account is inactive.': 'Sua conta está inativa.',
+	'Invalid credentials.':
+		'Não foi possível entrar. Confira seus dados e tente novamente.',
+	'Account is inactive.':
+		'Não foi possível entrar. Confira seus dados e tente novamente.',
 	'Account is blocked.': 'Sua conta está bloqueada.',
 	'Invalid confirmation token.': 'Token de confirmação inválido.',
+	'Invalid password reset token.': 'Token de definição de senha inválido.',
 	'Authentication required.': 'Autenticação necessária.',
 	'Insufficient permissions.': 'Permissões insuficientes.',
+	'Password setup is unavailable for this user.':
+		'Este usuário não pode receber e-mail de definição de senha.',
 	'Registration is unavailable.':
 		'O cadastro está temporariamente indisponível.',
 };

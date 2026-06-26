@@ -13,13 +13,15 @@ type UserRecord = {
 	id: string;
 	username: string;
 	email: string;
-	password: string;
+	password: string | null;
 	role: string;
 	isActive: boolean;
 	isBlocked: boolean;
 	emailConfirmedAt: Date | null;
 	emailConfirmationTokenHash: string | null;
 	emailConfirmationTokenExpiresAt: Date | null;
+	passwordResetTokenHash: string | null;
+	passwordResetTokenExpiresAt: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
 };
@@ -30,19 +32,22 @@ type UserDelegate = {
 			| { id: string }
 			| { email: string }
 			| { username: string }
-			| { emailConfirmationTokenHash: string };
+			| { emailConfirmationTokenHash: string }
+			| { passwordResetTokenHash: string };
 	}): Promise<UserRecord | null>;
 	create(args: {
 		data: {
 			username: string;
 			email: string;
-			password: string;
+			password: string | null;
 			role: string;
 			isActive: boolean;
 			isBlocked: boolean;
 			emailConfirmedAt: Date | null;
 			emailConfirmationTokenHash: string | null;
 			emailConfirmationTokenExpiresAt: Date | null;
+			passwordResetTokenHash: string | null;
+			passwordResetTokenExpiresAt: Date | null;
 		};
 	}): Promise<UserRecord>;
 	update(args: {
@@ -50,13 +55,15 @@ type UserDelegate = {
 		data: {
 			username: string;
 			email: string;
-			password: string;
+			password: string | null;
 			role: string;
 			isActive: boolean;
 			isBlocked: boolean;
 			emailConfirmedAt: Date | null;
 			emailConfirmationTokenHash: string | null;
 			emailConfirmationTokenExpiresAt: Date | null;
+			passwordResetTokenHash: string | null;
+			passwordResetTokenExpiresAt: Date | null;
 		};
 	}): Promise<UserRecord>;
 };
@@ -107,6 +114,15 @@ export class PrismaUserRepository implements UserRepositoryPort {
 		return this.mapUserFromRecord(record);
 	}
 
+	async findByPasswordResetTokenHash(tokenHash: string): Promise<User | null> {
+		const record = await this.getDelegate().findUnique({
+			where: { passwordResetTokenHash: tokenHash },
+		});
+		if (!record) return null;
+
+		return this.mapUserFromRecord(record);
+	}
+
 	async create(user: User): Promise<User> {
 		try {
 			const record = await this.getDelegate().create({
@@ -147,6 +163,8 @@ export class PrismaUserRepository implements UserRepositoryPort {
 			emailConfirmedAt: record.emailConfirmedAt,
 			emailConfirmationTokenHash: record.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: record.emailConfirmationTokenExpiresAt,
+			passwordResetTokenHash: record.passwordResetTokenHash,
+			passwordResetTokenExpiresAt: record.passwordResetTokenExpiresAt,
 			createdAt: record.createdAt,
 			updatedAt: record.updatedAt,
 		});
@@ -163,6 +181,8 @@ export class PrismaUserRepository implements UserRepositoryPort {
 			emailConfirmedAt: user.emailConfirmedAt,
 			emailConfirmationTokenHash: user.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: user.emailConfirmationTokenExpiresAt,
+			passwordResetTokenHash: user.passwordResetTokenHash,
+			passwordResetTokenExpiresAt: user.passwordResetTokenExpiresAt,
 		};
 	}
 

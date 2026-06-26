@@ -45,6 +45,14 @@ class InMemoryUserRepository implements UserRepositoryPort {
 		);
 	}
 
+	async findByPasswordResetTokenHash(tokenHash: string): Promise<User | null> {
+		return (
+			[...this.users.values()].find(
+				(user) => user.passwordResetTokenHash === tokenHash,
+			) ?? null
+		);
+	}
+
 	async create(user: User): Promise<User> {
 		const createdUser = User.rehydrate({
 			id: `user-${this.nextId++}`,
@@ -57,6 +65,8 @@ class InMemoryUserRepository implements UserRepositoryPort {
 			emailConfirmedAt: user.emailConfirmedAt,
 			emailConfirmationTokenHash: user.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: user.emailConfirmationTokenExpiresAt,
+			passwordResetTokenHash: user.passwordResetTokenHash,
+			passwordResetTokenExpiresAt: user.passwordResetTokenExpiresAt,
 			createdAt: new Date('2026-03-17T00:00:00.000Z'),
 			updatedAt: new Date('2026-03-17T00:00:00.000Z'),
 		});
@@ -225,6 +235,47 @@ describe('LoginUseCase', () => {
 				password: 'Secret123456!',
 			}),
 		).rejects.toBeInstanceOf(AuthUserInactiveError);
+	});
+
+	it('rejects pending users without a password hash before verifying password', async () => {
+		const users = new InMemoryUserRepository();
+		await users.create(
+			User.createPendingFromAdmin({
+				username: 'summoner1',
+				email: 'summoner1@example.com',
+				role: Role.CLIENT,
+				passwordResetTokenHash: 'token-hash',
+				passwordResetTokenExpiresAt: new Date('2026-03-18T00:00:00.000Z'),
+			}),
+		);
+		const passwordHasher: PasswordHasherPort = {
+			hash: jest.fn(),
+			verify: jest.fn(),
+		};
+		const authSessions = new InMemoryAuthSessionRepository();
+		const accessTokenService: AccessTokenServicePort = {
+			sign: jest.fn(),
+			verify: jest.fn(),
+		};
+		const refreshTokenService: RefreshTokenServicePort = {
+			generate: jest.fn(),
+			hash: jest.fn(),
+		};
+		const useCase = new LoginUseCase(
+			users,
+			passwordHasher,
+			authSessions,
+			accessTokenService,
+			refreshTokenService,
+		);
+
+		await expect(
+			useCase.execute({
+				email: 'summoner1@example.com',
+				password: 'Secret123456!',
+			}),
+		).rejects.toBeInstanceOf(AuthInvalidCredentialsError);
+		expect(passwordHasher.verify).not.toHaveBeenCalled();
 	});
 
 	it('rejects blocked users', async () => {

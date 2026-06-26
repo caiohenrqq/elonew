@@ -17,6 +17,7 @@ export type AdminUserSnapshot = {
 	role: Role;
 	isActive: boolean;
 	isBlocked: boolean;
+	activationStatus: 'ACTIVE' | 'PENDING_ACTIVATION' | 'INACTIVE';
 	createdAt: Date;
 };
 

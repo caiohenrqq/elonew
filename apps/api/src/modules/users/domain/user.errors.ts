@@ -15,3 +15,9 @@ export class UserEmailConfirmationTokenInvalidError extends Error {
 		super('Invalid confirmation token.');
 	}
 }
+
+export class UserPasswordResetTokenInvalidError extends Error {
+	constructor() {
+		super('Invalid password reset token.');
+	}
+}

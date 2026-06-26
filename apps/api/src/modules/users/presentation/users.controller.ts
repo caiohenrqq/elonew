@@ -1,11 +1,14 @@
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { ConfirmEmailUseCase } from '@modules/users/application/use-cases/confirm-email/confirm-email.use-case';
+import { SetPasswordUseCase } from '@modules/users/application/use-cases/set-password/set-password.use-case';
 import { SignUpUseCase } from '@modules/users/application/use-cases/sign-up/sign-up.use-case';
 import {
 	type ConfirmEmailSchemaInput,
 	confirmEmailSchema,
+	type SetPasswordSchemaInput,
 	type SignUpSchemaInput,
+	setPasswordSchema,
 	signUpSchema,
 } from '@modules/users/presentation/users.request-schemas';
 import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler.guard';
@@ -17,6 +20,7 @@ export class UsersController {
 	constructor(
 		private readonly signUpUseCase: SignUpUseCase,
 		private readonly confirmEmailUseCase: ConfirmEmailUseCase,
+		private readonly setPasswordUseCase: SetPasswordUseCase,
 		private readonly appSettings: AppSettingsService,
 	) {}
 
@@ -51,6 +55,17 @@ export class UsersController {
 	) {
 		return this.confirmEmailUseCase.execute({
 			token: body.token,
+		});
+	}
+
+	@Post('set-password')
+	setPassword(
+		@Body(new ZodValidationPipe(setPasswordSchema))
+		body: SetPasswordSchemaInput,
+	) {
+		return this.setPasswordUseCase.execute({
+			token: body.token,
+			password: body.password,
 		});
 	}
 }

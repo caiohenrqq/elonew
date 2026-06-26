@@ -10,7 +10,10 @@ import {
 import {
 	AdminGovernanceReasonRequiredError,
 	AdminOrderNotFoundError,
+	AdminUserEmailAlreadyInUseError,
 	AdminUserNotFoundError,
+	AdminUsernameAlreadyInUseError,
+	AdminUserPasswordSetupUnavailableError,
 } from '@modules/admin/domain/admin.errors';
 import {
 	AuthenticationRequiredError,
@@ -95,6 +98,7 @@ import {
 	UserEmailAlreadyInUseError,
 	UserEmailConfirmationTokenInvalidError,
 	UsernameAlreadyInUseError,
+	UserPasswordResetTokenInvalidError,
 } from '@modules/users/domain/user.errors';
 import {
 	WalletInsufficientWithdrawableBalanceError,
@@ -193,7 +197,11 @@ export function mapApiDomainErrorToHttpException(
 			WalletInvalidAmountError,
 			WalletInsufficientWithdrawableBalanceError,
 			UserEmailConfirmationTokenInvalidError,
+			UserPasswordResetTokenInvalidError,
 			AdminGovernanceReasonRequiredError,
+			AdminUserEmailAlreadyInUseError,
+			AdminUsernameAlreadyInUseError,
+			AdminUserPasswordSetupUnavailableError,
 			TicketInvalidStatusTransitionError,
 			TicketMessageOperationInvalidError,
 			TicketOrderAccessDeniedError,

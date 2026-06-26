@@ -18,6 +18,7 @@ type AdminUserRecord = {
 	role: string;
 	isActive: boolean;
 	isBlocked: boolean;
+	emailConfirmedAt: Date | null;
 	createdAt: Date;
 };
 
@@ -66,6 +67,7 @@ type AdminDashboardPrismaClient = {
 				role: true;
 				isActive: true;
 				isBlocked: true;
+				emailConfirmedAt: true;
 				createdAt: true;
 			};
 			orderBy: { createdAt: 'desc' };
@@ -181,6 +183,7 @@ export class PrismaAdminDashboardReader {
 				role: true,
 				isActive: true,
 				isBlocked: true,
+				emailConfirmedAt: true,
 				createdAt: true,
 			},
 			orderBy: { createdAt: 'desc' },
@@ -190,6 +193,7 @@ export class PrismaAdminDashboardReader {
 		return records.map((record) => ({
 			...record,
 			role: ensurePersistedEnum(Role, record.role, 'user role'),
+			activationStatus: getActivationStatus(record),
 		}));
 	}
 
@@ -269,3 +273,12 @@ export class PrismaAdminDashboardReader {
 		return this.prisma as unknown as AdminDashboardPrismaClient;
 	}
 }
+
+const getActivationStatus = (record: {
+	isActive: boolean;
+	emailConfirmedAt: Date | null;
+}): AdminUserSnapshot['activationStatus'] => {
+	if (record.isActive) return 'ACTIVE';
+	if (!record.emailConfirmedAt) return 'PENDING_ACTIVATION';
+	return 'INACTIVE';
+};

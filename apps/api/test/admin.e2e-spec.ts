@@ -1,4 +1,7 @@
-import type { AdminDashboardReaderPort } from '@modules/admin/application/ports/admin-dashboard-reader.port';
+import type {
+	AdminDashboardReaderPort,
+	AdminUserSnapshot,
+} from '@modules/admin/application/ports/admin-dashboard-reader.port';
 import { ADMIN_DASHBOARD_READER_KEY } from '@modules/admin/application/ports/admin-dashboard-reader.port';
 import type { AdminGovernanceRepositoryPort } from '@modules/admin/application/ports/admin-governance.repository';
 import { ADMIN_GOVERNANCE_REPOSITORY_KEY } from '@modules/admin/application/ports/admin-governance.repository';
@@ -25,7 +28,7 @@ describe('Admin dashboard (e2e)', () => {
 			};
 		}
 
-		async listUsers() {
+		async listUsers(): Promise<AdminUserSnapshot[]> {
 			return [
 				{
 					id: 'user-1',
@@ -34,6 +37,7 @@ describe('Admin dashboard (e2e)', () => {
 					role: Role.CLIENT,
 					isActive: true,
 					isBlocked: false,
+					activationStatus: 'ACTIVE',
 					createdAt: new Date('2026-04-10T10:00:00.000Z'),
 				},
 			];

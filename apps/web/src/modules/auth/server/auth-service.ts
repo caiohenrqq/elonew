@@ -40,6 +40,16 @@ export const confirmEmail = async (token: string) => {
 	});
 };
 
+export const setPassword = async (input: {
+	token: string;
+	password: string;
+}) => {
+	await api.request('/users/set-password', {
+		method: 'POST',
+		body: JSON.stringify(input),
+	});
+};
+
 export const logout = async () => {
 	const session = await getAuthSession();
 

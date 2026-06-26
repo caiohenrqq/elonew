@@ -1,7 +1,9 @@
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { BlockAdminUserUseCase } from '@modules/admin/application/use-cases/block-admin-user/block-admin-user.use-case';
+import { CreateAdminUserUseCase } from '@modules/admin/application/use-cases/create-admin-user/create-admin-user.use-case';
 import { ForceCancelAdminOrderUseCase } from '@modules/admin/application/use-cases/force-cancel-admin-order/force-cancel-admin-order.use-case';
 import { GetAdminDashboardUseCase } from '@modules/admin/application/use-cases/get-admin-dashboard/get-admin-dashboard.use-case';
+import { ResendAdminUserPasswordSetupUseCase } from '@modules/admin/application/use-cases/resend-admin-user-password-setup/resend-admin-user-password-setup.use-case';
 import { UnblockAdminUserUseCase } from '@modules/admin/application/use-cases/unblock-admin-user/unblock-admin-user.use-case';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
@@ -20,9 +22,11 @@ import {
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
+	type AdminCreateUserSchemaInput,
 	type AdminIdParamSchemaInput,
 	type AdminListQuerySchemaInput,
 	type AdminReasonSchemaInput,
+	adminCreateUserSchema,
 	adminIdParamSchema,
 	adminListQuerySchema,
 	adminReasonSchema,
@@ -34,6 +38,8 @@ import {
 export class AdminController {
 	constructor(
 		private readonly dashboard: GetAdminDashboardUseCase,
+		private readonly createUser: CreateAdminUserUseCase,
+		private readonly resendPasswordSetup: ResendAdminUserPasswordSetupUseCase,
 		private readonly blockUser: BlockAdminUserUseCase,
 		private readonly unblockUser: UnblockAdminUserUseCase,
 		private readonly forceCancelOrder: ForceCancelAdminOrderUseCase,
@@ -51,6 +57,35 @@ export class AdminController {
 		@CurrentUser() _currentUser: AuthenticatedUser,
 	) {
 		return await this.dashboard.listUsers(query);
+	}
+
+	@Post('users')
+	async create(
+		@Body(new ZodValidationPipe(adminCreateUserSchema))
+		body: AdminCreateUserSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	) {
+		return await this.createUser.execute({
+			adminUserId: currentUser.id,
+			username: body.username,
+			email: body.email,
+			role: body.role as Role,
+			now: new Date(),
+		});
+	}
+
+	@Post('users/:userId/resend-password-setup')
+	@HttpCode(200)
+	async resendSetupEmail(
+		@Param('userId', new ZodValidationPipe(adminIdParamSchema))
+		userId: AdminIdParamSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	) {
+		return await this.resendPasswordSetup.execute({
+			adminUserId: currentUser.id,
+			targetUserId: userId,
+			now: new Date(),
+		});
 	}
 
 	@Post('users/:userId/block')

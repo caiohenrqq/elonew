@@ -32,6 +32,10 @@ class InMemoryUserRepository implements UserRepositoryPort {
 		return null;
 	}
 
+	async findByPasswordResetTokenHash(): Promise<User | null> {
+		return null;
+	}
+
 	async create(user: User): Promise<User> {
 		this.users.set(user.id, user);
 		return user;

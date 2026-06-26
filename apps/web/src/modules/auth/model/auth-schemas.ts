@@ -14,5 +14,11 @@ export const registerFormSchema = z.object({
 		.refine((accepted) => accepted, 'Aceite os termos para continuar.'),
 });
 
+export const setPasswordFormSchema = z.object({
+	token: z.string().trim().min(1, 'Token inválido.'),
+	password: z.string().min(12, 'A senha deve ter pelo menos 12 caracteres.'),
+});
+
 export type LoginFormInput = z.infer<typeof loginFormSchema>;
 export type RegisterFormInput = z.infer<typeof registerFormSchema>;
+export type SetPasswordFormInput = z.infer<typeof setPasswordFormSchema>;
