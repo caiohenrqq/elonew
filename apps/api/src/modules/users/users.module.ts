@@ -5,6 +5,7 @@ import { EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY } from '@modules/users/application
 import { PASSWORD_HASHER_KEY } from '@modules/users/application/ports/password-hasher.port';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import { ConfirmEmailUseCase } from '@modules/users/application/use-cases/confirm-email/confirm-email.use-case';
+import { SetPasswordUseCase } from '@modules/users/application/use-cases/set-password/set-password.use-case';
 import { SignUpUseCase } from '@modules/users/application/use-cases/sign-up/sign-up.use-case';
 import { PrismaUserRepository } from '@modules/users/infrastructure/repositories/prisma-user.repository';
 import { Argon2PasswordHasher } from '@modules/users/infrastructure/security/argon2-password-hasher';
@@ -44,7 +45,12 @@ import { Module } from '@nestjs/common';
 		},
 		SignUpUseCase,
 		ConfirmEmailUseCase,
+		SetPasswordUseCase,
 	],
-	exports: [USER_REPOSITORY_KEY, PASSWORD_HASHER_KEY],
+	exports: [
+		USER_REPOSITORY_KEY,
+		PASSWORD_HASHER_KEY,
+		EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY,
+	],
 })
 export class UsersModule {}

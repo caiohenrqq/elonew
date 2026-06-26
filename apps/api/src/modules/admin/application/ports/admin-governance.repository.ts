@@ -6,6 +6,7 @@ export const ADMIN_GOVERNANCE_REPOSITORY_KEY = Symbol(
 );
 
 export type AdminGovernanceActionType =
+	| 'USER_CREATE'
 	| 'USER_BLOCK'
 	| 'USER_UNBLOCK'
 	| 'ORDER_FORCE_CANCEL';

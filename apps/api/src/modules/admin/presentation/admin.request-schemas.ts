@@ -9,6 +9,18 @@ export const adminIdParamSchema = z.string().trim().min(1);
 
 export type AdminIdParamSchemaInput = z.infer<typeof adminIdParamSchema>;
 
+export const adminCreateUserSchema = z.object({
+	username: z.string().trim().min(1),
+	email: z
+		.string()
+		.trim()
+		.email()
+		.transform((value) => value.toLowerCase()),
+	role: z.enum(['CLIENT', 'BOOSTER', 'ADMIN']),
+});
+
+export type AdminCreateUserSchemaInput = z.infer<typeof adminCreateUserSchema>;
+
 export const adminListQuerySchema = z.object({
 	limit: z.coerce.number().int().min(1).max(100).default(25),
 	query: z.string().trim().min(1).max(120).optional(),

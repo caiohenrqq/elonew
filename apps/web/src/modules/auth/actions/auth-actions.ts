@@ -14,8 +14,16 @@ import {
 	loginFormSchema,
 	type RegisterFormInput,
 	registerFormSchema,
+	type SetPasswordFormInput,
+	setPasswordFormSchema,
 } from '../model/auth-schemas';
-import { confirmEmail, login, logout, register } from '../server/auth-service';
+import {
+	confirmEmail,
+	login,
+	logout,
+	register,
+	setPassword,
+} from '../server/auth-service';
 
 export type AuthActionState = {
 	error?: string;
@@ -101,6 +109,25 @@ export const confirmEmailAction = async (
 	try {
 		await assertSameOriginRequest();
 		await confirmEmail(trimmedToken);
+		return { success: true };
+	} catch (error) {
+		return {
+			error: getAuthErrorMessage(error, 'confirmEmail'),
+		};
+	}
+};
+
+export const setPasswordAction = async (
+	input: SetPasswordFormInput,
+): Promise<AuthActionState> => {
+	const parsed = setPasswordFormSchema.safeParse(input);
+	if (!parsed.success) {
+		return { error: parsed.error.issues[0]?.message ?? 'Dados inválidos.' };
+	}
+
+	try {
+		await assertSameOriginRequest();
+		await setPassword(parsed.data);
 		return { success: true };
 	} catch (error) {
 		return {

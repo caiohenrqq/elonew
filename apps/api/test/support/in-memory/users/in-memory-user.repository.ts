@@ -30,6 +30,14 @@ export class InMemoryUserRepository implements UserRepositoryPort {
 		);
 	}
 
+	findByPasswordResetTokenHash(tokenHash: string): Promise<User | null> {
+		return Promise.resolve(
+			[...this.users.values()].find(
+				(user) => user.passwordResetTokenHash === tokenHash,
+			) ?? null,
+		);
+	}
+
 	create(user: User): Promise<User> {
 		const createdUser = User.rehydrate({
 			id: `user-${this.nextId++}`,
@@ -42,6 +50,8 @@ export class InMemoryUserRepository implements UserRepositoryPort {
 			emailConfirmedAt: user.emailConfirmedAt,
 			emailConfirmationTokenHash: user.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: user.emailConfirmationTokenExpiresAt,
+			passwordResetTokenHash: user.passwordResetTokenHash,
+			passwordResetTokenExpiresAt: user.passwordResetTokenExpiresAt,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});

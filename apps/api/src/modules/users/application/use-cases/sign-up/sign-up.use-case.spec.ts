@@ -47,6 +47,14 @@ class InMemoryUserRepository implements UserRepositoryPort {
 		);
 	}
 
+	async findByPasswordResetTokenHash(tokenHash: string): Promise<User | null> {
+		return (
+			[...this.users.values()].find(
+				(user) => user.passwordResetTokenHash === tokenHash,
+			) ?? null
+		);
+	}
+
 	async create(user: User): Promise<User> {
 		const createdUser = User.rehydrate({
 			id: `user-${this.nextId++}`,
@@ -58,6 +66,8 @@ class InMemoryUserRepository implements UserRepositoryPort {
 			emailConfirmedAt: user.emailConfirmedAt,
 			emailConfirmationTokenHash: user.emailConfirmationTokenHash,
 			emailConfirmationTokenExpiresAt: user.emailConfirmationTokenExpiresAt,
+			passwordResetTokenHash: user.passwordResetTokenHash,
+			passwordResetTokenExpiresAt: user.passwordResetTokenExpiresAt,
 			createdAt: new Date('2026-03-11T00:00:00.000Z'),
 			updatedAt: new Date('2026-03-11T00:00:00.000Z'),
 		});

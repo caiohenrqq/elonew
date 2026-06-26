@@ -24,6 +24,7 @@ class AdminDashboardReaderStub implements AdminDashboardReaderPort {
 			role: Role.CLIENT,
 			isActive: true,
 			isBlocked: false,
+			activationStatus: 'ACTIVE',
 			createdAt: new Date('2026-05-01T00:00:00.000Z'),
 		},
 	];

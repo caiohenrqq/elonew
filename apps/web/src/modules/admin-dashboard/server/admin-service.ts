@@ -7,6 +7,7 @@ import {
 	type AdminOrderOutput,
 	type AdminSupportTicketOutput,
 	type AdminUserOutput,
+	adminCreateUserInputSchema,
 	adminDashboardSchema,
 	adminGovernanceInputSchema,
 	adminMetricsSchema,
@@ -138,6 +139,31 @@ export const getAdminDashboard = async (
 	]);
 
 	return adminDashboardSchema.parse({ metrics, users, orders, tickets });
+};
+
+export const createAdminUser = async (
+	input: unknown,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<void> => {
+	const body = adminCreateUserInputSchema.parse(input);
+	await apiRequest('/admin/users', {
+		auth: true,
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+};
+
+export const resendAdminUserPasswordSetup = async (
+	targetId: string,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<void> => {
+	await apiRequest(
+		`/admin/users/${encodeURIComponent(targetId)}/resend-password-setup`,
+		{
+			auth: true,
+			method: 'POST',
+		},
+	);
 };
 
 export const blockAdminUser = async (

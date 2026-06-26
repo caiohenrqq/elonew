@@ -15,3 +15,21 @@ export class AdminGovernanceReasonRequiredError extends Error {
 		super('Admin governance reason is required.');
 	}
 }
+
+export class AdminUserEmailAlreadyInUseError extends Error {
+	constructor() {
+		super('User email is already in use.');
+	}
+}
+
+export class AdminUsernameAlreadyInUseError extends Error {
+	constructor() {
+		super('Username is already in use.');
+	}
+}
+
+export class AdminUserPasswordSetupUnavailableError extends Error {
+	constructor() {
+		super('Password setup is unavailable for this user.');
+	}
+}

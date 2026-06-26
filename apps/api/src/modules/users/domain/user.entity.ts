@@ -8,17 +8,27 @@ type CreatePendingUserInput = {
 	emailConfirmationTokenExpiresAt: Date;
 };
 
+type CreatePendingAdminUserInput = {
+	username: string;
+	email: string;
+	role: Role;
+	passwordResetTokenHash: string;
+	passwordResetTokenExpiresAt: Date;
+};
+
 type RehydrateUserInput = {
 	id: string;
 	username: string;
 	email: string;
-	passwordHash: string;
+	passwordHash: string | null;
 	role: Role;
 	isActive: boolean;
 	isBlocked?: boolean;
 	emailConfirmedAt: Date | null;
 	emailConfirmationTokenHash: string | null;
 	emailConfirmationTokenExpiresAt: Date | null;
+	passwordResetTokenHash?: string | null;
+	passwordResetTokenExpiresAt?: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
 };
@@ -28,13 +38,15 @@ export class User {
 		public readonly id: string,
 		public readonly username: string,
 		public readonly email: string,
-		public readonly passwordHash: string,
+		public readonly passwordHash: string | null,
 		public readonly role: Role,
 		public readonly isActive: boolean,
 		public readonly isBlocked: boolean,
 		public readonly emailConfirmedAt: Date | null,
 		public readonly emailConfirmationTokenHash: string | null,
 		public readonly emailConfirmationTokenExpiresAt: Date | null,
+		public readonly passwordResetTokenHash: string | null,
+		public readonly passwordResetTokenExpiresAt: Date | null,
 		public readonly createdAt: Date,
 		public readonly updatedAt: Date,
 	) {}
@@ -51,6 +63,27 @@ export class User {
 			null,
 			input.emailConfirmationTokenHash,
 			input.emailConfirmationTokenExpiresAt,
+			null,
+			null,
+			new Date(),
+			new Date(),
+		);
+	}
+
+	static createPendingFromAdmin(input: CreatePendingAdminUserInput): User {
+		return new User(
+			'',
+			input.username,
+			input.email,
+			null,
+			input.role,
+			false,
+			false,
+			null,
+			null,
+			null,
+			input.passwordResetTokenHash ?? null,
+			input.passwordResetTokenExpiresAt ?? null,
 			new Date(),
 			new Date(),
 		);
@@ -68,6 +101,8 @@ export class User {
 			input.emailConfirmedAt,
 			input.emailConfirmationTokenHash,
 			input.emailConfirmationTokenExpiresAt,
+			input.passwordResetTokenHash ?? null,
+			input.passwordResetTokenExpiresAt ?? null,
 			input.createdAt,
 			input.updatedAt,
 		);
@@ -94,8 +129,62 @@ export class User {
 			confirmedAt,
 			null,
 			null,
+			this.passwordResetTokenHash,
+			this.passwordResetTokenExpiresAt,
 			this.createdAt,
 			confirmedAt,
+		);
+	}
+
+	canSetPassword(referenceDate: Date): boolean {
+		return (
+			!this.isActive &&
+			this.emailConfirmedAt === null &&
+			this.passwordResetTokenHash !== null &&
+			this.passwordResetTokenExpiresAt !== null &&
+			this.passwordResetTokenExpiresAt >= referenceDate
+		);
+	}
+
+	setPassword(passwordHash: string, confirmedAt: Date): User {
+		return new User(
+			this.id,
+			this.username,
+			this.email,
+			passwordHash,
+			this.role,
+			true,
+			this.isBlocked,
+			confirmedAt,
+			null,
+			null,
+			null,
+			null,
+			this.createdAt,
+			confirmedAt,
+		);
+	}
+
+	issuePasswordReset(input: {
+		tokenHash: string;
+		expiresAt: Date;
+		issuedAt: Date;
+	}): User {
+		return new User(
+			this.id,
+			this.username,
+			this.email,
+			this.passwordHash,
+			this.role,
+			this.isActive,
+			this.isBlocked,
+			this.emailConfirmedAt,
+			this.emailConfirmationTokenHash,
+			this.emailConfirmationTokenExpiresAt,
+			input.tokenHash,
+			input.expiresAt,
+			this.createdAt,
+			input.issuedAt,
 		);
 	}
 
@@ -111,6 +200,8 @@ export class User {
 			this.emailConfirmedAt,
 			this.emailConfirmationTokenHash,
 			this.emailConfirmationTokenExpiresAt,
+			this.passwordResetTokenHash,
+			this.passwordResetTokenExpiresAt,
 			this.createdAt,
 			new Date(),
 		);
@@ -128,6 +219,8 @@ export class User {
 			this.emailConfirmedAt,
 			this.emailConfirmationTokenHash,
 			this.emailConfirmationTokenExpiresAt,
+			this.passwordResetTokenHash,
+			this.passwordResetTokenExpiresAt,
 			this.createdAt,
 			new Date(),
 		);

@@ -15,7 +15,9 @@ jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
 
 jest.mock('../../actions/admin-actions', () => ({
 	blockAdminUserAction: jest.fn(),
+	createAdminUserAction: jest.fn(),
 	forceCancelAdminOrderAction: jest.fn(),
+	resendAdminUserPasswordSetupAction: jest.fn(),
 	unblockAdminUserAction: jest.fn(),
 }));
 
@@ -53,6 +55,7 @@ describe('admin dashboard pages', () => {
 						role: 'CLIENT',
 						isActive: true,
 						isBlocked: false,
+						activationStatus: 'ACTIVE',
 						createdAt: '2026-05-01T00:00:00.000Z',
 					},
 				]}
