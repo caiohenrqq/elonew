@@ -1,6 +1,12 @@
 'use client';
 
-import { BarChart3, FileText, Ticket, Users } from 'lucide-react';
+import {
+	BarChart3,
+	FileText,
+	Ticket,
+	TicketPercent,
+	Users,
+} from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { ElementType } from 'react';
 import { DashboardNavItem } from '@/shared/dashboard/dashboard-nav-item';
@@ -15,6 +21,7 @@ const navigationItems: NavigationItem[] = [
 	{ href: '/admin', label: 'Visão geral', icon: BarChart3 },
 	{ href: '/admin/users', label: 'Usuários', icon: Users },
 	{ href: '/admin/orders', label: 'Pedidos', icon: FileText },
+	{ href: '/admin/coupons', label: 'Cupons', icon: TicketPercent },
 	{ href: '/admin/support', label: 'Suporte', icon: Ticket },
 ];
 
