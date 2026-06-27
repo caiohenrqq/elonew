@@ -70,6 +70,21 @@ export class InMemoryOrderRepository
 		);
 	}
 
+	existsActiveOrPaidOrderForClient(clientId: string): Promise<boolean> {
+		const blockingStatuses = new Set<OrderStatus>([
+			OrderStatus.AWAITING_PAYMENT,
+			OrderStatus.PENDING_BOOSTER,
+			OrderStatus.IN_PROGRESS,
+			OrderStatus.COMPLETED,
+		]);
+		return Promise.resolve(
+			Array.from(this.orders.values()).some(
+				(order) =>
+					order.clientId === clientId && blockingStatuses.has(order.status),
+			),
+		);
+	}
+
 	findRecentForClient(
 		clientId: string,
 		limit: number,

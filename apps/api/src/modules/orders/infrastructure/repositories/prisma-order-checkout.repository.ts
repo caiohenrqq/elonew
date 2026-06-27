@@ -323,6 +323,7 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 				clientId: input.clientId,
 				status: {
 					in: [
+						OrderStatus.AWAITING_PAYMENT,
 						OrderStatus.PENDING_BOOSTER,
 						OrderStatus.IN_PROGRESS,
 						OrderStatus.COMPLETED,

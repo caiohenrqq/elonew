@@ -69,6 +69,19 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 			(order) => order.clientId === clientId && paidStatuses.has(order.status),
 		);
 	}
+
+	async existsActiveOrPaidOrderForClient(clientId: string): Promise<boolean> {
+		const blockingStatuses = new Set<OrderStatus>([
+			OrderStatus.AWAITING_PAYMENT,
+			OrderStatus.PENDING_BOOSTER,
+			OrderStatus.IN_PROGRESS,
+			OrderStatus.COMPLETED,
+		]);
+		return Array.from(this.orders.values()).some(
+			(order) =>
+				order.clientId === clientId && blockingStatuses.has(order.status),
+		);
+	}
 }
 
 class CouponLookupStub implements CouponLookupPort {

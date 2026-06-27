@@ -82,7 +82,11 @@ export class InMemoryOrderCheckoutRepository implements OrderCheckoutPort {
 
 		const coupon = await this.couponLookup.findById(input.couponId);
 		if (!coupon || !coupon.firstOrderOnly) return;
-		if (await this.orderRepository.existsPaidOrderForClient?.(input.clientId))
+		if (
+			await this.orderRepository.existsActiveOrPaidOrderForClient?.(
+				input.clientId,
+			)
+		)
 			throw new OrderCouponInvalidError();
 	}
 }
