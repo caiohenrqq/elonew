@@ -64,6 +64,18 @@ export class OrderCouponInvalidError extends Error {
 	}
 }
 
+export class CouponCodeAlreadyExistsError extends Error {
+	constructor() {
+		super('Coupon code is already in use.');
+	}
+}
+
+export class CouponNotFoundError extends Error {
+	constructor() {
+		super('Coupon was not found.');
+	}
+}
+
 export class OrderPricingVersionNotFoundError extends Error {
 	constructor() {
 		super('Pricing version was not found.');

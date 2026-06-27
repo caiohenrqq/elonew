@@ -56,6 +56,20 @@ export class InMemoryOrderRepository
 		);
 	}
 
+	existsPaidOrderForClient(clientId: string): Promise<boolean> {
+		const paidStatuses = new Set<OrderStatus>([
+			OrderStatus.PENDING_BOOSTER,
+			OrderStatus.IN_PROGRESS,
+			OrderStatus.COMPLETED,
+		]);
+		return Promise.resolve(
+			Array.from(this.orders.values()).some(
+				(order) =>
+					order.clientId === clientId && paidStatuses.has(order.status),
+			),
+		);
+	}
+
 	findRecentForClient(
 		clientId: string,
 		limit: number,

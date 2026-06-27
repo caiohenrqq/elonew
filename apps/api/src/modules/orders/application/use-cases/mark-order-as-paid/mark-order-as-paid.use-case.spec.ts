@@ -1,3 +1,9 @@
+import type { CouponLifecycleLogger } from '@modules/orders/application/logging/coupon-lifecycle.logger';
+import type { CouponEventRecorderPort } from '@modules/orders/application/ports/coupon-event-recorder.port';
+import type {
+	CouponLookupPort,
+	StoredCoupon,
+} from '@modules/orders/application/ports/coupon-lookup.port';
 import type {
 	OrderEvent,
 	OrderEventPublisherPort,
@@ -6,6 +12,21 @@ import type { OrderRepositoryPort } from '@modules/orders/application/ports/orde
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
 import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
+
+const couponLookupStub: CouponLookupPort = {
+	findByCode: async (): Promise<StoredCoupon | null> => null,
+	findById: async (): Promise<StoredCoupon | null> => null,
+	countConfirmedUsage: async (): Promise<number> => 0,
+	countConfirmedUsageForClient: async (): Promise<number> => 0,
+};
+
+const couponEventsStub: CouponEventRecorderPort = {
+	record: async (): Promise<void> => undefined,
+};
+
+const couponLifecycleLoggerStub = {
+	emit: (): void => undefined,
+} as unknown as CouponLifecycleLogger;
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();
@@ -47,7 +68,13 @@ describe('MarkOrderAsPaidUseCase', () => {
 		const order = Order.create('order-1');
 		repository.insert(order);
 
-		const useCase = new MarkOrderAsPaidUseCase(repository, eventPublisher);
+		const useCase = new MarkOrderAsPaidUseCase(
+			repository,
+			couponLookupStub,
+			couponEventsStub,
+			couponLifecycleLoggerStub,
+			eventPublisher,
+		);
 		await useCase.execute({ orderId: 'order-1' });
 
 		const savedOrder = await repository.findById('order-1');
@@ -64,7 +91,12 @@ describe('MarkOrderAsPaidUseCase', () => {
 
 	it('throws when order does not exist', async () => {
 		const repository = new InMemoryOrderRepository();
-		const useCase = new MarkOrderAsPaidUseCase(repository);
+		const useCase = new MarkOrderAsPaidUseCase(
+			repository,
+			couponLookupStub,
+			couponEventsStub,
+			couponLifecycleLoggerStub,
+		);
 
 		await expect(useCase.execute({ orderId: 'missing-order' })).rejects.toThrow(
 			OrderNotFoundError,
@@ -76,7 +108,13 @@ describe('MarkOrderAsPaidUseCase', () => {
 		const eventPublisher = new OrderEventPublisherSpy();
 		const order = Order.create('order-2');
 		repository.insert(order);
-		const useCase = new MarkOrderAsPaidUseCase(repository, eventPublisher);
+		const useCase = new MarkOrderAsPaidUseCase(
+			repository,
+			couponLookupStub,
+			couponEventsStub,
+			couponLifecycleLoggerStub,
+			eventPublisher,
+		);
 
 		await useCase.execute({ orderId: 'order-2' });
 

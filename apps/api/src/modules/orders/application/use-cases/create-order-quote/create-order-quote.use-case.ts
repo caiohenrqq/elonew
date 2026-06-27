@@ -59,6 +59,8 @@ export class CreateOrderQuoteUseCase {
 			clientId: input.clientId,
 			couponCode: input.couponCode,
 			pricing,
+			requestDetails,
+			emitEvents: true,
 		});
 		const quote = await this.orderQuoteRepository.create({
 			clientId: input.clientId,

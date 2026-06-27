@@ -10,6 +10,8 @@ import {
 	OrderCouponInvalidError,
 	OrderQuoteAlreadyUsedError,
 } from '@modules/orders/domain/order-pricing.errors';
+import { OrderStatus } from '@modules/orders/domain/order-status';
+import { makeStoredCoupon } from '../../../../../test/support/coupons/make-stored-coupon';
 import { InMemoryOrderCheckoutRepository } from '../../../../../test/support/in-memory/orders/in-memory-order-checkout.repository';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
@@ -56,6 +58,17 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 			(order) => order.clientId === clientId,
 		);
 	}
+
+	async existsPaidOrderForClient(clientId: string): Promise<boolean> {
+		const paidStatuses = new Set<OrderStatus>([
+			OrderStatus.PENDING_BOOSTER,
+			OrderStatus.IN_PROGRESS,
+			OrderStatus.COMPLETED,
+		]);
+		return Array.from(this.orders.values()).some(
+			(order) => order.clientId === clientId && paidStatuses.has(order.status),
+		);
+	}
 }
 
 class CouponLookupStub implements CouponLookupPort {
@@ -71,6 +84,14 @@ class CouponLookupStub implements CouponLookupPort {
 
 	async findById(id: string): Promise<StoredCoupon | null> {
 		return this.coupons.get(id) ?? null;
+	}
+
+	async countConfirmedUsage(): Promise<number> {
+		return 0;
+	}
+
+	async countConfirmedUsageForClient(): Promise<number> {
+		return 0;
 	}
 
 	insert(coupon: StoredCoupon): void {
@@ -276,16 +297,16 @@ describe('InMemoryOrderCheckoutRepository', () => {
 
 	it('restores the quote when a first-order coupon becomes invalid at checkout', async () => {
 		const orderRepository = new InMemoryOrderRepository();
-		await orderRepository.create(
-			Order.createDraft({
-				id: 'existing-order',
-				clientId: 'client-1',
-				couponId: null,
-				pricingVersionId: 'pricing-version-1',
-				requestDetails: makeQuote().requestDetails,
-				pricing: makeQuote().pricing,
-			}),
-		);
+		const existingOrder = Order.createDraft({
+			id: 'existing-order',
+			clientId: 'client-1',
+			couponId: null,
+			pricingVersionId: 'pricing-version-1',
+			requestDetails: makeQuote().requestDetails,
+			pricing: makeQuote().pricing,
+		});
+		existingOrder.confirmPayment();
+		await orderRepository.save(existingOrder);
 		const quoteRepository = new InMemoryOrderQuoteRepository();
 		quoteRepository.insert({
 			...makeQuote(),
@@ -299,14 +320,15 @@ describe('InMemoryOrderCheckoutRepository', () => {
 			},
 		});
 		const couponLookup = new CouponLookupStub();
-		couponLookup.insert({
-			id: 'coupon-1',
-			code: 'FIRST10',
-			discountType: 'percentage',
-			discount: 10,
-			isActive: true,
-			firstOrderOnly: true,
-		});
+		couponLookup.insert(
+			makeStoredCoupon({
+				id: 'coupon-1',
+				code: 'FIRST10',
+				discountType: 'percentage',
+				discount: 10,
+				firstOrderOnly: true,
+			}),
+		);
 		const repository = new InMemoryOrderCheckoutRepository(
 			orderRepository,
 			quoteRepository,

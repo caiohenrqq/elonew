@@ -54,6 +54,7 @@ export class PreviewOrderQuoteUseCase {
 			clientId: input.clientId,
 			couponCode: input.couponCode,
 			pricing,
+			requestDetails,
 		});
 
 		return {

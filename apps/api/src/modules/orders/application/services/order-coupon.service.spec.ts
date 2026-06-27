@@ -1,146 +1,162 @@
-import type { OrderPricingSnapshot } from '@modules/orders/application/order-pricing';
+import type { OrderQuoteRequestDetails } from '@modules/orders/application/order-pricing';
+import type { CouponEventInput } from '@modules/orders/application/ports/coupon-event-recorder.port';
 import type {
 	CouponLookupPort,
 	StoredCoupon,
 } from '@modules/orders/application/ports/coupon-lookup.port';
-import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
+import type { OrderClientReaderPort } from '@modules/orders/application/ports/order-client-reader.port';
 import { ApplyOrderCouponService } from '@modules/orders/application/services/order-coupon.service';
-import { Order } from '@modules/orders/domain/order.entity';
+import { makeStoredCoupon } from '../../../../../test/support/coupons/make-stored-coupon';
 
 class CouponLookupStub implements CouponLookupPort {
 	public coupon: StoredCoupon | null = null;
-	public lastCode: string | null = null;
-	public lastId: string | null = null;
+	public globalUsage = 0;
+	public perUserUsage = 0;
 
-	async findByCode(code: string): Promise<StoredCoupon | null> {
-		this.lastCode = code;
+	async findByCode(): Promise<StoredCoupon | null> {
 		return this.coupon;
 	}
 
-	async findById(id: string): Promise<StoredCoupon | null> {
-		this.lastId = id;
+	async findById(): Promise<StoredCoupon | null> {
 		return this.coupon;
+	}
+
+	async countConfirmedUsage(): Promise<number> {
+		return this.globalUsage;
+	}
+
+	async countConfirmedUsageForClient(): Promise<number> {
+		return this.perUserUsage;
 	}
 }
 
-class OrderRepositoryStub implements OrderRepositoryPort {
-	public hasOrderForClient = false;
-	public checkedClientId: string | null = null;
+class ClientReaderStub implements OrderClientReaderPort {
+	public email: string | null = null;
+	public paid = false;
 
-	async create(): Promise<Order> {
-		throw new Error('not needed in this test');
+	async findEmailById(): Promise<string | null> {
+		return this.email;
 	}
 
-	async findById(): Promise<Order | null> {
-		throw new Error('not needed in this test');
+	async hasPaidOrder(): Promise<boolean> {
+		return this.paid;
 	}
+}
 
-	async findByIdForClient(): Promise<Order | null> {
-		throw new Error('not needed in this test');
+class EventRecorderStub {
+	public events: CouponEventInput[] = [];
+	async record(event: CouponEventInput): Promise<void> {
+		this.events.push(event);
 	}
+}
 
-	async save(): Promise<void> {
-		throw new Error('not needed in this test');
-	}
+function makeRequestDetails(): OrderQuoteRequestDetails {
+	return {
+		serviceType: 'elo_boost',
+		extras: [],
+		currentLeague: 'gold',
+		currentDivision: 'II',
+		currentLp: 50,
+		desiredLeague: 'platinum',
+		desiredDivision: 'IV',
+		server: 'br',
+		desiredQueue: 'solo_duo',
+		lpGain: 20,
+		deadline: new Date('2026-03-31T00:00:00.000Z'),
+	};
+}
 
-	async existsForClient(clientId: string): Promise<boolean> {
-		this.checkedClientId = clientId;
-		return this.hasOrderForClient;
-	}
+function makeService() {
+	const couponLookup = new CouponLookupStub();
+	const clientReader = new ClientReaderStub();
+	const events = new EventRecorderStub();
+	const service = new ApplyOrderCouponService(
+		couponLookup,
+		clientReader,
+		events,
+	);
+	return { service, couponLookup, clientReader, events };
 }
 
 describe('ApplyOrderCouponService', () => {
-	it('applies a percentage coupon to the base quote pricing', async () => {
-		const couponLookup = new CouponLookupStub();
-		couponLookup.coupon = {
-			id: 'coupon-1',
+	it('applies a percentage coupon to the quote subtotal', async () => {
+		const { service, couponLookup } = makeService();
+		couponLookup.coupon = makeStoredCoupon({
 			code: 'WELCOME10',
 			discountType: 'percentage',
 			discount: 10,
-			isActive: true,
-			firstOrderOnly: false,
-		};
-		const orderRepository = new OrderRepositoryStub();
-		const service = new ApplyOrderCouponService(couponLookup, orderRepository);
-		const basePricing: OrderPricingSnapshot = {
-			pricingVersionId: 'pricing-version-1',
-			subtotal: 100,
-			totalAmount: 100,
-			discountAmount: 0,
-			extras: [],
-		};
+		});
 
 		await expect(
 			service.apply({
 				clientId: 'client-1',
 				couponCode: 'WELCOME10',
-				pricing: basePricing,
-			}),
-		).resolves.toEqual({
-			couponId: 'coupon-1',
-			pricing: {
-				pricingVersionId: 'pricing-version-1',
-				subtotal: 100,
-				totalAmount: 90,
-				discountAmount: 10,
-				extras: [],
-			},
-		});
-		expect(couponLookup.lastCode).toBe('WELCOME10');
-		expect(orderRepository.checkedClientId).toBeNull();
-	});
-
-	it('applies a fixed coupon and clamps the total amount at zero', async () => {
-		const couponLookup = new CouponLookupStub();
-		couponLookup.coupon = {
-			id: 'coupon-2',
-			code: 'FLAT200',
-			discountType: 'fixed',
-			discount: 200,
-			isActive: true,
-			firstOrderOnly: false,
-		};
-		const orderRepository = new OrderRepositoryStub();
-		const service = new ApplyOrderCouponService(couponLookup, orderRepository);
-
-		await expect(
-			service.apply({
-				clientId: 'client-1',
-				couponCode: 'FLAT200',
+				requestDetails: makeRequestDetails(),
 				pricing: {
 					pricingVersionId: 'pricing-version-1',
-					subtotal: 100,
-					totalAmount: 100,
+					subtotal: 10000,
+					totalAmount: 10000,
 					discountAmount: 0,
 					extras: [],
 				},
 			}),
 		).resolves.toEqual({
-			couponId: 'coupon-2',
+			couponId: 'coupon-1',
 			pricing: {
 				pricingVersionId: 'pricing-version-1',
-				subtotal: 100,
-				totalAmount: 0,
-				discountAmount: 100,
+				subtotal: 10000,
+				totalAmount: 9000,
+				discountAmount: 1000,
+				extras: [],
+			},
+		});
+	});
+
+	it('keeps the order total at the R$0.50 floor for an oversized fixed discount', async () => {
+		const { service, couponLookup } = makeService();
+		couponLookup.coupon = makeStoredCoupon({
+			code: 'FLAT200',
+			discountType: 'fixed',
+			discount: 200,
+		});
+
+		await expect(
+			service.apply({
+				clientId: 'client-1',
+				couponCode: 'FLAT200',
+				requestDetails: makeRequestDetails(),
+				pricing: {
+					pricingVersionId: 'pricing-version-1',
+					subtotal: 10000,
+					totalAmount: 10000,
+					discountAmount: 0,
+					extras: [],
+				},
+			}),
+		).resolves.toEqual({
+			couponId: 'coupon-1',
+			pricing: {
+				pricingVersionId: 'pricing-version-1',
+				subtotal: 10000,
+				totalAmount: 50,
+				discountAmount: 9950,
 				extras: [],
 			},
 		});
 	});
 
 	it('rejects unknown coupon codes', async () => {
-		const service = new ApplyOrderCouponService(
-			new CouponLookupStub(),
-			new OrderRepositoryStub(),
-		);
+		const { service } = makeService();
 
 		await expect(
 			service.apply({
 				clientId: 'client-1',
 				couponCode: 'MISSING',
+				requestDetails: makeRequestDetails(),
 				pricing: {
 					pricingVersionId: 'pricing-version-1',
-					subtotal: 100,
-					totalAmount: 100,
+					subtotal: 10000,
+					totalAmount: 10000,
 					discountAmount: 0,
 					extras: [],
 				},
@@ -149,28 +165,18 @@ describe('ApplyOrderCouponService', () => {
 	});
 
 	it('rejects inactive coupons', async () => {
-		const couponLookup = new CouponLookupStub();
-		couponLookup.coupon = {
-			id: 'coupon-3',
-			code: 'OFFLINE',
-			discountType: 'percentage',
-			discount: 10,
-			isActive: false,
-			firstOrderOnly: false,
-		};
-		const service = new ApplyOrderCouponService(
-			couponLookup,
-			new OrderRepositoryStub(),
-		);
+		const { service, couponLookup } = makeService();
+		couponLookup.coupon = makeStoredCoupon({ isActive: false });
 
 		await expect(
 			service.apply({
 				clientId: 'client-1',
-				couponCode: 'OFFLINE',
+				couponCode: 'WELCOME10',
+				requestDetails: makeRequestDetails(),
 				pricing: {
 					pricingVersionId: 'pricing-version-1',
-					subtotal: 100,
-					totalAmount: 100,
+					subtotal: 10000,
+					totalAmount: 10000,
 					discountAmount: 0,
 					extras: [],
 				},
@@ -178,33 +184,73 @@ describe('ApplyOrderCouponService', () => {
 		).rejects.toThrow('Coupon is invalid.');
 	});
 
-	it('rejects first-order-only coupons when the client already has an order', async () => {
-		const couponLookup = new CouponLookupStub();
-		couponLookup.coupon = {
-			id: 'coupon-4',
-			code: 'FIRSTONLY',
-			discountType: 'percentage',
-			discount: 10,
-			isActive: true,
-			firstOrderOnly: true,
-		};
-		const orderRepository = new OrderRepositoryStub();
-		orderRepository.hasOrderForClient = true;
-		const service = new ApplyOrderCouponService(couponLookup, orderRepository);
+	it('rejects first-order coupons when the client already has a paid order', async () => {
+		const { service, couponLookup, clientReader } = makeService();
+		couponLookup.coupon = makeStoredCoupon({ firstOrderOnly: true });
+		clientReader.paid = true;
 
 		await expect(
 			service.apply({
 				clientId: 'client-1',
-				couponCode: 'FIRSTONLY',
+				couponCode: 'WELCOME10',
+				requestDetails: makeRequestDetails(),
 				pricing: {
 					pricingVersionId: 'pricing-version-1',
-					subtotal: 100,
-					totalAmount: 100,
+					subtotal: 10000,
+					totalAmount: 10000,
 					discountAmount: 0,
 					extras: [],
 				},
 			}),
 		).rejects.toThrow('Coupon is invalid.');
-		expect(orderRepository.checkedClientId).toBe('client-1');
+	});
+
+	it('rejects coupons that reached the global usage limit', async () => {
+		const { service, couponLookup } = makeService();
+		couponLookup.coupon = makeStoredCoupon({ globalUsageLimit: 5 });
+		couponLookup.globalUsage = 5;
+
+		await expect(
+			service.apply({
+				clientId: 'client-1',
+				couponCode: 'WELCOME10',
+				requestDetails: makeRequestDetails(),
+				pricing: {
+					pricingVersionId: 'pricing-version-1',
+					subtotal: 10000,
+					totalAmount: 10000,
+					discountAmount: 0,
+					extras: [],
+				},
+			}),
+		).rejects.toThrow('Coupon is invalid.');
+	});
+
+	it('records audit events only when emitEvents is set', async () => {
+		const { service, couponLookup, events } = makeService();
+		couponLookup.coupon = makeStoredCoupon();
+
+		await service.apply({
+			clientId: 'client-1',
+			couponCode: 'WELCOME10',
+			requestDetails: makeRequestDetails(),
+			emitEvents: true,
+			pricing: {
+				pricingVersionId: 'pricing-version-1',
+				subtotal: 10000,
+				totalAmount: 10000,
+				discountAmount: 0,
+				extras: [],
+			},
+		});
+
+		expect(events.events).toEqual([
+			{
+				type: 'applied_at_checkout',
+				code: 'WELCOME10',
+				couponId: 'coupon-1',
+				clientId: 'client-1',
+			},
+		]);
 	});
 });
