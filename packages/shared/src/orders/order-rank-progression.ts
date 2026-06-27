@@ -39,3 +39,14 @@ export const orderRankProgression: readonly OrderRankStep[] = [
 	{ league: 'diamond', division: 'I' },
 	{ league: 'master', division: 'MASTER' },
 ] as const;
+
+export function findOrderRankIndex(league: string, division: string): number {
+	const normalizedLeague = league.trim().toLowerCase();
+	const normalizedDivision = division.trim().toUpperCase();
+	if (normalizedLeague === 'master') return orderRankProgression.length - 1;
+	return orderRankProgression.findIndex(
+		(step) =>
+			step.league === normalizedLeague &&
+			step.division.toUpperCase() === normalizedDivision,
+	);
+}
