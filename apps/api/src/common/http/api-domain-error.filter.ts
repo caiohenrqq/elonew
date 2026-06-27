@@ -48,6 +48,8 @@ import {
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
 import {
+	CouponCodeAlreadyExistsError,
+	CouponNotFoundError,
 	OrderCouponDiscountInvalidError,
 	OrderCouponFirstOrderOnlyError,
 	OrderCouponInactiveError,
@@ -172,6 +174,7 @@ export function mapApiDomainErrorToHttpException(
 			NotificationNotFoundError,
 			TicketNotFoundError,
 			RatingOrderNotFoundError,
+			CouponNotFoundError,
 		),
 		mapAsBadRequest(
 			OrderAlreadyExistsError,
@@ -213,6 +216,7 @@ export function mapApiDomainErrorToHttpException(
 		mapAsConflict(OrderPricingVersionActiveConflictError, ChatNotWritableError),
 		mapAsConflict(NotificationReadConflictError),
 		mapAsConflict(RatingAlreadySubmittedError),
+		mapAsConflict(CouponCodeAlreadyExistsError),
 	]);
 }
 

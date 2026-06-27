@@ -51,6 +51,16 @@ enum CouponDiscountType {
   FIXED
 }
 
+enum CouponEventType {
+  created
+  disabled
+  validation_failed
+  eligibility_failed
+  usage_limit_failed
+  applied_at_checkout
+  confirmed_by_payment
+}
+
 enum PricingVersionStatus {
   DRAFT
   ACTIVE
@@ -312,13 +322,47 @@ model Coupon {
   discount       Float
   isActive       Boolean  @default(true)
   firstOrderOnly Boolean  @default(false)
+
+  // Targeting rules. Empty list / null means "no restriction on this dimension".
+  allowedServiceTypes ServiceType[] @default([])
+  allowedQueues       String[]      @default([])
+  allowedEmails       String[]      @default([])
+  minSubtotal         Int?
+  maxSubtotal         Int?
+  minRankIndex        Int?
+  maxRankIndex        Int?
+  minExtrasCount      Int?
+  requiredExtra       String?
+
+  // Usage limits. Null means unlimited.
+  globalUsageLimit  Int?
+  perUserUsageLimit Int?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   orders Order[]
   orderQuotes OrderQuote[]
+  events CouponEvent[]
 
   @@map("coupons")
+}
+
+model CouponEvent {
+  id        String          @id @default(cuid())
+  couponId  String?
+  coupon    Coupon?         @relation(fields: [couponId], references: [id])
+  code      String
+  type      CouponEventType
+  clientId  String?
+  orderId   String?
+  reason    String?
+  createdAt DateTime        @default(now())
+
+  @@index([couponId, type])
+  @@index([type, createdAt])
+  @@index([code])
+  @@map("coupon_events")
 }
 
 model PricingVersion {

@@ -11,6 +11,14 @@
 			"types": "./dist/chat/send-chat-message.schema.d.ts",
 			"default": "./dist/chat/send-chat-message.schema.js"
 		},
+		"./coupons/coupon": {
+			"types": "./dist/coupons/coupon.d.ts",
+			"default": "./dist/coupons/coupon.js"
+		},
+		"./coupons/create-coupon.schema": {
+			"types": "./dist/coupons/create-coupon.schema.d.ts",
+			"default": "./dist/coupons/create-coupon.schema.js"
+		},
 		"./money/money": {
 			"types": "./dist/money/money.d.ts",
 			"default": "./dist/money/money.js"

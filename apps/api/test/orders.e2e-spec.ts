@@ -2,9 +2,11 @@ import { createHmac } from 'node:crypto';
 import { CHAT_REPOSITORY_KEY } from '@modules/chat/application/ports/chat-repository.port';
 import { CHAT_THREAD_WRITER_KEY } from '@modules/chat/application/ports/chat-thread-writer.port';
 import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
+import { COUPON_EVENT_RECORDER_KEY } from '@modules/orders/application/ports/coupon-event-recorder.port';
 import type { StoredCoupon } from '@modules/orders/application/ports/coupon-lookup.port';
 import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
+import { ORDER_CLIENT_READER_KEY } from '@modules/orders/application/ports/order-client-reader.port';
 import {
 	ORDER_PRICING_VERSION_REPOSITORY_KEY,
 	type OrderPricingVersionRepositoryPort,
@@ -23,6 +25,7 @@ import {
 	getTestJwtSecret,
 	signTestAccessToken as signToken,
 } from './support/auth-token';
+import { makeStoredCoupon } from './support/coupons/make-stored-coupon';
 import { InMemoryChatRepository } from './support/in-memory/chat/in-memory-chat.repository';
 import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
@@ -32,6 +35,7 @@ import { InMemoryOrderQuoteRepository } from './support/in-memory/orders/in-memo
 describe('Orders (e2e)', () => {
 	let app: ApiHttpApp;
 	let couponLookup: CouponLookupStub;
+	let clientReader: ClientReaderStub;
 	let orderRepository: InMemoryOrderRepository;
 	let chatRepository: InMemoryChatRepository;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
@@ -52,6 +56,28 @@ describe('Orders (e2e)', () => {
 
 		async findById(id: string): Promise<StoredCoupon | null> {
 			return this.coupons.get(id) ?? null;
+		}
+
+		async countConfirmedUsage(): Promise<number> {
+			return 0;
+		}
+
+		async countConfirmedUsageForClient(): Promise<number> {
+			return 0;
+		}
+	}
+
+	class ClientReaderStub {
+		public emails = new Map<string, string>();
+
+		constructor(private readonly orders: InMemoryOrderRepository) {}
+
+		async findEmailById(clientId: string): Promise<string | null> {
+			return this.emails.get(clientId) ?? null;
+		}
+
+		async hasPaidOrder(clientId: string): Promise<boolean> {
+			return (await this.orders.existsPaidOrderForClient?.(clientId)) ?? false;
 		}
 	}
 
@@ -153,6 +179,7 @@ describe('Orders (e2e)', () => {
 	beforeEach(async () => {
 		couponLookup = new CouponLookupStub();
 		orderRepository = new InMemoryOrderRepository();
+		clientReader = new ClientReaderStub(orderRepository);
 		chatRepository = new InMemoryChatRepository(orderRepository);
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
@@ -161,6 +188,10 @@ describe('Orders (e2e)', () => {
 			.useValue(orderRepository)
 			.overrideProvider(CLIENT_ORDER_READER_KEY)
 			.useValue(orderRepository)
+			.overrideProvider(ORDER_CLIENT_READER_KEY)
+			.useValue(clientReader)
+			.overrideProvider(COUPON_EVENT_RECORDER_KEY)
+			.useValue({ record: async (): Promise<void> => undefined })
 			.overrideProvider(ORDER_CHECKOUT_PORT_KEY)
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
@@ -682,14 +713,16 @@ describe('Orders (e2e)', () => {
 
 	it('returns the same invalid coupon response for missing and inactive coupons', async () => {
 		const token = signToken({ sub: 'client-coupon', role: 'CLIENT' });
-		couponLookup.coupons.set('INACTIVE10', {
-			id: 'coupon-inactive',
-			code: 'INACTIVE10',
-			discountType: 'percentage',
-			discount: 10,
-			isActive: false,
-			firstOrderOnly: false,
-		});
+		couponLookup.coupons.set(
+			'INACTIVE10',
+			makeStoredCoupon({
+				id: 'coupon-inactive',
+				code: 'INACTIVE10',
+				discountType: 'percentage',
+				discount: 10,
+				isActive: false,
+			}),
+		);
 
 		await requestHttp(app)
 			.post('/orders/quote')
@@ -716,17 +749,20 @@ describe('Orders (e2e)', () => {
 
 	it('returns the same invalid coupon response when a first-order coupon becomes ineligible', async () => {
 		const token = signToken({ sub: 'client-first-order', role: 'CLIENT' });
-		couponLookup.coupons.set('FIRST10', {
-			id: 'coupon-first',
-			code: 'FIRST10',
-			discountType: 'percentage',
-			discount: 10,
-			isActive: true,
-			firstOrderOnly: true,
-		});
+		couponLookup.coupons.set(
+			'FIRST10',
+			makeStoredCoupon({
+				id: 'coupon-first',
+				code: 'FIRST10',
+				discountType: 'percentage',
+				discount: 10,
+				firstOrderOnly: true,
+			}),
+		);
 
 		const existingOrder = await createQuotedOrder(token);
-		expect(await orderRepository.findById(existingOrder.id)).toBeTruthy();
+		await markOrderAsPaidUseCase.execute({ orderId: existingOrder.id });
+		expect(await clientReader.hasPaidOrder('client-first-order')).toBe(true);
 
 		await requestHttp(app)
 			.post('/orders/quote')
@@ -743,14 +779,16 @@ describe('Orders (e2e)', () => {
 	it('rejects consuming a stale first-order coupon quote after another order is created', async () => {
 		const token = signToken({ sub: 'client-stale-coupon', role: 'CLIENT' });
 		let couponQuoteId = '';
-		couponLookup.coupons.set('coupon-first', {
-			id: 'coupon-first',
-			code: 'FIRST10',
-			discountType: 'percentage',
-			discount: 10,
-			isActive: true,
-			firstOrderOnly: true,
-		});
+		couponLookup.coupons.set(
+			'coupon-first',
+			makeStoredCoupon({
+				id: 'coupon-first',
+				code: 'FIRST10',
+				discountType: 'percentage',
+				discount: 10,
+				firstOrderOnly: true,
+			}),
+		);
 
 		await requestHttp(app)
 			.post('/orders/quote')
@@ -762,7 +800,8 @@ describe('Orders (e2e)', () => {
 			})
 			.execute();
 
-		await createQuotedOrder(token);
+		const otherOrder = await createQuotedOrder(token);
+		await markOrderAsPaidUseCase.execute({ orderId: otherOrder.id });
 
 		await requestHttp(app)
 			.post('/orders')

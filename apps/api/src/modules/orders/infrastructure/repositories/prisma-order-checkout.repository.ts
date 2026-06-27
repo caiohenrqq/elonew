@@ -105,7 +105,7 @@ type OrderQuoteDelegate = {
 
 type OrderDelegate = {
 	findFirst(args: {
-		where: { clientId: string };
+		where: { clientId: string; status?: { in: OrderStatus[] } };
 		select: { id: true };
 	}): Promise<{ id: string } | null>;
 	create(args: {
@@ -312,22 +312,23 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 		const coupon = await client.coupon.findUnique({
 			where: { id: input.couponId },
 		});
-		if (!coupon) throw new OrderCouponInvalidError();
-		if (!coupon.isActive) throw new OrderCouponInvalidError();
-		if (!Number.isFinite(coupon.discount) || coupon.discount < 0)
-			throw new OrderCouponInvalidError();
-		if (coupon.discountType !== CouponDiscountType.PERCENTAGE) {
-			if (coupon.discountType !== CouponDiscountType.FIXED)
-				throw new OrderCouponInvalidError();
-		}
-		if (!coupon.firstOrderOnly) return;
+		if (!coupon || !coupon.firstOrderOnly) return;
 
 		await client.$queryRaw<{ id: string }[]>(
 			Prisma.sql`SELECT id FROM "users" WHERE id = ${input.clientId} FOR UPDATE`,
 		);
 
 		const existingOrder = await client.order.findFirst({
-			where: { clientId: input.clientId },
+			where: {
+				clientId: input.clientId,
+				status: {
+					in: [
+						OrderStatus.PENDING_BOOSTER,
+						OrderStatus.IN_PROGRESS,
+						OrderStatus.COMPLETED,
+					],
+				},
+			},
 			select: { id: true },
 		});
 		if (existingOrder) throw new OrderCouponInvalidError();
