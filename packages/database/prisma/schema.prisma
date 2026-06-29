@@ -54,6 +54,7 @@ enum CouponDiscountType {
 enum CouponEventType {
   created
   disabled
+  enabled
   validation_failed
   eligibility_failed
   usage_limit_failed
