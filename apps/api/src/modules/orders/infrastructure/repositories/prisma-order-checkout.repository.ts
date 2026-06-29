@@ -332,7 +332,7 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 			},
 			select: { id: true },
 		});
-		if (existingOrder) throw new OrderCouponInvalidError();
+		if (existingOrder) throw new OrderCouponInvalidError('not_first_order');
 	}
 
 	private mapOrderFromRecord(record: OrderRecord): Order {

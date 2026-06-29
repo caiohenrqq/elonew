@@ -711,7 +711,7 @@ describe('Orders (e2e)', () => {
 			.execute();
 	});
 
-	it('returns the same invalid coupon response for missing and inactive coupons', async () => {
+	it('returns distinct invalid coupon reasons for missing and inactive coupons', async () => {
 		const token = signToken({ sub: 'client-coupon', role: 'CLIENT' });
 		couponLookup.coupons.set(
 			'INACTIVE10',
@@ -729,7 +729,7 @@ describe('Orders (e2e)', () => {
 			.set('Authorization', `Bearer ${token}`)
 			.send({ ...makeQuotePayload(), couponCode: 'MISSING10' })
 			.expect(400, {
-				message: 'Coupon is invalid.',
+				message: 'Coupon was not found.',
 				error: 'Bad Request',
 				statusCode: 400,
 			})
@@ -740,14 +740,14 @@ describe('Orders (e2e)', () => {
 			.set('Authorization', `Bearer ${token}`)
 			.send({ ...makeQuotePayload(), couponCode: 'INACTIVE10' })
 			.expect(400, {
-				message: 'Coupon is invalid.',
+				message: 'Coupon is inactive.',
 				error: 'Bad Request',
 				statusCode: 400,
 			})
 			.execute();
 	});
 
-	it('returns the same invalid coupon response when a first-order coupon becomes ineligible', async () => {
+	it('returns the first-order reason when a first-order coupon becomes ineligible', async () => {
 		const token = signToken({ sub: 'client-first-order', role: 'CLIENT' });
 		couponLookup.coupons.set(
 			'FIRST10',
@@ -769,7 +769,7 @@ describe('Orders (e2e)', () => {
 			.set('Authorization', `Bearer ${token}`)
 			.send({ ...makeQuotePayload(), couponCode: 'FIRST10' })
 			.expect(400, {
-				message: 'Coupon is invalid.',
+				message: 'Coupon is valid for the first order only.',
 				error: 'Bad Request',
 				statusCode: 400,
 			})
@@ -808,7 +808,7 @@ describe('Orders (e2e)', () => {
 			.set('Authorization', `Bearer ${token}`)
 			.send({ quoteId: couponQuoteId })
 			.expect(400, {
-				message: 'Coupon is invalid.',
+				message: 'Coupon is valid for the first order only.',
 				error: 'Bad Request',
 				statusCode: 400,
 			})

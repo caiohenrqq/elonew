@@ -34,33 +34,44 @@ export class OrderQuoteAlreadyUsedError extends Error {
 	}
 }
 
-export class OrderCouponNotFoundError extends Error {
-	constructor() {
-		super('Coupon was not found.');
-	}
-}
+export type CouponInvalidReason =
+	| 'not_found'
+	| 'inactive'
+	| 'discount_invalid'
+	| 'not_first_order'
+	| 'service_type_not_allowed'
+	| 'queue_not_allowed'
+	| 'email_not_allowed'
+	| 'subtotal_below_minimum'
+	| 'subtotal_above_maximum'
+	| 'rank_below_minimum'
+	| 'rank_above_maximum'
+	| 'not_enough_extras'
+	| 'required_extra_missing'
+	| 'global_usage_limit_reached'
+	| 'per_user_usage_limit_reached';
 
-export class OrderCouponInactiveError extends Error {
-	constructor() {
-		super('Coupon is inactive.');
-	}
-}
-
-export class OrderCouponFirstOrderOnlyError extends Error {
-	constructor() {
-		super('Coupon is restricted to first orders.');
-	}
-}
-
-export class OrderCouponDiscountInvalidError extends Error {
-	constructor() {
-		super('Coupon discount configuration is invalid.');
-	}
-}
+export const couponInvalidReasonMessages: Record<CouponInvalidReason, string> = {
+	not_found: 'Coupon was not found.',
+	inactive: 'Coupon is inactive.',
+	discount_invalid: 'Coupon discount configuration is invalid.',
+	not_first_order: 'Coupon is valid for the first order only.',
+	service_type_not_allowed: 'Coupon is not valid for this service.',
+	queue_not_allowed: 'Coupon is not valid for this queue.',
+	email_not_allowed: 'Coupon is not valid for this account.',
+	subtotal_below_minimum: 'Order total is below the coupon minimum.',
+	subtotal_above_maximum: 'Order total is above the coupon maximum.',
+	rank_below_minimum: 'Coupon requires a higher rank.',
+	rank_above_maximum: 'Coupon requires a lower rank.',
+	not_enough_extras: 'Order does not have enough extras for this coupon.',
+	required_extra_missing: 'Coupon requires a specific extra.',
+	global_usage_limit_reached: 'Coupon usage limit has been reached.',
+	per_user_usage_limit_reached: 'You have already used this coupon.',
+};
 
 export class OrderCouponInvalidError extends Error {
-	constructor() {
-		super('Coupon is invalid.');
+	constructor(readonly reason: CouponInvalidReason) {
+		super(couponInvalidReasonMessages[reason]);
 	}
 }
 

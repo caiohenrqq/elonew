@@ -87,6 +87,6 @@ export class InMemoryOrderCheckoutRepository implements OrderCheckoutPort {
 				input.clientId,
 			)
 		)
-			throw new OrderCouponInvalidError();
+			throw new OrderCouponInvalidError('not_first_order');
 	}
 }
