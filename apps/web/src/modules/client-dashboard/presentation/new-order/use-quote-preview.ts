@@ -10,7 +10,10 @@ import type {
 const quotePreviewDebounceMs = 300;
 const quotePreviewFallbackError = 'Não foi possível calcular o pedido.';
 
-export const useQuotePreview = (orderInput: StartCheckoutInput) => {
+export const useQuotePreview = (
+	orderInput: StartCheckoutInput,
+	refreshKey = 0,
+) => {
 	const [quotePreview, setQuotePreview] =
 		useState<OrderQuotePreviewOutput | null>(null);
 	const [quotePreviewError, setQuotePreviewError] = useState<string | null>(
@@ -34,6 +37,7 @@ export const useQuotePreview = (orderInput: StartCheckoutInput) => {
 		serviceType,
 	} = orderInput;
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is an explicit re-apply trigger, not read in the effect.
 	useEffect(() => {
 		const requestId = ++previewRequestId.current;
 		let isCancelled = false;
@@ -98,6 +102,7 @@ export const useQuotePreview = (orderInput: StartCheckoutInput) => {
 		paymentMethod,
 		server,
 		serviceType,
+		refreshKey,
 	]);
 
 	return {

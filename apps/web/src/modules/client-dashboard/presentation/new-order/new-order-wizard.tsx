@@ -37,8 +37,9 @@ export const NewOrderWizard = () => {
 	const selectedRank = getRankOption(orderInput.desiredLeague);
 	const initialRank = useRef(selectedRank);
 	const wizardRef = useRef<HTMLDivElement>(null);
+	const [couponApplyNonce, setCouponApplyNonce] = useState(0);
 	const { isQuotePreviewPending, quotePreview, quotePreviewError } =
-		useQuotePreview(orderInput);
+		useQuotePreview(orderInput, couponApplyNonce);
 	const { checkoutError, handleCheckout, isPending } = useCheckoutSubmit({
 		hasAcceptedTerms,
 		orderInput,
@@ -105,6 +106,7 @@ export const NewOrderWizard = () => {
 	const handleCouponCodeChange = useCallback(
 		(couponCode: string) => {
 			updateOrderInput('couponCode', couponCode || undefined);
+			setCouponApplyNonce((nonce) => nonce + 1);
 		},
 		[updateOrderInput],
 	);
