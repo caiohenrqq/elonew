@@ -89,7 +89,7 @@ const ConfirmEmailContent = () => {
 					<h2 className="text-xl font-black uppercase tracking-[0.2em] text-white">
 						E-mail Confirmado!
 					</h2>
-					<p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed max-w-[280px] mx-auto">
+					<p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed max-w-70 mx-auto">
 						Sua conta foi ativada com sucesso. Já pode acessar a EloNew.
 					</p>
 				</div>
@@ -112,7 +112,7 @@ const ConfirmEmailContent = () => {
 				<h2 className="text-xl font-black uppercase tracking-[0.2em] text-white">
 					Erro na Confirmação
 				</h2>
-				<p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed max-w-[280px] mx-auto">
+				<p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed max-w-70 mx-auto">
 					{errorMessage}
 				</p>
 			</div>
@@ -141,7 +141,7 @@ const ConfirmEmailContent = () => {
 
 export default function ConfirmEmailPage() {
 	return (
-		<div className="text-center space-y-6 py-8 min-h-[400px] flex flex-col items-center justify-center">
+		<div className="text-center space-y-6 py-8 min-h-100 flex flex-col items-center justify-center">
 			<Suspense fallback={<ConfirmEmailLoading />}>
 				<ConfirmEmailContent />
 			</Suspense>

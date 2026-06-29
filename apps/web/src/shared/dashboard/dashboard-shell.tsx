@@ -28,7 +28,7 @@ export const DashboardShell = ({
 	user,
 }: DashboardShellProps) => (
 	<div className="flex min-h-screen flex-col bg-background text-white lg:h-screen lg:flex-row lg:overflow-hidden">
-		<aside className="z-50 flex w-full flex-col border-white/5 border-b bg-background lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:w-[240px] lg:border-r lg:border-b-0">
+		<aside className="z-50 flex w-full flex-col border-white/5 border-b bg-background lg:fixed lg:top-0 lg:bottom-0 lg:left-0 lg:w-60 lg:border-r lg:border-b-0">
 			<div className="flex justify-center p-4 pb-4 lg:p-8 lg:pb-10">
 				<Link
 					href="/"

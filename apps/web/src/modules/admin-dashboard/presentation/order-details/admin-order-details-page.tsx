@@ -66,7 +66,7 @@ export const AdminOrderDetailsView = ({
 							{order.id}
 						</p>
 					</div>
-					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:min-w-105">
 						<DefinitionItem
 							label="Valor"
 							value={formatCurrency(order.totalAmount)}
@@ -179,7 +179,7 @@ export const AdminOrderDetailsView = ({
 						statusText="Admin leitura"
 						emptyTitle="Sem mensagens"
 						emptyDescription="Nenhuma conversa foi registrada para este pedido."
-						className="h-[560px] max-w-none border-white/10"
+						className="h-140 max-w-none border-white/10"
 					/>
 				</div>
 			</div>

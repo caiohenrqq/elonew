@@ -83,7 +83,7 @@ export const RegisterForm = () => {
 					<h2 className="text-xl font-black uppercase tracking-[0.2em] text-white">
 						Confirme seu e-mail
 					</h2>
-					<p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed max-w-[280px] mx-auto">
+					<p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed max-w-70 mx-auto">
 						Enviamos um link de confirmação para o seu e-mail. Abra a mensagem e
 						clique no link para ativar sua conta.
 					</p>

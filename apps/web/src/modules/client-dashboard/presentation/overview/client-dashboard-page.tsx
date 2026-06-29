@@ -263,7 +263,7 @@ const TicketHistorySection = ({
 							<p className="truncate text-sm font-black text-white">
 								{ticket.subject}
 							</p>
-							<p className="max-w-[220px] truncate font-mono text-[10px] text-white/35">
+							<p className="max-w-55 truncate font-mono text-[10px] text-white/35">
 								{ticket.id}
 							</p>
 						</div>
@@ -271,7 +271,7 @@ const TicketHistorySection = ({
 					<TableCell>
 						<TicketStatusBadge status={ticket.status} />
 					</TableCell>
-					<TableCell className="max-w-[220px] break-all text-xs text-white/55">
+					<TableCell className="max-w-55 break-all text-xs text-white/55">
 						{ticket.orderId ?? 'Ticket geral'}
 					</TableCell>
 					<TableCell className="text-[10px] uppercase tracking-widest text-white/35">
