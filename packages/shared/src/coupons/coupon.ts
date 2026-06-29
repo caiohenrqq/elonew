@@ -4,6 +4,7 @@ export type CouponDiscountType = (typeof couponDiscountTypes)[number];
 export const couponEventTypes = [
 	'created',
 	'disabled',
+	'enabled',
 	'validation_failed',
 	'eligibility_failed',
 	'usage_limit_failed',
