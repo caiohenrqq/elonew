@@ -1,90 +1,62 @@
+import { DashboardEntrance } from '@/shared/dashboard/dashboard-entrance';
+import { Badge } from '@/shared/ui/components/badge';
 import type { AdminCouponSummaryOutput } from '../../server/coupon-contracts';
-import { AdminCreateCouponForm } from './admin-create-coupon-form';
-import { AdminDisableCouponButton } from './admin-disable-coupon-button';
+import { AdminCouponsTable } from './admin-coupons-table';
+import { AdminCreateCouponDialog } from './admin-create-coupon-dialog';
 
-const formatDiscount = (coupon: AdminCouponSummaryOutput): string =>
-	coupon.discountType === 'percentage'
-		? `${coupon.discount}%`
-		: `R$${coupon.discount.toFixed(2)}`;
-
-const formatLimit = (value: number | null): string =>
-	value === null ? '∞' : String(value);
+const formatStat = (value: number) => value.toString().padStart(2, '0');
 
 export const AdminCouponsPage = ({
 	coupons,
 }: {
 	coupons: AdminCouponSummaryOutput[];
 }) => {
+	const active = coupons.filter((coupon) => coupon.isActive).length;
+	const totalUses = coupons.reduce((sum, coupon) => sum + coupon.usageCount, 0);
+
+	const stats = [
+		{ label: 'Total', value: formatStat(coupons.length) },
+		{ label: 'Ativos', value: formatStat(active) },
+		{ label: 'Usos totais', value: formatStat(totalUses) },
+		{ label: 'Inativos', value: formatStat(coupons.length - active) },
+	];
+
 	return (
-		<div className="grid gap-6">
-			<header className="grid gap-1">
-				<h1 className="text-sm font-black uppercase tracking-[0.22em] text-white">
-					Cupons
-				</h1>
-				<p className="text-xs text-white/45">
-					Crie, liste e desative cupons de desconto.
-				</p>
-			</header>
+		<DashboardEntrance>
+			<div className="dashboard-animate flex min-h-0 flex-1 flex-col gap-6">
+				<header className="flex flex-none flex-wrap items-start justify-between gap-4">
+					<div className="space-y-1.5">
+						<div className="flex items-center gap-2.5">
+							<h2 className="text-sm font-black uppercase tracking-[0.25em] text-white">
+								Cupons
+							</h2>
+							<Badge variant="outline">{coupons.length}</Badge>
+						</div>
+						<p className="text-xs text-white/40">
+							Crie e gerencie os cupons de desconto da plataforma.
+						</p>
+					</div>
+					<AdminCreateCouponDialog />
+				</header>
 
-			<AdminCreateCouponForm />
+				<div className="grid flex-none gap-3 sm:grid-cols-2 xl:grid-cols-4">
+					{stats.map((stat) => (
+						<div
+							key={stat.label}
+							className="rounded-sm border border-white/10 bg-white/[0.02] px-4 py-3"
+						>
+							<p className="text-[10px] font-black uppercase tracking-widest text-white/35">
+								{stat.label}
+							</p>
+							<p className="mt-1.5 text-xl font-black tabular-nums text-white">
+								{stat.value}
+							</p>
+						</div>
+					))}
+				</div>
 
-			<div className="overflow-x-auto rounded-sm border border-white/10">
-				<table className="w-full min-w-[720px] text-left text-xs">
-					<thead className="bg-white/[0.03] text-[10px] uppercase tracking-widest text-white/35">
-						<tr>
-							<th className="px-3 py-2">Código</th>
-							<th className="px-3 py-2">Desconto</th>
-							<th className="px-3 py-2">Status</th>
-							<th className="px-3 py-2">Uso</th>
-							<th className="px-3 py-2">Limite global</th>
-							<th className="px-3 py-2">Limite/usuário</th>
-							<th className="px-3 py-2">1ª compra</th>
-							<th className="px-3 py-2 text-right">Ações</th>
-						</tr>
-					</thead>
-					<tbody>
-						{coupons.length === 0 ? (
-							<tr>
-								<td className="px-3 py-6 text-white/35" colSpan={8}>
-									Nenhum cupom criado ainda.
-								</td>
-							</tr>
-						) : (
-							coupons.map((coupon) => (
-								<tr
-									key={coupon.id}
-									className="border-t border-white/5 text-white/70"
-								>
-									<td className="px-3 py-2 font-bold text-white">
-										{coupon.code}
-									</td>
-									<td className="px-3 py-2">{formatDiscount(coupon)}</td>
-									<td className="px-3 py-2">
-										{coupon.isActive ? 'Ativo' : 'Desativado'}
-									</td>
-									<td className="px-3 py-2">{coupon.usageCount}</td>
-									<td className="px-3 py-2">
-										{formatLimit(coupon.globalUsageLimit)}
-									</td>
-									<td className="px-3 py-2">
-										{formatLimit(coupon.perUserUsageLimit)}
-									</td>
-									<td className="px-3 py-2">
-										{coupon.firstOrderOnly ? 'Sim' : 'Não'}
-									</td>
-									<td className="px-3 py-2 text-right">
-										{coupon.isActive ? (
-											<AdminDisableCouponButton couponId={coupon.id} />
-										) : (
-											<span className="text-white/25">—</span>
-										)}
-									</td>
-								</tr>
-							))
-						)}
-					</tbody>
-				</table>
+				<AdminCouponsTable coupons={coupons} />
 			</div>
-		</div>
+		</DashboardEntrance>
 	);
 };

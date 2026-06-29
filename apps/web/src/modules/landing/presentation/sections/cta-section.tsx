@@ -150,7 +150,7 @@ export function CtaSection() {
 				ref={innerRef}
 				className="relative h-screen w-full flex items-center justify-center overflow-hidden border border-white/5 shadow-2xl mx-auto"
 			>
-				<div className="cta-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-hextech-cyan/10 rounded-full blur-[100px] pointer-events-none" />
+				<div className="cta-orb absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-hextech-cyan/10 rounded-full blur-[100px] pointer-events-none" />
 
 				<div className="max-w-4xl mx-auto text-center px-6 relative z-10 translate-y-8 md:translate-y-10">
 					<div className="overflow-hidden mb-4">
@@ -216,7 +216,7 @@ export function CtaSection() {
 										{stat.value}
 									</span>
 								</p>
-								<div className="cta-stat-line mx-auto mb-6 h-[2px] w-12 bg-hextech-cyan shadow-[0_0_10px_rgba(14,165,233,0.5)] will-change-transform" />
+								<div className="cta-stat-line mx-auto mb-6 h-0.5 w-12 bg-hextech-cyan shadow-[0_0_10px_rgba(14,165,233,0.5)] will-change-transform" />
 								<p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
 									{stat.label}
 								</p>

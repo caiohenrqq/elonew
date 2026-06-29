@@ -1,4 +1,5 @@
 import type { StoredCoupon } from '@modules/orders/application/ports/coupon-lookup.port';
+import type { CouponInvalidReason } from '@modules/orders/domain/order-pricing.errors';
 import type { OrderServiceType } from '@packages/shared/orders/service-type';
 
 export type CouponEligibilityContext = {
@@ -13,7 +14,7 @@ export type CouponEligibilityContext = {
 
 export type CouponEligibilityResult =
 	| { ok: true }
-	| { ok: false; reason: string };
+	| { ok: false; reason: CouponInvalidReason };
 
 export function evaluateCouponEligibility(
 	coupon: StoredCoupon,
@@ -67,6 +68,6 @@ export function evaluateCouponEligibility(
 	return { ok: true };
 }
 
-function fail(reason: string): CouponEligibilityResult {
+function fail(reason: CouponInvalidReason): CouponEligibilityResult {
 	return { ok: false, reason };
 }

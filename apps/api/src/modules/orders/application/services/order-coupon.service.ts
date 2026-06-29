@@ -19,7 +19,10 @@ import {
 	ORDER_CLIENT_READER_KEY,
 	type OrderClientReaderPort,
 } from '@modules/orders/application/ports/order-client-reader.port';
-import { OrderCouponInvalidError } from '@modules/orders/domain/order-pricing.errors';
+import {
+	type CouponInvalidReason,
+	OrderCouponInvalidError,
+} from '@modules/orders/domain/order-pricing.errors';
 import { Inject, Injectable } from '@nestjs/common';
 import { COUPON_MIN_ORDER_TOTAL_CENTS } from '@packages/shared/coupons/coupon';
 import { Money } from '@packages/shared/money/money';
@@ -67,8 +70,24 @@ export class ApplyOrderCouponService implements OrderCouponService {
 		const code = input.couponCode.trim().toUpperCase();
 		const coupon = await this.couponLookup.findByCode(code);
 
-		if (!coupon || !coupon.isActive || !this.hasValidDiscount(coupon))
-			return this.reject(input, code, coupon?.id ?? null, 'validation_failed');
+		if (!coupon)
+			return this.reject(input, code, null, 'validation_failed', 'not_found');
+		if (!coupon.isActive)
+			return this.reject(
+				input,
+				code,
+				coupon.id,
+				'validation_failed',
+				'inactive',
+			);
+		if (!this.hasValidDiscount(coupon))
+			return this.reject(
+				input,
+				code,
+				coupon.id,
+				'validation_failed',
+				'discount_invalid',
+			);
 
 		const eligibility = evaluateCouponEligibility(
 			coupon,
@@ -83,8 +102,18 @@ export class ApplyOrderCouponService implements OrderCouponService {
 				eligibility.reason,
 			);
 
-		if (!(await this.withinUsageLimits(coupon, input.clientId)))
-			return this.reject(input, code, coupon.id, 'usage_limit_failed');
+		const usageLimitReason = await this.usageLimitReason(
+			coupon,
+			input.clientId,
+		);
+		if (usageLimitReason)
+			return this.reject(
+				input,
+				code,
+				coupon.id,
+				'usage_limit_failed',
+				usageLimitReason,
+			);
 
 		const pricing = this.applyDiscount(coupon, input.pricing);
 		if (input.emitEvents)
@@ -134,22 +163,23 @@ export class ApplyOrderCouponService implements OrderCouponService {
 	// is the accepted trade-off of count-after-payment; the alternative (reserving
 	// a slot at checkout with expiry) was explicitly out of scope. If hard caps
 	// ever become a requirement, enforce a reservation here instead.
-	private async withinUsageLimits(
+	private async usageLimitReason(
 		coupon: StoredCoupon,
 		clientId: string,
-	): Promise<boolean> {
+	): Promise<CouponInvalidReason | null> {
 		if (coupon.globalUsageLimit !== null) {
 			const used = await this.couponLookup.countConfirmedUsage(coupon.id);
-			if (used >= coupon.globalUsageLimit) return false;
+			if (used >= coupon.globalUsageLimit) return 'global_usage_limit_reached';
 		}
 		if (coupon.perUserUsageLimit !== null) {
 			const used = await this.couponLookup.countConfirmedUsageForClient(
 				coupon.id,
 				clientId,
 			);
-			if (used >= coupon.perUserUsageLimit) return false;
+			if (used >= coupon.perUserUsageLimit)
+				return 'per_user_usage_limit_reached';
 		}
-		return true;
+		return null;
 	}
 
 	private applyDiscount(
@@ -180,7 +210,7 @@ export class ApplyOrderCouponService implements OrderCouponService {
 		code: string,
 		couponId: string | null,
 		kind: FailureKind,
-		reason?: string,
+		reason: CouponInvalidReason,
 	): Promise<never> {
 		if (input.emitEvents)
 			await this.events.record({
@@ -188,8 +218,8 @@ export class ApplyOrderCouponService implements OrderCouponService {
 				code,
 				couponId,
 				clientId: input.clientId,
-				reason: reason ?? null,
+				reason,
 			});
-		throw new OrderCouponInvalidError();
+		throw new OrderCouponInvalidError(reason);
 	}
 }

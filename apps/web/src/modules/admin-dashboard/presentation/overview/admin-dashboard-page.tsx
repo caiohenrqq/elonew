@@ -549,7 +549,7 @@ export const AdminUsersPage = ({ users }: AdminUsersPageProps) => {
 									{user.isBlocked ? 'BLOQUEADO' : 'LIBERADO'}
 								</Badge>
 							</TableCell>
-							<TableCell className="min-w-[240px] text-right">
+							<TableCell className="min-w-60 text-right">
 								<div className="grid justify-items-end gap-3">
 									{user.activationStatus === 'PENDING_ACTIVATION' ? (
 										<AdminResendPasswordSetupForm userId={user.id} />
@@ -637,7 +637,7 @@ export const AdminOrdersPage = ({ orders }: AdminOrdersPageProps) => (
 								Booster {order.boosterId ?? 'não informado'}
 							</p>
 						</TableCell>
-						<TableCell className="max-w-[240px] text-xs text-white/55">
+						<TableCell className="max-w-60 text-xs text-white/55">
 							{order.latestGovernanceAction ? (
 								<span>
 									{formatGovernanceAction(order.latestGovernanceAction.type)} /{' '}

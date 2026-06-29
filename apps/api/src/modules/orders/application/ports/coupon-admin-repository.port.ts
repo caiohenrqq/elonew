@@ -50,5 +50,6 @@ export interface CouponAdminRepositoryPort {
 	list(): Promise<CouponSummary[]>;
 	findById(id: string): Promise<CouponSummary | null>;
 	disable(id: string, adminUserId: string): Promise<boolean>;
+	enable(id: string, adminUserId: string): Promise<boolean>;
 	getReport(couponId: string): Promise<CouponReport | null>;
 }

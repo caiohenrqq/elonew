@@ -9,12 +9,15 @@ import type { AuthSession } from '@/shared/auth/session';
 import { getAuthSession } from '@/shared/auth/session';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import type {
+	AdminCouponReportOutput,
 	AdminCouponSummaryOutput,
 	CreateCouponPayload,
 } from '../server/coupon-contracts';
 import {
 	createAdminCoupon,
 	disableAdminCoupon,
+	enableAdminCoupon,
+	getAdminCouponReport as getAdminCouponReportFromApi,
 	getAdminCoupons as getAdminCouponsFromApi,
 } from '../server/coupon-service';
 
@@ -49,6 +52,9 @@ const optionalInt = (value: FormDataEntryValue | null): number | undefined => {
 	return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+// ponytail: discount is stored/applied in reais (Money.fromDecimal); subtotals
+// are cents. Internally consistent — convert discount to cents only if it ever
+// causes a real bug.
 const optionalReaisToCents = (
 	value: FormDataEntryValue | null,
 ): number | undefined => {
@@ -57,14 +63,12 @@ const optionalReaisToCents = (
 		.replace(',', '.');
 	if (text.length === 0) return undefined;
 	const parsed = Number.parseFloat(text);
-	return Number.isFinite(parsed) ? Math.round(parsed * 100) : undefined;
+	if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
+	return Math.round(parsed * 100);
 };
 
-const splitList = (value: FormDataEntryValue | null): string[] =>
-	String(value ?? '')
-		.split(/[\n,]/)
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0);
+const getAllStrings = (formData: FormData, name: string): string[] =>
+	formData.getAll(name).map((entry) => String(entry));
 
 const optionalRank = (
 	league: FormDataEntryValue | null,
@@ -84,11 +88,9 @@ const parseCreateCouponForm = (formData: FormData): CreateCouponPayload => {
 		discountType,
 		discount: Number(formData.get('discount') ?? 0),
 		firstOrderOnly: formData.get('firstOrderOnly') === 'on',
-		allowedServiceTypes: formData
-			.getAll('allowedServiceTypes')
-			.map((entry) => String(entry)),
-		allowedQueues: splitList(formData.get('allowedQueues')),
-		allowedEmails: splitList(formData.get('allowedEmails')),
+		allowedServiceTypes: getAllStrings(formData, 'allowedServiceTypes'),
+		allowedQueues: getAllStrings(formData, 'allowedQueues'),
+		allowedEmails: getAllStrings(formData, 'allowedEmails'),
 		minSubtotal: optionalReaisToCents(formData.get('minSubtotal')),
 		maxSubtotal: optionalReaisToCents(formData.get('maxSubtotal')),
 		minRank: optionalRank(
@@ -117,6 +119,17 @@ export const getAdminCoupons = async (): Promise<
 	}
 };
 
+export const getCouponReportAction = async (
+	couponId: string,
+): Promise<AdminCouponReportOutput | null> => {
+	await getAdminSessionOrRedirect();
+	try {
+		return await getAdminCouponReportFromApi(couponId, renderReadApiRequest);
+	} catch {
+		return null;
+	}
+};
+
 export const createAdminCouponAction = async (
 	_state: CouponActionState,
 	formData: FormData,
@@ -142,6 +155,23 @@ export const disableAdminCouponAction = async (
 		const couponId = String(formData.get('couponId') ?? '').trim();
 		if (!couponId) return { error: 'Cupom inválido.' };
 		await disableAdminCoupon(couponId, api.request);
+		revalidatePath('/admin/coupons');
+		return { success: true };
+	} catch (error) {
+		return { error: getAuthErrorMessage(error) };
+	}
+};
+
+export const enableAdminCouponAction = async (
+	_state: CouponActionState,
+	formData: FormData,
+): Promise<CouponActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+		const couponId = String(formData.get('couponId') ?? '').trim();
+		if (!couponId) return { error: 'Cupom inválido.' };
+		await enableAdminCoupon(couponId, api.request);
 		revalidatePath('/admin/coupons');
 		return { success: true };
 	} catch (error) {

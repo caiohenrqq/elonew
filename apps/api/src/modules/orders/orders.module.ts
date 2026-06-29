@@ -32,6 +32,7 @@ import { CreateOrderUseCase } from '@modules/orders/application/use-cases/create
 import { CreateOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/create-order-pricing-version/create-order-pricing-version.use-case';
 import { CreateOrderQuoteUseCase } from '@modules/orders/application/use-cases/create-order-quote/create-order-quote.use-case';
 import { DisableCouponUseCase } from '@modules/orders/application/use-cases/disable-coupon/disable-coupon.use-case';
+import { EnableCouponUseCase } from '@modules/orders/application/use-cases/enable-coupon/enable-coupon.use-case';
 import { GetCouponReportUseCase } from '@modules/orders/application/use-cases/get-coupon-report/get-coupon-report.use-case';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
 import { GetOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/get-order-pricing-version/get-order-pricing-version.use-case';
@@ -190,6 +191,7 @@ import { Module } from '@nestjs/common';
 		CreateCouponUseCase,
 		ListCouponsUseCase,
 		DisableCouponUseCase,
+		EnableCouponUseCase,
 		GetCouponReportUseCase,
 		CreateOrderPricingVersionUseCase,
 		CreateOrderUseCase,

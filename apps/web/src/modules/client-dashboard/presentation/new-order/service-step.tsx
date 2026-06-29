@@ -1,5 +1,6 @@
 import { ChevronRight, ShieldCheck, Users } from 'lucide-react';
 import { Button } from '@/shared/ui/components/button';
+import { SelectableOption } from '@/shared/ui/components/selectable-option';
 import { cn } from '@/shared/ui/utils/cn';
 import {
 	SERVICE_TYPES,
@@ -8,7 +9,6 @@ import {
 import { isDesiredRankAvailable } from '../../model/rank-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
 import { RankRoutePicker } from './rank-route-picker';
-import { SelectableOption } from './selectable-option';
 
 const SERVICE_ICONS = {
 	shield: ShieldCheck,

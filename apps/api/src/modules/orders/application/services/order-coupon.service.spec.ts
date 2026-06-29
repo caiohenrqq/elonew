@@ -161,7 +161,7 @@ describe('ApplyOrderCouponService', () => {
 					extras: [],
 				},
 			}),
-		).rejects.toThrow('Coupon is invalid.');
+		).rejects.toThrow('Coupon was not found.');
 	});
 
 	it('rejects inactive coupons', async () => {
@@ -181,7 +181,7 @@ describe('ApplyOrderCouponService', () => {
 					extras: [],
 				},
 			}),
-		).rejects.toThrow('Coupon is invalid.');
+		).rejects.toThrow('Coupon is inactive.');
 	});
 
 	it('rejects first-order coupons when the client already has a paid order', async () => {
@@ -202,7 +202,7 @@ describe('ApplyOrderCouponService', () => {
 					extras: [],
 				},
 			}),
-		).rejects.toThrow('Coupon is invalid.');
+		).rejects.toThrow('Coupon is valid for the first order only.');
 	});
 
 	it('rejects coupons that reached the global usage limit', async () => {
@@ -223,7 +223,7 @@ describe('ApplyOrderCouponService', () => {
 					extras: [],
 				},
 			}),
-		).rejects.toThrow('Coupon is invalid.');
+		).rejects.toThrow('Coupon usage limit has been reached.');
 	});
 
 	it('records audit events only when emitEvents is set', async () => {

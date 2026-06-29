@@ -50,3 +50,13 @@ export const disableAdminCoupon = async (
 		method: 'POST',
 	});
 };
+
+export const enableAdminCoupon = async (
+	couponId: string,
+	apiRequest: ApiRequest,
+): Promise<void> => {
+	await apiRequest(`/admin/coupons/${encodeURIComponent(couponId)}/enable`, {
+		auth: true,
+		method: 'POST',
+	});
+};

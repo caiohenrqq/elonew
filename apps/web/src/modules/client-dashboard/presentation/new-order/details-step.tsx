@@ -14,10 +14,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/shared/ui/components/select';
+import { SelectableOption } from '@/shared/ui/components/selectable-option';
 import { cn } from '@/shared/ui/utils/cn';
 import { EXTRAS, QUEUES, SERVERS } from '../../model/new-order-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
-import { SelectableOption } from './selectable-option';
 
 type DetailsStepProps = {
 	orderInput: StartCheckoutInput;
@@ -239,7 +239,7 @@ export const DetailsStep = ({
 									onClick={(e) => handleToggleWithAnimation(extra.id, e)}
 									layout="row"
 									selected={isSelected}
-									className="flex-1 items-start gap-4 text-left min-h-[80px]"
+									className="flex-1 items-start gap-4 text-left min-h-20"
 								>
 									<div className="flex min-w-0 items-start gap-3">
 										<div

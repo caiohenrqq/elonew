@@ -161,7 +161,8 @@ export const CheckoutSummary = ({
 			: null;
 	const normalizedCouponDraft = couponDraft.trim().toUpperCase();
 	const isCouponApplyDisabled =
-		normalizedCouponDraft === (orderInput.couponCode ?? '');
+		normalizedCouponDraft === (orderInput.couponCode ?? '') &&
+		!quotePreviewError;
 
 	useEffect(() => {
 		setCouponDraft(orderInput.couponCode ?? '');
@@ -172,7 +173,7 @@ export const CheckoutSummary = ({
 	};
 
 	return (
-		<aside className="w-full lg:sticky lg:top-24 lg:w-[320px]">
+		<aside className="w-full lg:sticky lg:top-24 lg:w-80">
 			<Card className="overflow-hidden border-white/10 shadow-panel">
 				<div className="h-1 w-full bg-[var(--rank-accent)]" />
 				<CardHeader>
@@ -236,17 +237,17 @@ export const CheckoutSummary = ({
 									containerClassName="space-y-1 rounded-sm border border-emerald-400/10 bg-emerald-500/[0.04] p-3"
 									label={
 										appliedCouponCode
-											? `Utilizando o cupom ${appliedCouponCode}`
+											? `Cupom ${appliedCouponCode}`
 											: 'Desconto'
 									}
 									value={-quotePreview.discountAmount}
 									labelClassName={cn(
-										'uppercase tracking-widest',
+										'min-w-0 truncate uppercase tracking-widest',
 										appliedCouponCode
-											? 'font-black text-emerald-300'
+											? 'font-bold text-emerald-300'
 											: 'text-white/40',
 									)}
-									valueClassName="font-black text-emerald-400"
+									valueClassName="whitespace-nowrap font-black text-emerald-400"
 								/>
 							)}
 						</AnimatePresence>

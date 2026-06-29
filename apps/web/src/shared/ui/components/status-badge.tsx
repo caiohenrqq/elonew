@@ -4,8 +4,8 @@ import {
 } from '@/shared/status/status-config';
 import { Badge } from './badge';
 
-const ORDER_BADGE_WIDTH = 'min-w-[12.5rem] justify-start';
-const TICKET_BADGE_WIDTH = 'min-w-[8rem] justify-start';
+const ORDER_BADGE_WIDTH = 'min-w-50 justify-start';
+const TICKET_BADGE_WIDTH = 'min-w-32 justify-start';
 
 export const OrderStatusBadge = ({ status }: { status: string }) => {
 	const config = ORDER_STATUS_CONFIG[status];

@@ -50,11 +50,7 @@ import {
 import {
 	CouponCodeAlreadyExistsError,
 	CouponNotFoundError,
-	OrderCouponDiscountInvalidError,
-	OrderCouponFirstOrderOnlyError,
-	OrderCouponInactiveError,
 	OrderCouponInvalidError,
-	OrderCouponNotFoundError,
 	OrderPricingVersionActiveConflictError,
 	OrderPricingVersionImmutableError,
 	OrderPricingVersionIncompleteError,
@@ -132,16 +128,6 @@ export function mapApiDomainErrorToHttpException(
 		]);
 
 	return tryMapDomainErrorToHttpException(error, [
-		{
-			errorTypes: [
-				OrderCouponInvalidError,
-				OrderCouponNotFoundError,
-				OrderCouponInactiveError,
-				OrderCouponFirstOrderOnlyError,
-				OrderCouponDiscountInvalidError,
-			],
-			toException: () => new BadRequestException('Coupon is invalid.'),
-		},
 		mapAsUnauthorized(
 			AuthenticationRequiredError,
 			InvalidAccessTokenError,
@@ -183,6 +169,7 @@ export function mapApiDomainErrorToHttpException(
 			OrderCancellationNotAllowedError,
 			OrderCredentialsStorageNotAllowedError,
 			OrderCredentialsPasswordMismatchError,
+			OrderCouponInvalidError,
 			OrderUnsupportedPricingServiceTypeError,
 			OrderRankNotPricedError,
 			OrderRankProgressionInvalidError,

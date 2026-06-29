@@ -42,7 +42,7 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
 					className,
 				)}
 			>
-				<div className="max-w-[200px] space-y-2">
+				<div className="max-w-50 space-y-2">
 					<p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
 						{emptyTitle}
 					</p>

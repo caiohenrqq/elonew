@@ -60,7 +60,7 @@ export const BoosterChatPanel = ({
 				statusText={statusText}
 				emptyTitle="Nenhuma mensagem"
 				emptyDescription="Envie a primeira mensagem para alinhar este pedido com o cliente."
-				className="h-[min(720px,calc(100dvh-15rem))] min-h-[520px] max-w-none"
+				className="h-[min(720px,calc(100dvh-15rem))] min-h-130 max-w-none"
 			/>
 			{error ? (
 				<p className="text-[10px] font-bold uppercase tracking-wider text-red-400">

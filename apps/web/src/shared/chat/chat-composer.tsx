@@ -86,7 +86,7 @@ export const ChatComposer: FC<ChatComposerProps> = ({
 					maxLength={maxLength}
 					className={cn(
 						fieldSurface,
-						'min-h-[40px] max-h-[120px] py-2.5 resize-none leading-normal scrollbar-hide',
+						'min-h-10 max-h-30 py-2.5 resize-none leading-normal scrollbar-hide',
 					)}
 					rows={1}
 				/>

@@ -134,6 +134,30 @@ export class PrismaCouponAdminRepository implements CouponAdminRepositoryPort {
 		});
 	}
 
+	async enable(id: string, adminUserId: string): Promise<boolean> {
+		return this.prisma.$transaction(async (tx) => {
+			const result = await tx.coupon.updateMany({
+				where: { id, isActive: false },
+				data: { isActive: true },
+			});
+			if (result.count === 0) return false;
+
+			const coupon = await tx.coupon.findUnique({
+				where: { id },
+				select: { code: true },
+			});
+			await tx.couponEvent.create({
+				data: {
+					type: 'enabled',
+					code: coupon?.code ?? id,
+					couponId: id,
+					reason: adminUserId,
+				},
+			});
+			return true;
+		});
+	}
+
 	async getReport(couponId: string): Promise<CouponReport | null> {
 		const coupon = await this.prisma.coupon.findUnique({
 			where: { id: couponId },
