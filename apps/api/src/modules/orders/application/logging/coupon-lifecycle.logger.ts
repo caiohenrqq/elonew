@@ -3,7 +3,7 @@ import { PinoLogger } from 'nestjs-pino';
 
 export type CouponLifecycleLogEvent = {
 	event: 'coupon.lifecycle';
-	operation: 'create' | 'disable' | 'payment_confirmed_usage';
+	operation: 'create' | 'disable' | 'enable' | 'payment_confirmed_usage';
 	outcome?: 'success' | 'error' | 'skipped';
 	duration_ms?: number;
 	admin_user_id?: string;

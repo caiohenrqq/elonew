@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { CreateCouponUseCase } from '@modules/orders/application/use-cases/create-coupon/create-coupon.use-case';
 import { DisableCouponUseCase } from '@modules/orders/application/use-cases/disable-coupon/disable-coupon.use-case';
+import { EnableCouponUseCase } from '@modules/orders/application/use-cases/enable-coupon/enable-coupon.use-case';
 import { GetCouponReportUseCase } from '@modules/orders/application/use-cases/get-coupon-report/get-coupon-report.use-case';
 import { ListCouponsUseCase } from '@modules/orders/application/use-cases/list-coupons/list-coupons.use-case';
 import {
@@ -33,6 +34,7 @@ export class CouponsAdminController {
 		private readonly createCoupon: CreateCouponUseCase,
 		private readonly listCoupons: ListCouponsUseCase,
 		private readonly disableCoupon: DisableCouponUseCase,
+		private readonly enableCoupon: EnableCouponUseCase,
 		private readonly getCouponReport: GetCouponReportUseCase,
 	) {}
 
@@ -61,6 +63,20 @@ export class CouponsAdminController {
 		@CurrentUser() currentUser: AuthenticatedUser,
 	) {
 		await this.disableCoupon.execute({
+			couponId,
+			adminUserId: currentUser.id,
+		});
+		return { ok: true };
+	}
+
+	@Post(':couponId/enable')
+	@HttpCode(200)
+	async enable(
+		@Param('couponId', new ZodValidationPipe(couponIdParamSchema))
+		couponId: CouponIdParamSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	) {
+		await this.enableCoupon.execute({
 			couponId,
 			adminUserId: currentUser.id,
 		});
