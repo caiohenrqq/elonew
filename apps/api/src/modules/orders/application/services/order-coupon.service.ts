@@ -73,7 +73,13 @@ export class ApplyOrderCouponService implements OrderCouponService {
 		if (!coupon)
 			return this.reject(input, code, null, 'validation_failed', 'not_found');
 		if (!coupon.isActive)
-			return this.reject(input, code, coupon.id, 'validation_failed', 'inactive');
+			return this.reject(
+				input,
+				code,
+				coupon.id,
+				'validation_failed',
+				'inactive',
+			);
 		if (!this.hasValidDiscount(coupon))
 			return this.reject(
 				input,
@@ -96,7 +102,10 @@ export class ApplyOrderCouponService implements OrderCouponService {
 				eligibility.reason,
 			);
 
-		const usageLimitReason = await this.usageLimitReason(coupon, input.clientId);
+		const usageLimitReason = await this.usageLimitReason(
+			coupon,
+			input.clientId,
+		);
 		if (usageLimitReason)
 			return this.reject(
 				input,

@@ -60,8 +60,7 @@ const couponErrorMap: Record<string, string> = {
 		'Este cupom exige mais adicionais no pedido.',
 	'Coupon requires a specific extra.':
 		'Este cupom exige um adicional específico no pedido.',
-	'Coupon usage limit has been reached.':
-		'Este cupom atingiu o limite de uso.',
+	'Coupon usage limit has been reached.': 'Este cupom atingiu o limite de uso.',
 	'You have already used this coupon.':
 		'Você já utilizou este cupom o número máximo de vezes.',
 };
@@ -89,9 +88,7 @@ export const getAuthErrorMessage = (
 
 export const getCheckoutErrorMessage = (error: unknown) => {
 	if (error instanceof ApiRequestError && error.status === 400) {
-		return (
-			couponErrorMap[error.message] ?? checkoutMessages.invalidInput
-		);
+		return couponErrorMap[error.message] ?? checkoutMessages.invalidInput;
 	}
 
 	return checkoutMessages.default;

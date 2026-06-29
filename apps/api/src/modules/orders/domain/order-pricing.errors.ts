@@ -51,23 +51,24 @@ export type CouponInvalidReason =
 	| 'global_usage_limit_reached'
 	| 'per_user_usage_limit_reached';
 
-export const couponInvalidReasonMessages: Record<CouponInvalidReason, string> = {
-	not_found: 'Coupon was not found.',
-	inactive: 'Coupon is inactive.',
-	discount_invalid: 'Coupon discount configuration is invalid.',
-	not_first_order: 'Coupon is valid for the first order only.',
-	service_type_not_allowed: 'Coupon is not valid for this service.',
-	queue_not_allowed: 'Coupon is not valid for this queue.',
-	email_not_allowed: 'Coupon is not valid for this account.',
-	subtotal_below_minimum: 'Order total is below the coupon minimum.',
-	subtotal_above_maximum: 'Order total is above the coupon maximum.',
-	rank_below_minimum: 'Coupon requires a higher rank.',
-	rank_above_maximum: 'Coupon requires a lower rank.',
-	not_enough_extras: 'Order does not have enough extras for this coupon.',
-	required_extra_missing: 'Coupon requires a specific extra.',
-	global_usage_limit_reached: 'Coupon usage limit has been reached.',
-	per_user_usage_limit_reached: 'You have already used this coupon.',
-};
+export const couponInvalidReasonMessages: Record<CouponInvalidReason, string> =
+	{
+		not_found: 'Coupon was not found.',
+		inactive: 'Coupon is inactive.',
+		discount_invalid: 'Coupon discount configuration is invalid.',
+		not_first_order: 'Coupon is valid for the first order only.',
+		service_type_not_allowed: 'Coupon is not valid for this service.',
+		queue_not_allowed: 'Coupon is not valid for this queue.',
+		email_not_allowed: 'Coupon is not valid for this account.',
+		subtotal_below_minimum: 'Order total is below the coupon minimum.',
+		subtotal_above_maximum: 'Order total is above the coupon maximum.',
+		rank_below_minimum: 'Coupon requires a higher rank.',
+		rank_above_maximum: 'Coupon requires a lower rank.',
+		not_enough_extras: 'Order does not have enough extras for this coupon.',
+		required_extra_missing: 'Coupon requires a specific extra.',
+		global_usage_limit_reached: 'Coupon usage limit has been reached.',
+		per_user_usage_limit_reached: 'You have already used this coupon.',
+	};
 
 export class OrderCouponInvalidError extends Error {
 	constructor(readonly reason: CouponInvalidReason) {
