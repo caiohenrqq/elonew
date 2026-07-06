@@ -7,6 +7,7 @@ describe('MercadoPagoSdkAdapter', () => {
 			accessToken: 'mp-access-token',
 			webhookSecret: 'webhook-secret',
 			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			webAppUrl: 'https://app.elonew.test',
 			preferenceClient: {
 				create: jest.fn().mockResolvedValue({
 					id: 'pref-1',
@@ -41,6 +42,7 @@ describe('MercadoPagoSdkAdapter', () => {
 			accessToken: 'mp-access-token',
 			webhookSecret: 'webhook-secret',
 			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			webAppUrl: 'https://app.elonew.test',
 			preferenceClient: {
 				create,
 			},
@@ -63,11 +65,50 @@ describe('MercadoPagoSdkAdapter', () => {
 		});
 	});
 
+	it('sends back_urls and auto_return so the buyer returns to the orders page', async () => {
+		const create = jest.fn().mockResolvedValue({
+			id: 'pref-back',
+			init_point: 'https://mercadopago.test/checkout/pref-back',
+		});
+		const adapter = new MercadoPagoSdkAdapter({
+			accessToken: 'mp-access-token',
+			webhookSecret: 'webhook-secret',
+			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			webAppUrl: 'https://app.elonew.test',
+			preferenceClient: {
+				create,
+			},
+			paymentClient: {
+				get: jest.fn(),
+			},
+		});
+
+		await adapter.createPayment({
+			paymentId: 'payment-back',
+			orderId: 'order-back',
+			amount: 100,
+			paymentMethod: 'pix',
+		});
+
+		const ordersUrl = 'https://app.elonew.test/client/orders';
+		expect(create).toHaveBeenCalledWith({
+			body: expect.objectContaining({
+				back_urls: {
+					success: ordersUrl,
+					pending: ordersUrl,
+					failure: ordersUrl,
+				},
+				auto_return: 'approved',
+			}),
+		});
+	});
+
 	it('fetches a payment notification and maps provider fields to the internal contract', async () => {
 		const adapter = new MercadoPagoSdkAdapter({
 			accessToken: 'mp-access-token',
 			webhookSecret: 'webhook-secret',
 			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			webAppUrl: 'https://app.elonew.test',
 			preferenceClient: {
 				create: jest.fn(),
 			},
@@ -98,6 +139,7 @@ describe('MercadoPagoSdkAdapter', () => {
 			accessToken: 'mp-access-token',
 			webhookSecret: 'webhook-secret',
 			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			webAppUrl: 'https://app.elonew.test',
 			preferenceClient: {
 				create: jest.fn(),
 			},
@@ -128,6 +170,7 @@ describe('MercadoPagoSdkAdapter', () => {
 			accessToken: 'mp-access-token',
 			webhookSecret: 'webhook-secret',
 			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			webAppUrl: 'https://app.elonew.test',
 			preferenceClient: {
 				create: jest.fn(),
 			},

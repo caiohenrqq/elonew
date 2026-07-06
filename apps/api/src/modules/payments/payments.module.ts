@@ -63,6 +63,7 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 					accessToken: appSettings.mercadoPagoAccessToken,
 					webhookSecret: appSettings.mercadoPagoWebhookSecret,
 					webhookUrl: appSettings.mercadoPagoWebhookUrl,
+					webAppUrl: appSettings.webAppUrl,
 				}),
 			inject: [AppSettingsService],
 		},
