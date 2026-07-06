@@ -39,23 +39,31 @@ loki.process "pino" {
 
 	stage.json {
 		expressions = {
+			docker_log = "log",
+			pino_level = "level",
+		}
+	}
+
+	stage.json {
+		source = "docker_log"
+		expressions = {
 			pino_level = "level",
 		}
 	}
 
 	stage.template {
-		source   = "detected_level"
-		template = "{{ if eq (printf \"%v\" .pino_level) \"10\" }}trace{{ else if eq (printf \"%v\" .pino_level) \"20\" }}debug{{ else if eq (printf \"%v\" .pino_level) \"30\" }}info{{ else if eq (printf \"%v\" .pino_level) \"40\" }}warn{{ else if eq (printf \"%v\" .pino_level) \"50\" }}error{{ else if eq (printf \"%v\" .pino_level) \"60\" }}fatal{{ else }}unknown{{ end }}"
+		source   = "pino_level"
+		template = "{{ if eq (printf \"%v\" .Value) \"10\" }}trace{{ else if eq (printf \"%v\" .Value) \"20\" }}debug{{ else if eq (printf \"%v\" .Value) \"30\" }}info{{ else if eq (printf \"%v\" .Value) \"40\" }}warn{{ else if eq (printf \"%v\" .Value) \"50\" }}error{{ else if eq (printf \"%v\" .Value) \"60\" }}fatal{{ else }}unknown{{ end }}"
 	}
 
 	stage.template {
 		source   = "severity_text"
-		template = "{{ ToUpper .detected_level }}"
+		template = "{{ ToUpper .pino_level }}"
 	}
 
 	stage.structured_metadata {
 		values = {
-			detected_level = "",
+			detected_level = "pino_level",
 			severity_text  = "",
 		}
 	}
