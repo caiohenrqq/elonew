@@ -7,6 +7,11 @@ import { paymentMethodValues } from '@packages/shared/payments/payment-method';
 import { z } from 'zod';
 import { devPaymentOutcomeValues } from '../application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
 
+const mercadoPagoIdSchema = z
+	.union([z.string(), z.number()])
+	.transform((value) => String(value).trim())
+	.pipe(z.string().min(1));
+
 export const startCheckoutSchema = z.object({
 	quoteId: z.string().trim().min(1),
 	paymentMethod: z.enum(paymentMethodValues),
@@ -17,9 +22,9 @@ export type StartCheckoutSchemaInput = z.infer<typeof startCheckoutSchema>;
 export const mercadoPagoWebhookSchema = z.object({
 	action: z.string().trim().min(1),
 	data: z.object({
-		id: z.string().trim().min(1),
+		id: mercadoPagoIdSchema,
 	}),
-	id: z.string().trim().min(1),
+	id: mercadoPagoIdSchema,
 	type: z.string().trim().min(1),
 });
 
