@@ -20,6 +20,7 @@ import {
 	ORDER_REPOSITORY_KEY,
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
+import { OrderLifecycleEmailService } from '@modules/orders/application/services/order-lifecycle-email.service';
 import type { Order } from '@modules/orders/domain/order.entity';
 import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
 import { OrderStatus } from '@modules/orders/domain/order-status';
@@ -42,6 +43,8 @@ export class MarkOrderAsPaidUseCase {
 		@Optional()
 		@Inject(ORDER_EVENT_PUBLISHER_KEY)
 		private readonly orderEventPublisher?: OrderEventPublisherPort,
+		@Optional()
+		private readonly orderLifecycleEmails?: OrderLifecycleEmailService,
 	) {}
 
 	async execute(input: MarkOrderAsPaidInput): Promise<void> {
@@ -55,6 +58,7 @@ export class MarkOrderAsPaidUseCase {
 		await this.orderEventPublisher?.publish(
 			createOrderEvent('order.paid', order),
 		);
+		await this.orderLifecycleEmails?.sendOrderPaidEmail(order);
 	}
 
 	private async recordCouponUsage(order: Order): Promise<void> {

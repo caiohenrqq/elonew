@@ -4,6 +4,7 @@ import type {
 	OrderEventPublisherPort,
 } from '@modules/orders/application/ports/order-event-publisher.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
+import type { OrderLifecycleEmailService } from '@modules/orders/application/services/order-lifecycle-email.service';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
 import {
@@ -83,6 +84,22 @@ describe('AcceptOrderUseCase', () => {
 			},
 		]);
 		expect(chatThreadWriter.orderIds).toEqual(['order-1']);
+	});
+
+	it('sends the booster assigned email to the client', async () => {
+		const repository = new InMemoryOrderRepository();
+		const sendBoosterAssignedEmail = jest.fn();
+		const order = Order.create('order-1');
+		order.confirmPayment();
+		repository.insert(order);
+
+		const useCase = new AcceptOrderUseCase(repository, undefined, undefined, {
+			sendBoosterAssignedEmail,
+		} as unknown as OrderLifecycleEmailService);
+		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
+
+		expect(sendBoosterAssignedEmail).toHaveBeenCalledTimes(1);
+		expect(sendBoosterAssignedEmail).toHaveBeenCalledWith(order);
 	});
 
 	it('throws when order does not exist', async () => {
