@@ -26,7 +26,7 @@ export const ORDER_STATUS_CONFIG: Record<string, StatusConfig> = {
 	},
 	pending_booster: {
 		label: 'Aguardando booster',
-		variant: 'warning',
+		variant: 'pending',
 		icon: Hourglass,
 	},
 	in_progress: { label: 'Em execução', variant: 'info', icon: Play },

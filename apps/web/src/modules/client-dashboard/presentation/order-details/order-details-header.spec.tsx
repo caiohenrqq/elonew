@@ -25,6 +25,11 @@ const makeOrder = (status: string) => ({
 	subtotal: 100,
 	totalAmount: 100,
 	discountAmount: 0,
+	serviceType: null,
+	currentLeague: null,
+	currentDivision: null,
+	desiredLeague: null,
+	desiredDivision: null,
 });
 
 describe('OrderDetailsHeader', () => {

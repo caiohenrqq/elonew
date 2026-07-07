@@ -1,9 +1,17 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { PropsWithChildren } from 'react';
+import type { ImgHTMLAttributes, PropsWithChildren } from 'react';
 import { ClientDashboardPage } from './client-dashboard-page';
 
 jest.mock('../../actions/order-actions', () => ({
 	createSupportTicketAction: jest.fn(),
+}));
+
+jest.mock('next/image', () => ({
+	__esModule: true,
+	default: ({ alt, ...props }: ImgHTMLAttributes<HTMLImageElement>) => (
+		// biome-ignore lint/performance/noImgElement: jest mock for next/image
+		<img alt={alt} {...props} />
+	),
 }));
 
 jest.mock('next/link', () => ({
@@ -94,7 +102,8 @@ describe('ClientDashboardPage', () => {
 		expect(screen.getAllByText(/R\$\s*120,00/).length).toBeGreaterThan(0);
 		expect(screen.getByText(/R\$\s*210,00/)).toBeInTheDocument();
 		expect(screen.getAllByText('Elo Boost')).toHaveLength(2);
-		expect(screen.getAllByText('Gold II → Platinum IV')).toHaveLength(2);
+		expect(screen.getAllByText('Ouro II')).toHaveLength(2);
+		expect(screen.getAllByText('Platina IV')).toHaveLength(2);
 		expect(screen.getAllByText('Duo Boost')).toHaveLength(2);
 		expect(screen.getByRole('link', { name: /^Pagar$/i })).toHaveAttribute(
 			'href',
@@ -161,7 +170,8 @@ describe('ClientDashboardPage', () => {
 			screen.getByText('Todos os pedidos carregados para consulta.'),
 		).toBeInTheDocument();
 		expect(screen.getAllByText('Duo Boost')).toHaveLength(2);
-		expect(screen.getAllByText('Gold II → Platinum IV')).toHaveLength(2);
+		expect(screen.getAllByText('Ouro II')).toHaveLength(2);
+		expect(screen.getAllByText('Platina IV')).toHaveLength(2);
 		expect(screen.getByRole('link', { name: /^Detalhes$/i })).toHaveAttribute(
 			'href',
 			'/client/orders/order-2',

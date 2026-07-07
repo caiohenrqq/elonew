@@ -14,8 +14,11 @@ import { DashboardMetricCard } from '@/shared/dashboard/dashboard-metric-card';
 import { DashboardTableSection } from '@/shared/dashboard/dashboard-table-section';
 import { formatCurrency } from '@/shared/format/currency';
 import { formatDate, formatDateTime } from '@/shared/format/date';
-import { formatOrderRoute, formatServiceType } from '@/shared/format/orders';
-import { getButtonClassName } from '@/shared/ui/components/button';
+import { formatServiceType } from '@/shared/format/orders';
+import {
+	type ButtonVariant,
+	getButtonClassName,
+} from '@/shared/ui/components/button';
 import {
 	OrderStatusBadge,
 	TicketStatusBadge,
@@ -30,6 +33,7 @@ import {
 import type { ClientDashboardTab } from '../../model/client-tabs';
 import type { ClientDashboard, ClientDashboardOrder } from '../../model/orders';
 import type { SupportTicketOutput } from '../../server/ticket-contracts';
+import { OrderRankRoute } from '../order-rank-route';
 import { ClientDashboardLiveRefresh } from './client-dashboard-live-refresh';
 import { DevelopmentCheckoutModal } from './development-checkout-modal';
 
@@ -56,6 +60,9 @@ const getOrderActionLabel = (status: string) => {
 	return 'Detalhes';
 };
 
+const getOrderActionVariant = (status: string): ButtonVariant =>
+	paymentRequiredStatuses.has(status) ? 'primary' : 'outline';
+
 const ClientOrderCard = ({ order }: { order: ClientDashboardOrder }) => (
 	<Link
 		href={`/client/orders/${order.id}`}
@@ -69,8 +76,13 @@ const ClientOrderCard = ({ order }: { order: ClientDashboardOrder }) => (
 						{formatServiceType(order.serviceType)}
 					</p>
 				</div>
-				<p className="mt-2 font-bold text-white/80">
-					{formatOrderRoute(order)}
+				<p className="mt-2">
+					<OrderRankRoute
+						currentLeague={order.currentLeague}
+						currentDivision={order.currentDivision}
+						desiredLeague={order.desiredLeague}
+						desiredDivision={order.desiredDivision}
+					/>
 				</p>
 			</div>
 			<OrderStatusBadge status={order.status} />
@@ -92,7 +104,13 @@ const ClientOrderCard = ({ order }: { order: ClientDashboardOrder }) => (
 			</div>
 		</div>
 		<div className="mt-4">
-			<span className="inline-flex h-8 items-center justify-center rounded-sm border border-white/10 px-3 text-[10px] font-black uppercase tracking-widest text-white/70">
+			<span
+				className={getButtonClassName({
+					variant: getOrderActionVariant(order.status),
+					size: 'sm',
+					className: 'gap-2 font-black uppercase tracking-widest',
+				})}
+			>
 				{getOrderActionLabel(order.status)}
 			</span>
 		</div>
@@ -114,7 +132,12 @@ const ClientOrderRow = ({ order }: { order: ClientDashboardOrder }) => (
 		</TableCell>
 		<TableCell>
 			<div className="space-y-1">
-				<p className="font-bold text-white/80">{formatOrderRoute(order)}</p>
+				<OrderRankRoute
+					currentLeague={order.currentLeague}
+					currentDivision={order.currentDivision}
+					desiredLeague={order.desiredLeague}
+					desiredDivision={order.desiredDivision}
+				/>
 				<p className="text-[10px] uppercase tracking-widest text-white/35">
 					{formatCurrency(order.totalAmount)}
 				</p>
@@ -130,7 +153,7 @@ const ClientOrderRow = ({ order }: { order: ClientDashboardOrder }) => (
 			<Link
 				href={`/client/orders/${order.id}`}
 				className={getButtonClassName({
-					variant: 'outline',
+					variant: getOrderActionVariant(order.status),
 					size: 'sm',
 					className: 'gap-2 font-black uppercase tracking-widest',
 				})}
