@@ -251,6 +251,11 @@ export class OrdersController {
 		subtotal: number | null;
 		totalAmount: number | null;
 		discountAmount: number;
+		serviceType: string | null;
+		currentLeague: string | null;
+		currentDivision: string | null;
+		desiredLeague: string | null;
+		desiredDivision: string | null;
 	}> {
 		return await this.getOrderUseCase.execute({
 			orderId,
