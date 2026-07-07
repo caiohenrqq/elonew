@@ -22,6 +22,12 @@ type MercadoPagoPreferenceClient = {
 				unit_price: number;
 			}>;
 			notification_url: string;
+			back_urls: {
+				success: string;
+				pending: string;
+				failure: string;
+			};
+			auto_return: 'approved';
 		};
 	}): Promise<PreferenceResponse>;
 };
@@ -38,11 +44,13 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 		accessToken: string;
 		webhookSecret: string;
 		webhookUrl: string;
+		webAppUrl: string;
 		preferenceClient?: MercadoPagoPreferenceClient;
 		paymentClient?: MercadoPagoPaymentClient;
 	}) {
 		this.webhookSecret = input.webhookSecret;
 		this.webhookUrl = input.webhookUrl;
+		this.webAppUrl = input.webAppUrl;
 
 		if (input.preferenceClient && input.paymentClient) {
 			this.preferenceClient = input.preferenceClient;
@@ -60,10 +68,12 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 
 	private readonly webhookSecret: string;
 	private readonly webhookUrl: string;
+	private readonly webAppUrl: string;
 
 	async createPayment(
 		input: MercadoPagoCreatePaymentInput,
 	): Promise<MercadoPagoCreatePaymentOutput> {
+		const ordersUrl = new URL('/client/orders', this.webAppUrl).toString();
 		const response = await this.preferenceClient.create({
 			body: {
 				external_reference: input.paymentId,
@@ -76,6 +86,12 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 					},
 				],
 				notification_url: this.webhookUrl,
+				back_urls: {
+					success: ordersUrl,
+					pending: ordersUrl,
+					failure: ordersUrl,
+				},
+				auto_return: 'approved',
 			},
 		});
 		if (!response.id || !response.init_point)

@@ -3,7 +3,14 @@ import { focusRing } from '../styles/classes';
 import { cn } from '../utils/cn';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-	variant?: 'default' | 'outline' | 'success' | 'warning' | 'error' | 'info';
+	variant?:
+		| 'default'
+		| 'outline'
+		| 'success'
+		| 'warning'
+		| 'error'
+		| 'info'
+		| 'pending';
 	icon?: React.ComponentType<{ className?: string }>;
 }
 
@@ -21,6 +28,7 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
 			warning: 'border-transparent bg-hextech-gold/10 text-hextech-gold',
 			error: 'border-transparent bg-red-500/10 text-red-400',
 			info: 'border-transparent bg-hextech-cyan/10 text-hextech-cyan',
+			pending: 'border-transparent bg-violet-500/10 text-violet-400',
 		};
 
 		return (

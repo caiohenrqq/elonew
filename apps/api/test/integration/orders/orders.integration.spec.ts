@@ -163,6 +163,11 @@ describe('Orders module integration', () => {
 			subtotal: 2520,
 			totalAmount: 2520,
 			discountAmount: 0,
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
 		});
 
 		const persistedOrder = await orderRepository.findById(createdOrder.id);
@@ -364,6 +369,11 @@ describe('Orders module integration', () => {
 			subtotal: 2520,
 			totalAmount: 2520,
 			discountAmount: 0,
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
 		});
 	});
 

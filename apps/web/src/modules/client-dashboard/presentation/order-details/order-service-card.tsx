@@ -9,6 +9,7 @@ import {
 } from '@/shared/ui/components/card';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import type { ClientOrder } from '../../model/orders';
+import { OrderRankRoute } from '../order-rank-route';
 
 type OrderServiceCardProps = {
 	order: ClientOrder;
@@ -24,6 +25,18 @@ export const OrderServiceCard = ({ order }: OrderServiceCardProps) => {
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="grid grid-cols-2 md:grid-cols-4 gap-8">
+				<div className="col-span-2 md:col-span-4 space-y-2">
+					<p className="text-[10px] text-white/40 uppercase tracking-widest">
+						Rota
+					</p>
+					<OrderRankRoute
+						size="md"
+						currentLeague={order.currentLeague}
+						currentDivision={order.currentDivision}
+						desiredLeague={order.desiredLeague}
+						desiredDivision={order.desiredDivision}
+					/>
+				</div>
 				<div className="space-y-1">
 					<p className="text-[10px] text-white/40 uppercase tracking-widest">
 						Status

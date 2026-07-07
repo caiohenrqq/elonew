@@ -1,3 +1,4 @@
+import { EmailModule } from '@app/common/email/email.module';
 import { LoggingModule } from '@app/common/logging/logging.module';
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
@@ -20,6 +21,7 @@ import {
 	ApplyOrderCouponService,
 	ORDER_COUPON_SERVICE_KEY,
 } from '@modules/orders/application/services/order-coupon.service';
+import { OrderLifecycleEmailService } from '@modules/orders/application/services/order-lifecycle-email.service';
 import { ORDER_PRICING_SERVICE_KEY } from '@modules/orders/application/services/order-pricing.service';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { ActivateOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/activate-order-pricing-version/activate-order-pricing-version.use-case';
@@ -66,7 +68,14 @@ import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, AuthModule, ChatModule, WalletModule, LoggingModule],
+	imports: [
+		PrismaModule,
+		AuthModule,
+		ChatModule,
+		WalletModule,
+		LoggingModule,
+		EmailModule,
+	],
 	controllers: [
 		OrdersEventsController,
 		OrdersController,
@@ -123,6 +132,7 @@ import { Module } from '@nestjs/common';
 			inject: [PrismaOrderClientReader],
 		},
 		ApplyOrderCouponService,
+		OrderLifecycleEmailService,
 		{
 			provide: ORDER_COUPON_SERVICE_KEY,
 			useFactory: (

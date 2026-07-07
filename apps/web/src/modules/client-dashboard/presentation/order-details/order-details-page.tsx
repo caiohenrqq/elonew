@@ -49,20 +49,18 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 		<div className="space-y-8">
 			<OrderDetailsHeader order={order} />
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-				<div className="lg:col-span-2 space-y-8">
-					<OrderServiceCard order={order} />
-					<OrderActivityCard />
-				</div>
+			<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+				<OrderChatPanel
+					orderId={order.id}
+					orderStatus={order.status}
+					currentUserId={session.userId}
+					initialMessages={chatMessages}
+				/>
 
-				<div className="space-y-8">
+				<div className="grid content-start gap-8">
+					<OrderServiceCard order={order} />
 					<OrderBoosterCard />
-					<OrderChatPanel
-						orderId={order.id}
-						orderStatus={order.status}
-						currentUserId={session.userId}
-						initialMessages={chatMessages}
-					/>
+					<OrderActivityCard />
 					<OrderSupportCard />
 					{order.status === 'completed' ? (
 						<RatingCard

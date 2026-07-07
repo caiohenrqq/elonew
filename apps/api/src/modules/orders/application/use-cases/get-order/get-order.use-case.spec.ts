@@ -54,6 +54,11 @@ describe('GetOrderUseCase', () => {
 			subtotal: 25.2,
 			totalAmount: 25.2,
 			discountAmount: 0,
+			serviceType: null,
+			currentLeague: null,
+			currentDivision: null,
+			desiredLeague: null,
+			desiredDivision: null,
 		});
 	});
 

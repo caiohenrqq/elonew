@@ -17,6 +17,11 @@ type GetOrderOutput = {
 	subtotal: number | null;
 	totalAmount: number | null;
 	discountAmount: number;
+	serviceType: string | null;
+	currentLeague: string | null;
+	currentDivision: string | null;
+	desiredLeague: string | null;
+	desiredDivision: string | null;
 };
 
 @Injectable()
@@ -33,12 +38,19 @@ export class GetOrderUseCase {
 		);
 		if (!order) throw new OrderNotFoundError();
 
+		const details = order.requestDetails;
+
 		return {
 			id: order.id,
 			status: order.status,
 			subtotal: order.subtotal,
 			totalAmount: order.totalAmount,
 			discountAmount: order.discountAmount,
+			serviceType: details?.serviceType ?? null,
+			currentLeague: details?.currentLeague ?? null,
+			currentDivision: details?.currentDivision ?? null,
+			desiredLeague: details?.desiredLeague ?? null,
+			desiredDivision: details?.desiredDivision ?? null,
 		};
 	}
 }

@@ -9,6 +9,7 @@ import type {
 	OrderEventPublisherPort,
 } from '@modules/orders/application/ports/order-event-publisher.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
+import type { OrderLifecycleEmailService } from '@modules/orders/application/services/order-lifecycle-email.service';
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
 import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
@@ -62,6 +63,26 @@ class OrderEventPublisherSpy implements OrderEventPublisherPort {
 }
 
 describe('MarkOrderAsPaidUseCase', () => {
+	it('sends the order paid email to the client', async () => {
+		const repository = new InMemoryOrderRepository();
+		const sendOrderPaidEmail = jest.fn();
+		const order = Order.create('order-1');
+		repository.insert(order);
+
+		const useCase = new MarkOrderAsPaidUseCase(
+			repository,
+			couponLookupStub,
+			couponEventsStub,
+			couponLifecycleLoggerStub,
+			undefined,
+			{ sendOrderPaidEmail } as unknown as OrderLifecycleEmailService,
+		);
+		await useCase.execute({ orderId: 'order-1' });
+
+		expect(sendOrderPaidEmail).toHaveBeenCalledTimes(1);
+		expect(sendOrderPaidEmail).toHaveBeenCalledWith(order);
+	});
+
 	it('moves order to pending booster when payment is confirmed', async () => {
 		const repository = new InMemoryOrderRepository();
 		const eventPublisher = new OrderEventPublisherSpy();

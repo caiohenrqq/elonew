@@ -193,6 +193,11 @@ describe('Orders module integration (db)', () => {
 			subtotal: 2520,
 			totalAmount: 2520,
 			discountAmount: 0,
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
 		});
 	});
 
@@ -750,6 +755,11 @@ describe('Orders module integration (db)', () => {
 			subtotal: 2520,
 			totalAmount: 2520,
 			discountAmount: 0,
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
 		});
 	});
 
@@ -872,6 +882,11 @@ describe('Orders module integration (db)', () => {
 			subtotal: 2520,
 			totalAmount: 2520,
 			discountAmount: 0,
+			serviceType: 'elo_boost',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
 		});
 	});
 

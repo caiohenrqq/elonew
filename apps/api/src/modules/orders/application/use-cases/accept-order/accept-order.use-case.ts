@@ -11,6 +11,7 @@ import {
 	ORDER_REPOSITORY_KEY,
 	type OrderRepositoryPort,
 } from '@modules/orders/application/ports/order-repository.port';
+import { OrderLifecycleEmailService } from '@modules/orders/application/services/order-lifecycle-email.service';
 import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 
@@ -30,6 +31,8 @@ export class AcceptOrderUseCase {
 		@Optional()
 		@Inject(CHAT_THREAD_WRITER_KEY)
 		private readonly chatThreadWriter?: ChatThreadWriterPort,
+		@Optional()
+		private readonly orderLifecycleEmails?: OrderLifecycleEmailService,
 	) {}
 
 	async execute(input: AcceptOrderInput): Promise<void> {
@@ -46,5 +49,6 @@ export class AcceptOrderUseCase {
 		await this.orderEventPublisher?.publish(
 			createOrderEvent('order.accepted', order),
 		);
+		await this.orderLifecycleEmails?.sendBoosterAssignedEmail(order);
 	}
 }
