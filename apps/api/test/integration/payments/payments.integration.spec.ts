@@ -331,6 +331,36 @@ describe('Payments module integration', () => {
 		).resolves.toMatchObject({ id: payment.id, status: 'held' });
 	});
 
+	it('acknowledges legacy IPN notifications without processing them', async () => {
+		const createdOrder = await createQuotedOrder();
+		const payment = await paymentsController.create(
+			{
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			},
+			clientUser,
+		);
+
+		await expect(
+			paymentsController.handleMercadoPagoWebhook(
+				{
+					resource: 'https://api.mercadolibre.com/merchant_orders/42594925288',
+					topic: 'merchant_order',
+				},
+				'signature-ipn',
+				'request-ipn',
+			),
+		).resolves.toEqual({ processed: false });
+
+		expect(mercadoPagoSdkMock.fetchPaymentNotification).not.toHaveBeenCalled();
+		await expect(
+			paymentsController.get(payment.id, clientUser),
+		).resolves.toMatchObject({
+			id: payment.id,
+			status: 'awaiting_confirmation',
+		});
+	});
+
 	it('keeps the payment awaiting confirmation for authorized webhook statuses', async () => {
 		const createdOrder = await createQuotedOrder();
 		const payment = await paymentsController.create(
