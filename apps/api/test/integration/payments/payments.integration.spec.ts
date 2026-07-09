@@ -14,7 +14,7 @@ import { PAYMENT_REPOSITORY_KEY } from '@modules/payments/application/ports/paym
 import { PROCESSED_WEBHOOK_EVENT_PORT_KEY } from '@modules/payments/application/ports/processed-webhook-event.port';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
-import { Test } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
 import type { CreateOrderSchemaInput } from '@packages/shared/orders/create-order.schema';
@@ -33,6 +33,7 @@ describe('Payments module integration', () => {
 	let paymentsController: PaymentsController;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
 	let previousSkipMercadoPagoCheckoutInDevMode: string | undefined;
+	let moduleRef: TestingModule;
 	let mercadoPagoSdkMock: {
 		createPayment: jest.Mock;
 		fetchPaymentNotification: jest.Mock;
@@ -96,7 +97,7 @@ describe('Payments module integration', () => {
 			verifyWebhookSignature: jest.fn().mockResolvedValue(true),
 		};
 
-		const moduleRef = await Test.createTestingModule({
+		moduleRef = await Test.createTestingModule({
 			imports: [PaymentsModule],
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
@@ -140,7 +141,9 @@ describe('Payments module integration', () => {
 		});
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
+		await moduleRef.close();
+
 		if (previousSkipMercadoPagoCheckoutInDevMode === undefined) {
 			delete process.env.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE;
 			return;
