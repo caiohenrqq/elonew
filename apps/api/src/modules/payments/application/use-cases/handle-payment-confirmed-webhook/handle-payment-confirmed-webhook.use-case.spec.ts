@@ -1,7 +1,9 @@
 import type { OrderCredentialCleanupPort } from '@modules/payments/application/ports/order-credential-cleanup.port';
 import type { OrderPaymentConfirmationPort } from '@modules/payments/application/ports/order-payment-confirmation.port';
-import type { PaymentGatewayPort } from '@modules/payments/application/ports/payment-gateway.port';
-import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
+import type {
+	FetchPaymentNotificationOutput,
+	PaymentGatewayPort,
+} from '@modules/payments/application/ports/payment-gateway.port';
 import type { PaymentWebhookSignatureVerifierPort } from '@modules/payments/application/ports/payment-webhook-signature-verifier.port';
 import type { ProcessedWebhookEventPort } from '@modules/payments/application/ports/processed-webhook-event.port';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
@@ -12,54 +14,7 @@ import {
 	PaymentWebhookSignatureInvalidError,
 	PaymentWebhookTopicNotSupportedError,
 } from '@modules/payments/domain/payment.errors';
-
-class InMemoryPaymentRepository implements PaymentRepositoryPort {
-	private readonly payments = new Map<string, Payment>();
-	private readonly failOnSavePaymentIds = new Set<string>();
-
-	async findById(id: string): Promise<Payment | null> {
-		return this.payments.get(id) ?? null;
-	}
-
-	async findByIdForClient(id: string): Promise<Payment | null> {
-		return this.findById(id);
-	}
-
-	async findByOrderId(orderId: string): Promise<Payment | null> {
-		for (const payment of this.payments.values()) {
-			if (payment.orderId === orderId) return payment;
-		}
-
-		return null;
-	}
-
-	async findByOrderIdForClient(): Promise<Payment | null> {
-		throw new Error('not needed in this test');
-	}
-
-	async findByGatewayId(gatewayId: string): Promise<Payment | null> {
-		for (const payment of this.payments.values()) {
-			if (payment.gatewayId === gatewayId) return payment;
-		}
-
-		return null;
-	}
-
-	async save(payment: Payment): Promise<void> {
-		if (this.failOnSavePaymentIds.has(payment.id))
-			throw new Error('Payment save failed.');
-
-		this.payments.set(payment.id, payment);
-	}
-
-	insert(payment: Payment): void {
-		this.payments.set(payment.id, payment);
-	}
-
-	setFailOnSave(paymentId: string): void {
-		this.failOnSavePaymentIds.add(paymentId);
-	}
-}
+import { InMemoryPaymentRepository } from '../../../../../../test/support/in-memory/payments/in-memory-payment.repository';
 
 class InMemoryProcessedWebhookEventPort implements ProcessedWebhookEventPort {
 	private readonly processedEventIds = new Set<string>();
@@ -102,7 +57,16 @@ class InMemoryOrderCredentialCleanupPort implements OrderCredentialCleanupPort {
 class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 	fetchCalls = 0;
 
-	notification = {
+	notification: Omit<
+		FetchPaymentNotificationOutput,
+		'gatewayPaymentMethodId' | 'gatewayPaymentTypeId'
+	> &
+		Partial<
+			Pick<
+				FetchPaymentNotificationOutput,
+				'gatewayPaymentMethodId' | 'gatewayPaymentTypeId'
+			>
+		> = {
 		internalPaymentId: 'payment-1',
 		gatewayPaymentId: 'mp-payment-1',
 		gatewayStatus: 'approved',
@@ -118,14 +82,21 @@ class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 		throw new Error('not needed in this test');
 	}
 
-	async fetchPaymentNotification(): Promise<{
-		internalPaymentId: string;
-		gatewayPaymentId: string;
-		gatewayStatus: string;
-		gatewayStatusDetail: string | null;
-	}> {
+	async fetchPaymentNotification(): Promise<FetchPaymentNotificationOutput> {
 		this.fetchCalls++;
-		return this.notification;
+		return {
+			gatewayPaymentMethodId: null,
+			gatewayPaymentTypeId: null,
+			...this.notification,
+		};
+	}
+
+	async fetchPaymentByExternalReference(): Promise<FetchPaymentNotificationOutput | null> {
+		return {
+			gatewayPaymentMethodId: null,
+			gatewayPaymentTypeId: null,
+			...this.notification,
+		};
 	}
 }
 

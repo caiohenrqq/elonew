@@ -2,49 +2,13 @@ import { OrderStatus } from '@modules/orders/domain/order-status';
 import type { OrderPaymentAmountPort } from '@modules/payments/application/ports/order-payment-amount.port';
 import type { OrderStatusPort } from '@modules/payments/application/ports/order-status.port';
 import type { PaymentGatewayPort } from '@modules/payments/application/ports/payment-gateway.port';
-import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
 import {
 	PaymentAlreadyExistsError,
 	PaymentOrderNotFoundError,
 } from '@modules/payments/domain/payment.errors';
-
-class InMemoryPaymentRepository implements PaymentRepositoryPort {
-	private readonly payments = new Map<string, Payment>();
-
-	async findById(id: string): Promise<Payment | null> {
-		return this.payments.get(id) ?? null;
-	}
-
-	async findByIdForClient(): Promise<Payment | null> {
-		throw new Error('not needed in this test');
-	}
-
-	async findByOrderId(orderId: string): Promise<Payment | null> {
-		for (const payment of this.payments.values()) {
-			if (payment.orderId === orderId) return payment;
-		}
-
-		return null;
-	}
-
-	async findByOrderIdForClient(): Promise<Payment | null> {
-		throw new Error('not needed in this test');
-	}
-
-	async findByGatewayId(): Promise<Payment | null> {
-		throw new Error('not needed in this test');
-	}
-
-	async save(payment: Payment): Promise<void> {
-		this.payments.set(payment.id, payment);
-	}
-
-	insert(payment: Payment): void {
-		this.payments.set(payment.id, payment);
-	}
-}
+import { InMemoryPaymentRepository } from '../../../../../../test/support/in-memory/payments/in-memory-payment.repository';
 
 class InMemoryOrderStatusPort implements OrderStatusPort {
 	private readonly orderStatuses = new Map<
@@ -128,8 +92,13 @@ class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 		gatewayPaymentId: string;
 		gatewayStatus: string;
 		gatewayStatusDetail: string | null;
-		isApproved: boolean;
+		gatewayPaymentMethodId: string | null;
+		gatewayPaymentTypeId: string | null;
 	}> {
+		throw new Error('not needed in this test');
+	}
+
+	async fetchPaymentByExternalReference(): Promise<never> {
 		throw new Error('not needed in this test');
 	}
 }

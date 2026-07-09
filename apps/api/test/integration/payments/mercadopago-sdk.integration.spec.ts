@@ -119,6 +119,8 @@ describe('MercadoPagoSdkAdapter', () => {
 					status: 'approved',
 					status_detail: 'accredited',
 					external_reference: 'payment-1',
+					payment_method_id: 'pix',
+					payment_type_id: 'bank_transfer',
 				}),
 			},
 		});
@@ -132,6 +134,96 @@ describe('MercadoPagoSdkAdapter', () => {
 			gatewayPaymentId: '123',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: 'accredited',
+			gatewayPaymentMethodId: 'pix',
+			gatewayPaymentTypeId: 'bank_transfer',
+		});
+	});
+
+	it('searches a payment by external reference for stale reconciliation', async () => {
+		const search = jest.fn().mockResolvedValue({
+			results: [
+				{
+					id: 456,
+					status: 'pending',
+					status_detail: 'pending_waiting_transfer',
+					external_reference: 'payment-search',
+					payment_method_id: 'pix',
+					payment_type_id: 'bank_transfer',
+				},
+			],
+		});
+		const adapter = new MercadoPagoSdkAdapter({
+			accessToken: 'mp-access-token',
+			webhookSecret: 'webhook-secret',
+			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			webAppUrl: 'https://app.elonew.test',
+			preferenceClient: {
+				create: jest.fn(),
+			},
+			paymentClient: {
+				get: jest.fn(),
+				search,
+			},
+		});
+
+		await expect(
+			adapter.fetchPaymentByExternalReference('payment-search'),
+		).resolves.toEqual({
+			internalPaymentId: 'payment-search',
+			gatewayPaymentId: '456',
+			gatewayStatus: 'pending',
+			gatewayStatusDetail: 'pending_waiting_transfer',
+			gatewayPaymentMethodId: 'pix',
+			gatewayPaymentTypeId: 'bank_transfer',
+		});
+		expect(search).toHaveBeenCalledWith({
+			options: {
+				external_reference: 'payment-search',
+				limit: 10,
+			},
+		});
+	});
+
+	it('prefers an approved searched payment over older pending attempts', async () => {
+		const search = jest.fn().mockResolvedValue({
+			results: [
+				{
+					id: 456,
+					status: 'pending',
+					status_detail: 'pending_waiting_transfer',
+					external_reference: 'payment-search',
+					date_last_updated: '2026-07-09T17:10:00.000Z',
+				},
+				{
+					id: 789,
+					status: 'approved',
+					status_detail: 'accredited',
+					external_reference: 'payment-search',
+					payment_method_id: 'pix',
+					payment_type_id: 'bank_transfer',
+					date_approved: '2026-07-09T17:00:00.000Z',
+				},
+			],
+		});
+		const adapter = new MercadoPagoSdkAdapter({
+			accessToken: 'mp-access-token',
+			webhookSecret: 'webhook-secret',
+			webhookUrl: 'https://example.com/payments/webhooks/mercadopago',
+			webAppUrl: 'https://app.elonew.test',
+			preferenceClient: {
+				create: jest.fn(),
+			},
+			paymentClient: {
+				get: jest.fn(),
+				search,
+			},
+		});
+
+		await expect(
+			adapter.fetchPaymentByExternalReference('payment-search'),
+		).resolves.toMatchObject({
+			gatewayPaymentId: '789',
+			gatewayStatus: 'approved',
 		});
 	});
 

@@ -23,6 +23,8 @@ export type FetchPaymentNotificationOutput = {
 	gatewayPaymentId: string;
 	gatewayStatus: string;
 	gatewayStatusDetail: string | null;
+	gatewayPaymentMethodId: string | null;
+	gatewayPaymentTypeId: string | null;
 };
 
 export const PAYMENT_GATEWAY_PORT_KEY = Symbol('PAYMENT_GATEWAY_PORT_KEY');
@@ -32,4 +34,7 @@ export interface PaymentGatewayPort {
 	fetchPaymentNotification(
 		input: FetchPaymentNotificationInput,
 	): Promise<FetchPaymentNotificationOutput>;
+	fetchPaymentByExternalReference(
+		externalReference: string,
+	): Promise<FetchPaymentNotificationOutput | null>;
 }

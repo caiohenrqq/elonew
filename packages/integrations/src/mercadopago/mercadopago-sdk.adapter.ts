@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
 import type { PaymentResponse } from 'mercadopago/dist/clients/payment/commonTypes';
+import type { PaymentSearchResult } from 'mercadopago/dist/clients/payment/search/types';
 import type { PreferenceResponse } from 'mercadopago/dist/clients/preference/commonTypes';
 import type {
 	MercadoPagoCreatePaymentInput,
@@ -34,6 +35,12 @@ type MercadoPagoPreferenceClient = {
 
 type MercadoPagoPaymentClient = {
 	get(input: { id: string }): Promise<PaymentResponse>;
+	search?(input: {
+		options: {
+			external_reference: string;
+			limit: number;
+		};
+	}): Promise<{ results?: PaymentSearchResult[] }>;
 };
 
 export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
@@ -114,15 +121,26 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 		const response = await this.paymentClient.get({
 			id: input.notificationId,
 		});
-		if (!response.id || !response.status)
-			throw new Error('Mercado Pago payment response is invalid.');
 
-		return {
-			internalPaymentId: response.external_reference?.trim() ?? '',
-			gatewayPaymentId: String(response.id),
-			gatewayStatus: response.status,
-			gatewayStatusDetail: response.status_detail ?? null,
-		};
+		return this.mapPaymentResponse(response);
+	}
+
+	async fetchPaymentByExternalReference(
+		externalReference: string,
+	): Promise<MercadoPagoFetchPaymentNotificationOutput | null> {
+		if (!this.paymentClient.search)
+			throw new Error('Mercado Pago payment search is unavailable.');
+
+		const response = await this.paymentClient.search({
+			options: {
+				external_reference: externalReference,
+				limit: 10,
+			},
+		});
+		const payment = this.selectPaymentSearchResult(response.results ?? []);
+		if (!payment) return null;
+
+		return this.mapPaymentResponse(payment);
 	}
 
 	async verifyWebhookSignature(input: {
@@ -162,5 +180,77 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 		}
 
 		return null;
+	}
+
+	private mapPaymentResponse(
+		response: PaymentResponse | PaymentSearchResult,
+	): MercadoPagoFetchPaymentNotificationOutput {
+		if (!response.id || !response.status)
+			throw new Error('Mercado Pago payment response is invalid.');
+
+		return {
+			internalPaymentId: response.external_reference?.trim() ?? '',
+			gatewayPaymentId: String(response.id),
+			gatewayStatus: response.status,
+			gatewayStatusDetail: response.status_detail ?? null,
+			gatewayPaymentMethodId: this.nullableString(
+				(response as { payment_method_id?: unknown }).payment_method_id,
+			),
+			gatewayPaymentTypeId: this.nullableString(
+				(response as { payment_type_id?: unknown }).payment_type_id,
+			),
+		};
+	}
+
+	private nullableString(value: unknown): string | null {
+		return typeof value === 'string' && value.trim() ? value.trim() : null;
+	}
+
+	private selectPaymentSearchResult(
+		results: PaymentSearchResult[],
+	): PaymentSearchResult | null {
+		return (
+			[...results].sort(
+				(left, right) =>
+					this.paymentSearchRank(right) - this.paymentSearchRank(left) ||
+					this.paymentSearchTimestamp(right) -
+						this.paymentSearchTimestamp(left) ||
+					String(right.id ?? '').localeCompare(String(left.id ?? '')),
+			)[0] ?? null
+		);
+	}
+
+	private paymentSearchRank(payment: PaymentSearchResult): number {
+		switch (payment.status) {
+			case 'approved':
+				return 3;
+			case 'authorized':
+			case 'pending':
+			case 'in_process':
+				return 2;
+			case 'rejected':
+			case 'cancelled':
+				return 1;
+			default:
+				return 0;
+		}
+	}
+
+	private paymentSearchTimestamp(payment: PaymentSearchResult): number {
+		const record = payment as {
+			date_approved?: unknown;
+			date_last_updated?: unknown;
+			date_created?: unknown;
+		};
+		for (const value of [
+			record.date_approved,
+			record.date_last_updated,
+			record.date_created,
+		]) {
+			if (typeof value !== 'string') continue;
+			const timestamp = Date.parse(value);
+			if (!Number.isNaN(timestamp)) return timestamp;
+		}
+		return 0;
 	}
 }

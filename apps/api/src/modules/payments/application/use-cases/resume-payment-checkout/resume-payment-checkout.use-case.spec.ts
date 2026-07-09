@@ -5,66 +5,13 @@ import type {
 	InitiatePaymentOutput,
 	PaymentGatewayPort,
 } from '@modules/payments/application/ports/payment-gateway.port';
-import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
 import {
 	PaymentCheckoutResumeNotAllowedError,
 	PaymentNotFoundError,
 } from '@modules/payments/domain/payment.errors';
-
-class InMemoryPaymentRepository implements PaymentRepositoryPort {
-	private readonly payments = new Map<
-		string,
-		{ payment: Payment; clientId: string }
-	>();
-
-	async findById(id: string): Promise<Payment | null> {
-		return this.payments.get(id)?.payment ?? null;
-	}
-
-	async findByIdForClient(
-		id: string,
-		clientId: string,
-	): Promise<Payment | null> {
-		const record = this.payments.get(id);
-		if (!record || record.clientId !== clientId) return null;
-
-		return record.payment;
-	}
-
-	async findByOrderId(orderId: string): Promise<Payment | null> {
-		for (const record of this.payments.values()) {
-			if (record.payment.orderId === orderId) return record.payment;
-		}
-
-		return null;
-	}
-
-	async findByOrderIdForClient(
-		orderId: string,
-		clientId: string,
-	): Promise<Payment | null> {
-		for (const record of this.payments.values()) {
-			if (record.payment.orderId === orderId && record.clientId === clientId)
-				return record.payment;
-		}
-
-		return null;
-	}
-
-	async findByGatewayId(): Promise<Payment | null> {
-		throw new Error('not needed in this test');
-	}
-
-	async save(payment: Payment): Promise<void> {
-		this.payments.set(payment.id, { payment, clientId: 'client-1' });
-	}
-
-	insert(payment: Payment, clientId: string): void {
-		this.payments.set(payment.id, { payment, clientId });
-	}
-}
+import { InMemoryPaymentRepository } from '../../../../../../test/support/in-memory/payments/in-memory-payment.repository';
 
 class InMemoryOrderStatusPort implements OrderStatusPort {
 	private readonly statuses = new Map<
@@ -108,6 +55,10 @@ class FakePaymentGateway implements PaymentGatewayPort {
 	}
 
 	async fetchPaymentNotification(): Promise<never> {
+		throw new Error('not needed in this test');
+	}
+
+	async fetchPaymentByExternalReference(): Promise<never> {
 		throw new Error('not needed in this test');
 	}
 }

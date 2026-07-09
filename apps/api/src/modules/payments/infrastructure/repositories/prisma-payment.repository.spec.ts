@@ -16,6 +16,8 @@ describe('PrismaPaymentRepository', () => {
 			gatewayId: 'mp-payment-1',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: null,
+			gatewayPaymentMethodId: null,
+			gatewayPaymentTypeId: null,
 			checkoutUrl: null,
 		});
 		const upsert = jest.fn().mockResolvedValue(undefined);
@@ -53,6 +55,8 @@ describe('PrismaPaymentRepository', () => {
 			gatewayId: 'mp-payment-1',
 			gatewayStatus: 'approved',
 			gatewayStatusDetail: null,
+			gatewayPaymentMethodId: null,
+			gatewayPaymentTypeId: null,
 			checkoutUrl: null,
 		});
 		expect(upsert).toHaveBeenCalledWith({
@@ -69,6 +73,8 @@ describe('PrismaPaymentRepository', () => {
 				gatewayId: 'mp-payment-1',
 				gatewayStatus: 'approved',
 				gatewayStatusDetail: null,
+				gatewayPaymentMethodId: null,
+				gatewayPaymentTypeId: null,
 				checkoutUrl: null,
 			},
 			update: {
@@ -81,6 +87,8 @@ describe('PrismaPaymentRepository', () => {
 				gatewayId: 'mp-payment-1',
 				gatewayStatus: 'approved',
 				gatewayStatusDetail: null,
+				gatewayPaymentMethodId: null,
+				gatewayPaymentTypeId: null,
 				checkoutUrl: null,
 			},
 		});
@@ -124,6 +132,8 @@ describe('PrismaPaymentRepository', () => {
 				gatewayId: null,
 				gatewayStatus: null,
 				gatewayStatusDetail: null,
+				gatewayPaymentMethodId: null,
+				gatewayPaymentTypeId: null,
 				checkoutUrl: null,
 			},
 			update: {
@@ -136,6 +146,8 @@ describe('PrismaPaymentRepository', () => {
 				gatewayId: null,
 				gatewayStatus: null,
 				gatewayStatusDetail: null,
+				gatewayPaymentMethodId: null,
+				gatewayPaymentTypeId: null,
 				checkoutUrl: null,
 			},
 		});
@@ -154,6 +166,8 @@ describe('PrismaPaymentRepository', () => {
 			gatewayId: 'mp-gateway-lookup',
 			gatewayStatus: 'pending',
 			gatewayStatusDetail: null,
+			gatewayPaymentMethodId: null,
+			gatewayPaymentTypeId: null,
 			checkoutUrl: null,
 		});
 		const prisma = {
@@ -205,6 +219,8 @@ describe('PrismaPaymentRepository', () => {
 					gatewayId: null,
 					gatewayStatus: null,
 					gatewayStatusDetail: null,
+					gatewayPaymentMethodId: null,
+					gatewayPaymentTypeId: null,
 					checkoutUrl: null,
 				}),
 				findFirst: jest.fn(),
@@ -233,6 +249,8 @@ describe('PrismaPaymentRepository', () => {
 					gatewayId: null,
 					gatewayStatus: null,
 					gatewayStatusDetail: null,
+					gatewayPaymentMethodId: null,
+					gatewayPaymentTypeId: null,
 					checkoutUrl: null,
 				}),
 				findFirst: jest.fn(),
@@ -265,6 +283,8 @@ describe('PrismaPaymentRepository', () => {
 					gatewayId: null,
 					gatewayStatus: null,
 					gatewayStatusDetail: null,
+					gatewayPaymentMethodId: null,
+					gatewayPaymentTypeId: null,
 					checkoutUrl: null,
 				}),
 				findFirst: jest.fn(),
@@ -276,5 +296,53 @@ describe('PrismaPaymentRepository', () => {
 		await expect(
 			repository.findById('payment-invalid-method-1'),
 		).rejects.toThrow('Invalid payment method persisted: pix');
+	});
+
+	it('uses a transaction-scoped advisory lock for stale checkout reconciliation', async () => {
+		const queryRaw = jest.fn().mockResolvedValue([{ locked: true }]);
+		const transaction = jest.fn(async (callback) =>
+			callback({ $queryRaw: queryRaw }),
+		);
+		const prisma = {
+			payment: {
+				findUnique: jest.fn(),
+				findFirst: jest.fn(),
+				upsert: jest.fn(),
+			},
+			$transaction: transaction,
+		};
+		const repository = new PrismaPaymentRepository(prisma as never);
+
+		await expect(
+			repository.withStaleCheckoutReconciliationLock(async () => 'ran'),
+		).resolves.toBe('ran');
+
+		expect(queryRaw).toHaveBeenCalled();
+		expect(transaction).toHaveBeenCalledWith(expect.any(Function), {
+			timeout: 120_000,
+		});
+	});
+
+	it('skips stale checkout reconciliation when the transaction lock is unavailable', async () => {
+		const queryRaw = jest.fn().mockResolvedValue([{ locked: false }]);
+		const transaction = jest.fn(async (callback) =>
+			callback({ $queryRaw: queryRaw }),
+		);
+		const prisma = {
+			payment: {
+				findUnique: jest.fn(),
+				findFirst: jest.fn(),
+				upsert: jest.fn(),
+			},
+			$transaction: transaction,
+		};
+		const repository = new PrismaPaymentRepository(prisma as never);
+		const callback = jest.fn();
+
+		await expect(
+			repository.withStaleCheckoutReconciliationLock(callback),
+		).resolves.toBeNull();
+
+		expect(callback).not.toHaveBeenCalled();
 	});
 });

@@ -17,6 +17,7 @@ import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/cr
 import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail-payment/fail-payment.use-case';
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
+import { ReconcileStaleCheckoutsUseCase } from '@modules/payments/application/use-cases/reconcile-stale-checkouts/reconcile-stale-checkouts.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
 import { SimulateDevPaymentOutcomeUseCase } from '@modules/payments/application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
@@ -139,6 +140,7 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 		HandlePaymentConfirmedWebhookUseCase,
 		PaymentLifecycleLogger,
 		ReleasePaymentHoldUseCase,
+		ReconcileStaleCheckoutsUseCase,
 		ResumePaymentCheckoutUseCase,
 		SimulateDevPaymentOutcomeUseCase,
 		StartCheckoutUseCase,

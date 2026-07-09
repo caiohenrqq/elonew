@@ -88,6 +88,8 @@ export class SimulateDevPaymentOutcomeUseCase {
 				gatewayId: `dev-${payment.id}`,
 				gatewayStatus: input.outcome,
 				gatewayStatusDetail: this.resolveGatewayStatusDetail(input.outcome),
+				gatewayPaymentMethodId: payment.paymentMethod,
+				gatewayPaymentTypeId: payment.paymentMethod,
 			});
 
 			if (input.outcome === 'approved') payment.confirm();

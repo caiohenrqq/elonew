@@ -37,6 +37,7 @@ describe('Payments module integration', () => {
 	let mercadoPagoSdkMock: {
 		createPayment: jest.Mock;
 		fetchPaymentNotification: jest.Mock;
+		fetchPaymentByExternalReference: jest.Mock;
 		verifyWebhookSignature: jest.Mock;
 	};
 	const clientUser: AuthenticatedUser = {
@@ -93,6 +94,16 @@ describe('Payments module integration', () => {
 				gatewayPaymentId: `mp-${notificationId}`,
 				gatewayStatus: 'approved',
 				gatewayStatusDetail: 'accredited',
+				gatewayPaymentMethodId: 'pix',
+				gatewayPaymentTypeId: 'bank_transfer',
+			})),
+			fetchPaymentByExternalReference: jest.fn(async (externalReference) => ({
+				internalPaymentId: externalReference,
+				gatewayPaymentId: `mp-${externalReference}`,
+				gatewayStatus: 'approved',
+				gatewayStatusDetail: 'accredited',
+				gatewayPaymentMethodId: 'pix',
+				gatewayPaymentTypeId: 'bank_transfer',
 			})),
 			verifyWebhookSignature: jest.fn().mockResolvedValue(true),
 		};
@@ -121,6 +132,9 @@ describe('Payments module integration', () => {
 				),
 				fetchPaymentNotification: jest.fn((input) =>
 					mercadoPagoSdkMock.fetchPaymentNotification(input),
+				),
+				fetchPaymentByExternalReference: jest.fn((externalReference) =>
+					mercadoPagoSdkMock.fetchPaymentByExternalReference(externalReference),
 				),
 			})
 			.overrideProvider(ORDER_STATUS_PORT_KEY)

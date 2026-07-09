@@ -1,11 +1,14 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
-import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
+import type {
+	PaymentRepositoryPort,
+	StalePaymentReconciliationCandidate,
+} from '@modules/payments/application/ports/payment-repository.port';
 import { Payment } from '@modules/payments/domain/payment.entity';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Injectable } from '@nestjs/common';
 import { PaymentMethod } from '@packages/shared/payments/payment-method';
 import { ensurePersistedEnum } from '@packages/shared/utils/enum.utils';
-import { PaymentMethod as PrismaPaymentMethod } from '@prisma/client';
+import { Prisma, PaymentMethod as PrismaPaymentMethod } from '@prisma/client';
 
 type PaymentRecord = {
 	id: string;
@@ -19,6 +22,8 @@ type PaymentRecord = {
 	gatewayId: string | null;
 	gatewayStatus: string | null;
 	gatewayStatusDetail: string | null;
+	gatewayPaymentMethodId: string | null;
+	gatewayPaymentTypeId: string | null;
 	checkoutUrl: string | null;
 };
 
@@ -65,6 +70,15 @@ type PaymentDelegate = {
 					order: { clientId: string };
 			  };
 	}): Promise<PaymentRecord | null>;
+	findMany(args: {
+		where: {
+			status: string;
+			createdAt: { lt: Date };
+			order: { status: string };
+		};
+		orderBy: { createdAt: 'asc' };
+		take: number;
+	}): Promise<PaymentRecord[]>;
 	upsert(args: {
 		where: { id: string };
 		create: PaymentRecord;
@@ -74,7 +88,15 @@ type PaymentDelegate = {
 
 type PaymentPrismaClient = {
 	payment: PaymentDelegate;
+	$transaction<T>(
+		callback: (transaction: {
+			$queryRaw<TQuery = unknown>(query: Prisma.Sql): Promise<TQuery>;
+		}) => Promise<T>,
+		options?: { timeout?: number },
+	): Promise<T>;
 };
+
+const STALE_CHECKOUT_RECONCILIATION_LOCK_ID = 911_984_301;
 
 @Injectable()
 export class PrismaPaymentRepository implements PaymentRepositoryPort {
@@ -133,6 +155,43 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 		return this.mapRecordToDomain(record);
 	}
 
+	async findStaleAwaitingCheckoutCandidates(input: {
+		createdBefore: Date;
+		limit: number;
+	}): Promise<StalePaymentReconciliationCandidate[]> {
+		const records = await this.getDelegate().findMany({
+			where: {
+				status: PaymentStatus.AWAITING_CONFIRMATION,
+				createdAt: { lt: input.createdBefore },
+				order: { status: 'awaiting_payment' },
+			},
+			orderBy: { createdAt: 'asc' },
+			take: input.limit,
+		});
+
+		return records.map((record) => ({
+			payment: this.mapRecordToDomain(record),
+		}));
+	}
+
+	async withStaleCheckoutReconciliationLock<T>(
+		callback: () => Promise<T>,
+	): Promise<T | null> {
+		return await this.getClient().$transaction(
+			async (transaction) => {
+				const [{ locked }] = await transaction.$queryRaw<
+					Array<{ locked: boolean }>
+				>(
+					Prisma.sql`SELECT pg_try_advisory_xact_lock(${STALE_CHECKOUT_RECONCILIATION_LOCK_ID}) AS locked`,
+				);
+				if (!locked) return null;
+
+				return await callback();
+			},
+			{ timeout: 120_000 },
+		);
+	}
+
 	async save(payment: Payment): Promise<void> {
 		await this.getDelegate().upsert({
 			where: { id: payment.id },
@@ -148,6 +207,8 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				gatewayId: payment.gatewayId,
 				gatewayStatus: payment.gatewayStatus,
 				gatewayStatusDetail: payment.gatewayStatusDetail,
+				gatewayPaymentMethodId: payment.gatewayPaymentMethodId,
+				gatewayPaymentTypeId: payment.gatewayPaymentTypeId,
 				checkoutUrl: payment.checkoutUrl,
 			},
 			update: {
@@ -160,6 +221,8 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 				gatewayId: payment.gatewayId,
 				gatewayStatus: payment.gatewayStatus,
 				gatewayStatusDetail: payment.gatewayStatusDetail,
+				gatewayPaymentMethodId: payment.gatewayPaymentMethodId,
+				gatewayPaymentTypeId: payment.gatewayPaymentTypeId,
 				checkoutUrl: payment.checkoutUrl,
 			},
 		});
@@ -180,6 +243,8 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 			gatewayId: record.gatewayId,
 			gatewayStatus: record.gatewayStatus,
 			gatewayStatusDetail: record.gatewayStatusDetail,
+			gatewayPaymentMethodId: record.gatewayPaymentMethodId,
+			gatewayPaymentTypeId: record.gatewayPaymentTypeId,
 			checkoutUrl: record.checkoutUrl,
 			grossAmount: record.grossAmount,
 			boosterAmount: record.boosterAmount,
@@ -193,6 +258,10 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 	}
 
 	private getDelegate(): PaymentDelegate {
-		return (this.prisma as unknown as PaymentPrismaClient).payment;
+		return this.getClient().payment;
+	}
+
+	private getClient(): PaymentPrismaClient {
+		return this.prisma as unknown as PaymentPrismaClient;
 	}
 }

@@ -31,4 +31,12 @@ export class DevPaymentGatewayAdapter implements PaymentGatewayPort {
 			new Error('Dev payment gateway does not fetch provider notifications.'),
 		);
 	}
+
+	fetchPaymentByExternalReference(
+		_externalReference: string,
+	): Promise<FetchPaymentNotificationOutput | null> {
+		return Promise.reject(
+			new Error('Dev payment gateway does not fetch provider notifications.'),
+		);
+	}
 }

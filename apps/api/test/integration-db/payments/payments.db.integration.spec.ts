@@ -21,6 +21,7 @@ describe('Payments module integration (db)', () => {
 	let mercadoPagoSdkMock: {
 		createPayment: jest.Mock;
 		fetchPaymentNotification: jest.Mock;
+		fetchPaymentByExternalReference: jest.Mock;
 		verifyWebhookSignature: jest.Mock;
 	};
 
@@ -95,6 +96,16 @@ describe('Payments module integration (db)', () => {
 				gatewayPaymentId: `mp-${notificationId}`,
 				gatewayStatus: 'approved',
 				gatewayStatusDetail: 'accredited',
+				gatewayPaymentMethodId: 'pix',
+				gatewayPaymentTypeId: 'bank_transfer',
+			})),
+			fetchPaymentByExternalReference: jest.fn(async (externalReference) => ({
+				internalPaymentId: externalReference,
+				gatewayPaymentId: `mp-${externalReference}`,
+				gatewayStatus: 'approved',
+				gatewayStatusDetail: 'accredited',
+				gatewayPaymentMethodId: 'pix',
+				gatewayPaymentTypeId: 'bank_transfer',
 			})),
 			verifyWebhookSignature: jest.fn().mockResolvedValue(true),
 		};

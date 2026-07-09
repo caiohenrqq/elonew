@@ -23,6 +23,8 @@ export type MercadoPagoFetchPaymentNotificationOutput = {
 	gatewayPaymentId: string;
 	gatewayStatus: string;
 	gatewayStatusDetail: string | null;
+	gatewayPaymentMethodId: string | null;
+	gatewayPaymentTypeId: string | null;
 };
 
 export type MercadoPagoWebhookPayload = {
@@ -38,6 +40,9 @@ export interface MercadoPagoSdkPort {
 	fetchPaymentNotification(
 		input: MercadoPagoFetchPaymentNotificationInput,
 	): Promise<MercadoPagoFetchPaymentNotificationOutput>;
+	fetchPaymentByExternalReference(
+		externalReference: string,
+	): Promise<MercadoPagoFetchPaymentNotificationOutput | null>;
 	verifyWebhookSignature(input: {
 		payload: MercadoPagoWebhookPayload;
 		signature?: string;
