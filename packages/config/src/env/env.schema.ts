@@ -21,6 +21,8 @@ const DEFAULT_ORDER_CREDENTIALS_ENCRYPTION_KEY =
 
 export const RESEND_API_KEY_PLACEHOLDER = 're_xxxxxxxxx';
 
+const DEFAULT_WEB_APP_URL = 'http://localhost:3001';
+
 const PRODUCTION_ONLY_DEFAULT_SECRETS = {
 	JWT_ACCESS_TOKEN_SECRET: DEFAULT_JWT_ACCESS_TOKEN_SECRET,
 	INTERNAL_API_KEY: DEFAULT_INTERNAL_API_KEY,
@@ -112,7 +114,7 @@ export const envSchema = z
 			.trim()
 			.url()
 			.default('http://localhost:3001'),
-		WEB_APP_URL: z.string().trim().url().default('http://localhost:3001'),
+		WEB_APP_URL: z.string().trim().url().default(DEFAULT_WEB_APP_URL),
 		ORDER_QUOTE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
 		AUTH_LOGIN_THROTTLE_LIMIT: z.coerce.number().int().positive().default(5),
 		AUTH_LOGIN_THROTTLE_TTL_SECONDS: z.coerce
@@ -163,6 +165,15 @@ export const envSchema = z
 						'Production environment must override development placeholder secrets.',
 				});
 			}
+		}
+
+		if (env.WEB_APP_URL === DEFAULT_WEB_APP_URL) {
+			context.addIssue({
+				code: 'custom',
+				path: ['WEB_APP_URL'],
+				message:
+					'Production environment must set WEB_APP_URL to the public web app URL.',
+			});
 		}
 
 		if (
