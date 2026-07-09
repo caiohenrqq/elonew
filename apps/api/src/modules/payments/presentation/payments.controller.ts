@@ -11,6 +11,7 @@ import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/c
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
 import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail-payment/fail-payment.use-case';
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
+import { PaymentLifecycleLogger } from '@modules/payments/application/logging/payment-lifecycle.logger';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
@@ -23,6 +24,7 @@ import {
 	Headers,
 	HttpCode,
 	NotFoundException,
+	Optional,
 	Param,
 	Post,
 	UseGuards,
@@ -32,7 +34,6 @@ import type { PaymentMethod } from '@packages/shared/payments/payment-method';
 import {
 	type CreatePaymentSchemaInput,
 	createPaymentSchema,
-	type MercadoPagoWebhookSchemaInput,
 	mercadoPagoWebhookSchema,
 	type OrderIdParamSchemaInput,
 	orderIdParamSchema,
@@ -57,6 +58,8 @@ export class PaymentsController {
 		private readonly simulateDevPaymentOutcomeUseCase: SimulateDevPaymentOutcomeUseCase,
 		private readonly startCheckoutUseCase: StartCheckoutUseCase,
 		private readonly appSettings: AppSettingsService,
+		@Optional()
+		private readonly paymentLifecycleLogger?: PaymentLifecycleLogger,
 	) {}
 
 	@Post()
@@ -170,15 +173,29 @@ export class PaymentsController {
 	@Public()
 	@HttpCode(200)
 	async handleMercadoPagoWebhook(
-		@Body(new ZodValidationPipe(mercadoPagoWebhookSchema))
-		body: MercadoPagoWebhookSchemaInput,
+		@Body() body: unknown,
 		@Headers('x-signature') signature?: string,
 		@Headers('x-request-id') requestId?: string,
 	): Promise<{ processed: boolean }> {
+		const parsed = mercadoPagoWebhookSchema.safeParse(body);
+		if (!parsed.success) {
+			this.paymentLifecycleLogger?.emit(
+				{
+					event: 'payment.lifecycle',
+					operation: 'mercadopago_webhook',
+					outcome: 'skipped',
+					webhook_ignored_reason: 'unsupported_notification_format',
+					webhook_request_id: requestId,
+				},
+				Date.now(),
+			);
+			return { processed: false };
+		}
+
 		return await this.handlePaymentConfirmedWebhookUseCase.execute({
-			eventId: body.id,
-			topic: body.type,
-			notificationResourceId: body.data.id,
+			eventId: parsed.data.id,
+			topic: parsed.data.type,
+			notificationResourceId: parsed.data.data.id,
 			signature,
 			requestId,
 		});

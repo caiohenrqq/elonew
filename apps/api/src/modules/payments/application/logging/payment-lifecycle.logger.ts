@@ -38,6 +38,7 @@ export type PaymentLifecycleLogEvent = {
 	webhook_processed_event_key?: string;
 	webhook_already_processed?: boolean;
 	webhook_resolution?: string;
+	webhook_ignored_reason?: string;
 	side_effects?: string[];
 	error_type?: string;
 	error_message?: string;
