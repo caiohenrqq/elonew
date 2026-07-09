@@ -1,5 +1,10 @@
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import type { OrderStatusPort } from '@modules/payments/application/ports/order-status.port';
+import type {
+	InitiatePaymentInput,
+	InitiatePaymentOutput,
+	PaymentGatewayPort,
+} from '@modules/payments/application/ports/payment-gateway.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
@@ -86,6 +91,27 @@ class InMemoryOrderStatusPort implements OrderStatusPort {
 	}
 }
 
+class FakePaymentGateway implements PaymentGatewayPort {
+	lastInput: InitiatePaymentInput | undefined;
+
+	async initiatePayment(
+		input: InitiatePaymentInput,
+	): Promise<InitiatePaymentOutput> {
+		this.lastInput = input;
+
+		return {
+			checkoutUrl: `https://checkout.example/fresh/${input.paymentId}`,
+			backUrl: `https://app.example/client/orders/${input.orderId}`,
+			gatewayReferenceId: `pref-fresh-${input.paymentId}`,
+			gatewayStatus: 'pending',
+		};
+	}
+
+	async fetchPaymentNotification(): Promise<never> {
+		throw new Error('not needed in this test');
+	}
+}
+
 const makePayment = (input?: { checkoutUrl?: string | null }) => {
 	const payment = Payment.create({
 		id: 'payment-1',
@@ -108,7 +134,7 @@ const makePayment = (input?: { checkoutUrl?: string | null }) => {
 };
 
 describe('ResumePaymentCheckoutUseCase', () => {
-	it('returns the stored checkout URL for an owned awaiting payment', async () => {
+	it('creates a fresh checkout for an owned awaiting payment', async () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
 		repository.insert(makePayment(), 'client-1');
@@ -116,14 +142,19 @@ describe('ResumePaymentCheckoutUseCase', () => {
 		const useCase = new ResumePaymentCheckoutUseCase(
 			repository,
 			orderStatusPort,
+			new FakePaymentGateway(),
 		);
 
 		await expect(
 			useCase.execute({ orderId: 'order-1', clientId: 'client-1' }),
 		).resolves.toEqual({
 			paymentId: 'payment-1',
-			checkoutUrl: 'https://checkout.example/pay',
+			checkoutUrl: 'https://checkout.example/fresh/payment-1',
 		});
+
+		const saved = await repository.findById('payment-1');
+		expect(saved?.gatewayReferenceId).toBe('pref-fresh-payment-1');
+		expect(saved?.checkoutUrl).toBe('https://checkout.example/fresh/payment-1');
 	});
 
 	it('throws when the payment belongs to another client', async () => {
@@ -134,6 +165,7 @@ describe('ResumePaymentCheckoutUseCase', () => {
 		const useCase = new ResumePaymentCheckoutUseCase(
 			repository,
 			orderStatusPort,
+			new FakePaymentGateway(),
 		);
 
 		await expect(
@@ -151,6 +183,7 @@ describe('ResumePaymentCheckoutUseCase', () => {
 		const useCase = new ResumePaymentCheckoutUseCase(
 			repository,
 			orderStatusPort,
+			new FakePaymentGateway(),
 		);
 
 		await expect(
@@ -158,7 +191,7 @@ describe('ResumePaymentCheckoutUseCase', () => {
 		).rejects.toThrow(PaymentCheckoutResumeNotAllowedError);
 	});
 
-	it('throws when an older payment has no stored checkout URL', async () => {
+	it('recovers an older payment that has no stored checkout URL', async () => {
 		const repository = new InMemoryPaymentRepository();
 		const orderStatusPort = new InMemoryOrderStatusPort();
 		repository.insert(makePayment({ checkoutUrl: null }), 'client-1');
@@ -166,11 +199,15 @@ describe('ResumePaymentCheckoutUseCase', () => {
 		const useCase = new ResumePaymentCheckoutUseCase(
 			repository,
 			orderStatusPort,
+			new FakePaymentGateway(),
 		);
 
 		await expect(
 			useCase.execute({ orderId: 'order-1', clientId: 'client-1' }),
-		).rejects.toThrow(PaymentCheckoutResumeNotAllowedError);
+		).resolves.toEqual({
+			paymentId: 'payment-1',
+			checkoutUrl: 'https://checkout.example/fresh/payment-1',
+		});
 	});
 
 	it.each([
@@ -186,6 +223,7 @@ describe('ResumePaymentCheckoutUseCase', () => {
 		const useCase = new ResumePaymentCheckoutUseCase(
 			repository,
 			orderStatusPort,
+			new FakePaymentGateway(),
 		);
 
 		await expect(
