@@ -43,7 +43,9 @@ RUN pnpm build:packages \
 
 FROM base AS runtime
 
+ARG APP_VERSION=unknown
 ENV NODE_ENV=production
+ENV APP_VERSION=$APP_VERSION
 
 COPY --from=build --chown=node:node /workspace /workspace
 
