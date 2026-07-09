@@ -9,6 +9,7 @@ export type MercadoPagoCreatePaymentInput = {
 
 export type MercadoPagoCreatePaymentOutput = {
 	checkoutUrl: string;
+	backUrl: string;
 	gatewayReferenceId: string;
 	gatewayStatus: string | null;
 };

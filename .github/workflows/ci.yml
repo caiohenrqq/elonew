@@ -201,7 +201,7 @@ jobs:
           cd /opt/elonew/elonew
           git fetch --force --tags origin
           git checkout --detach "refs/tags/$tag"
-          docker compose --env-file infrastructure/docker/prod/.env \
+          APP_VERSION="$tag" docker compose --env-file infrastructure/docker/prod/.env \
             -f infrastructure/docker/prod/compose.yml up -d --build
           for attempt in {1..30}; do
             curl --fail --silent --show-error https://api.elonew.com.br/health && exit 0

@@ -29,6 +29,7 @@ export type PaymentLifecycleLogEvent = {
 	gateway_status?: string;
 	gateway_status_detail?: string;
 	checkout_url_present?: boolean;
+	back_url?: string;
 	webhook_event_id?: string;
 	webhook_topic?: string;
 	webhook_resource_id?: string;

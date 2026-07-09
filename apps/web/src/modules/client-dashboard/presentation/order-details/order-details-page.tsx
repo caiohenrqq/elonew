@@ -7,11 +7,13 @@ import { RatingCard } from '@/shared/ratings/rating-card';
 import type { RatingOutput } from '@/shared/ratings/rating-contracts';
 import { getOrder, getOrderChatMessages } from '../../actions/order-actions';
 import type { ClientOrder } from '../../model/orders';
+import { AwaitingPaymentBanner } from './awaiting-payment-banner';
 import { OrderActivityCard } from './order-activity-card';
 import { OrderBoosterCard } from './order-booster-card';
 import { OrderChatPanel } from './order-chat-panel';
 import { OrderDetailsHeader } from './order-details-header';
 import { orderDetailsLayout } from './order-details-layout';
+import { OrderDetailsLiveRefresh } from './order-details-live-refresh';
 import { OrderServiceCard } from './order-service-card';
 import { OrderSupportCard } from './order-support-card';
 
@@ -67,7 +69,9 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 
 	return (
 		<div className="space-y-8">
+			<OrderDetailsLiveRefresh />
 			<OrderDetailsHeader order={order} />
+			{order.status === 'awaiting_payment' ? <AwaitingPaymentBanner /> : null}
 
 			<div className={orderDetailsLayout.grid}>
 				{chatPanel}

@@ -118,6 +118,7 @@ export class StartCheckoutUseCase {
 			logEvent.gateway_reference_id = payment.gatewayReferenceId ?? undefined;
 			logEvent.gateway_status = payment.gatewayStatus ?? undefined;
 			logEvent.checkout_url_present = Boolean(payment.checkoutUrl);
+			logEvent.back_url = gatewayPayment.backUrl ?? undefined;
 
 			return {
 				orderId: order.id,

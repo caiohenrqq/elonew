@@ -11,7 +11,11 @@ import { LoggerModule } from 'nestjs-pino';
 			useFactory: (settings: AppSettingsService) => ({
 				pinoHttp: {
 					level: 'info',
-					base: { service: 'api', env: settings.nodeEnv },
+					base: {
+						service: 'api',
+						env: settings.nodeEnv,
+						version: process.env.APP_VERSION ?? 'unknown',
+					},
 					genReqId: (req: IncomingMessage, res: ServerResponse) => {
 						const header = req.headers['x-request-id'];
 						const requestId =

@@ -222,6 +222,7 @@ describe('AppSettingsService', () => {
 		MERCADO_PAGO_WEBHOOK_SECRET: 'webhook-secret',
 		MERCADO_PAGO_WEBHOOK_URL:
 			'https://example.com/payments/webhooks/mercadopago',
+		WEB_APP_URL: 'https://app.example.com',
 	});
 
 	it('rejects production env when the Resend API key is missing', () => {
@@ -247,6 +248,22 @@ describe('AppSettingsService', () => {
 		expect(result.error.issues).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ path: ['RESEND_API_KEY'] }),
+			]),
+		);
+	});
+
+	it('rejects production env when WEB_APP_URL is left at the localhost default', () => {
+		const result = envSchema.safeParse({
+			...buildValidProductionEnv(),
+			RESEND_API_KEY: 're_live_realkey',
+			WEB_APP_URL: 'http://localhost:3001',
+		});
+
+		expect(result.success).toBe(false);
+		if (result.success) return;
+		expect(result.error.issues).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ path: ['WEB_APP_URL'] }),
 			]),
 		);
 	});

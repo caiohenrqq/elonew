@@ -28,6 +28,7 @@ describe('MercadoPagoSdkAdapter', () => {
 			}),
 		).resolves.toEqual({
 			checkoutUrl: 'https://mercadopago.test/checkout/pref-1',
+			backUrl: 'https://app.elonew.test/client/orders/order-1',
 			gatewayReferenceId: 'pref-1',
 			gatewayStatus: null,
 		});
@@ -65,7 +66,7 @@ describe('MercadoPagoSdkAdapter', () => {
 		});
 	});
 
-	it('sends back_urls and auto_return so the buyer returns to the orders page', async () => {
+	it('sends back_urls and auto_return so the buyer returns to their order page', async () => {
 		const create = jest.fn().mockResolvedValue({
 			id: 'pref-back',
 			init_point: 'https://mercadopago.test/checkout/pref-back',
@@ -90,7 +91,7 @@ describe('MercadoPagoSdkAdapter', () => {
 			paymentMethod: 'pix',
 		});
 
-		const ordersUrl = 'https://app.elonew.test/client/orders';
+		const ordersUrl = 'https://app.elonew.test/client/orders/order-back';
 		expect(create).toHaveBeenCalledWith({
 			body: expect.objectContaining({
 				back_urls: {

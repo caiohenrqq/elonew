@@ -45,6 +45,7 @@ export type CheckoutActionState = {
 };
 
 export type ResumePaymentCheckoutActionState = {
+	checkoutUrl?: string;
 	error?: string;
 };
 
@@ -235,18 +236,14 @@ export const sendOrderChatMessageAction = async (
 
 export const resumePaymentCheckoutAction = async (
 	orderId: string,
-	_state: ResumePaymentCheckoutActionState,
-	_formData: FormData,
 ): Promise<ResumePaymentCheckoutActionState> => {
 	const session = await getAuthSession();
 	if (!session) redirect('/login');
 
-	let checkoutUrl: string;
-
 	try {
 		await assertSameOriginRequest();
 		const payment = await resumePaymentCheckout(orderId, api.request);
-		checkoutUrl = payment.checkoutUrl;
+		return { checkoutUrl: payment.checkoutUrl };
 	} catch (error) {
 		if (
 			error instanceof ApiRequestError &&
@@ -258,6 +255,4 @@ export const resumePaymentCheckoutAction = async (
 			error: getCheckoutErrorMessage(error),
 		};
 	}
-
-	redirect(checkoutUrl);
 };

@@ -73,7 +73,10 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 	async createPayment(
 		input: MercadoPagoCreatePaymentInput,
 	): Promise<MercadoPagoCreatePaymentOutput> {
-		const ordersUrl = new URL('/client/orders', this.webAppUrl).toString();
+		const ordersUrl = new URL(
+			`/client/orders/${input.orderId}`,
+			this.webAppUrl,
+		).toString();
 		const response = await this.preferenceClient.create({
 			body: {
 				external_reference: input.paymentId,
@@ -99,6 +102,7 @@ export class MercadoPagoSdkAdapter implements MercadoPagoSdkPort {
 
 		return {
 			checkoutUrl: response.init_point,
+			backUrl: ordersUrl,
 			gatewayReferenceId: response.id,
 			gatewayStatus: null,
 		};

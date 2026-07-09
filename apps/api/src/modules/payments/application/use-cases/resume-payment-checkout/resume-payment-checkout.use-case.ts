@@ -9,6 +9,10 @@ import {
 	type OrderStatusPort,
 } from '@modules/payments/application/ports/order-status.port';
 import {
+	PAYMENT_GATEWAY_PORT_KEY,
+	type PaymentGatewayPort,
+} from '@modules/payments/application/ports/payment-gateway.port';
+import {
 	PAYMENT_REPOSITORY_KEY,
 	type PaymentRepositoryPort,
 } from '@modules/payments/application/ports/payment-repository.port';
@@ -18,6 +22,7 @@ import {
 } from '@modules/payments/domain/payment.errors';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Money } from '@packages/shared/money/money';
 
 type ResumePaymentCheckoutInput = {
 	orderId: string;
@@ -36,6 +41,8 @@ export class ResumePaymentCheckoutUseCase {
 		private readonly paymentRepository: PaymentRepositoryPort,
 		@Inject(ORDER_STATUS_PORT_KEY)
 		private readonly orderStatusPort: OrderStatusPort,
+		@Inject(PAYMENT_GATEWAY_PORT_KEY)
+		private readonly paymentGatewayPort: PaymentGatewayPort,
 		@Optional()
 		private readonly paymentLifecycleLogger?: PaymentLifecycleLogger,
 	) {}
@@ -80,16 +87,33 @@ export class ResumePaymentCheckoutUseCase {
 
 			if (
 				orderStatus !== OrderStatus.AWAITING_PAYMENT ||
-				payment.status !== PaymentStatus.AWAITING_CONFIRMATION ||
-				!payment.checkoutUrl
+				payment.status !== PaymentStatus.AWAITING_CONFIRMATION
 			)
 				throw new PaymentCheckoutResumeNotAllowedError();
 
+			const gatewayPayment = await this.paymentGatewayPort.initiatePayment({
+				paymentId: payment.id,
+				orderId: payment.orderId,
+				amount: Money.fromCents(payment.grossAmount).toDecimal(),
+				paymentMethod: payment.paymentMethod,
+			});
+			payment.attachGatewayDetails({
+				gatewayReferenceId: gatewayPayment.gatewayReferenceId,
+				gatewayId: payment.gatewayId,
+				gatewayStatus: gatewayPayment.gatewayStatus,
+				checkoutUrl: gatewayPayment.checkoutUrl,
+			});
+			await this.paymentRepository.save(payment);
+
 			logEvent.outcome = 'success';
+			logEvent.gateway_reference_id = payment.gatewayReferenceId ?? undefined;
+			logEvent.gateway_status = payment.gatewayStatus ?? undefined;
+			logEvent.checkout_url_present = true;
+			logEvent.back_url = gatewayPayment.backUrl ?? undefined;
 
 			return {
 				paymentId: payment.id,
-				checkoutUrl: payment.checkoutUrl,
+				checkoutUrl: gatewayPayment.checkoutUrl,
 			};
 		} catch (error) {
 			markPaymentLifecycleLogError(logEvent, error);

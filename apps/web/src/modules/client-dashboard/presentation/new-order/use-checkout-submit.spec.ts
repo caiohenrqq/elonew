@@ -7,6 +7,17 @@ jest.mock('../../actions/order-actions', () => ({
 	startCheckoutAction: jest.fn(),
 }));
 
+const routerPush = jest.fn();
+
+jest.mock('next/navigation', () => ({
+	useRouter: () => ({ push: routerPush }),
+}));
+
+const makeCheckoutTab = () => ({
+	close: jest.fn(),
+	location: { href: '' } as Location,
+});
+
 describe('useCheckoutSubmit', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -30,10 +41,11 @@ describe('useCheckoutSubmit', () => {
 		expect(startCheckoutAction).not.toHaveBeenCalled();
 	});
 
-	it('redirects to the returned checkout URL after a successful checkout', async () => {
-		const redirectToCheckout = jest.fn();
+	it('opens checkout in a new tab and sends the current tab to the order page', async () => {
+		const checkoutTab = makeCheckoutTab();
 		(startCheckoutAction as jest.Mock).mockResolvedValue({
 			checkoutUrl: 'https://checkout.example.com/pay',
+			orderId: 'order-1',
 		});
 
 		const orderInput = createInitialCheckoutInput();
@@ -41,7 +53,7 @@ describe('useCheckoutSubmit', () => {
 			useCheckoutSubmit({
 				hasAcceptedTerms: true,
 				orderInput,
-				redirectToCheckout,
+				openCheckoutTab: () => checkoutTab,
 			}),
 		);
 
@@ -53,14 +65,44 @@ describe('useCheckoutSubmit', () => {
 			expect(startCheckoutAction).toHaveBeenCalledWith(orderInput);
 		});
 		await waitFor(() => {
+			expect(checkoutTab.location.href).toBe(
+				'https://checkout.example.com/pay',
+			);
+		});
+		expect(routerPush).toHaveBeenCalledWith('/client/orders/order-1');
+		expect(result.current.checkoutError).toBeNull();
+	});
+
+	it('falls back to a same-tab redirect when the popup is blocked', async () => {
+		const redirectToCheckout = jest.fn();
+		(startCheckoutAction as jest.Mock).mockResolvedValue({
+			checkoutUrl: 'https://checkout.example.com/pay',
+			orderId: 'order-1',
+		});
+
+		const { result } = renderHook(() =>
+			useCheckoutSubmit({
+				hasAcceptedTerms: true,
+				orderInput: createInitialCheckoutInput(),
+				redirectToCheckout,
+				openCheckoutTab: () => null,
+			}),
+		);
+
+		act(() => {
+			result.current.handleCheckout();
+		});
+
+		await waitFor(() => {
 			expect(redirectToCheckout).toHaveBeenCalledWith(
 				'https://checkout.example.com/pay',
 			);
 		});
-		expect(result.current.checkoutError).toBeNull();
+		expect(routerPush).not.toHaveBeenCalled();
 	});
 
-	it('keeps the user on the page when checkout returns an error', async () => {
+	it('closes the checkout tab and keeps the user on the page when checkout fails', async () => {
+		const checkoutTab = makeCheckoutTab();
 		const redirectToCheckout = jest.fn();
 		(startCheckoutAction as jest.Mock).mockResolvedValue({
 			error: 'Não foi possível iniciar o checkout.',
@@ -71,6 +113,7 @@ describe('useCheckoutSubmit', () => {
 				hasAcceptedTerms: true,
 				orderInput: createInitialCheckoutInput(),
 				redirectToCheckout,
+				openCheckoutTab: () => checkoutTab,
 			}),
 		);
 
@@ -83,6 +126,7 @@ describe('useCheckoutSubmit', () => {
 				'Não foi possível iniciar o checkout.',
 			);
 		});
+		expect(checkoutTab.close).toHaveBeenCalled();
 		expect(redirectToCheckout).not.toHaveBeenCalled();
 	});
 });

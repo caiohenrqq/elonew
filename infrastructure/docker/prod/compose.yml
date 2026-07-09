@@ -5,6 +5,8 @@ x-shared-app-image: &shared-app-image ${APP_IMAGE:-elonew-prod:latest}
 x-app-image-build: &app-image-build
   context: ../../..
   dockerfile: infrastructure/docker/prod/Dockerfile
+  args:
+    APP_VERSION: ${APP_VERSION:-unknown}
 
 x-postgres-connection-url: &postgres-connection-url postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infrastructure/docker/prod/.env}@database:5432/elonew
 
