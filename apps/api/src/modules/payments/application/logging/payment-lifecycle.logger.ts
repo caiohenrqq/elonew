@@ -13,7 +13,7 @@ export type PaymentLifecycleLogEvent = {
 		| 'simulate_dev_outcome'
 		| 'mercadopago_webhook'
 		| 'reconcile_stale_checkout';
-	outcome?: 'success' | 'error' | 'skipped';
+	outcome?: 'success' | 'error' | 'skipped' | 'late_approved_after_expiration';
 	duration_ms?: number;
 	client_id?: string;
 	order_id?: string;
@@ -46,6 +46,7 @@ export type PaymentLifecycleLogEvent = {
 	failed_count?: number;
 	pending_updated_count?: number;
 	skipped_count?: number;
+	expired_count?: number;
 	gateway_error_count?: number;
 	error_type?: string;
 	error_message?: string;

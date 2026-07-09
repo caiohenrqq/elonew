@@ -9,6 +9,7 @@ import { ORDER_PAYMENT_AMOUNT_PORT_KEY } from '@modules/payments/application/por
 import { ORDER_PAYMENT_CONFIRMATION_PORT_KEY } from '@modules/payments/application/ports/order-payment-confirmation.port';
 import { ORDER_STATUS_PORT_KEY } from '@modules/payments/application/ports/order-status.port';
 import { PAYMENT_GATEWAY_PORT_KEY } from '@modules/payments/application/ports/payment-gateway.port';
+import { PAYMENT_GOVERNANCE_ACTION_PORT_KEY } from '@modules/payments/application/ports/payment-governance-action.port';
 import { PAYMENT_REPOSITORY_KEY } from '@modules/payments/application/ports/payment-repository.port';
 import { PAYMENT_WEBHOOK_SIGNATURE_VERIFIER_PORT_KEY } from '@modules/payments/application/ports/payment-webhook-signature-verifier.port';
 import { PROCESSED_WEBHOOK_EVENT_PORT_KEY } from '@modules/payments/application/ports/processed-webhook-event.port';
@@ -29,6 +30,7 @@ import { OrderCredentialCleanupFromOrdersAdapter } from '@modules/payments/infra
 import { OrderPaymentAmountFromPrismaAdapter } from '@modules/payments/infrastructure/adapters/order-payment-amount-from-prisma.adapter';
 import { OrderPaymentConfirmationFromOrdersAdapter } from '@modules/payments/infrastructure/adapters/order-payment-confirmation-from-orders.adapter';
 import { OrderStatusFromPrismaAdapter } from '@modules/payments/infrastructure/adapters/order-status-from-prisma.adapter';
+import { PaymentGovernanceActionFromPrismaAdapter } from '@modules/payments/infrastructure/adapters/payment-governance-action-from-prisma.adapter';
 import { PrismaPaymentRepository } from '@modules/payments/infrastructure/repositories/prisma-payment.repository';
 import { PrismaProcessedWebhookEventRepository } from '@modules/payments/infrastructure/repositories/prisma-processed-webhook-event.repository';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
@@ -106,6 +108,15 @@ import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/me
 				orderPaymentAmountPort: OrderPaymentAmountFromPrismaAdapter,
 			): OrderPaymentAmountFromPrismaAdapter => orderPaymentAmountPort,
 			inject: [OrderPaymentAmountFromPrismaAdapter],
+		},
+		PaymentGovernanceActionFromPrismaAdapter,
+		{
+			provide: PAYMENT_GOVERNANCE_ACTION_PORT_KEY,
+			useFactory: (
+				paymentGovernanceActionPort: PaymentGovernanceActionFromPrismaAdapter,
+			): PaymentGovernanceActionFromPrismaAdapter =>
+				paymentGovernanceActionPort,
+			inject: [PaymentGovernanceActionFromPrismaAdapter],
 		},
 		OrderPaymentConfirmationFromOrdersAdapter,
 		{

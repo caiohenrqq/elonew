@@ -9,7 +9,8 @@ export type AdminGovernanceActionType =
 	| 'USER_CREATE'
 	| 'USER_BLOCK'
 	| 'USER_UNBLOCK'
-	| 'ORDER_FORCE_CANCEL';
+	| 'ORDER_FORCE_CANCEL'
+	| 'PAYMENT_LATE_APPROVAL';
 
 export type AdminGovernanceActionInput = {
 	adminUserId: string;

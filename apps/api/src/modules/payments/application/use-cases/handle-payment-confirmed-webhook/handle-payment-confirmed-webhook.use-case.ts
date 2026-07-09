@@ -16,6 +16,10 @@ import {
 	type PaymentGatewayPort,
 } from '@modules/payments/application/ports/payment-gateway.port';
 import {
+	PAYMENT_GOVERNANCE_ACTION_PORT_KEY,
+	type PaymentGovernanceActionPort,
+} from '@modules/payments/application/ports/payment-governance-action.port';
+import {
 	PAYMENT_REPOSITORY_KEY,
 	type PaymentRepositoryPort,
 } from '@modules/payments/application/ports/payment-repository.port';
@@ -33,6 +37,7 @@ import {
 	PaymentWebhookSignatureInvalidError,
 	PaymentWebhookTopicNotSupportedError,
 } from '@modules/payments/domain/payment.errors';
+import { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 
 type HandlePaymentConfirmedWebhookInput = {
@@ -64,6 +69,8 @@ export class HandlePaymentConfirmedWebhookUseCase {
 		private readonly paymentWebhookSignatureVerifier: PaymentWebhookSignatureVerifierPort,
 		@Inject(PAYMENT_GATEWAY_PORT_KEY)
 		private readonly paymentGatewayPort: PaymentGatewayPort,
+		@Inject(PAYMENT_GOVERNANCE_ACTION_PORT_KEY)
+		private readonly paymentGovernanceActionPort: PaymentGovernanceActionPort,
 		@Optional()
 		private readonly paymentLifecycleLogger?: PaymentLifecycleLogger,
 	) {}
@@ -137,6 +144,19 @@ export class HandlePaymentConfirmedWebhookUseCase {
 
 			const resolution = this.resolveNotification(notification.gatewayStatus);
 			logEvent.webhook_resolution = resolution;
+			if (resolution === 'confirm' && payment.status === PaymentStatus.FAILED) {
+				await this.paymentRepository.save(payment);
+				await this.paymentGovernanceActionPort.recordLateApprovedAfterExpiration(
+					{ paymentId: payment.id, orderId: payment.orderId },
+				);
+				logEvent.side_effects?.push('governance_action_recorded');
+				await this.processedWebhookEventPort.markProcessed(processedEventKey);
+
+				logEvent.outcome = 'late_approved_after_expiration';
+				logEvent.payment_status_after = payment.status;
+
+				return { processed: true };
+			}
 			if (resolution === 'confirm') payment.confirm();
 			if (resolution === 'fail') payment.fail();
 			await this.paymentRepository.save(payment);
