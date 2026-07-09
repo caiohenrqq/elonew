@@ -11,6 +11,9 @@ const buildSdk = (
 	fetchPaymentNotification: async () => {
 		throw new Error('not configured');
 	},
+	fetchPaymentByExternalReference: async () => {
+		throw new Error('not configured');
+	},
 	verifyWebhookSignature: async () => false,
 	...overrides,
 });

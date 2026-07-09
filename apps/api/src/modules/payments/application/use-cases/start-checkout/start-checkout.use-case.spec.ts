@@ -52,6 +52,10 @@ class FakeGateway implements PaymentGatewayPort {
 	async fetchPaymentNotification(): Promise<never> {
 		throw new Error('not needed in this test');
 	}
+
+	async fetchPaymentByExternalReference(): Promise<never> {
+		throw new Error('not needed in this test');
+	}
 }
 
 const run = (orderCheckout: FakeOrderCheckout, gateway: FakeGateway) =>

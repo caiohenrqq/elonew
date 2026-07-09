@@ -4,6 +4,7 @@ import {
 } from '@modules/orders/application/ports/order-repository.port';
 import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import type { Payment } from '@modules/payments/domain/payment.entity';
+import { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 
 @Injectable()
@@ -68,6 +69,28 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		}
 
 		return Promise.resolve(null);
+	}
+
+	async findStaleAwaitingCheckoutCandidates(): Promise<
+		Array<{ payment: Payment }>
+	> {
+		const candidates: Array<{ payment: Payment }> = [];
+		for (const payment of this.payments.values()) {
+			if (payment.status !== PaymentStatus.AWAITING_CONFIRMATION) continue;
+			if (this.orderRepository) {
+				const order = await this.orderRepository.findById(payment.orderId);
+				if (!order || order.status !== 'awaiting_payment') continue;
+			}
+			candidates.push({ payment });
+		}
+
+		return candidates;
+	}
+
+	async withStaleCheckoutReconciliationLock<T>(
+		callback: () => Promise<T>,
+	): Promise<T | null> {
+		return await callback();
 	}
 
 	save(payment: Payment): Promise<void> {

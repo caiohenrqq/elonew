@@ -19,6 +19,18 @@ export const startCheckoutSchema = z.object({
 
 export type StartCheckoutSchemaInput = z.infer<typeof startCheckoutSchema>;
 
+export const reconcileStaleCheckoutsSchema = z.preprocess(
+	(value) => value ?? {},
+	z.object({
+		now: z.string().datetime({ offset: true }).optional(),
+		limit: z.number().int().min(1).max(500).default(50),
+	}),
+);
+
+export type ReconcileStaleCheckoutsSchemaInput = z.infer<
+	typeof reconcileStaleCheckoutsSchema
+>;
+
 export const mercadoPagoWebhookSchema = z.object({
 	action: z.string().trim().min(1),
 	data: z.object({

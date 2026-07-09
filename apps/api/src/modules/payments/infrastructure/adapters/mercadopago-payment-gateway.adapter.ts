@@ -40,6 +40,18 @@ export class MercadoPagoPaymentGatewayAdapter implements PaymentGatewayPort {
 			throw toGatewayError('fetch_notification', error);
 		}
 	}
+
+	async fetchPaymentByExternalReference(
+		externalReference: string,
+	): Promise<FetchPaymentNotificationOutput | null> {
+		try {
+			return await this.mercadoPagoSdk.fetchPaymentByExternalReference(
+				externalReference,
+			);
+		} catch (error) {
+			throw toGatewayError('fetch_notification', error);
+		}
+	}
 }
 
 function toGatewayError(

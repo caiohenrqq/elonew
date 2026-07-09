@@ -128,8 +128,13 @@ class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 		gatewayPaymentId: string;
 		gatewayStatus: string;
 		gatewayStatusDetail: string | null;
-		isApproved: boolean;
+		gatewayPaymentMethodId: string | null;
+		gatewayPaymentTypeId: string | null;
 	}> {
+		throw new Error('not needed in this test');
+	}
+
+	async fetchPaymentByExternalReference(): Promise<never> {
 		throw new Error('not needed in this test');
 	}
 }

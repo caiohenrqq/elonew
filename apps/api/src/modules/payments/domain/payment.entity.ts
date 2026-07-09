@@ -34,6 +34,8 @@ export class Payment {
 		private attachedGatewayId: string | null,
 		private attachedGatewayStatus: string | null,
 		private attachedGatewayStatusDetail: string | null,
+		private attachedGatewayPaymentMethodId: string | null,
+		private attachedGatewayPaymentTypeId: string | null,
 		private attachedCheckoutUrl: string | null,
 		private currentStatus: PaymentStatus,
 	) {}
@@ -62,6 +64,8 @@ export class Payment {
 			null,
 			null,
 			null,
+			null,
+			null,
 			PaymentStatus.AWAITING_CONFIRMATION,
 		);
 	}
@@ -77,6 +81,8 @@ export class Payment {
 		gatewayId: string | null;
 		gatewayStatus: string | null;
 		gatewayStatusDetail: string | null;
+		gatewayPaymentMethodId?: string | null;
+		gatewayPaymentTypeId?: string | null;
 		checkoutUrl?: string | null;
 		status: PaymentStatus;
 	}): Payment {
@@ -91,6 +97,8 @@ export class Payment {
 			input.gatewayId,
 			input.gatewayStatus,
 			input.gatewayStatusDetail,
+			input.gatewayPaymentMethodId ?? null,
+			input.gatewayPaymentTypeId ?? null,
 			input.checkoutUrl ?? null,
 			input.status,
 		);
@@ -116,6 +124,14 @@ export class Payment {
 		return this.attachedGatewayStatusDetail;
 	}
 
+	get gatewayPaymentMethodId(): string | null {
+		return this.attachedGatewayPaymentMethodId;
+	}
+
+	get gatewayPaymentTypeId(): string | null {
+		return this.attachedGatewayPaymentTypeId;
+	}
+
 	get checkoutUrl(): string | null {
 		return this.attachedCheckoutUrl;
 	}
@@ -125,6 +141,8 @@ export class Payment {
 		gatewayId: string | null;
 		gatewayStatus: string | null;
 		gatewayStatusDetail?: string | null;
+		gatewayPaymentMethodId?: string | null;
+		gatewayPaymentTypeId?: string | null;
 		checkoutUrl?: string | null;
 	}): void {
 		if (input.gatewayReferenceId !== undefined)
@@ -134,6 +152,10 @@ export class Payment {
 		this.attachedGatewayStatus = input.gatewayStatus;
 		if (input.gatewayStatusDetail !== undefined)
 			this.attachedGatewayStatusDetail = input.gatewayStatusDetail;
+		if (input.gatewayPaymentMethodId !== undefined)
+			this.attachedGatewayPaymentMethodId = input.gatewayPaymentMethodId;
+		if (input.gatewayPaymentTypeId !== undefined)
+			this.attachedGatewayPaymentTypeId = input.gatewayPaymentTypeId;
 		if (input.checkoutUrl !== undefined)
 			this.attachedCheckoutUrl = input.checkoutUrl;
 	}

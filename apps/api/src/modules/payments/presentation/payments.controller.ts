@@ -13,6 +13,7 @@ import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/cr
 import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail-payment/fail-payment.use-case';
 import { GetPaymentUseCase } from '@modules/payments/application/use-cases/get-payment/get-payment.use-case';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
+import { ReconcileStaleCheckoutsUseCase } from '@modules/payments/application/use-cases/reconcile-stale-checkouts/reconcile-stale-checkouts.use-case';
 import { ReleasePaymentHoldUseCase } from '@modules/payments/application/use-cases/release-payment-hold/release-payment-hold.use-case';
 import { ResumePaymentCheckoutUseCase } from '@modules/payments/application/use-cases/resume-payment-checkout/resume-payment-checkout.use-case';
 import { SimulateDevPaymentOutcomeUseCase } from '@modules/payments/application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
@@ -39,6 +40,8 @@ import {
 	orderIdParamSchema,
 	type PaymentIdParamSchemaInput,
 	paymentIdParamSchema,
+	type ReconcileStaleCheckoutsSchemaInput,
+	reconcileStaleCheckoutsSchema,
 	type SimulateDevPaymentOutcomeSchemaInput,
 	type StartCheckoutSchemaInput,
 	simulateDevPaymentOutcomeSchema,
@@ -54,6 +57,7 @@ export class PaymentsController {
 		private readonly failPaymentUseCase: FailPaymentUseCase,
 		private readonly handlePaymentConfirmedWebhookUseCase: HandlePaymentConfirmedWebhookUseCase,
 		private readonly releasePaymentHoldUseCase: ReleasePaymentHoldUseCase,
+		private readonly reconcileStaleCheckoutsUseCase: ReconcileStaleCheckoutsUseCase,
 		private readonly resumePaymentCheckoutUseCase: ResumePaymentCheckoutUseCase,
 		private readonly simulateDevPaymentOutcomeUseCase: SimulateDevPaymentOutcomeUseCase,
 		private readonly startCheckoutUseCase: StartCheckoutUseCase,
@@ -210,6 +214,28 @@ export class PaymentsController {
 	): Promise<{ success: true }> {
 		await this.releasePaymentHoldUseCase.execute({ paymentId });
 		return { success: true };
+	}
+
+	@Post('internal/reconcile-stale-checkouts')
+	@UseGuards(InternalApiKeyGuard)
+	@HttpCode(200)
+	async reconcileStaleCheckouts(
+		@Body(new ZodValidationPipe(reconcileStaleCheckoutsSchema))
+		body: ReconcileStaleCheckoutsSchemaInput,
+	): Promise<{
+		skipped: boolean;
+		reason?: 'lock_unavailable';
+		scannedCount: number;
+		confirmedCount: number;
+		failedCount: number;
+		pendingUpdatedCount: number;
+		skippedCount: number;
+		gatewayErrorCount: number;
+	}> {
+		return await this.reconcileStaleCheckoutsUseCase.execute({
+			now: body.now ? new Date(body.now) : new Date(),
+			limit: body.limit,
+		});
 	}
 
 	@Post('dev/:paymentId/simulate')

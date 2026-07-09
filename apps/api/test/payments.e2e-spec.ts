@@ -37,6 +37,7 @@ describe('Payments (e2e)', () => {
 	let mercadoPagoSdkMock: {
 		createPayment: jest.Mock;
 		fetchPaymentNotification: jest.Mock;
+		fetchPaymentByExternalReference: jest.Mock;
 		verifyWebhookSignature: jest.Mock;
 	};
 	const testInternalApiKey =
@@ -101,6 +102,16 @@ describe('Payments (e2e)', () => {
 				gatewayPaymentId: `mp-${notificationId}`,
 				gatewayStatus: 'approved',
 				gatewayStatusDetail: 'accredited',
+				gatewayPaymentMethodId: 'pix',
+				gatewayPaymentTypeId: 'bank_transfer',
+			})),
+			fetchPaymentByExternalReference: jest.fn(async (externalReference) => ({
+				internalPaymentId: externalReference,
+				gatewayPaymentId: `mp-${externalReference}`,
+				gatewayStatus: 'approved',
+				gatewayStatusDetail: 'accredited',
+				gatewayPaymentMethodId: 'pix',
+				gatewayPaymentTypeId: 'bank_transfer',
 			})),
 			verifyWebhookSignature: jest.fn(async ({ signature }) => {
 				return signature === validWebhookSignature;
@@ -488,6 +499,8 @@ describe('Payments (e2e)', () => {
 			gatewayPaymentId: `mp-${paymentId}`,
 			gatewayStatus: 'authorized',
 			gatewayStatusDetail: 'pending_capture',
+			gatewayPaymentMethodId: 'credit_card',
+			gatewayPaymentTypeId: 'credit_card',
 		});
 
 		await requestHttp(app)
@@ -516,6 +529,81 @@ describe('Payments (e2e)', () => {
 			.execute();
 	});
 
+	it('reconciles stale checkouts through the internal endpoint', async () => {
+		const token = signToken({ sub: 'client-reconcile', role: 'CLIENT' });
+		const createdOrder = await createQuotedOrder(token);
+		let paymentId = '';
+
+		await requestHttp(app)
+			.post('/payments')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				orderId: createdOrder.id,
+				paymentMethod: 'pix',
+			})
+			.expect(201)
+			.expect<{ id: string }>(({ body }) => {
+				paymentId = body.id;
+			})
+			.execute();
+
+		mercadoPagoSdkMock.fetchPaymentByExternalReference.mockResolvedValueOnce({
+			internalPaymentId: paymentId,
+			gatewayPaymentId: `mp-${paymentId}`,
+			gatewayStatus: 'approved',
+			gatewayStatusDetail: 'accredited',
+			gatewayPaymentMethodId: 'pix',
+			gatewayPaymentTypeId: 'bank_transfer',
+		});
+
+		await requestHttp(app)
+			.post('/payments/internal/reconcile-stale-checkouts')
+			.set('x-internal-api-key', testInternalApiKey)
+			.send({
+				now: '2026-07-09T18:00:00.000Z',
+				limit: 50,
+			})
+			.expect(200)
+			.expect(({ body }) => {
+				expect(body).toMatchObject({
+					skipped: false,
+					scannedCount: 1,
+					confirmedCount: 1,
+					failedCount: 0,
+					pendingUpdatedCount: 0,
+					skippedCount: 0,
+					gatewayErrorCount: 0,
+				});
+			})
+			.execute();
+
+		await requestHttp(app)
+			.get(`/payments/${paymentId}`)
+			.set('Authorization', `Bearer ${token}`)
+			.expect(200)
+			.expect(({ body }) => {
+				expect(body).toMatchObject({
+					id: paymentId,
+					status: 'held',
+				});
+			})
+			.execute();
+	});
+
+	it('rejects stale checkout reconciliation without the internal API key', async () => {
+		await requestHttp(app)
+			.post('/payments/internal/reconcile-stale-checkouts')
+			.send({
+				now: '2026-07-09T18:00:00.000Z',
+			})
+			.expect(401, {
+				message: 'Internal API key required.',
+				error: 'Unauthorized',
+				statusCode: 401,
+			})
+			.execute();
+	});
+
 	it('fails payments for rejected webhook statuses', async () => {
 		const token = signToken({ sub: 'client-webhook-rejected', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
@@ -539,6 +627,8 @@ describe('Payments (e2e)', () => {
 			gatewayPaymentId: `mp-${paymentId}`,
 			gatewayStatus: 'rejected',
 			gatewayStatusDetail: 'cc_rejected_bad_filled_security_code',
+			gatewayPaymentMethodId: 'credit_card',
+			gatewayPaymentTypeId: 'credit_card',
 		});
 
 		await requestHttp(app)

@@ -131,6 +131,8 @@ export class HandlePaymentConfirmedWebhookUseCase {
 				gatewayId: notification.gatewayPaymentId,
 				gatewayStatus: notification.gatewayStatus,
 				gatewayStatusDetail: notification.gatewayStatusDetail,
+				gatewayPaymentMethodId: notification.gatewayPaymentMethodId,
+				gatewayPaymentTypeId: notification.gatewayPaymentTypeId,
 			});
 
 			const resolution = this.resolveNotification(notification.gatewayStatus);
