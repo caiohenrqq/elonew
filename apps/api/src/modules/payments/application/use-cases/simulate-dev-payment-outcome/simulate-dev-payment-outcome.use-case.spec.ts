@@ -1,72 +1,8 @@
 import type { OrderCredentialCleanupPort } from '@modules/payments/application/ports/order-credential-cleanup.port';
 import type { OrderPaymentConfirmationPort } from '@modules/payments/application/ports/order-payment-confirmation.port';
-import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { SimulateDevPaymentOutcomeUseCase } from '@modules/payments/application/use-cases/simulate-dev-payment-outcome/simulate-dev-payment-outcome.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
-
-class PaymentRepositoryStub implements PaymentRepositoryPort {
-	private readonly payments = new Map<
-		string,
-		{ clientId: string; payment: Payment }
-	>();
-
-	async findById(id: string): Promise<Payment | null> {
-		return this.payments.get(id)?.payment ?? null;
-	}
-
-	async findByIdForClient(
-		id: string,
-		clientId: string,
-	): Promise<Payment | null> {
-		const record = this.payments.get(id);
-		if (!record || record.clientId !== clientId) return null;
-
-		return record.payment;
-	}
-
-	async findByOrderId(orderId: string): Promise<Payment | null> {
-		for (const { payment } of this.payments.values()) {
-			if (payment.orderId === orderId) return payment;
-		}
-
-		return null;
-	}
-
-	async findByOrderIdForClient(
-		orderId: string,
-		clientId: string,
-	): Promise<Payment | null> {
-		for (const { payment, clientId: ownerId } of this.payments.values()) {
-			if (payment.orderId === orderId && ownerId === clientId) return payment;
-		}
-
-		return null;
-	}
-
-	async findByGatewayId(): Promise<Payment | null> {
-		throw new Error('not needed in this test');
-	}
-
-	async findStaleAwaitingCheckoutCandidates(): Promise<never> {
-		throw new Error('not needed in this test');
-	}
-
-	async withStaleCheckoutReconciliationLock(): Promise<never> {
-		throw new Error('not needed in this test');
-	}
-
-	async save(payment: Payment): Promise<void> {
-		const record = this.payments.get(payment.id);
-		this.payments.set(payment.id, {
-			clientId: record?.clientId ?? 'client-1',
-			payment,
-		});
-	}
-
-	insert(clientId: string, payment: Payment): void {
-		this.payments.set(payment.id, { clientId, payment });
-	}
-}
+import { InMemoryPaymentRepository } from '../../../../../../test/support/in-memory/payments/in-memory-payment.repository';
 
 const makePayment = () =>
 	Payment.create({
@@ -78,14 +14,14 @@ const makePayment = () =>
 
 describe('SimulateDevPaymentOutcomeUseCase', () => {
 	it('confirms the owned payment when simulating approval', async () => {
-		const payments = new PaymentRepositoryStub();
+		const payments = new InMemoryPaymentRepository();
 		const confirmation: OrderPaymentConfirmationPort = {
 			markAsPaid: jest.fn(),
 		};
 		const cleanup: OrderCredentialCleanupPort = {
 			clearCredentials: jest.fn(),
 		};
-		payments.insert('client-1', makePayment());
+		payments.insert(makePayment(), 'client-1');
 		const useCase = new SimulateDevPaymentOutcomeUseCase(
 			payments,
 			confirmation,
@@ -109,14 +45,14 @@ describe('SimulateDevPaymentOutcomeUseCase', () => {
 	});
 
 	it('fails the owned payment when simulating rejection', async () => {
-		const payments = new PaymentRepositoryStub();
+		const payments = new InMemoryPaymentRepository();
 		const confirmation: OrderPaymentConfirmationPort = {
 			markAsPaid: jest.fn(),
 		};
 		const cleanup: OrderCredentialCleanupPort = {
 			clearCredentials: jest.fn(),
 		};
-		payments.insert('client-1', makePayment());
+		payments.insert(makePayment(), 'client-1');
 		const useCase = new SimulateDevPaymentOutcomeUseCase(
 			payments,
 			confirmation,
@@ -140,14 +76,14 @@ describe('SimulateDevPaymentOutcomeUseCase', () => {
 	});
 
 	it('keeps pending outcomes awaiting confirmation', async () => {
-		const payments = new PaymentRepositoryStub();
+		const payments = new InMemoryPaymentRepository();
 		const confirmation: OrderPaymentConfirmationPort = {
 			markAsPaid: jest.fn(),
 		};
 		const cleanup: OrderCredentialCleanupPort = {
 			clearCredentials: jest.fn(),
 		};
-		payments.insert('client-1', makePayment());
+		payments.insert(makePayment(), 'client-1');
 		const useCase = new SimulateDevPaymentOutcomeUseCase(
 			payments,
 			confirmation,
@@ -171,8 +107,8 @@ describe('SimulateDevPaymentOutcomeUseCase', () => {
 	});
 
 	it('does not allow another client to simulate a payment', async () => {
-		const payments = new PaymentRepositoryStub();
-		payments.insert('client-1', makePayment());
+		const payments = new InMemoryPaymentRepository();
+		payments.insert(makePayment(), 'client-1');
 		const useCase = new SimulateDevPaymentOutcomeUseCase(
 			payments,
 			{ markAsPaid: jest.fn() },

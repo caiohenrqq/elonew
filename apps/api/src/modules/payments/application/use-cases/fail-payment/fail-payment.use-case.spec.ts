@@ -1,52 +1,8 @@
 import type { OrderCredentialCleanupPort } from '@modules/payments/application/ports/order-credential-cleanup.port';
-import type { PaymentRepositoryPort } from '@modules/payments/application/ports/payment-repository.port';
 import { FailPaymentUseCase } from '@modules/payments/application/use-cases/fail-payment/fail-payment.use-case';
 import { Payment } from '@modules/payments/domain/payment.entity';
 import { PaymentNotFoundError } from '@modules/payments/domain/payment.errors';
-
-class InMemoryPaymentRepository implements PaymentRepositoryPort {
-	private readonly payments = new Map<string, Payment>();
-
-	async findById(id: string): Promise<Payment | null> {
-		return this.payments.get(id) ?? null;
-	}
-
-	async findByIdForClient(id: string): Promise<Payment | null> {
-		return this.findById(id);
-	}
-
-	async findByOrderId(orderId: string): Promise<Payment | null> {
-		for (const payment of this.payments.values()) {
-			if (payment.orderId === orderId) return payment;
-		}
-
-		return null;
-	}
-
-	async findByOrderIdForClient(): Promise<Payment | null> {
-		throw new Error('not needed in this test');
-	}
-
-	async findByGatewayId(): Promise<Payment | null> {
-		throw new Error('not needed in this test');
-	}
-
-	async findStaleAwaitingCheckoutCandidates(): Promise<never> {
-		throw new Error('not needed in this test');
-	}
-
-	async withStaleCheckoutReconciliationLock(): Promise<never> {
-		throw new Error('not needed in this test');
-	}
-
-	async save(payment: Payment): Promise<void> {
-		this.payments.set(payment.id, payment);
-	}
-
-	insert(payment: Payment): void {
-		this.payments.set(payment.id, payment);
-	}
-}
+import { InMemoryPaymentRepository } from '../../../../../../test/support/in-memory/payments/in-memory-payment.repository';
 
 class InMemoryOrderCredentialCleanupPort implements OrderCredentialCleanupPort {
 	readonly orderIds: string[] = [];

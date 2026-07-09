@@ -4,65 +4,30 @@ import type {
 	FetchPaymentNotificationOutput,
 	PaymentGatewayPort,
 } from '@modules/payments/application/ports/payment-gateway.port';
-import type {
-	PaymentRepositoryPort,
-	StalePaymentReconciliationCandidate,
-} from '@modules/payments/application/ports/payment-repository.port';
+import type { StalePaymentReconciliationCandidate } from '@modules/payments/application/ports/payment-repository.port';
 import { Payment } from '@modules/payments/domain/payment.entity';
+import { InMemoryPaymentRepository } from '../../../../../../test/support/in-memory/payments/in-memory-payment.repository';
 import { ReconcileStaleCheckoutsUseCase } from './reconcile-stale-checkouts.use-case';
 
-class PaymentRepositoryStub implements PaymentRepositoryPort {
-	readonly payments = new Map<string, Payment>();
+class PaymentRepositoryStub extends InMemoryPaymentRepository {
 	lockAvailable = true;
 	candidates: StalePaymentReconciliationCandidate[] = [];
 
-	async findById(id: string): Promise<Payment | null> {
-		return this.payments.get(id) ?? null;
-	}
-
-	async findByIdForClient(id: string): Promise<Payment | null> {
-		return this.findById(id);
-	}
-
-	async findByOrderId(orderId: string): Promise<Payment | null> {
-		return (
-			[...this.payments.values()].find(
-				(payment) => payment.orderId === orderId,
-			) ?? null
-		);
-	}
-
-	async findByOrderIdForClient(orderId: string): Promise<Payment | null> {
-		return this.findByOrderId(orderId);
-	}
-
-	async findByGatewayId(gatewayId: string): Promise<Payment | null> {
-		return (
-			[...this.payments.values()].find(
-				(payment) => payment.gatewayId === gatewayId,
-			) ?? null
-		);
-	}
-
-	async findStaleAwaitingCheckoutCandidates(): Promise<
+	override async findStaleAwaitingCheckoutCandidates(): Promise<
 		StalePaymentReconciliationCandidate[]
 	> {
 		return this.candidates;
 	}
 
-	async withStaleCheckoutReconciliationLock<T>(
+	override async withStaleCheckoutReconciliationLock<T>(
 		callback: () => Promise<T>,
 	): Promise<T | null> {
 		if (!this.lockAvailable) return null;
 		return await callback();
 	}
 
-	async save(payment: Payment): Promise<void> {
-		this.payments.set(payment.id, payment);
-	}
-
-	insert(payment: Payment): void {
-		this.payments.set(payment.id, payment);
+	override insert(payment: Payment): void {
+		super.insert(payment);
 		this.candidates.push({ payment });
 	}
 }
@@ -250,7 +215,7 @@ describe('ReconcileStaleCheckoutsUseCase', () => {
 		const currentPayment = makePayment('payment-concurrent');
 		currentPayment.confirm();
 		repository.candidates.push({ payment: staleCandidate });
-		repository.payments.set(currentPayment.id, currentPayment);
+		await repository.save(currentPayment);
 		gateway.notifications.set(
 			'mp-payment-concurrent',
 			makeProviderPayment(

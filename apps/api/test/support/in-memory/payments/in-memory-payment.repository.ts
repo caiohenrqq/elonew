@@ -10,6 +10,8 @@ import { Inject, Injectable, Optional } from '@nestjs/common';
 @Injectable()
 export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	private readonly payments = new Map<string, Payment>();
+	private readonly clientIds = new Map<string, string>();
+	private readonly failOnSavePaymentIds = new Set<string>();
 
 	constructor(
 		@Optional()
@@ -27,6 +29,8 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	): Promise<Payment | null> {
 		const payment = await this.findById(id);
 		if (!payment) return null;
+		const ownerId = this.clientIds.get(payment.id);
+		if (ownerId !== undefined) return ownerId === clientId ? payment : null;
 		if (!this.orderRepository) return payment;
 
 		const order = await this.orderRepository.findByIdForClient(
@@ -52,6 +56,8 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	): Promise<Payment | null> {
 		const payment = await this.findByOrderId(orderId);
 		if (!payment) return null;
+		const ownerId = this.clientIds.get(payment.id);
+		if (ownerId !== undefined) return ownerId === clientId ? payment : null;
 		if (!this.orderRepository) return payment;
 
 		const order = await this.orderRepository.findByIdForClient(
@@ -94,7 +100,19 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	}
 
 	save(payment: Payment): Promise<void> {
+		if (this.failOnSavePaymentIds.has(payment.id))
+			return Promise.reject(new Error('Payment save failed.'));
+
 		this.payments.set(payment.id, payment);
 		return Promise.resolve();
+	}
+
+	insert(payment: Payment, clientId?: string): void {
+		this.payments.set(payment.id, payment);
+		if (clientId !== undefined) this.clientIds.set(payment.id, clientId);
+	}
+
+	setFailOnSave(paymentId: string): void {
+		this.failOnSavePaymentIds.add(paymentId);
 	}
 }
