@@ -19,12 +19,13 @@ import {
 import {
 	PAYMENT_REPOSITORY_KEY,
 	type PaymentRepositoryPort,
+	type StalePaymentReconciliationCandidate,
 } from '@modules/payments/application/ports/payment-repository.port';
-import type { Payment } from '@modules/payments/domain/payment.entity';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 
 const DEFAULT_STALE_AFTER_MINUTES = 15;
+const EXPIRE_UNSTARTED_AFTER_HOURS = 24;
 const RECONCILIATION_CONCURRENCY = 3;
 
 type ReconcileStaleCheckoutsInput = {
@@ -39,6 +40,7 @@ type ReconcileStaleCheckoutsOutput = {
 	confirmedCount: number;
 	failedCount: number;
 	pendingUpdatedCount: number;
+	expiredCount: number;
 	skippedCount: number;
 	gatewayErrorCount: number;
 };
@@ -80,6 +82,9 @@ export class ReconcileStaleCheckoutsUseCase {
 						const createdBefore = new Date(
 							input.now.getTime() - DEFAULT_STALE_AFTER_MINUTES * 60_000,
 						);
+						const expireCreatedBefore = new Date(
+							input.now.getTime() - EXPIRE_UNSTARTED_AFTER_HOURS * 3_600_000,
+						);
 						const candidates =
 							await this.paymentRepository.findStaleAwaitingCheckoutCandidates({
 								createdBefore,
@@ -95,7 +100,13 @@ export class ReconcileStaleCheckoutsUseCase {
 							await Promise.all(
 								candidates
 									.slice(index, index + RECONCILIATION_CONCURRENCY)
-									.map(({ payment }) => this.reconcilePayment(payment, counts)),
+									.map((candidate) =>
+										this.reconcilePayment(
+											candidate,
+											expireCreatedBefore,
+											counts,
+										),
+									),
 							);
 						}
 
@@ -127,9 +138,11 @@ export class ReconcileStaleCheckoutsUseCase {
 	}
 
 	private async reconcilePayment(
-		payment: Payment,
+		candidate: StalePaymentReconciliationCandidate,
+		expireCreatedBefore: Date,
 		counts: ReconciliationCounts,
 	): Promise<void> {
+		const { payment } = candidate;
 		let providerPayment: FetchPaymentNotificationOutput | null;
 		try {
 			providerPayment = payment.gatewayId
@@ -145,7 +158,26 @@ export class ReconcileStaleCheckoutsUseCase {
 		}
 
 		if (!providerPayment || providerPayment.internalPaymentId !== payment.id) {
-			counts.skippedCount++;
+			if (candidate.createdAt >= expireCreatedBefore) {
+				counts.skippedCount++;
+				return;
+			}
+
+			const currentPayment = await this.paymentRepository.findById(payment.id);
+			if (
+				!currentPayment ||
+				currentPayment.status !== PaymentStatus.AWAITING_CONFIRMATION
+			) {
+				counts.skippedCount++;
+				return;
+			}
+
+			await this.orderCredentialCleanupPort.clearCredentials(
+				currentPayment.orderId,
+			);
+			currentPayment.fail();
+			await this.paymentRepository.save(currentPayment);
+			counts.expiredCount++;
 			return;
 		}
 
@@ -218,6 +250,7 @@ export class ReconcileStaleCheckoutsUseCase {
 			confirmedCount: 0,
 			failedCount: 0,
 			pendingUpdatedCount: 0,
+			expiredCount: 0,
 			skippedCount: 0,
 			gatewayErrorCount: 0,
 		};
@@ -231,6 +264,7 @@ export class ReconcileStaleCheckoutsUseCase {
 		logEvent.confirmed_count = counts.confirmedCount;
 		logEvent.failed_count = counts.failedCount;
 		logEvent.pending_updated_count = counts.pendingUpdatedCount;
+		logEvent.expired_count = counts.expiredCount;
 		logEvent.skipped_count = counts.skippedCount;
 		logEvent.gateway_error_count = counts.gatewayErrorCount;
 	}

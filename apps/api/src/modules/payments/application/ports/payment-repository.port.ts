@@ -4,6 +4,7 @@ export const PAYMENT_REPOSITORY_KEY = Symbol('PAYMENT_REPOSITORY_KEY');
 
 export type StalePaymentReconciliationCandidate = {
 	payment: Payment;
+	createdAt: Date;
 };
 
 export interface PaymentRepositoryPort {
