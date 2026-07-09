@@ -1,17 +1,16 @@
-import { render, screen } from '@testing-library/react';
-import { useActionState } from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { resumePaymentCheckoutAction } from '../../actions/order-actions';
 import { ResumePaymentButton } from './resume-payment-button';
-
-jest.mock('react', () => ({
-	...jest.requireActual('react'),
-	useActionState: jest.fn(),
-}));
 
 jest.mock('../../actions/order-actions', () => ({
 	resumePaymentCheckoutAction: jest.fn(),
 }));
 
-const useActionStateMock = useActionState as jest.Mock;
+const makeCheckoutTab = () => ({
+	close: jest.fn(),
+	location: { href: '' } as Location,
+});
 
 describe('ResumePaymentButton', () => {
 	afterEach(() => {
@@ -19,8 +18,6 @@ describe('ResumePaymentButton', () => {
 	});
 
 	it('renders the localized resume command', () => {
-		useActionStateMock.mockReturnValue([{}, jest.fn(), false]);
-
 		render(<ResumePaymentButton orderId="order-1" />);
 
 		expect(
@@ -28,22 +25,54 @@ describe('ResumePaymentButton', () => {
 		).toBeInTheDocument();
 	});
 
-	it('shows an inline error when resume fails without auth redirect', () => {
-		useActionStateMock.mockReturnValue([
-			{
-				error:
-					'Não foi possível iniciar o pagamento. Tente novamente em instantes.',
-			},
-			jest.fn(),
-			false,
-		]);
+	it('opens the checkout in a new tab on resume', async () => {
+		const checkoutTab = makeCheckoutTab();
+		(resumePaymentCheckoutAction as jest.Mock).mockResolvedValue({
+			checkoutUrl: 'https://checkout.example.com/pay',
+		});
 
-		render(<ResumePaymentButton orderId="order-1" />);
+		render(
+			<ResumePaymentButton
+				orderId="order-1"
+				openCheckoutTab={() => checkoutTab}
+			/>,
+		);
+
+		await userEvent.click(
+			screen.getByRole('button', { name: /retomar pagamento/i }),
+		);
+
+		await waitFor(() => {
+			expect(checkoutTab.location.href).toBe(
+				'https://checkout.example.com/pay',
+			);
+		});
+		expect(resumePaymentCheckoutAction).toHaveBeenCalledWith('order-1');
+	});
+
+	it('shows an inline error and closes the tab when resume fails', async () => {
+		const checkoutTab = makeCheckoutTab();
+		(resumePaymentCheckoutAction as jest.Mock).mockResolvedValue({
+			error:
+				'Não foi possível iniciar o pagamento. Tente novamente em instantes.',
+		});
+
+		render(
+			<ResumePaymentButton
+				orderId="order-1"
+				openCheckoutTab={() => checkoutTab}
+			/>,
+		);
+
+		await userEvent.click(
+			screen.getByRole('button', { name: /retomar pagamento/i }),
+		);
 
 		expect(
-			screen.getByText(
+			await screen.findByText(
 				'Não foi possível iniciar o pagamento. Tente novamente em instantes.',
 			),
 		).toBeInTheDocument();
+		expect(checkoutTab.close).toHaveBeenCalled();
 	});
 });

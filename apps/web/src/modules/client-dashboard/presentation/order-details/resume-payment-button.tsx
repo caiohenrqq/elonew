@@ -1,24 +1,51 @@
 'use client';
 
 import { CreditCard } from 'lucide-react';
-import { useActionState } from 'react';
+import { useCallback, useState, useTransition } from 'react';
 import { getButtonClassName } from '@/shared/ui/components/button';
 import { resumePaymentCheckoutAction } from '../../actions/order-actions';
 
+type CheckoutTab = Pick<Window, 'close' | 'location'>;
+
 type ResumePaymentButtonProps = {
 	orderId: string;
+	openCheckoutTab?: () => CheckoutTab | null;
 };
 
-export const ResumePaymentButton = ({ orderId }: ResumePaymentButtonProps) => {
-	const [state, formAction, isPending] = useActionState(
-		resumePaymentCheckoutAction.bind(null, orderId),
-		{},
-	);
+const defaultOpenCheckoutTab = () => window.open('', '_blank');
+
+export const ResumePaymentButton = ({
+	orderId,
+	openCheckoutTab = defaultOpenCheckoutTab,
+}: ResumePaymentButtonProps) => {
+	const [error, setError] = useState<string | null>(null);
+	const [isPending, startTransition] = useTransition();
+
+	const handleResume = useCallback(() => {
+		setError(null);
+		const checkoutTab = openCheckoutTab();
+		startTransition(async () => {
+			const result = await resumePaymentCheckoutAction(orderId);
+			if (result.error || !result.checkoutUrl) {
+				checkoutTab?.close();
+				setError(result.error ?? 'Não foi possível iniciar o pagamento.');
+				return;
+			}
+
+			if (checkoutTab) {
+				checkoutTab.location.href = result.checkoutUrl;
+				return;
+			}
+
+			window.location.assign(result.checkoutUrl);
+		});
+	}, [orderId, openCheckoutTab]);
 
 	return (
-		<form action={formAction} className="space-y-2">
+		<div className="space-y-2">
 			<button
-				type="submit"
+				type="button"
+				onClick={handleResume}
 				disabled={isPending}
 				className={getButtonClassName({
 					size: 'sm',
@@ -26,13 +53,13 @@ export const ResumePaymentButton = ({ orderId }: ResumePaymentButtonProps) => {
 				})}
 			>
 				<CreditCard className="h-3.5 w-3.5" />
-				{isPending ? 'Redirecionando' : 'Retomar pagamento'}
+				{isPending ? 'Abrindo pagamento' : 'Retomar pagamento'}
 			</button>
-			{state.error ? (
+			{error ? (
 				<p className="max-w-64 text-[10px] font-bold leading-4 text-danger">
-					{state.error}
+					{error}
 				</p>
 			) : null}
-		</form>
+		</div>
 	);
 };

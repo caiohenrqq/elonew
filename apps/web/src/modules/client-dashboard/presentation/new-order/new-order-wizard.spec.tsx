@@ -7,6 +7,10 @@ jest.mock('../../actions/order-actions', () => ({
 	startCheckoutAction: jest.fn(),
 }));
 
+jest.mock('next/navigation', () => ({
+	useRouter: () => ({ push: jest.fn() }),
+}));
+
 jest.mock('@/shared/ui/animation/gsap', () => ({
 	gsap: {
 		to: jest.fn(),
