@@ -57,7 +57,7 @@ export const ChatPanel: FC<ChatPanelProps> = ({
 					<div className="h-3 w-3 animate-spin rounded-full border border-hextech-cyan border-t-transparent" />
 				) : null}
 			</div>
-			<div className="flex-1 overflow-hidden relative">
+			<div className="relative min-h-0 flex-1 overflow-hidden">
 				<ChatMessageList
 					messages={messages}
 					currentUserId={currentUserId}

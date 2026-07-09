@@ -2,12 +2,19 @@ import {
 	ORDER_STATUS_CONFIG,
 	TICKET_STATUS_CONFIG,
 } from '@/shared/status/status-config';
+import { cn } from '../utils/cn';
 import { Badge } from './badge';
 
 const ORDER_BADGE_WIDTH = 'min-w-50 justify-start';
 const TICKET_BADGE_WIDTH = 'min-w-32 justify-start';
 
-export const OrderStatusBadge = ({ status }: { status: string }) => {
+export const OrderStatusBadge = ({
+	className,
+	status,
+}: {
+	className?: string;
+	status: string;
+}) => {
 	const config = ORDER_STATUS_CONFIG[status];
 	if (!config)
 		throw new Error(
@@ -17,7 +24,7 @@ export const OrderStatusBadge = ({ status }: { status: string }) => {
 		<Badge
 			variant={config.variant}
 			icon={config.icon}
-			className={ORDER_BADGE_WIDTH}
+			className={cn(ORDER_BADGE_WIDTH, className)}
 		>
 			{config.label}
 		</Badge>

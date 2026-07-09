@@ -44,6 +44,10 @@ describe('RatingCard', () => {
 		expect(
 			screen.getByRole('button', { name: /enviar avaliação/i }),
 		).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Nota 1' })).toHaveClass(
+			'h-11',
+			'w-11',
+		);
 	});
 
 	it('shows the submitted state when the user already rated', () => {

@@ -4,6 +4,8 @@ import { useCallback, useState, useTransition } from 'react';
 import type { ChatMessage } from '@/shared/chat/chat.types';
 import { ChatPanel } from '@/shared/chat/chat-panel';
 import { sendOrderChatMessageAction } from '../../actions/order-actions';
+import { orderDetailsLayout } from './order-details-layout';
+import { getOrderStageCopy, isReadOnlyOrderStatus } from './order-stage-copy';
 
 type OrderChatPanelProps = {
 	orderId: string;
@@ -12,22 +14,12 @@ type OrderChatPanelProps = {
 	initialMessages: ChatMessage[];
 };
 
-const isReadOnlyStatus = (orderStatus: string) =>
-	orderStatus === 'completed' || orderStatus === 'cancelled';
-
-const getStatusText = (orderStatus: string) => {
-	if (orderStatus === 'in_progress') return 'Ativo';
-	if (isReadOnlyStatus(orderStatus)) return 'Somente leitura';
-
-	return 'Aguardando aceite';
-};
-
 const getEmptyDescription = (orderStatus: string) => {
 	if (orderStatus === 'in_progress') {
 		return 'Envie a primeira mensagem para alinhar os detalhes deste pedido.';
 	}
 
-	if (isReadOnlyStatus(orderStatus)) {
+	if (isReadOnlyOrderStatus(orderStatus)) {
 		return 'Nenhuma conversa foi registrada para este pedido.';
 	}
 
@@ -43,7 +35,9 @@ export const OrderChatPanel = ({
 	const [messages, setMessages] = useState(initialMessages);
 	const [error, setError] = useState<string | null>(null);
 	const [isPending, startTransition] = useTransition();
+	const isReadOnly = isReadOnlyOrderStatus(orderStatus);
 	const isDisabled = orderStatus !== 'in_progress' || isPending;
+	const copy = getOrderStageCopy(orderStatus);
 
 	const handleSendMessage = useCallback(
 		(content: string) => {
@@ -71,11 +65,12 @@ export const OrderChatPanel = ({
 				onSendMessage={handleSendMessage}
 				isSending={isPending}
 				isDisabled={isDisabled}
+				isReadOnly={isReadOnly}
 				title="Chat do pedido"
-				statusText={getStatusText(orderStatus)}
+				statusText={copy.chatStatus}
 				emptyTitle="Nenhuma mensagem"
 				emptyDescription={getEmptyDescription(orderStatus)}
-				className="max-w-none"
+				className={orderDetailsLayout.chat}
 			/>
 			{error ? (
 				<p className="text-[10px] font-bold uppercase tracking-wider text-red-400">

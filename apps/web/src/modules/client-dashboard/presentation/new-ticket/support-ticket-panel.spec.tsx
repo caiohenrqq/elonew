@@ -44,6 +44,20 @@ describe('SupportTicketPanel', () => {
 		expect(screen.getByText('01 disponíveis')).toBeInTheDocument();
 	});
 
+	it('preselects the linked order when it is available', () => {
+		render(
+			<SupportTicketPanel
+				action={jest.fn().mockResolvedValue({})}
+				initialOrderId="order-1234abcd"
+				orders={[buildOrder()]}
+			/>,
+		);
+
+		expect(
+			screen.getByRole('combobox', { name: /pedido relacionado/i }),
+		).toHaveValue('order-1234abcd');
+	});
+
 	it('shows the empty-orders helper when there are no orders', () => {
 		render(
 			<SupportTicketPanel

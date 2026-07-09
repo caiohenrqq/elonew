@@ -1,15 +1,21 @@
 import { Clock } from 'lucide-react';
-import { Button } from '@/shared/ui/components/button';
+import Link from 'next/link';
+import { getButtonClassName } from '@/shared/ui/components/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
 } from '@/shared/ui/components/card';
+import { orderDetailsLayout } from './order-details-layout';
 
-export const OrderSupportCard = () => {
+type OrderSupportCardProps = {
+	orderId: string;
+};
+
+export const OrderSupportCard = ({ orderId }: OrderSupportCardProps) => {
 	return (
-		<Card>
+		<Card className={orderDetailsLayout.railCard}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Clock className="w-4 h-4 text-hextech-cyan" />
@@ -21,9 +27,15 @@ export const OrderSupportCard = () => {
 					Precisa de ajuda com este pedido? Nossa equipe de suporte está
 					disponível a qualquer momento.
 				</p>
-				<Button variant="secondary" className="w-full">
+				<Link
+					href={`/client/tickets/new?orderId=${encodeURIComponent(orderId)}`}
+					className={getButtonClassName({
+						variant: 'secondary',
+						className: 'w-full',
+					})}
+				>
 					Abrir Ticket
-				</Button>
+				</Link>
 			</CardContent>
 		</Card>
 	);

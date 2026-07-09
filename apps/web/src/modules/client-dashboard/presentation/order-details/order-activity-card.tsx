@@ -5,10 +5,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/shared/ui/components/card';
+import { orderDetailsLayout } from './order-details-layout';
 
 export const OrderActivityCard = () => {
 	return (
-		<Card>
+		<Card className={orderDetailsLayout.railCard}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Activity className="w-4 h-4 text-hextech-cyan" />
