@@ -146,7 +146,8 @@ export class HandlePaymentConfirmedWebhookUseCase {
 				await this.orderCredentialCleanupPort.clearCredentials(payment.orderId);
 				logEvent.side_effects?.push('order_credentials_cleared');
 			}
-			await this.processedWebhookEventPort.markProcessed(processedEventKey);
+			if (resolution === 'confirm' || resolution === 'fail')
+				await this.processedWebhookEventPort.markProcessed(processedEventKey);
 
 			logEvent.outcome = 'success';
 			logEvent.payment_status_after = payment.status;

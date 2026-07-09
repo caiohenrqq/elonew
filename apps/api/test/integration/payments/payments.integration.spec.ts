@@ -372,6 +372,22 @@ describe('Payments module integration', () => {
 			id: createdOrder.id,
 			status: 'awaiting_payment',
 		});
+
+		await expect(
+			paymentsController.handleMercadoPagoWebhook(
+				{
+					id: 'event-approved-after-authorized',
+					type: 'payment.updated',
+					action: 'payment.updated',
+					data: { id: payment.id },
+				},
+				'signature-approved',
+				'request-approved',
+			),
+		).resolves.toEqual({ processed: true });
+		await expect(
+			paymentsController.get(payment.id, clientUser),
+		).resolves.toMatchObject({ id: payment.id, status: 'held' });
 	});
 
 	it('fails the payment for rejected webhook statuses', async () => {
