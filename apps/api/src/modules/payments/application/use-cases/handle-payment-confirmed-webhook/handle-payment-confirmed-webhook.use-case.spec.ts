@@ -586,6 +586,68 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 		expect(savedPayment?.gatewayStatusDetail).toBe('pending_capture');
 		await expect(
 			processedWebhookEventPort.has(processedWebhookKey('notification-8')),
+		).resolves.toBe(false);
+	});
+
+	it('confirms a payment whose approval arrives after a pending notification for the same resource', async () => {
+		const paymentRepository = new InMemoryPaymentRepository();
+		const processedWebhookEventPort = new InMemoryProcessedWebhookEventPort();
+		const orderPaymentConfirmationPort =
+			new InMemoryOrderPaymentConfirmationPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
+		paymentRepository.insert(
+			Payment.create({
+				id: 'payment-11',
+				orderId: 'order-11',
+				grossAmount: 100,
+				paymentMethod: 'pix',
+			}),
+		);
+		paymentGatewayPort.notification = {
+			internalPaymentId: 'payment-11',
+			gatewayPaymentId: 'mp-payment-11',
+			gatewayStatus: 'pending',
+			gatewayStatusDetail: 'pending_waiting_transfer',
+		};
+		const useCase = new HandlePaymentConfirmedWebhookUseCase(
+			paymentRepository,
+			processedWebhookEventPort,
+			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
+			new AcceptAllPaymentWebhookSignatureVerifier(),
+			paymentGatewayPort,
+		);
+
+		await useCase.execute({
+			eventId: 'event-11-pending',
+			topic: 'payment.updated',
+			notificationResourceId: 'notification-11',
+			requestId: 'request-11',
+			signature: 'signature-11',
+		});
+
+		paymentGatewayPort.notification = {
+			internalPaymentId: 'payment-11',
+			gatewayPaymentId: 'mp-payment-11',
+			gatewayStatus: 'approved',
+			gatewayStatusDetail: 'accredited',
+		};
+
+		await expect(
+			useCase.execute({
+				eventId: 'event-11-approved',
+				topic: 'payment.updated',
+				notificationResourceId: 'notification-11',
+				requestId: 'request-11',
+				signature: 'signature-11',
+			}),
+		).resolves.toEqual({ processed: true });
+
+		const savedPayment = await paymentRepository.findById('payment-11');
+		expect(savedPayment?.status).toBe('held');
+		expect(orderPaymentConfirmationPort.orderIds).toEqual(['order-11']);
+		await expect(
+			processedWebhookEventPort.has(processedWebhookKey('notification-11')),
 		).resolves.toBe(true);
 	});
 
