@@ -47,6 +47,14 @@ class PaymentRepositoryStub implements PaymentRepositoryPort {
 		throw new Error('not needed in this test');
 	}
 
+	async findStaleAwaitingCheckoutCandidates(): Promise<never> {
+		throw new Error('not needed in this test');
+	}
+
+	async withStaleCheckoutReconciliationLock(): Promise<never> {
+		throw new Error('not needed in this test');
+	}
+
 	async save(payment: Payment): Promise<void> {
 		const record = this.payments.get(payment.id);
 		this.payments.set(payment.id, {

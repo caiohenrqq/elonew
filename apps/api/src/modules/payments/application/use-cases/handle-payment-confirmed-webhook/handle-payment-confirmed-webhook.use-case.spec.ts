@@ -48,6 +48,14 @@ class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return null;
 	}
 
+	async findStaleAwaitingCheckoutCandidates(): Promise<never> {
+		throw new Error('not needed in this test');
+	}
+
+	async withStaleCheckoutReconciliationLock(): Promise<never> {
+		throw new Error('not needed in this test');
+	}
+
 	async save(payment: Payment): Promise<void> {
 		if (this.failOnSavePaymentIds.has(payment.id))
 			throw new Error('Payment save failed.');
