@@ -83,6 +83,7 @@ describe('Payments module integration', () => {
 		mercadoPagoSdkMock = {
 			createPayment: jest.fn(async ({ paymentId }) => ({
 				checkoutUrl: `https://mercadopago.test/checkout/${paymentId}`,
+				backUrl: `https://app.elonew.test/client/orders/${paymentId}`,
 				gatewayReferenceId: `pref-${paymentId}`,
 				gatewayStatus: 'pending',
 			})),

@@ -43,6 +43,7 @@ class FakeGateway implements PaymentGatewayPort {
 
 		return {
 			checkoutUrl: 'https://checkout.example/pay',
+			backUrl: 'https://app.example/client/orders/order-1',
 			gatewayReferenceId: 'pref-1',
 			gatewayStatus: 'pending',
 		};

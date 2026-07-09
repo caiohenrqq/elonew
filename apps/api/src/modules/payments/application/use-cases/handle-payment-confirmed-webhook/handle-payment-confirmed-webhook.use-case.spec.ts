@@ -111,6 +111,7 @@ class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 
 	async initiatePayment(): Promise<{
 		checkoutUrl: string;
+		backUrl: string | null;
 		gatewayReferenceId: string;
 		gatewayStatus: string | null;
 	}> {

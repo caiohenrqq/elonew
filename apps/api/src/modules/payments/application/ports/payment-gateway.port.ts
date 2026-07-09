@@ -9,6 +9,7 @@ export type InitiatePaymentInput = {
 
 export type InitiatePaymentOutput = {
 	checkoutUrl: string;
+	backUrl: string | null;
 	gatewayReferenceId: string;
 	gatewayStatus: string | null;
 };

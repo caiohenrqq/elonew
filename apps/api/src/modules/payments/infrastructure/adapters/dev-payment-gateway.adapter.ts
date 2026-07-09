@@ -18,6 +18,7 @@ export class DevPaymentGatewayAdapter implements PaymentGatewayPort {
 
 		return Promise.resolve({
 			checkoutUrl: checkoutUrl.toString(),
+			backUrl: null,
 			gatewayReferenceId: `dev-${input.paymentId}`,
 			gatewayStatus: 'pending',
 		});

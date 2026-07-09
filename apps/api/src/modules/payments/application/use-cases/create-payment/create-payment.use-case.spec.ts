@@ -109,6 +109,7 @@ class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 		paymentMethod: 'pix' | 'credit_card' | 'boleto';
 	}): Promise<{
 		checkoutUrl: string;
+		backUrl: string | null;
 		gatewayReferenceId: string;
 		gatewayStatus: string | null;
 	}> {
@@ -116,6 +117,7 @@ class InMemoryPaymentGatewayPort implements PaymentGatewayPort {
 
 		return {
 			checkoutUrl: `https://mercadopago.test/checkout/${input.paymentId}`,
+			backUrl: null,
 			gatewayReferenceId: `pref-${input.paymentId}`,
 			gatewayStatus: 'pending',
 		};

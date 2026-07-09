@@ -16,6 +16,7 @@ describe('DevPaymentGatewayAdapter', () => {
 			}),
 		).resolves.toEqual({
 			checkoutUrl: 'http://localhost:3001/client?devPaymentId=payment-1',
+			backUrl: null,
 			gatewayReferenceId: 'dev-payment-1',
 			gatewayStatus: 'pending',
 		});
