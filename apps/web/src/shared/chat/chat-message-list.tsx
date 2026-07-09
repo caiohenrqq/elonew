@@ -1,6 +1,6 @@
 'use client';
 
-import { type CSSProperties, type FC, memo, useEffect, useRef } from 'react';
+import { type FC, memo, useEffect, useRef } from 'react';
 import { Badge } from '@/shared/ui/components/badge';
 import { cn } from '@/shared/ui/utils/cn';
 import type { ChatMessage, ChatRoleLabel } from './chat.types';
@@ -57,12 +57,6 @@ export const ChatMessageList: FC<ChatMessageListProps> = ({
 	return (
 		<div
 			ref={scrollRef}
-			style={
-				{
-					containIntrinsicSize: '0 420px',
-					contentVisibility: 'auto',
-				} as CSSProperties
-			}
 			className={cn(
 				'flex flex-col gap-4 overflow-y-auto p-4 scrollbar-hide',
 				className,
@@ -107,21 +101,22 @@ const ChatMessageItem = memo(({ message, isMe }: ChatMessageItemProps) => {
 			)}
 		>
 			<div className="flex items-center gap-2 mb-1">
-				{!isMe && (
-					<span className="text-[10px] font-black uppercase tracking-wider text-white/40">
-						{message.sender.username}
-					</span>
-				)}
-				<Badge
-					variant={ROLE_VARIANTS[message.sender.role]}
-					className="h-4 px-1 text-[8px]"
-				>
-					{ROLE_LABELS[message.sender.role]}
-				</Badge>
-				{isMe && (
+				{isMe ? (
 					<span className="text-[10px] font-black uppercase tracking-wider text-white/40">
 						Você
 					</span>
+				) : (
+					<>
+						<span className="text-[10px] font-black uppercase tracking-wider text-white/40">
+							{message.sender.username}
+						</span>
+						<Badge
+							variant={ROLE_VARIANTS[message.sender.role]}
+							className="h-4 px-1 text-[8px]"
+						>
+							{ROLE_LABELS[message.sender.role]}
+						</Badge>
+					</>
 				)}
 			</div>
 			<div

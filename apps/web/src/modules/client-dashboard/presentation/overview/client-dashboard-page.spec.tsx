@@ -197,6 +197,46 @@ describe('ClientDashboardPage', () => {
 		expect(screen.getAllByText('Nenhum pedido encontrado')).toHaveLength(2);
 	});
 
+	it('does not count stale paid status as active', () => {
+		render(
+			<ClientDashboardPage
+				dashboard={{
+					orders: [
+						{
+							id: 'order-paid',
+							status: 'paid',
+							serviceType: 'elo_boost',
+							currentLeague: 'gold',
+							currentDivision: 'II',
+							currentLp: 40,
+							desiredLeague: 'platinum',
+							desiredDivision: 'IV',
+							server: 'br',
+							desiredQueue: 'solo_duo',
+							lpGain: 20,
+							deadline: '2026-05-01T00:00:00.000Z',
+							subtotal: 120,
+							totalAmount: 12000,
+							discountAmount: 0,
+							createdAt: '2026-04-01T00:00:00.000Z',
+						},
+					],
+					summary: {
+						activeOrders: 1,
+						totalOrders: 1,
+						totalInvested: 12000,
+					},
+				}}
+			/>,
+		);
+
+		expect(screen.getByText('Pedidos ativos')).toBeInTheDocument();
+		expect(screen.getByText('00')).toBeInTheDocument();
+		expect(screen.getByTestId('active-orders-progress')).toHaveStyle({
+			width: '0%',
+		});
+	});
+
 	it('renders the development checkout tutorial and copies snippets', async () => {
 		render(
 			<ClientDashboardPage

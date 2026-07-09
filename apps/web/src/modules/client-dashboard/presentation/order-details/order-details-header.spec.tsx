@@ -39,6 +39,7 @@ describe('OrderDetailsHeader', () => {
 		expect(
 			screen.getByRole('button', { name: /retomar pagamento/i }),
 		).toBeInTheDocument();
+		expect(screen.getByText(/conclua o pagamento/i)).toBeInTheDocument();
 	});
 
 	it('hides resume payment after checkout is no longer pending', () => {
@@ -47,5 +48,23 @@ describe('OrderDetailsHeader', () => {
 		expect(
 			screen.queryByRole('button', { name: /retomar pagamento/i }),
 		).not.toBeInTheDocument();
+	});
+
+	it('wraps long order ids without forcing one-line header layout', () => {
+		render(
+			<OrderDetailsHeader
+				order={{
+					...makeOrder('completed'),
+					id: 'very-long-order-id-that-needs-to-wrap-on-mobile',
+				}}
+			/>,
+		);
+
+		expect(
+			screen.getByRole('heading', {
+				name: 'very-long-order-id-that-needs-to-wrap-on-mobile',
+			}),
+		).toHaveClass('break-all');
+		expect(screen.getByText(/pedido foi finalizado/i)).toBeInTheDocument();
 	});
 });

@@ -5,10 +5,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/shared/ui/components/card';
+import { cn } from '@/shared/ui/utils/cn';
+import { orderDetailsLayout } from './order-details-layout';
 
 export const OrderBoosterCard = () => {
 	return (
-		<Card className="border-hextech-cyan/10">
+		<Card className={cn(orderDetailsLayout.railCard, 'border-hextech-cyan/10')}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Shield className="w-4 h-4 text-hextech-cyan" />

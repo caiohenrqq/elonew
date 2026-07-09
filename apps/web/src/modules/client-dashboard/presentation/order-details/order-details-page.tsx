@@ -11,6 +11,7 @@ import { OrderActivityCard } from './order-activity-card';
 import { OrderBoosterCard } from './order-booster-card';
 import { OrderChatPanel } from './order-chat-panel';
 import { OrderDetailsHeader } from './order-details-header';
+import { orderDetailsLayout } from './order-details-layout';
 import { OrderServiceCard } from './order-service-card';
 import { OrderSupportCard } from './order-support-card';
 
@@ -45,30 +46,38 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 		ratings = await getOrderRatings(order.id);
 	}
 
+	const chatPanel = (
+		<OrderChatPanel
+			orderId={order.id}
+			orderStatus={order.status}
+			currentUserId={session.userId}
+			initialMessages={chatMessages}
+		/>
+	);
+
+	const ratingCard =
+		order.status === 'completed' ? (
+			<RatingCard
+				className={orderDetailsLayout.railCard}
+				orderId={order.id}
+				currentUserId={session.userId}
+				initialRatings={ratings}
+			/>
+		) : null;
+
 	return (
 		<div className="space-y-8">
 			<OrderDetailsHeader order={order} />
 
-			<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
-				<OrderChatPanel
-					orderId={order.id}
-					orderStatus={order.status}
-					currentUserId={session.userId}
-					initialMessages={chatMessages}
-				/>
+			<div className={orderDetailsLayout.grid}>
+				{chatPanel}
 
-				<div className="grid content-start gap-8">
+				<div className={orderDetailsLayout.rail}>
 					<OrderServiceCard order={order} />
 					<OrderBoosterCard />
 					<OrderActivityCard />
-					<OrderSupportCard />
-					{order.status === 'completed' ? (
-						<RatingCard
-							orderId={order.id}
-							currentUserId={session.userId}
-							initialRatings={ratings}
-						/>
-					) : null}
+					<OrderSupportCard orderId={order.id} />
+					{ratingCard}
 				</div>
 			</div>
 		</div>

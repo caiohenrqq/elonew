@@ -7,10 +7,14 @@ import type { ClientDashboardOrder } from '../../model/orders';
 import { SupportTicketPanel } from './support-ticket-panel';
 
 type NewTicketPageProps = {
+	initialOrderId?: string;
 	orders: ClientDashboardOrder[];
 };
 
-export const NewTicketPage = ({ orders }: NewTicketPageProps) => (
+export const NewTicketPage = ({
+	initialOrderId,
+	orders,
+}: NewTicketPageProps) => (
 	<DashboardEntrance>
 		<div className="dashboard-animate flex flex-none flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 			<div className="flex items-start gap-4">
@@ -41,6 +45,10 @@ export const NewTicketPage = ({ orders }: NewTicketPageProps) => (
 			</Link>
 		</div>
 
-		<SupportTicketPanel action={createSupportTicketAction} orders={orders} />
+		<SupportTicketPanel
+			action={createSupportTicketAction}
+			initialOrderId={initialOrderId}
+			orders={orders}
+		/>
 	</DashboardEntrance>
 );

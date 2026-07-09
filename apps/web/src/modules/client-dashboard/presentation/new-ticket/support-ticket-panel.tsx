@@ -14,14 +14,19 @@ type SupportTicketPanelProps = {
 		state: CreateSupportTicketActionState,
 		formData: FormData,
 	) => Promise<CreateSupportTicketActionState>;
+	initialOrderId?: string;
 	orders: ClientDashboardOrder[];
 };
 
 export const SupportTicketPanel = ({
 	action,
+	initialOrderId,
 	orders,
 }: SupportTicketPanelProps) => {
 	const [state, formAction] = useActionState(action, {});
+	const selectedOrderId = orders.some((order) => order.id === initialOrderId)
+		? initialOrderId
+		: '';
 
 	return (
 		<section className="dashboard-animate grid w-full overflow-hidden rounded-sm border border-white/10 bg-[#0b0b0d] lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -34,7 +39,7 @@ export const SupportTicketPanel = ({
 						<select
 							name="orderId"
 							className={cn(fieldSurface, 'h-12 bg-white/[0.03] text-sm')}
-							defaultValue=""
+							defaultValue={selectedOrderId}
 						>
 							<option value="">Ticket geral</option>
 							{orders.map((order) => (

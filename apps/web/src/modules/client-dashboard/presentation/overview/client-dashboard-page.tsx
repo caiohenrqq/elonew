@@ -49,7 +49,6 @@ const formatMetricCount = (value: number) => value.toString().padStart(2, '0');
 const paymentRequiredStatuses = new Set(['awaiting_payment']);
 const activeStatuses = new Set([
 	'awaiting_payment',
-	'paid',
 	'pending_booster',
 	'in_progress',
 ]);
@@ -324,7 +323,7 @@ export const ClientDashboardPage = ({
 	const isTicketsTab = tab === 'tickets';
 	const activeProgress =
 		dashboard && dashboard.summary.totalOrders > 0
-			? (dashboard.summary.activeOrders / dashboard.summary.totalOrders) * 100
+			? (activeOrders.length / dashboard.summary.totalOrders) * 100
 			: 0;
 
 	return (
@@ -347,6 +346,7 @@ export const ClientDashboardPage = ({
 							<div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
 								<div
 									className="h-full bg-hextech-cyan"
+									data-testid="active-orders-progress"
 									style={{ width: `${activeProgress}%` }}
 								/>
 							</div>

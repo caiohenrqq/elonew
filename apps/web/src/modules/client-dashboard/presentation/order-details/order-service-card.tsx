@@ -10,6 +10,7 @@ import {
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import type { ClientOrder } from '../../model/orders';
 import { OrderRankRoute } from '../order-rank-route';
+import { orderDetailsLayout } from './order-details-layout';
 
 type OrderServiceCardProps = {
 	order: ClientOrder;
@@ -17,15 +18,15 @@ type OrderServiceCardProps = {
 
 export const OrderServiceCard = ({ order }: OrderServiceCardProps) => {
 	return (
-		<Card>
+		<Card className={orderDetailsLayout.railCard}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<FileText className="w-4 h-4 text-hextech-cyan" />
 					Dados do Serviço
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="grid grid-cols-2 md:grid-cols-4 gap-8">
-				<div className="col-span-2 md:col-span-4 space-y-2">
+			<CardContent className="space-y-7">
+				<div className="space-y-2">
 					<p className="text-[10px] text-white/40 uppercase tracking-widest">
 						Rota
 					</p>
@@ -37,26 +38,31 @@ export const OrderServiceCard = ({ order }: OrderServiceCardProps) => {
 						desiredDivision={order.desiredDivision}
 					/>
 				</div>
-				<div className="space-y-1">
+				<div className="space-y-2">
 					<p className="text-[10px] text-white/40 uppercase tracking-widest">
 						Status
 					</p>
-					<OrderStatusBadge status={order.status} />
+					<OrderStatusBadge
+						className="min-w-0 w-fit max-w-full"
+						status={order.status}
+					/>
 				</div>
-				<DefinitionItem
-					label="Subtotal"
-					value={formatCurrency(order.subtotal)}
-					valueClassName="text-hextech-cyan"
-				/>
-				<DefinitionItem
-					label="Desconto"
-					value={formatCurrency(order.discountAmount)}
-				/>
-				<DefinitionItem
-					label="Total"
-					value={formatCurrency(order.totalAmount)}
-					valueClassName="text-hextech-cyan"
-				/>
+				<div className="grid gap-5 sm:grid-cols-3">
+					<DefinitionItem
+						label="Subtotal"
+						value={formatCurrency(order.subtotal)}
+						valueClassName="text-hextech-cyan"
+					/>
+					<DefinitionItem
+						label="Desconto"
+						value={formatCurrency(order.discountAmount)}
+					/>
+					<DefinitionItem
+						label="Total"
+						value={formatCurrency(order.totalAmount)}
+						valueClassName="text-hextech-cyan"
+					/>
+				</div>
 			</CardContent>
 		</Card>
 	);
