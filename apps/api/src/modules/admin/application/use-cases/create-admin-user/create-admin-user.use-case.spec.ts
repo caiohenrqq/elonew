@@ -97,6 +97,9 @@ class AdminGovernanceRepositoryStub implements AdminGovernanceRepositoryPort {
 		this.actions.push(action);
 		return Promise.resolve();
 	}
+	updateUserAndRecordAction(): Promise<void> {
+		return Promise.resolve();
+	}
 }
 
 const appSettings = {

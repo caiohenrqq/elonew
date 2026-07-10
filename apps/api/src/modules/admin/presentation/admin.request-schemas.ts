@@ -21,6 +21,13 @@ export const adminCreateUserSchema = z.object({
 
 export type AdminCreateUserSchemaInput = z.infer<typeof adminCreateUserSchema>;
 
+export const adminUpdateUserSchema = z.union([
+	z.object({ username: z.string().trim().min(1).max(120) }).strict(),
+	z.object({ role: z.enum(['CLIENT', 'BOOSTER', 'ADMIN']) }).strict(),
+]);
+
+export type AdminUpdateUserSchemaInput = z.infer<typeof adminUpdateUserSchema>;
+
 export const adminListQuerySchema = z.object({
 	limit: z.coerce.number().int().min(1).max(100).default(25),
 	query: z.string().trim().min(1).max(120).optional(),

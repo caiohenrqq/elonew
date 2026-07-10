@@ -4,6 +4,7 @@ import {
 } from '@modules/admin/application/ports/admin-governance.repository';
 import {
 	AdminGovernanceReasonRequiredError,
+	AdminSelfBlockError,
 	AdminUserNotFoundError,
 } from '@modules/admin/domain/admin.errors';
 import { Inject, Injectable } from '@nestjs/common';
@@ -25,6 +26,8 @@ export class BlockAdminUserUseCase {
 	async execute(input: BlockAdminUserInput): Promise<void> {
 		const reason = input.reason.trim();
 		if (!reason) throw new AdminGovernanceReasonRequiredError();
+		if (input.adminUserId === input.targetUserId)
+			throw new AdminSelfBlockError();
 
 		const user = await this.repository.findUserById(input.targetUserId);
 		if (!user) throw new AdminUserNotFoundError();

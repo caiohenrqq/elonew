@@ -3,7 +3,10 @@ import type {
 	AdminGovernanceRepositoryPort,
 } from '@modules/admin/application/ports/admin-governance.repository';
 import { BlockAdminUserUseCase } from '@modules/admin/application/use-cases/block-admin-user/block-admin-user.use-case';
-import { AdminGovernanceReasonRequiredError } from '@modules/admin/domain/admin.errors';
+import {
+	AdminGovernanceReasonRequiredError,
+	AdminSelfBlockError,
+} from '@modules/admin/domain/admin.errors';
 import { Order } from '@modules/orders/domain/order.entity';
 import { User } from '@modules/users/domain/user.entity';
 import { Role } from '@packages/auth/roles/role';
@@ -46,6 +49,9 @@ class AdminGovernanceRepositoryStub implements AdminGovernanceRepositoryPort {
 		this.actions.push(action);
 		return Promise.resolve();
 	}
+	updateUserAndRecordAction(): Promise<void> {
+		return Promise.resolve();
+	}
 }
 
 describe('BlockAdminUserUseCase', () => {
@@ -71,6 +77,22 @@ describe('BlockAdminUserUseCase', () => {
 				createdAt: now,
 			},
 		]);
+	});
+
+	it('rejects admins blocking their own account', async () => {
+		const repository = new AdminGovernanceRepositoryStub();
+		const useCase = new BlockAdminUserUseCase(repository);
+
+		await expect(
+			useCase.execute({
+				adminUserId: 'admin-1',
+				targetUserId: 'admin-1',
+				reason: 'mistake',
+				now: new Date('2026-05-05T12:00:00.000Z'),
+			}),
+		).rejects.toThrow(AdminSelfBlockError);
+		expect(repository.user?.isBlocked).toBe(false);
+		expect(repository.actions).toEqual([]);
 	});
 
 	it('rejects an empty reason', async () => {

@@ -10,6 +10,8 @@ import {
 import {
 	AdminGovernanceReasonRequiredError,
 	AdminOrderNotFoundError,
+	AdminSelfBlockError,
+	AdminSelfRoleChangeError,
 	AdminUserEmailAlreadyInUseError,
 	AdminUserNotFoundError,
 	AdminUsernameAlreadyInUseError,
@@ -192,6 +194,8 @@ export function mapApiDomainErrorToHttpException(
 			AdminUserEmailAlreadyInUseError,
 			AdminUsernameAlreadyInUseError,
 			AdminUserPasswordSetupUnavailableError,
+			AdminSelfBlockError,
+			AdminSelfRoleChangeError,
 			TicketInvalidStatusTransitionError,
 			TicketMessageOperationInvalidError,
 			TicketOrderAccessDeniedError,

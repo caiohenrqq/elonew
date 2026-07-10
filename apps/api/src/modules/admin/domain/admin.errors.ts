@@ -33,3 +33,15 @@ export class AdminUserPasswordSetupUnavailableError extends Error {
 		super('Password setup is unavailable for this user.');
 	}
 }
+
+export class AdminSelfRoleChangeError extends Error {
+	constructor() {
+		super('Admins cannot change their own account type.');
+	}
+}
+
+export class AdminSelfBlockError extends Error {
+	constructor() {
+		super('Admins cannot block their own account.');
+	}
+}

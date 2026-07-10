@@ -5,6 +5,7 @@ import { ForceCancelAdminOrderUseCase } from '@modules/admin/application/use-cas
 import { GetAdminDashboardUseCase } from '@modules/admin/application/use-cases/get-admin-dashboard/get-admin-dashboard.use-case';
 import { ResendAdminUserPasswordSetupUseCase } from '@modules/admin/application/use-cases/resend-admin-user-password-setup/resend-admin-user-password-setup.use-case';
 import { UnblockAdminUserUseCase } from '@modules/admin/application/use-cases/unblock-admin-user/unblock-admin-user.use-case';
+import { UpdateAdminUserUseCase } from '@modules/admin/application/use-cases/update-admin-user/update-admin-user.use-case';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
@@ -16,6 +17,7 @@ import {
 	Get,
 	HttpCode,
 	Param,
+	Patch,
 	Post,
 	Query,
 	UseGuards,
@@ -26,10 +28,12 @@ import {
 	type AdminIdParamSchemaInput,
 	type AdminListQuerySchemaInput,
 	type AdminReasonSchemaInput,
+	type AdminUpdateUserSchemaInput,
 	adminCreateUserSchema,
 	adminIdParamSchema,
 	adminListQuerySchema,
 	adminReasonSchema,
+	adminUpdateUserSchema,
 } from './admin.request-schemas';
 
 @Controller('admin')
@@ -42,8 +46,26 @@ export class AdminController {
 		private readonly resendPasswordSetup: ResendAdminUserPasswordSetupUseCase,
 		private readonly blockUser: BlockAdminUserUseCase,
 		private readonly unblockUser: UnblockAdminUserUseCase,
+		private readonly updateUser: UpdateAdminUserUseCase,
 		private readonly forceCancelOrder: ForceCancelAdminOrderUseCase,
 	) {}
+
+	@Patch('users/:userId')
+	@HttpCode(200)
+	async update(
+		@Param('userId', new ZodValidationPipe(adminIdParamSchema)) userId: string,
+		@Body(new ZodValidationPipe(adminUpdateUserSchema))
+		body: AdminUpdateUserSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	) {
+		await this.updateUser.execute({
+			adminUserId: currentUser.id,
+			targetUserId: userId,
+			...('role' in body ? { role: body.role as Role } : body),
+			now: new Date(),
+		});
+		return { ok: true };
+	}
 
 	@Get('metrics')
 	async getMetrics(@CurrentUser() _currentUser: AuthenticatedUser) {
