@@ -279,7 +279,7 @@ describe('Payments (e2e)', () => {
 			.execute();
 	});
 
-	it('rejects Mercado Pago webhook payloads missing the provider event id', async () => {
+	it('acknowledges Mercado Pago webhook payloads missing the provider event id without processing them', async () => {
 		const token = signToken({ sub: 'client-2', role: 'CLIENT' });
 		const createdOrder = await createQuotedOrder(token);
 
@@ -302,7 +302,10 @@ describe('Payments (e2e)', () => {
 				action: 'payment.updated',
 				data: { id: 'payment-1' },
 			})
-			.expect(400)
+			.expect(200)
+			.expect(({ body }) => {
+				expect(body).toEqual({ processed: false });
+			})
 			.execute();
 	});
 
