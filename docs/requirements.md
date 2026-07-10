@@ -96,6 +96,13 @@ Zero-cost extras:
 - FR-065: Admin metrics: revenue, orders, active users.
 - FR-066: Admin can intervene in any order state.
 - FR-067: Admin can block any user account.
+- FR-075: Admins can rename users while usernames remain globally unique.
+- FR-076: Admins can change another user's account type between `Cliente`,
+  `Booster`, and `Admin` after explicit confirmation.
+- FR-077: Username and account-type changes store their previous and new values
+  in the admin audit history and revoke the target user's sessions.
+- FR-078: Account blocks and role changes affect authorization immediately; an
+  admin cannot change their own account type.
 
 ### 12. Chargebacks
 - FR-068: Chargeback-associated users are blocked.
