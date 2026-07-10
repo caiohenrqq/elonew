@@ -7,6 +7,7 @@ import type { AdminGovernanceRepositoryPort } from '@modules/admin/application/p
 import { ADMIN_GOVERNANCE_REPOSITORY_KEY } from '@modules/admin/application/ports/admin-governance.repository';
 import type { Order } from '@modules/orders/domain/order.entity';
 import { OrderStatus } from '@modules/orders/domain/order-status';
+import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import type { User } from '@modules/users/domain/user.entity';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
@@ -14,6 +15,7 @@ import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { signTestAccessToken as signToken } from './support/auth-token';
+import { E2eUserRepositoryStub } from './support/e2e-user-repository.stub';
 
 describe('Admin dashboard (e2e)', () => {
 	let app: ApiHttpApp;
@@ -94,6 +96,10 @@ describe('Admin dashboard (e2e)', () => {
 		async recordAction(): Promise<void> {
 			throw new Error('Unexpected governance repository call.');
 		}
+
+		async updateUserAndRecordAction(): Promise<void> {
+			throw new Error('Unexpected governance repository call.');
+		}
 	}
 
 	beforeEach(async () => {
@@ -104,6 +110,8 @@ describe('Admin dashboard (e2e)', () => {
 			.useClass(AdminDashboardReaderStub)
 			.overrideProvider(ADMIN_GOVERNANCE_REPOSITORY_KEY)
 			.useClass(AdminGovernanceRepositoryStub)
+			.overrideProvider(USER_REPOSITORY_KEY)
+			.useClass(E2eUserRepositoryStub)
 			.compile();
 
 		app = await createTestHttpApp(moduleRef);

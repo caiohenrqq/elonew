@@ -3,7 +3,15 @@ import {
 	ACCESS_TOKEN_SERVICE_KEY,
 	type AccessTokenServicePort,
 } from '@modules/auth/application/ports/token-service.port';
-import { AuthenticationRequiredError } from '@modules/auth/domain/auth.errors';
+import {
+	AuthenticationRequiredError,
+	AuthUserBlockedError,
+	AuthUserInactiveError,
+} from '@modules/auth/domain/auth.errors';
+import {
+	USER_REPOSITORY_KEY,
+	type UserRepositoryPort,
+} from '@modules/users/application/ports/user-repository.port';
 import {
 	CanActivate,
 	type ExecutionContext,
@@ -16,15 +24,21 @@ export class JwtAuthGuard implements CanActivate {
 	constructor(
 		@Inject(ACCESS_TOKEN_SERVICE_KEY)
 		private readonly accessTokenService: AccessTokenServicePort,
+		@Inject(USER_REPOSITORY_KEY)
+		private readonly users: UserRepositoryPort,
 	) {}
 
-	canActivate(context: ExecutionContext): boolean {
+	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest<{
 			headers?: { authorization?: string };
 			user?: AuthenticatedUser;
 		}>();
 		const token = this.getBearerToken(request.headers?.authorization);
-		request.user = this.accessTokenService.verify(token);
+		const tokenUser = this.accessTokenService.verify(token);
+		const user = await this.users.findById(tokenUser.id);
+		if (!user || !user.isActive) throw new AuthUserInactiveError();
+		if (user.isBlocked) throw new AuthUserBlockedError();
+		request.user = { id: user.id, role: user.role };
 
 		return true;
 	}

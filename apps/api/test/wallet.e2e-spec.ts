@@ -1,3 +1,4 @@
+import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
 import { Test } from '@nestjs/testing';
@@ -6,6 +7,7 @@ import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { signTestAccessToken as signToken } from './support/auth-token';
+import { E2eUserRepositoryStub } from './support/e2e-user-repository.stub';
 import { InMemoryWalletRepository } from './support/in-memory/wallet/in-memory-wallet.repository';
 
 describe('Wallet (e2e)', () => {
@@ -16,6 +18,8 @@ describe('Wallet (e2e)', () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
+			.overrideProvider(USER_REPOSITORY_KEY)
+			.useClass(E2eUserRepositoryStub)
 			.overrideProvider(WALLET_REPOSITORY_KEY)
 			.useClass(InMemoryWalletRepository)
 			.compile();

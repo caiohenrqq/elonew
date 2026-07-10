@@ -59,6 +59,7 @@ import { Module } from '@nestjs/common';
 		RolesGuard,
 	],
 	exports: [
+		UsersModule,
 		ACCESS_TOKEN_SERVICE_KEY,
 		WebSessionCookieService,
 		InternalApiKeyGuard,

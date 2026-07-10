@@ -14,6 +14,7 @@ import {
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
 import { ORDER_REPOSITORY_KEY } from '@modules/orders/application/ports/order-repository.port';
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
+import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { io, type Socket } from 'socket.io-client';
@@ -26,6 +27,7 @@ import {
 	signTestAccessToken as signToken,
 } from './support/auth-token';
 import { makeStoredCoupon } from './support/coupons/make-stored-coupon';
+import { E2eUserRepositoryStub } from './support/e2e-user-repository.stub';
 import { InMemoryChatRepository } from './support/in-memory/chat/in-memory-chat.repository';
 import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
@@ -184,6 +186,8 @@ describe('Orders (e2e)', () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
+			.overrideProvider(USER_REPOSITORY_KEY)
+			.useClass(E2eUserRepositoryStub)
 			.overrideProvider(ORDER_REPOSITORY_KEY)
 			.useValue(orderRepository)
 			.overrideProvider(CLIENT_ORDER_READER_KEY)

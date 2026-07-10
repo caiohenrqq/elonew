@@ -76,6 +76,8 @@ describe('Orders (e2e db)', () => {
 				email: `client-e2e-db-${uniqueSuffix}@example.com`,
 				password: 'secret',
 				role: 'CLIENT',
+				isActive: true,
+				emailConfirmedAt: new Date(),
 			},
 		});
 		clientId = user.id;

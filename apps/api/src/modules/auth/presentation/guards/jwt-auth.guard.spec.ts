@@ -2,10 +2,13 @@ import { createHmac } from 'node:crypto';
 import type { AppSettingsService } from '@app/common/settings/app-settings.service';
 import {
 	AuthenticationRequiredError,
+	AuthUserBlockedError,
 	InvalidAccessTokenError,
 } from '@modules/auth/domain/auth.errors';
 import { HmacAccessTokenService } from '@modules/auth/infrastructure/security/hmac-access-token.service';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
+import type { UserRepositoryPort } from '@modules/users/application/ports/user-repository.port';
+import { User } from '@modules/users/domain/user.entity';
 import type { ContextType, ExecutionContext, Type } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 
@@ -85,12 +88,33 @@ function createExecutionContext(
 }
 
 describe('JwtAuthGuard', () => {
-	it('attaches the authenticated user from a valid bearer token', () => {
+	const user = (role = Role.CLIENT, isBlocked = false) =>
+		User.rehydrate({
+			id: 'user-1',
+			username: 'user',
+			email: 'user@example.com',
+			passwordHash: 'hash',
+			role,
+			isActive: true,
+			isBlocked,
+			emailConfirmedAt: new Date(),
+			emailConfirmationTokenHash: null,
+			emailConfirmationTokenExpiresAt: null,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		});
+	const users = (current = user()) =>
+		({
+			findById: jest.fn().mockResolvedValue(current),
+		}) as unknown as UserRepositoryPort;
+
+	it('attaches the current persisted role from a valid bearer token', async () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
 		const guard = new JwtAuthGuard(
 			new HmacAccessTokenService(appSettings as AppSettingsService),
+			users(user(Role.ADMIN)),
 		);
 		const token = signTestToken(
 			{
@@ -105,33 +129,35 @@ describe('JwtAuthGuard', () => {
 			authorization: `Bearer ${token}`,
 		});
 
-		expect(guard.canActivate(context)).toBe(true);
+		await expect(guard.canActivate(context)).resolves.toBe(true);
 		expect(context.switchToHttp().getRequest().user).toEqual({
 			id: 'user-1',
-			role: Role.CLIENT,
+			role: Role.ADMIN,
 		});
 	});
 
-	it('rejects requests without a bearer token', () => {
+	it('rejects requests without a bearer token', async () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
 		const guard = new JwtAuthGuard(
 			new HmacAccessTokenService(appSettings as AppSettingsService),
+			users(),
 		);
 		const context = createExecutionContext({});
 
-		expect(() => guard.canActivate(context)).toThrow(
+		await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
 			AuthenticationRequiredError,
 		);
 	});
 
-	it('rejects tokens with malformed json payloads', () => {
+	it('rejects tokens with malformed json payloads', async () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
 		const guard = new JwtAuthGuard(
 			new HmacAccessTokenService(appSettings as AppSettingsService),
+			users(),
 		);
 		const header = encodeBase64Url(
 			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
@@ -144,15 +170,18 @@ describe('JwtAuthGuard', () => {
 			authorization: `Bearer ${header}.${payload}.${signature}`,
 		});
 
-		expect(() => guard.canActivate(context)).toThrow(InvalidAccessTokenError);
+		await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
+			InvalidAccessTokenError,
+		);
 	});
 
-	it('rejects expired tokens', () => {
+	it('rejects expired tokens', async () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
 		const guard = new JwtAuthGuard(
 			new HmacAccessTokenService(appSettings as AppSettingsService),
+			users(),
 		);
 		const token = signTestToken(
 			{
@@ -167,6 +196,32 @@ describe('JwtAuthGuard', () => {
 			authorization: `Bearer ${token}`,
 		});
 
-		expect(() => guard.canActivate(context)).toThrow(InvalidAccessTokenError);
+		await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
+			InvalidAccessTokenError,
+		);
+	});
+
+	it('rejects a blocked user immediately', async () => {
+		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
+			jwtAccessTokenSecret: 'test-secret',
+		};
+		const guard = new JwtAuthGuard(
+			new HmacAccessTokenService(appSettings as AppSettingsService),
+			users(user(Role.CLIENT, true)),
+		);
+		const token = signTestToken(
+			{
+				sub: 'user-1',
+				role: Role.CLIENT,
+				expiresAt: Math.floor(Date.now() / 1000) + 900,
+				issuedAt: Math.floor(Date.now() / 1000),
+			},
+			appSettings.jwtAccessTokenSecret,
+		);
+		await expect(
+			guard.canActivate(
+				createExecutionContext({ authorization: `Bearer ${token}` }),
+			),
+		).rejects.toBeInstanceOf(AuthUserBlockedError);
 	});
 });

@@ -12,6 +12,7 @@ import { ORDER_STATUS_PORT_KEY } from '@modules/payments/application/ports/order
 import { PAYMENT_REPOSITORY_KEY } from '@modules/payments/application/ports/payment-repository.port';
 import { PROCESSED_WEBHOOK_EVENT_PORT_KEY } from '@modules/payments/application/ports/processed-webhook-event.port';
 import { PaymentsController } from '@modules/payments/presentation/payments.controller';
+import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { MERCADO_PAGO_SDK_PORT_KEY } from '@packages/integrations/mercadopago/mercadopago-sdk.port';
@@ -20,6 +21,7 @@ import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { makeDefaultOrderPricingVersionInput } from './order-pricing-version-test-data';
 import { signTestAccessToken as signToken } from './support/auth-token';
+import { E2eUserRepositoryStub } from './support/e2e-user-repository.stub';
 import { InMemoryOrderRepository } from './support/in-memory/orders/in-memory-order.repository';
 import { InMemoryOrderCheckoutRepository } from './support/in-memory/orders/in-memory-order-checkout.repository';
 import { InMemoryOrderPricingVersionRepository } from './support/in-memory/orders/in-memory-order-pricing-version.repository';
@@ -121,6 +123,8 @@ describe('Payments (e2e)', () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
+			.overrideProvider(USER_REPOSITORY_KEY)
+			.useClass(E2eUserRepositoryStub)
 			.overrideProvider(ORDER_REPOSITORY_KEY)
 			.useClass(InMemoryOrderRepository)
 			.overrideProvider(ORDER_CHECKOUT_PORT_KEY)

@@ -19,6 +19,8 @@ describe('Ratings (e2e db)', () => {
 				email: `rating-${suffix}@example.com`,
 				password: 'secret',
 				role,
+				isActive: true,
+				emailConfirmedAt: new Date(),
 				profile: { create: {} },
 			},
 		});

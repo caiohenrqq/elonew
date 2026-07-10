@@ -1,11 +1,13 @@
 import { TICKET_REPOSITORY_KEY } from '@modules/tickets/application/ports/ticket-repository.port';
 import { TicketStatus } from '@modules/tickets/domain/ticket.entity';
+import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import { Test } from '@nestjs/testing';
 import { Role } from '@packages/auth/roles/role';
 import { AppModule } from '../src/app.module';
 import type { ApiHttpApp } from '../src/common/http/http-app.factory';
 import { createTestHttpApp, requestHttp } from './create-test-http-app';
 import { signTestAccessToken as signToken } from './support/auth-token';
+import { E2eUserRepositoryStub } from './support/e2e-user-repository.stub';
 import { InMemoryTicketRepository } from './support/in-memory/tickets/in-memory-ticket.repository';
 
 describe('Tickets (e2e)', () => {
@@ -24,6 +26,8 @@ describe('Tickets (e2e)', () => {
 		const moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
+			.overrideProvider(USER_REPOSITORY_KEY)
+			.useClass(E2eUserRepositoryStub)
 			.overrideProvider(TICKET_REPOSITORY_KEY)
 			.useValue(tickets)
 			.compile();
