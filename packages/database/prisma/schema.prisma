@@ -483,8 +483,8 @@ model TicketMessage {
 
 model AdminGovernanceAction {
   id            String   @id @default(cuid())
-  adminUserId   String
-  adminUser     User     @relation("AdminGovernanceActor", fields: [adminUserId], references: [id])
+  adminUserId   String?
+  adminUser     User?    @relation("AdminGovernanceActor", fields: [adminUserId], references: [id])
   actionType    String
   reason        String
   targetUserId  String?

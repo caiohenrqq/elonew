@@ -4,6 +4,7 @@ import type {
 	FetchPaymentNotificationOutput,
 	PaymentGatewayPort,
 } from '@modules/payments/application/ports/payment-gateway.port';
+import type { PaymentGovernanceActionPort } from '@modules/payments/application/ports/payment-governance-action.port';
 import type { PaymentWebhookSignatureVerifierPort } from '@modules/payments/application/ports/payment-webhook-signature-verifier.port';
 import type { ProcessedWebhookEventPort } from '@modules/payments/application/ports/processed-webhook-event.port';
 import { HandlePaymentConfirmedWebhookUseCase } from '@modules/payments/application/use-cases/handle-payment-confirmed-webhook/handle-payment-confirmed-webhook.use-case';
@@ -25,6 +26,19 @@ class InMemoryProcessedWebhookEventPort implements ProcessedWebhookEventPort {
 
 	async markProcessed(eventId: string): Promise<void> {
 		this.processedEventIds.add(eventId);
+	}
+}
+
+class InMemoryPaymentGovernanceActionPort
+	implements PaymentGovernanceActionPort
+{
+	readonly recorded: Array<{ paymentId: string; orderId: string }> = [];
+
+	async recordLateApprovedAfterExpiration(input: {
+		paymentId: string;
+		orderId: string;
+	}): Promise<void> {
+		this.recorded.push(input);
 	}
 }
 
@@ -127,6 +141,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -172,6 +187,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 		paymentGatewayPort.notification = {
 			internalPaymentId: 'payment-2',
@@ -224,6 +240,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 		paymentGatewayPort.notification = {
 			internalPaymentId: 'payment-2b',
@@ -277,6 +294,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 		paymentGatewayPort.notification = {
 			internalPaymentId: 'payment-2c',
@@ -328,6 +346,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -374,6 +393,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -418,6 +438,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -460,6 +481,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			rejectingVerifier,
 			new InMemoryPaymentGatewayPort(),
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -490,6 +512,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -538,6 +561,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -587,6 +611,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await useCase.execute({
@@ -653,6 +678,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			orderCredentialCleanupPort,
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -702,6 +728,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			orderCredentialCleanupPort,
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -748,6 +775,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -785,6 +813,7 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 			new InMemoryOrderCredentialCleanupPort(),
 			new AcceptAllPaymentWebhookSignatureVerifier(),
 			paymentGatewayPort,
+			new InMemoryPaymentGovernanceActionPort(),
 		);
 
 		await expect(
@@ -799,5 +828,72 @@ describe('HandlePaymentConfirmedWebhookUseCase', () => {
 		await expect(
 			processedWebhookEventPort.has(processedWebhookKey('notification-9')),
 		).resolves.toBe(false);
+	});
+
+	it('acknowledges a late approval on a failed payment without touching the order', async () => {
+		const paymentRepository = new InMemoryPaymentRepository();
+		const processedWebhookEventPort = new InMemoryProcessedWebhookEventPort();
+		const orderPaymentConfirmationPort =
+			new InMemoryOrderPaymentConfirmationPort();
+		const paymentGatewayPort = new InMemoryPaymentGatewayPort();
+		const paymentGovernanceActionPort =
+			new InMemoryPaymentGovernanceActionPort();
+		const payment = Payment.create({
+			id: 'payment-10',
+			orderId: 'order-10',
+			grossAmount: 100,
+			paymentMethod: 'pix',
+		});
+		payment.fail();
+		paymentRepository.insert(payment);
+
+		const useCase = new HandlePaymentConfirmedWebhookUseCase(
+			paymentRepository,
+			processedWebhookEventPort,
+			orderPaymentConfirmationPort,
+			new InMemoryOrderCredentialCleanupPort(),
+			new AcceptAllPaymentWebhookSignatureVerifier(),
+			paymentGatewayPort,
+			paymentGovernanceActionPort,
+		);
+		paymentGatewayPort.notification = {
+			internalPaymentId: 'payment-10',
+			gatewayPaymentId: 'mp-payment-10',
+			gatewayStatus: 'approved',
+			gatewayStatusDetail: 'accredited',
+		};
+
+		await expect(
+			useCase.execute({
+				eventId: 'event-10',
+				topic: 'payment.updated',
+				notificationResourceId: 'notification-10',
+				requestId: 'request-10',
+				signature: 'signature-10',
+			}),
+		).resolves.toEqual({ processed: true });
+
+		const savedPayment = await paymentRepository.findById('payment-10');
+		expect(savedPayment?.status).toBe('failed');
+		expect(savedPayment?.gatewayId).toBe('mp-payment-10');
+		expect(savedPayment?.gatewayStatus).toBe('approved');
+		expect(orderPaymentConfirmationPort.orderIds).toEqual([]);
+		expect(paymentGovernanceActionPort.recorded).toEqual([
+			{ paymentId: 'payment-10', orderId: 'order-10' },
+		]);
+		await expect(
+			processedWebhookEventPort.has(processedWebhookKey('notification-10')),
+		).resolves.toBe(true);
+
+		await expect(
+			useCase.execute({
+				eventId: 'event-10',
+				topic: 'payment.updated',
+				notificationResourceId: 'notification-10',
+				requestId: 'request-10',
+				signature: 'signature-10',
+			}),
+		).resolves.toEqual({ processed: false });
+		expect(paymentGovernanceActionPort.recorded).toHaveLength(1);
 	});
 });

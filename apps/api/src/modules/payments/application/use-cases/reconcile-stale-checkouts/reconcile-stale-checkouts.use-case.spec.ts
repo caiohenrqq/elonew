@@ -26,9 +26,13 @@ class PaymentRepositoryStub extends InMemoryPaymentRepository {
 		return await callback();
 	}
 
-	override insert(payment: Payment): void {
-		super.insert(payment);
-		this.candidates.push({ payment });
+	override insert(
+		payment: Payment,
+		_clientId?: string,
+		createdAt?: Date,
+	): void {
+		super.insert(payment, _clientId, createdAt);
+		this.candidates.push({ payment, createdAt: createdAt ?? new Date() });
 	}
 }
 
@@ -214,7 +218,10 @@ describe('ReconcileStaleCheckoutsUseCase', () => {
 		const staleCandidate = makePayment('payment-concurrent');
 		const currentPayment = makePayment('payment-concurrent');
 		currentPayment.confirm();
-		repository.candidates.push({ payment: staleCandidate });
+		repository.candidates.push({
+			payment: staleCandidate,
+			createdAt: new Date(),
+		});
 		await repository.save(currentPayment);
 		gateway.notifications.set(
 			'mp-payment-concurrent',
@@ -277,8 +284,54 @@ describe('ReconcileStaleCheckoutsUseCase', () => {
 			confirmedCount: 0,
 			failedCount: 0,
 			pendingUpdatedCount: 0,
+			expiredCount: 0,
 			skippedCount: 0,
 			gatewayErrorCount: 0,
 		});
+	});
+
+	it('expires checkouts without a provider payment after the expiry window', async () => {
+		const { repository, gateway, cleanup, useCase } = makeUseCase();
+		const payment = makePayment('payment-expired', null);
+		repository.insert(
+			payment,
+			undefined,
+			new Date(runAt.getTime() - 25 * 3_600_000),
+		);
+		gateway.notifications.clear();
+
+		const result = await useCase.execute({ now: runAt, limit: 50 });
+
+		expect(result).toMatchObject({
+			skipped: false,
+			scannedCount: 1,
+			expiredCount: 1,
+			skippedCount: 0,
+		});
+		expect(payment.status).toBe('failed');
+		expect(cleanup.orderIds).toEqual(['order-payment-expired']);
+		expect(gateway.externalReferences).toEqual(['payment-expired']);
+	});
+
+	it('keeps skipping recent checkouts without a provider payment', async () => {
+		const { repository, gateway, cleanup, useCase } = makeUseCase();
+		const payment = makePayment('payment-recent', null);
+		repository.insert(
+			payment,
+			undefined,
+			new Date(runAt.getTime() - 3_600_000),
+		);
+		gateway.notifications.clear();
+
+		const result = await useCase.execute({ now: runAt, limit: 50 });
+
+		expect(result).toMatchObject({
+			skipped: false,
+			scannedCount: 1,
+			expiredCount: 0,
+			skippedCount: 1,
+		});
+		expect(payment.status).toBe('awaiting_confirmation');
+		expect(cleanup.orderIds).toEqual([]);
 	});
 });

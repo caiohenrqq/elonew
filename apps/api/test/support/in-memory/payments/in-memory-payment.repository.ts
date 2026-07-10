@@ -10,6 +10,7 @@ import { Inject, Injectable, Optional } from '@nestjs/common';
 @Injectable()
 export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	private readonly payments = new Map<string, Payment>();
+	private readonly createdAts = new Map<string, Date>();
 	private readonly clientIds = new Map<string, string>();
 	private readonly failOnSavePaymentIds = new Set<string>();
 
@@ -78,16 +79,19 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 	}
 
 	async findStaleAwaitingCheckoutCandidates(): Promise<
-		Array<{ payment: Payment }>
+		Array<{ payment: Payment; createdAt: Date }>
 	> {
-		const candidates: Array<{ payment: Payment }> = [];
+		const candidates: Array<{ payment: Payment; createdAt: Date }> = [];
 		for (const payment of this.payments.values()) {
 			if (payment.status !== PaymentStatus.AWAITING_CONFIRMATION) continue;
 			if (this.orderRepository) {
 				const order = await this.orderRepository.findById(payment.orderId);
 				if (!order || order.status !== 'awaiting_payment') continue;
 			}
-			candidates.push({ payment });
+			candidates.push({
+				payment,
+				createdAt: this.createdAts.get(payment.id) ?? new Date(),
+			});
 		}
 
 		return candidates;
@@ -107,9 +111,10 @@ export class InMemoryPaymentRepository implements PaymentRepositoryPort {
 		return Promise.resolve();
 	}
 
-	insert(payment: Payment, clientId?: string): void {
+	insert(payment: Payment, clientId?: string, createdAt?: Date): void {
 		this.payments.set(payment.id, payment);
 		if (clientId !== undefined) this.clientIds.set(payment.id, clientId);
+		if (createdAt !== undefined) this.createdAts.set(payment.id, createdAt);
 	}
 
 	setFailOnSave(paymentId: string): void {

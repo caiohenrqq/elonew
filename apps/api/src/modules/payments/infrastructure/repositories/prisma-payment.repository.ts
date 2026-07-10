@@ -25,6 +25,7 @@ type PaymentRecord = {
 	gatewayPaymentMethodId: string | null;
 	gatewayPaymentTypeId: string | null;
 	checkoutUrl: string | null;
+	createdAt: Date;
 };
 
 function mapDomainPaymentMethodToPersisted(
@@ -81,8 +82,8 @@ type PaymentDelegate = {
 	}): Promise<PaymentRecord[]>;
 	upsert(args: {
 		where: { id: string };
-		create: PaymentRecord;
-		update: Omit<PaymentRecord, 'id' | 'orderId'>;
+		create: Omit<PaymentRecord, 'createdAt'>;
+		update: Omit<PaymentRecord, 'id' | 'orderId' | 'createdAt'>;
 	}): Promise<PaymentRecord>;
 };
 
@@ -171,6 +172,7 @@ export class PrismaPaymentRepository implements PaymentRepositoryPort {
 
 		return records.map((record) => ({
 			payment: this.mapRecordToDomain(record),
+			createdAt: record.createdAt,
 		}));
 	}
 

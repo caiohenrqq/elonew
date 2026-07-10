@@ -229,6 +229,7 @@ export class PaymentsController {
 		confirmedCount: number;
 		failedCount: number;
 		pendingUpdatedCount: number;
+		expiredCount: number;
 		skippedCount: number;
 		gatewayErrorCount: number;
 	}> {
