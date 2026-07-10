@@ -146,101 +146,101 @@ const UserActions = ({
 
 			{kind ? (
 				<Modal labelledBy={titleId} onClose={() => setKind(null)}>
-						<div className="mb-4 flex items-start justify-between gap-4">
-							<div>
-								<h2 id={titleId} className="text-sm font-black text-white">
-									{kind === 'rename'
-										? 'Renomear usuário'
-										: kind === 'role'
-											? 'Alterar tipo de conta'
-											: user.isBlocked
-												? 'Desbloquear usuário'
-												: 'Bloquear usuário'}
-								</h2>
-								<p className="mt-1 text-xs text-white/45">
-									{user.username} · {user.email}
-								</p>
-							</div>
-							<button
-								type="button"
-								aria-label="Fechar"
-								onClick={() => setKind(null)}
-								className={getButtonClassName({
-									variant: 'ghost',
-									size: 'icon',
-								})}
-							>
-								<X className="h-4 w-4" />
-							</button>
+					<div className="mb-4 flex items-start justify-between gap-4">
+						<div>
+							<h2 id={titleId} className="text-sm font-black text-white">
+								{kind === 'rename'
+									? 'Renomear usuário'
+									: kind === 'role'
+										? 'Alterar tipo de conta'
+										: user.isBlocked
+											? 'Desbloquear usuário'
+											: 'Bloquear usuário'}
+							</h2>
+							<p className="mt-1 text-xs text-white/45">
+								{user.username} · {user.email}
+							</p>
 						</div>
-						{kind === 'rename' ? (
-							<form action={renameAction} className="grid gap-3">
-								<input type="hidden" name="targetId" value={user.id} />
-								<label className="grid gap-2 text-xs text-white/60">
-									Nome de usuário
-									<input
-										name="username"
-										defaultValue={user.username}
-										required
-										maxLength={120}
-										className={cn(fieldSurface, 'bg-black/20')}
-									/>
-								</label>
-								<ActionFooter
-									pending={renamePending}
-									error={renameState.error}
-									label="Salvar nome"
-									close={() => setKind(null)}
+						<button
+							type="button"
+							aria-label="Fechar"
+							onClick={() => setKind(null)}
+							className={getButtonClassName({
+								variant: 'ghost',
+								size: 'icon',
+							})}
+						>
+							<X className="h-4 w-4" />
+						</button>
+					</div>
+					{kind === 'rename' ? (
+						<form action={renameAction} className="grid gap-3">
+							<input type="hidden" name="targetId" value={user.id} />
+							<label className="grid gap-2 text-xs text-white/60">
+								Nome de usuário
+								<input
+									name="username"
+									defaultValue={user.username}
+									required
+									maxLength={120}
+									className={cn(fieldSurface, 'bg-black/20')}
 								/>
-							</form>
-						) : kind === 'role' ? (
-							<form action={roleAction} className="grid gap-3">
-								<input type="hidden" name="targetId" value={user.id} />
-								<p className="rounded-sm border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-relaxed text-amber-100/75">
-									Esta alteração troca as permissões de{' '}
-									<strong>{roleLabels[user.role]}</strong> e encerra as sessões
-									atuais. Pedidos e saldo existentes não serão alterados.
-								</p>
-								<label className="grid gap-2 text-xs text-white/60">
-									Novo tipo
-									<select
-										name="role"
-										defaultValue={user.role}
-										className={cn(fieldSurface, 'bg-black/20')}
-									>
-										{roleOptions.map((option) => (
-											<option key={option.value} value={option.value}>
-												{option.label}
-											</option>
-										))}
-									</select>
-								</label>
-								<ActionFooter
-									pending={rolePending}
-									error={roleState.error}
-									label="Confirmar alteração"
-									close={() => setKind(null)}
+							</label>
+							<ActionFooter
+								pending={renamePending}
+								error={renameState.error}
+								label="Salvar nome"
+								close={() => setKind(null)}
+							/>
+						</form>
+					) : kind === 'role' ? (
+						<form action={roleAction} className="grid gap-3">
+							<input type="hidden" name="targetId" value={user.id} />
+							<p className="rounded-sm border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-relaxed text-amber-100/75">
+								Esta alteração troca as permissões de{' '}
+								<strong>{roleLabels[user.role]}</strong> e encerra as sessões
+								atuais. Pedidos e saldo existentes não serão alterados.
+							</p>
+							<label className="grid gap-2 text-xs text-white/60">
+								Novo tipo
+								<select
+									name="role"
+									defaultValue={user.role}
+									className={cn(fieldSurface, 'bg-black/20')}
+								>
+									{roleOptions.map((option) => (
+										<option key={option.value} value={option.value}>
+											{option.label}
+										</option>
+									))}
+								</select>
+							</label>
+							<ActionFooter
+								pending={rolePending}
+								error={roleState.error}
+								label="Confirmar alteração"
+								close={() => setKind(null)}
+							/>
+						</form>
+					) : (
+						<form action={blockAction} className="grid gap-3">
+							<input type="hidden" name="targetId" value={user.id} />
+							<label className="grid gap-2 text-xs text-white/60">
+								Motivo
+								<textarea
+									name="reason"
+									required
+									className={cn(fieldSurface, 'h-24 resize-none bg-black/20')}
 								/>
-							</form>
-						) : (
-							<form action={blockAction} className="grid gap-3">
-								<input type="hidden" name="targetId" value={user.id} />
-								<label className="grid gap-2 text-xs text-white/60">
-									Motivo
-									<textarea
-										name="reason"
-										required
-										className={cn(fieldSurface, 'h-24 resize-none bg-black/20')}
-									/>
-								</label>
-								<ActionFooter
-									pending={blockPending}
-									error={blockState.error}
-									label={user.isBlocked ? 'Desbloquear' : 'Bloquear'}
-									close={() => setKind(null)}
-								/>
-							</form>
-						)}
+							</label>
+							<ActionFooter
+								pending={blockPending}
+								error={blockState.error}
+								label={user.isBlocked ? 'Desbloquear' : 'Bloquear'}
+								close={() => setKind(null)}
+							/>
+						</form>
+					)}
 				</Modal>
 			) : null}
 		</div>
