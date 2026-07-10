@@ -20,11 +20,14 @@ import type {
 	AdminUserOutput,
 } from '../server/admin-contracts';
 import {
+	adminChangeUserRoleInputSchema,
 	adminCreateUserInputSchema,
 	adminGovernanceInputSchema,
+	adminRenameUserInputSchema,
 } from '../server/admin-contracts';
 import {
 	blockAdminUser,
+	changeAdminUserRole,
 	createAdminUser,
 	forceCancelAdminOrder,
 	getAdminDashboard as getAdminDashboardFromApi,
@@ -33,6 +36,7 @@ import {
 	getAdminOrders as getAdminOrdersFromApi,
 	getAdminSupportTickets as getAdminSupportTicketsFromApi,
 	getAdminUsers as getAdminUsersFromApi,
+	renameAdminUser,
 	resendAdminUserPasswordSetup,
 	unblockAdminUser,
 } from '../server/admin-service';
@@ -163,6 +167,50 @@ export const createAdminUserAction = async (
 		await assertSameOriginRequest();
 		await getAdminSessionOrRedirect();
 		await createAdminUser(parseCreateUserForm(formData), api.request);
+		revalidatePath('/admin');
+		revalidatePath('/admin/users');
+		return { success: true };
+	} catch (error) {
+		return { error: getAuthErrorMessage(error) };
+	}
+};
+
+export const renameAdminUserAction = async (
+	_state: AdminGovernanceActionState,
+	formData: FormData,
+): Promise<AdminGovernanceActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+		await renameAdminUser(
+			adminRenameUserInputSchema.parse({
+				targetId: formData.get('targetId'),
+				username: formData.get('username'),
+			}),
+			api.request,
+		);
+		revalidatePath('/admin');
+		revalidatePath('/admin/users');
+		return { success: true };
+	} catch (error) {
+		return { error: getAuthErrorMessage(error) };
+	}
+};
+
+export const changeAdminUserRoleAction = async (
+	_state: AdminGovernanceActionState,
+	formData: FormData,
+): Promise<AdminGovernanceActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+		await changeAdminUserRole(
+			adminChangeUserRoleInputSchema.parse({
+				targetId: formData.get('targetId'),
+				role: formData.get('role'),
+			}),
+			api.request,
+		);
 		revalidatePath('/admin');
 		revalidatePath('/admin/users');
 		return { success: true };

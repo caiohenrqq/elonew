@@ -11,6 +11,16 @@ export const adminCreateUserInputSchema = z.object({
 	role: z.enum(['CLIENT', 'BOOSTER', 'ADMIN']),
 });
 
+export const adminRenameUserInputSchema = z.object({
+	targetId: z.string().trim().min(1),
+	username: z.string().trim().min(1, 'Informe o nome de usuário.').max(120),
+});
+
+export const adminChangeUserRoleInputSchema = z.object({
+	targetId: z.string().trim().min(1),
+	role: z.enum(['CLIENT', 'BOOSTER', 'ADMIN']),
+});
+
 export const adminMetricsSchema = z.object({
 	revenueTotal: z.number(),
 	ordersTotal: z.number().int().nonnegative(),
@@ -66,6 +76,10 @@ export const adminDashboardSchema = z.object({
 
 export type AdminMetricsOutput = z.infer<typeof adminMetricsSchema>;
 export type AdminCreateUserInput = z.infer<typeof adminCreateUserInputSchema>;
+export type AdminRenameUserInput = z.infer<typeof adminRenameUserInputSchema>;
+export type AdminChangeUserRoleInput = z.infer<
+	typeof adminChangeUserRoleInputSchema
+>;
 export type AdminUserOutput = z.infer<typeof adminUserSchema>;
 export type AdminOrderOutput = z.infer<typeof adminOrderSchema>;
 export type AdminSupportTicketOutput = z.infer<typeof adminSupportTicketSchema>;
