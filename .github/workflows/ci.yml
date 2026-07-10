@@ -38,6 +38,9 @@ jobs:
       - name: API integration tests
         run: pnpm api test:integration
 
+      - name: API e2e tests
+        run: pnpm api test:e2e
+
       - name: Web tests
         run: pnpm web test
 
