@@ -9,8 +9,6 @@ and operational commands.
 - The VPS repository is `/opt/elonew/elonew`.
 - Docker Compose runs API, workers, PostgreSQL, Redis, Alloy, migrations, and
   Cloudflare Tunnel.
-- A lightweight cron container calls the internal stale-checkout reconciliation
-  endpoint every 15 minutes.
 - Cloudflare routes `api.elonew.com.br` to `http://api:3000`.
 - PostgreSQL and Redis are private Docker services with persistent volumes.
 
@@ -28,8 +26,6 @@ chmod 600 .env api.env workers.env
 
 The same `INTERNAL_API_KEY` is required in `api.env` and `workers.env`.
 Keep `SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE=false` in production.
-Set `STALE_CHECKOUT_RECONCILE_LIMIT` in `.env` only if the default batch size
-of `50` is too small.
 
 Vercel owns frontend environment variables:
 
