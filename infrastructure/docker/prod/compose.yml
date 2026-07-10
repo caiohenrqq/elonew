@@ -121,6 +121,28 @@ services:
     networks: [private-backend]
     command: ['pnpm', 'exec', 'tsx', 'src/main.ts']
 
+  stale-checkout-reconciler:
+    <<: *log-rotation
+    image: alpine:3.20
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    env_file:
+      - ./workers.env
+    environment:
+      API_INTERNAL_BASE_URL: http://api:3000
+      STALE_CHECKOUT_RECONCILE_LIMIT: ${STALE_CHECKOUT_RECONCILE_LIMIT:-50}
+    volumes:
+      - ./reconcile-stale-checkouts.sh:/usr/local/bin/reconcile-stale-checkouts:ro
+    networks: [private-backend]
+    command:
+      [
+        'sh',
+        '-c',
+        "echo '*/15 * * * * sh /usr/local/bin/reconcile-stale-checkouts' > /etc/crontabs/root && crond -f -l 8",
+      ]
+
   cloudflared:
     <<: *log-rotation
     image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:-2026.5.2}
