@@ -50,6 +50,7 @@ describe('Ratings (e2e db)', () => {
 		await prisma.rating.deleteMany();
 		await prisma.payment.deleteMany();
 		await prisma.order.deleteMany();
+		await prisma.orderQuote.deleteMany();
 		await prisma.profile.deleteMany();
 		await prisma.authSession.deleteMany();
 		await prisma.user.deleteMany();
@@ -61,6 +62,7 @@ describe('Ratings (e2e db)', () => {
 	afterEach(async () => {
 		await prisma.rating.deleteMany();
 		await prisma.order.deleteMany();
+		await prisma.orderQuote.deleteMany();
 		await prisma.profile.deleteMany();
 		await prisma.user.deleteMany();
 		await app.close();
