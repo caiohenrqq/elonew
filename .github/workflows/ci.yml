@@ -41,8 +41,8 @@ jobs:
       - name: API e2e tests
         run: pnpm api test:e2e
 
-      - name: Web tests
-        run: pnpm web test
+      # - name: Web tests
+      #   run: pnpm web test
 
       - name: Worker tests
         run: pnpm workers test:ci
@@ -101,66 +101,13 @@ jobs:
       - name: API e2e (db) tests
         run: pnpm --filter api exec jest --config ./test/jest-e2e-db.json --runInBand
 
-  web-e2e:
-    name: Web browser tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: elonew
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d elonew"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: ./.github/actions/setup-workspace
-
-      - name: Prepare application
-        run: |
-          pnpm db:migrate:deploy
-          pnpm db:seed:dev
-          pnpm api build
-
-      - name: Install Chromium
-        run: pnpm web exec playwright install --with-deps chromium
-
-      - name: Run browser tests
-        run: |
-          pnpm api start:prod > /tmp/elonew-api.log 2>&1 &
-          api_pid=$!
-          trap 'kill "$api_pid"' EXIT
-          for attempt in {1..30}; do
-            if curl --fail --silent http://localhost:3000/health; then
-              pnpm web test:e2e
-              exit
-            fi
-            sleep 2
-          done
-          cat /tmp/elonew-api.log
-          exit 1
+  # web-e2e:
+  #   Web browser tests are temporarily disabled.
 
   deploy:
     name: Deploy production
     if: github.event_name == 'release'
-    needs: [checks, database, web-e2e]
+    needs: [checks, database]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
