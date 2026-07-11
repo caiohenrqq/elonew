@@ -225,4 +225,12 @@ export class User {
 			new Date(),
 		);
 	}
+
+	rename(username: string, updatedAt: Date): User {
+		return User.rehydrate({ ...this, username, updatedAt });
+	}
+
+	changeRole(role: Role, updatedAt: Date): User {
+		return User.rehydrate({ ...this, role, updatedAt });
+	}
 }

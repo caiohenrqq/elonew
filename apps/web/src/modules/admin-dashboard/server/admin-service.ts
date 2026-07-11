@@ -7,11 +7,13 @@ import {
 	type AdminOrderOutput,
 	type AdminSupportTicketOutput,
 	type AdminUserOutput,
+	adminChangeUserRoleInputSchema,
 	adminCreateUserInputSchema,
 	adminDashboardSchema,
 	adminGovernanceInputSchema,
 	adminMetricsSchema,
 	adminOrderSchema,
+	adminRenameUserInputSchema,
 	adminSupportTicketSchema,
 	adminUserSchema,
 } from './admin-contracts';
@@ -150,6 +152,30 @@ export const createAdminUser = async (
 		auth: true,
 		method: 'POST',
 		body: JSON.stringify(body),
+	});
+};
+
+export const renameAdminUser = async (
+	input: unknown,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<void> => {
+	const body = adminRenameUserInputSchema.parse(input);
+	await apiRequest(`/admin/users/${encodeURIComponent(body.targetId)}`, {
+		auth: true,
+		method: 'PATCH',
+		body: JSON.stringify({ username: body.username }),
+	});
+};
+
+export const changeAdminUserRole = async (
+	input: unknown,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<void> => {
+	const body = adminChangeUserRoleInputSchema.parse(input);
+	await apiRequest(`/admin/users/${encodeURIComponent(body.targetId)}`, {
+		auth: true,
+		method: 'PATCH',
+		body: JSON.stringify({ role: body.role }),
 	});
 };
 

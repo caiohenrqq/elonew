@@ -487,6 +487,7 @@ model AdminGovernanceAction {
   adminUser     User?    @relation("AdminGovernanceActor", fields: [adminUserId], references: [id])
   actionType    String
   reason        String
+  changes       Json?
   targetUserId  String?
   targetUser    User?    @relation("AdminGovernanceTargetUser", fields: [targetUserId], references: [id])
   targetOrderId String?

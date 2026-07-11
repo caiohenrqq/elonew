@@ -15,6 +15,10 @@ const apiErrorMap: Record<string, string> = {
 	'Insufficient permissions.': 'Permissões insuficientes.',
 	'Password setup is unavailable for this user.':
 		'Este usuário não pode receber e-mail de definição de senha.',
+	'Admins cannot change their own account type.':
+		'Você não pode alterar o tipo da sua própria conta.',
+	'Admins cannot block their own account.':
+		'Você não pode bloquear a sua própria conta.',
 	'Registration is unavailable.':
 		'O cadastro está temporariamente indisponível.',
 };

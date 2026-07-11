@@ -38,19 +38,17 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/shared/ui/components/table';
-import {
-	blockAdminUserAction,
-	unblockAdminUserAction,
-} from '../../actions/admin-actions';
 import type {
 	AdminMetricsOutput,
 	AdminOrderOutput,
 	AdminSupportTicketOutput,
 	AdminUserOutput,
 } from '../../server/admin-contracts';
-import { AdminCreateUserForm } from './admin-create-user-form';
-import { AdminGovernanceForm } from './admin-governance-form';
-import { AdminResendPasswordSetupForm } from './admin-resend-password-setup-form';
+import { roleLabels } from '../users/admin-user-metadata';
+import {
+	AdminCreateUserDialog,
+	AdminUsersTable,
+} from '../users/admin-users-table';
 
 type AdminDashboardPageProps = {
 	metrics: AdminMetricsOutput;
@@ -61,6 +59,7 @@ type AdminDashboardPageProps = {
 
 type AdminUsersPageProps = {
 	users: AdminUserOutput[];
+	currentAdminId?: string;
 };
 
 type AdminOrdersPageProps = {
@@ -72,27 +71,6 @@ type AdminSupportPageProps = {
 };
 
 const formatMetricCount = (value: number) => value.toString().padStart(2, '0');
-
-const roleLabels: Record<string, string> = {
-	ADMIN: 'ADMIN',
-	BOOSTER: 'BOOSTER',
-	CLIENT: 'CLIENTE',
-};
-
-const activationLabels: Record<AdminUserOutput['activationStatus'], string> = {
-	ACTIVE: 'ATIVO',
-	PENDING_ACTIVATION: 'PENDENTE',
-	INACTIVE: 'INATIVO',
-};
-
-const activationVariants: Record<
-	AdminUserOutput['activationStatus'],
-	'success' | 'warning' | 'outline'
-> = {
-	ACTIVE: 'success',
-	PENDING_ACTIVATION: 'warning',
-	INACTIVE: 'outline',
-};
 
 const metricItems = (metrics: AdminMetricsOutput) => [
 	{
@@ -138,44 +116,6 @@ const summarizeOrders = (orders: AdminOrderOutput[]) => {
 
 	return { active, completed, pending };
 };
-
-const AdminUserCard = ({ user }: { user: AdminUserOutput }) => (
-	<article className="rounded-sm border border-white/10 bg-white/[0.02] p-4">
-		<div className="flex items-start justify-between gap-3">
-			<div className="min-w-0">
-				<p className="truncate text-sm font-black text-white">
-					{user.username}
-				</p>
-				<p className="mt-1 truncate text-xs text-white/45">{user.email}</p>
-			</div>
-			<Badge>{roleLabels[user.role] ?? user.role}</Badge>
-		</div>
-		<div className="mt-4 grid grid-cols-2 gap-3 border-white/5 border-t pt-3">
-			<Badge variant={activationVariants[user.activationStatus]}>
-				{activationLabels[user.activationStatus]}
-			</Badge>
-			<Badge variant={user.isBlocked ? 'error' : 'success'}>
-				{user.isBlocked ? 'BLOQUEADO' : 'LIBERADO'}
-			</Badge>
-		</div>
-		<div className="mt-4">
-			<div className="grid gap-3">
-				{user.activationStatus === 'PENDING_ACTIVATION' ? (
-					<AdminResendPasswordSetupForm userId={user.id} />
-				) : null}
-				<AdminGovernanceForm
-					action={
-						user.isBlocked ? unblockAdminUserAction : blockAdminUserAction
-					}
-					targetId={user.id}
-					label={user.isBlocked ? 'Desbloquear' : 'Bloquear'}
-					placeholder="Motivo obrigatório da auditoria"
-					tone={user.isBlocked ? 'neutral' : 'danger'}
-				/>
-			</div>
-		</div>
-	</article>
-);
 
 const AdminOrderCard = ({ order }: { order: AdminOrderOutput }) => (
 	<Link
@@ -466,7 +406,10 @@ export const AdminDashboardPage = ({
 	);
 };
 
-export const AdminUsersPage = ({ users }: AdminUsersPageProps) => {
+export const AdminUsersPage = ({
+	users,
+	currentAdminId,
+}: AdminUsersPageProps) => {
 	const blockedUsers = users.filter((user) => user.isBlocked).length;
 	const boosters = users.filter((user) => user.role === 'BOOSTER').length;
 	const clients = users.filter((user) => user.role === 'CLIENT').length;
@@ -474,10 +417,20 @@ export const AdminUsersPage = ({ users }: AdminUsersPageProps) => {
 	return (
 		<DashboardEntrance>
 			<section className="dashboard-animate flex-none space-y-4">
-				<DashboardSectionHeader
-					title="Usuários"
-					detail={`${users.length} carregados`}
-				/>
+				<header className="flex flex-wrap items-start justify-between gap-4">
+					<div>
+						<div className="flex items-center gap-2.5">
+							<h2 className="text-sm font-black uppercase tracking-[0.25em] text-white">
+								Usuários
+							</h2>
+							<Badge variant="outline">{users.length}</Badge>
+						</div>
+						<p className="mt-1.5 text-xs text-white/40">
+							Gerencie acesso, identificação e permissões das contas.
+						</p>
+					</div>
+					<AdminCreateUserDialog />
+				</header>
 				<div className="grid gap-4 md:grid-cols-4">
 					<DashboardMetricCard
 						label="Total"
@@ -496,81 +449,8 @@ export const AdminUsersPage = ({ users }: AdminUsersPageProps) => {
 						value={formatMetricCount(blockedUsers)}
 					/>
 				</div>
-				<AdminCreateUserForm />
 			</section>
-			<DashboardTableSection
-				isEmpty={users.length === 0}
-				colSpan={6}
-				mobileContent={users.map((user) => (
-					<AdminUserCard key={user.id} user={user} />
-				))}
-				emptyState={
-					<DashboardEmptyState
-						icon={Users}
-						title="Nenhum usuário encontrado"
-						description="Os usuários retornados pela API aparecerão aqui para revisão administrativa."
-					/>
-				}
-			>
-				<TableHeader>
-					<TableRow>
-						<TableHead>Usuário</TableHead>
-						<TableHead>Perfil</TableHead>
-						<TableHead>Conta</TableHead>
-						<TableHead>Criado em</TableHead>
-						<TableHead>Bloqueio</TableHead>
-						<TableHead className="text-right">Admin</TableHead>
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{users.map((user) => (
-						<TableRow key={user.id}>
-							<TableCell>
-								<div className="min-w-0 space-y-1">
-									<p className="truncate text-sm font-black text-white">
-										{user.username}
-									</p>
-									<p className="truncate text-xs text-white/45">{user.email}</p>
-								</div>
-							</TableCell>
-							<TableCell>
-								<Badge>{roleLabels[user.role] ?? user.role}</Badge>
-							</TableCell>
-							<TableCell>
-								<Badge variant={activationVariants[user.activationStatus]}>
-									{activationLabels[user.activationStatus]}
-								</Badge>
-							</TableCell>
-							<TableCell className="text-xs text-white/45">
-								{formatDateTime(user.createdAt)}
-							</TableCell>
-							<TableCell>
-								<Badge variant={user.isBlocked ? 'error' : 'success'}>
-									{user.isBlocked ? 'BLOQUEADO' : 'LIBERADO'}
-								</Badge>
-							</TableCell>
-							<TableCell className="min-w-60 text-right">
-								<div className="grid justify-items-end gap-3">
-									{user.activationStatus === 'PENDING_ACTIVATION' ? (
-										<AdminResendPasswordSetupForm userId={user.id} />
-									) : null}
-									<AdminGovernanceForm
-										action={
-											user.isBlocked
-												? unblockAdminUserAction
-												: blockAdminUserAction
-										}
-										targetId={user.id}
-										label={user.isBlocked ? 'Desbloquear' : 'Bloquear'}
-										placeholder="Motivo obrigatório da auditoria"
-										tone={user.isBlocked ? 'neutral' : 'danger'}
-									/>
-								</div>
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</DashboardTableSection>
+			<AdminUsersTable users={users} currentAdminId={currentAdminId} />
 		</DashboardEntrance>
 	);
 };

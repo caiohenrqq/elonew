@@ -10,13 +10,13 @@ import {
 	createAdminUserAction,
 } from '../../actions/admin-actions';
 
-const roleOptions = [
-	{ value: 'CLIENT', label: 'Cliente' },
-	{ value: 'BOOSTER', label: 'Booster' },
-	{ value: 'ADMIN', label: 'Admin' },
-] as const;
+import { roleOptions } from '../users/admin-user-metadata';
 
-export const AdminCreateUserForm = () => {
+export const AdminCreateUserForm = ({
+	onSuccess,
+}: {
+	onSuccess?: () => void;
+}) => {
 	const [state, formAction, pending] = useActionState<
 		AdminCreateUserActionState,
 		FormData
@@ -24,14 +24,17 @@ export const AdminCreateUserForm = () => {
 	const formRef = useRef<HTMLFormElement>(null);
 
 	useEffect(() => {
-		if (state.success) formRef.current?.reset();
-	}, [state.success]);
+		if (state.success) {
+			formRef.current?.reset();
+			onSuccess?.();
+		}
+	}, [state.success, onSuccess]);
 
 	return (
 		<form
 			ref={formRef}
 			action={formAction}
-			className="grid gap-3 rounded-sm border border-white/10 bg-white/[0.02] p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_auto]"
+			className="grid gap-3 md:grid-cols-2"
 		>
 			<label className="grid gap-2">
 				<span className="text-[10px] font-black uppercase tracking-widest text-white/35">
@@ -72,7 +75,7 @@ export const AdminCreateUserForm = () => {
 					))}
 				</select>
 			</label>
-			<div className="grid content-end gap-2">
+			<div className="grid content-end gap-2 md:col-span-2">
 				<button
 					type="submit"
 					disabled={pending}
@@ -83,10 +86,10 @@ export const AdminCreateUserForm = () => {
 					})}
 				>
 					<UserPlus className="h-4 w-4" />
-					{pending ? 'Criando' : 'Criar'}
+					{pending ? 'Criando' : 'Criar usuário'}
 				</button>
 			</div>
-			<p className="min-h-4 text-[10px] font-medium text-red-300 md:col-span-4">
+			<p className="min-h-4 text-[10px] font-medium text-red-300 md:col-span-2">
 				{state.error ?? (state.success ? 'Usuário criado.' : '')}
 			</p>
 		</form>

@@ -9,6 +9,7 @@ import { ForceCancelAdminOrderUseCase } from '@modules/admin/application/use-cas
 import { GetAdminDashboardUseCase } from '@modules/admin/application/use-cases/get-admin-dashboard/get-admin-dashboard.use-case';
 import { ResendAdminUserPasswordSetupUseCase } from '@modules/admin/application/use-cases/resend-admin-user-password-setup/resend-admin-user-password-setup.use-case';
 import { UnblockAdminUserUseCase } from '@modules/admin/application/use-cases/unblock-admin-user/unblock-admin-user.use-case';
+import { UpdateAdminUserUseCase } from '@modules/admin/application/use-cases/update-admin-user/update-admin-user.use-case';
 import { PrismaAdminDashboardReader } from '@modules/admin/infrastructure/repositories/prisma-admin-dashboard.reader';
 import { PrismaAdminGovernanceRepository } from '@modules/admin/infrastructure/repositories/prisma-admin-governance.repository';
 import { AdminController } from '@modules/admin/presentation/admin.controller';
@@ -43,6 +44,7 @@ import { Module } from '@nestjs/common';
 		ResendAdminUserPasswordSetupUseCase,
 		BlockAdminUserUseCase,
 		UnblockAdminUserUseCase,
+		UpdateAdminUserUseCase,
 		ForceCancelAdminOrderUseCase,
 	],
 })

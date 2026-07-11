@@ -15,9 +15,11 @@ jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
 
 jest.mock('../../actions/admin-actions', () => ({
 	blockAdminUserAction: jest.fn(),
+	changeAdminUserRoleAction: jest.fn(),
 	createAdminUserAction: jest.fn(),
 	forceCancelAdminOrderAction: jest.fn(),
 	resendAdminUserPasswordSetupAction: jest.fn(),
+	renameAdminUserAction: jest.fn(),
 	unblockAdminUserAction: jest.fn(),
 }));
 
@@ -42,7 +44,7 @@ describe('admin dashboard pages', () => {
 		expect(screen.queryByText('Preciso de ajuda')).not.toBeInTheDocument();
 	});
 
-	it('opens user admin actions in a modal', async () => {
+	it('groups user admin actions under an accessible more menu', async () => {
 		const user = userEvent.setup();
 
 		render(
@@ -63,21 +65,29 @@ describe('admin dashboard pages', () => {
 		);
 
 		expect(screen.getByText('Usuários')).toBeInTheDocument();
-		expect(screen.getAllByText('CLIENTE').length).toBeGreaterThan(0);
-		expect(screen.getAllByText('ATIVO').length).toBeGreaterThan(0);
-		expect(screen.getAllByText('LIBERADO').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('Cliente').length).toBeGreaterThan(0);
+		expect(screen.getAllByText('Ativo').length).toBeGreaterThan(0);
+		expect(screen.queryByText('LIBERADO')).not.toBeInTheDocument();
 		expect(
-			screen.queryByPlaceholderText('Motivo obrigatório da auditoria'),
+			screen.queryByRole('textbox', { name: 'Motivo' }),
 		).not.toBeInTheDocument();
 
-		await user.click(screen.getAllByRole('button', { name: 'Bloquear' })[0]);
+		await user.click(
+			screen.getAllByRole('button', { name: 'Mais ações para dev-client' })[0],
+		);
+		expect(screen.getByRole('menu')).toBeInTheDocument();
+		expect(
+			screen.getByRole('menuitem', { name: 'Renomear' }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('menuitem', { name: 'Alterar tipo de conta' }),
+		).toBeInTheDocument();
+		await user.click(screen.getByRole('menuitem', { name: 'Bloquear' }));
 
 		expect(
-			screen.getByRole('dialog', { name: 'Bloquear' }),
+			screen.getByRole('dialog', { name: 'Bloquear usuário' }),
 		).toBeInTheDocument();
-		expect(
-			screen.getByPlaceholderText('Motivo obrigatório da auditoria'),
-		).toBeInTheDocument();
+		expect(screen.getByRole('textbox', { name: 'Motivo' })).toBeInTheDocument();
 	});
 
 	it('renders orders on the dedicated orders page', () => {
