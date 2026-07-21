@@ -10,8 +10,10 @@ import { TicketsModule } from '@modules/tickets/tickets.module';
 import { UsersModule } from '@modules/users/users.module';
 import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ApiDomainErrorFilter } from './common/http/api-domain-error.filter';
+import { ApiMutationThrottlerGuard } from './common/http/api-mutation-throttler.guard';
+import { HttpThrottlingModule } from './common/http/http-throttling.module';
 import { LoggingModule } from './common/logging/logging.module';
 import { OutboxModule } from './common/outbox/outbox.module';
 import { PrismaModule } from './common/prisma/prisma.module';
@@ -20,6 +22,7 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 @Module({
 	imports: [
 		AppSettingsModule,
+		HttpThrottlingModule,
 		LoggingModule,
 		PrismaModule,
 		OutboxModule,
@@ -40,6 +43,10 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 		{
 			provide: APP_FILTER,
 			useClass: ApiDomainErrorFilter,
+		},
+		{
+			provide: APP_GUARD,
+			useClass: ApiMutationThrottlerGuard,
 		},
 	],
 })

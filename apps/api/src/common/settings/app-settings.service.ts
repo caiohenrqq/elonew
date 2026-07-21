@@ -131,6 +131,18 @@ export class AppSettingsService {
 		});
 	}
 
+	get apiMutationThrottleLimit() {
+		return this.config.getOrThrow('API_MUTATION_THROTTLE_LIMIT', {
+			infer: true,
+		});
+	}
+
+	get apiMutationThrottleTtlSeconds() {
+		return this.config.getOrThrow('API_MUTATION_THROTTLE_TTL_SECONDS', {
+			infer: true,
+		});
+	}
+
 	get authLoginThrottleLimit() {
 		return this.config.getOrThrow('AUTH_LOGIN_THROTTLE_LIMIT', {
 			infer: true,
