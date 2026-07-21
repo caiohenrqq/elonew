@@ -55,7 +55,7 @@ export class Order {
 		private readonly currentCouponId: string | null,
 		private readonly currentPricingVersionId: string | null,
 		private currentStatus: OrderStatus,
-		private currentCredentials: OrderCredentials | null,
+		private pendingCredentialsValue: OrderCredentials | null,
 		private readonly currentRequestDetails: OrderRequestDetails | null,
 		private readonly currentSubtotal: number | null,
 		private readonly currentTotalAmount: number | null,
@@ -125,7 +125,7 @@ export class Order {
 		couponId?: string | null;
 		pricingVersionId?: string | null;
 		status: OrderStatus;
-		credentials?: OrderCredentials | null;
+		hasStoredCredentials?: boolean;
 		requestDetails?: OrderRequestDetails | null;
 		subtotal?: number | null;
 		totalAmount?: number | null;
@@ -133,14 +133,14 @@ export class Order {
 		extras?: OrderPricedExtra[];
 		completedAt?: Date | null;
 	}): Order {
-		return new Order(
+		const order = new Order(
 			input.id,
 			input.clientId ?? null,
 			input.boosterId ?? null,
 			input.couponId ?? null,
 			input.pricingVersionId ?? null,
 			input.status,
-			input.credentials ?? null,
+			null,
 			input.requestDetails ?? null,
 			input.subtotal ?? null,
 			input.totalAmount ?? null,
@@ -148,7 +148,11 @@ export class Order {
 			(input.extras ?? []).map((extra) => ({ ...extra })),
 			input.completedAt ?? null,
 		);
+		order.storedCredentials = input.hasStoredCredentials ?? false;
+		return order;
 	}
+
+	private storedCredentials = false;
 
 	get clientId(): string | null {
 		return this.currentClientId;
@@ -170,8 +174,12 @@ export class Order {
 		return this.currentStatus;
 	}
 
-	get credentials(): OrderCredentials | null {
-		return this.currentCredentials;
+	get hasCredentials(): boolean {
+		return this.storedCredentials || this.pendingCredentialsValue !== null;
+	}
+
+	get pendingCredentials(): OrderCredentials | null {
+		return this.pendingCredentialsValue;
 	}
 
 	get requestDetails(): OrderRequestDetails | null {
@@ -224,7 +232,7 @@ export class Order {
 
 	complete(now: Date = new Date()): void {
 		this.transitionTo(OrderStatus.COMPLETED);
-		this.currentCredentials = null;
+		this.clearCredentials();
 		this.currentCompletedAt = now;
 	}
 
@@ -236,17 +244,19 @@ export class Order {
 			throw new OrderCancellationNotAllowedError();
 
 		this.transitionTo(OrderStatus.CANCELLED);
+		this.clearCredentials();
 	}
 
 	setCredentials(credentials: OrderCredentials): void {
 		if (!CREDENTIALS_ALLOWED_STATUSES.has(this.currentStatus))
 			throw new OrderCredentialsStorageNotAllowedError();
 
-		this.currentCredentials = credentials;
+		this.pendingCredentialsValue = credentials;
 	}
 
 	clearCredentials(): void {
-		this.currentCredentials = null;
+		this.pendingCredentialsValue = null;
+		this.storedCredentials = false;
 	}
 
 	private transitionTo(nextStatus: OrderStatus): void {

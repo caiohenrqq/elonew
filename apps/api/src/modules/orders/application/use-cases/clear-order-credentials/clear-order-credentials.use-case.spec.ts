@@ -2,6 +2,7 @@ import type { OrderRepositoryPort } from '@modules/orders/application/ports/orde
 import { ClearOrderCredentialsUseCase } from '@modules/orders/application/use-cases/clear-order-credentials/clear-order-credentials.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
 import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
+import { persistedOrderCopy } from '../../../../../../test/support/in-memory/orders/in-memory-order.repository';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();
@@ -20,11 +21,11 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	}
 
 	async save(order: Order): Promise<void> {
-		this.orders.set(order.id, order);
+		this.orders.set(order.id, persistedOrderCopy(order));
 	}
 
 	insert(order: Order): void {
-		this.orders.set(order.id, order);
+		this.orders.set(order.id, persistedOrderCopy(order));
 	}
 }
 
@@ -44,7 +45,7 @@ describe('ClearOrderCredentialsUseCase', () => {
 		await useCase.execute({ orderId: 'order-1' });
 
 		const savedOrder = await repository.findById('order-1');
-		expect(savedOrder?.credentials).toBeNull();
+		expect(savedOrder?.hasCredentials).toBe(false);
 	});
 
 	it('is idempotent when credentials are already absent', async () => {
@@ -59,7 +60,7 @@ describe('ClearOrderCredentialsUseCase', () => {
 		).resolves.toBeUndefined();
 
 		const savedOrder = await repository.findById('order-2');
-		expect(savedOrder?.credentials).toBeNull();
+		expect(savedOrder?.hasCredentials).toBe(false);
 	});
 
 	it('throws when order does not exist', async () => {

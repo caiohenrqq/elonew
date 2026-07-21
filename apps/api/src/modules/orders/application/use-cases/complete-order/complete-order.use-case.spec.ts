@@ -10,6 +10,7 @@ import {
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
+import { persistedOrderCopy } from '../../../../../../test/support/in-memory/orders/in-memory-order.repository';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();
@@ -28,11 +29,11 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	}
 
 	async save(order: Order): Promise<void> {
-		this.orders.set(order.id, order);
+		this.orders.set(order.id, persistedOrderCopy(order));
 	}
 
 	insert(order: Order): void {
-		this.orders.set(order.id, order);
+		this.orders.set(order.id, persistedOrderCopy(order));
 	}
 }
 
@@ -86,7 +87,7 @@ describe('CompleteOrderUseCase', () => {
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('completed');
-		expect(savedOrder?.credentials).toBeNull();
+		expect(savedOrder?.hasCredentials).toBe(false);
 		expect(eventPublisher.events).toMatchObject([
 			{
 				type: 'order.completed',
@@ -135,7 +136,7 @@ describe('CompleteOrderUseCase', () => {
 		await expect(repository.findById('order-3')).resolves.toMatchObject({
 			id: 'order-3',
 			status: 'completed',
-			credentials: null,
+			hasCredentials: false,
 		});
 	});
 

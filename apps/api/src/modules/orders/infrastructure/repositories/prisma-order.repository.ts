@@ -10,7 +10,6 @@ import type {
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import {
 	Order,
-	type OrderCredentials,
 	type OrderRequestDetails,
 } from '@modules/orders/domain/order.entity';
 import { OrderStatus } from '@modules/orders/domain/order-status';
@@ -257,7 +256,7 @@ export class PrismaOrderRepository
 				...this.mapPricing(order),
 				completedAt: order.completedAt,
 				extras: this.mapExtrasCreate(order.extras),
-				credentials: this.mapCredentialsCreate(order.credentials),
+				credentials: this.mapCredentialsCreate(order),
 			},
 			include: { credentials: true, extras: true },
 		});
@@ -397,7 +396,9 @@ export class PrismaOrderRepository
 	}
 
 	async save(order: Order): Promise<void> {
-		await this.saveWithClient(order, this.getClient());
+		await this.prisma.$transaction(async (tx) => {
+			await this.saveWithClient(order, tx as unknown as OrderPrismaClient);
+		});
 	}
 
 	async saveBoosterRejection(order: Order, boosterId: string): Promise<void> {
@@ -424,9 +425,9 @@ export class PrismaOrderRepository
 		order: Order,
 		client: OrderPrismaClient,
 	): Promise<void> {
-		const credentialsCreate = this.mapCredentialsCreate(order.credentials);
-		const credentialsUpdate = this.mapCredentialsUpdate(order.credentials);
-		if (!order.credentials) {
+		const credentialsCreate = this.mapCredentialsCreate(order);
+		const credentialsUpdate = this.mapCredentialsUpdate(order);
+		if (!order.hasCredentials) {
 			await client.orderCredentials.deleteMany({
 				where: { orderId: order.id },
 			});
@@ -478,7 +479,7 @@ export class PrismaOrderRepository
 			couponId: record.couponId,
 			pricingVersionId: record.pricingVersionId,
 			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
-			credentials: this.mapCredentialsFromRecord(record.credentials),
+			hasStoredCredentials: record.credentials !== null,
 			requestDetails: this.mapRequestDetailsFromRecord(record),
 			subtotal: record.subtotal,
 			totalAmount: record.totalAmount,
@@ -591,19 +592,34 @@ export class PrismaOrderRepository
 		};
 	}
 
-	private mapCredentialsFromRecord(
-		record: OrderRecord['credentials'],
-	): OrderCredentials | null {
-		if (!record) return null;
+	private sealCredentials(order: Order): {
+		login: string;
+		summonerName: string;
+		password: string;
+	} | null {
+		const credentials = order.pendingCredentials;
+		if (!credentials) return null;
 
 		return {
-			login: this.orderCredentialsCipher.decrypt(record.login),
-			summonerName: this.orderCredentialsCipher.decrypt(record.summonerName),
-			password: this.orderCredentialsCipher.decrypt(record.password),
+			login: this.orderCredentialsCipher.encryptField(
+				order.id,
+				'login',
+				credentials.login,
+			),
+			summonerName: this.orderCredentialsCipher.encryptField(
+				order.id,
+				'summonerName',
+				credentials.summonerName,
+			),
+			password: this.orderCredentialsCipher.encryptField(
+				order.id,
+				'password',
+				credentials.password,
+			),
 		};
 	}
 
-	private mapCredentialsCreate(credentials: OrderCredentials | null):
+	private mapCredentialsCreate(order: Order):
 		| {
 				create: {
 					login: string;
@@ -612,20 +628,13 @@ export class PrismaOrderRepository
 				};
 		  }
 		| undefined {
-		if (!credentials) return undefined;
+		const sealed = this.sealCredentials(order);
+		if (!sealed) return undefined;
 
-		return {
-			create: {
-				login: this.orderCredentialsCipher.encrypt(credentials.login),
-				summonerName: this.orderCredentialsCipher.encrypt(
-					credentials.summonerName,
-				),
-				password: this.orderCredentialsCipher.encrypt(credentials.password),
-			},
-		};
+		return { create: sealed };
 	}
 
-	private mapCredentialsUpdate(credentials: OrderCredentials | null):
+	private mapCredentialsUpdate(order: Order):
 		| {
 				upsert: {
 					create: {
@@ -641,26 +650,10 @@ export class PrismaOrderRepository
 				};
 		  }
 		| undefined {
-		if (!credentials) return undefined;
+		const sealed = this.sealCredentials(order);
+		if (!sealed) return undefined;
 
-		return {
-			upsert: {
-				create: {
-					login: this.orderCredentialsCipher.encrypt(credentials.login),
-					summonerName: this.orderCredentialsCipher.encrypt(
-						credentials.summonerName,
-					),
-					password: this.orderCredentialsCipher.encrypt(credentials.password),
-				},
-				update: {
-					login: this.orderCredentialsCipher.encrypt(credentials.login),
-					summonerName: this.orderCredentialsCipher.encrypt(
-						credentials.summonerName,
-					),
-					password: this.orderCredentialsCipher.encrypt(credentials.password),
-				},
-			},
-		};
+		return { upsert: { create: sealed, update: sealed } };
 	}
 
 	private mapRequestDetails(requestDetails: OrderRequestDetails | null): {

@@ -840,19 +840,16 @@ describe('Orders module integration (db)', () => {
 		expect(credentials).toMatchObject({
 			orderId: createdOrder.id,
 		});
-		expect(credentials?.login).not.toBe('login-db');
-		expect(credentials?.summonerName).not.toBe('summoner-db');
-		expect(credentials?.password).not.toBe('secret-db');
+		expect(credentials?.login).toMatch(/^v2:/);
+		expect(credentials?.summonerName).toMatch(/^v2:/);
+		expect(credentials?.password).toMatch(/^v2:/);
 
 		await expect(
 			orderRepository.findById(createdOrder.id),
 		).resolves.toMatchObject({
 			id: createdOrder.id,
-			credentials: {
-				login: 'login-db',
-				summonerName: 'summoner-db',
-				password: 'secret-db',
-			},
+			hasCredentials: true,
+			pendingCredentials: null,
 		});
 	});
 
@@ -888,6 +885,27 @@ describe('Orders module integration (db)', () => {
 			desiredLeague: 'platinum',
 			desiredDivision: 'IV',
 		});
+	});
+
+	it('deletes credentials after order cancellation', async () => {
+		const createdOrder = await createQuotedOrder();
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await controller.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			},
+			clientUser,
+		);
+		await controller.cancel(createdOrder.id, clientUser);
+
+		const credentials = await prisma.orderCredentials.findUnique({
+			where: { orderId: createdOrder.id },
+		});
+		expect(credentials).toBeNull();
 	});
 
 	it('rejects credentials before payment confirmation', async () => {

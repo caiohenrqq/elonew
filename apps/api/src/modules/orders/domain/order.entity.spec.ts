@@ -71,8 +71,35 @@ describe('Order domain rules', () => {
 		order.acceptByBooster();
 		order.complete();
 
-		expect(order.credentials).toBeNull();
+		expect(order.hasCredentials).toBe(false);
 		expect(order.status).toBe(OrderStatus.COMPLETED);
+	});
+
+	it('deletes credentials on cancellation', () => {
+		const order = Order.create('order-4b');
+
+		order.confirmPayment();
+		order.setCredentials({
+			login: 'login',
+			summonerName: 'summoner',
+			password: 'secret',
+		});
+		order.cancel();
+
+		expect(order.hasCredentials).toBe(false);
+		expect(order.status).toBe(OrderStatus.CANCELLED);
+	});
+
+	it('deletes stored credentials on cancellation of a rehydrated order', () => {
+		const order = Order.rehydrate({
+			id: 'order-4c',
+			status: OrderStatus.PENDING_BOOSTER,
+			hasStoredCredentials: true,
+		});
+
+		expect(order.hasCredentials).toBe(true);
+		order.cancel();
+		expect(order.hasCredentials).toBe(false);
 	});
 
 	it('allows setting credentials when order is in progress', () => {
@@ -87,11 +114,12 @@ describe('Order domain rules', () => {
 				password: 'secret',
 			}),
 		).not.toThrow();
-		expect(order.credentials).toEqual({
+		expect(order.pendingCredentials).toEqual({
 			login: 'login',
 			summonerName: 'summoner',
 			password: 'secret',
 		});
+		expect(order.hasCredentials).toBe(true);
 	});
 
 	it('keeps extras immutable when callers mutate the returned array', () => {
