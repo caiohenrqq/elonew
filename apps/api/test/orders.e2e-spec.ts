@@ -236,6 +236,7 @@ describe('Orders (e2e)', () => {
 			.expect(200, {
 				id: createdOrder.id,
 				status: 'awaiting_payment',
+				hasCredentials: false,
 				subtotal: 2520,
 				totalAmount: 2520,
 				discountAmount: 0,
@@ -401,6 +402,7 @@ describe('Orders (e2e)', () => {
 			.expect(200, {
 				id: createdOrder.id,
 				status: 'in_progress',
+				hasCredentials: false,
 				subtotal: 2520,
 				totalAmount: 2520,
 				discountAmount: 0,

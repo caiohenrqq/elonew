@@ -876,6 +876,7 @@ describe('Orders module integration (db)', () => {
 		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'completed',
+			hasCredentials: false,
 			subtotal: 2520,
 			totalAmount: 2520,
 			discountAmount: 0,

@@ -248,6 +248,7 @@ export class OrdersController {
 	): Promise<{
 		id: string;
 		status: string;
+		hasCredentials: boolean;
 		subtotal: number | null;
 		totalAmount: number | null;
 		discountAmount: number;
