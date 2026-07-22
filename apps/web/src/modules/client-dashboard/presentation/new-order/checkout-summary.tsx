@@ -1,8 +1,7 @@
 'use client';
 
 import { Target } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatBRL } from '@/shared/format/currency';
 import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 import { Button } from '@/shared/ui/components/button';
@@ -34,13 +33,7 @@ type CheckoutSummaryProps = {
 	quotePreviewError?: string | null;
 };
 
-const AnimatedCurrency = ({
-	className,
-	value,
-}: {
-	className?: string;
-	value: number | null;
-}) => {
+const Currency = ({ value }: { value: number | null }) => {
 	const textRef = useRef<HTMLSpanElement>(null);
 	const previousValue = useRef(value ?? 0);
 
@@ -48,6 +41,12 @@ const AnimatedCurrency = ({
 		() => {
 			if (value === null) {
 				if (textRef.current) textRef.current.textContent = '...';
+				return;
+			}
+
+			if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				if (textRef.current) textRef.current.textContent = formatBRL(value);
+				previousValue.current = value;
 				return;
 			}
 
@@ -64,20 +63,13 @@ const AnimatedCurrency = ({
 				},
 				onComplete: () => {
 					previousValue.current = value;
-					if (textRef.current) {
-						textRef.current.textContent = formatBRL(value);
-					}
 				},
 			});
 		},
 		{ scope: textRef, dependencies: [value] },
 	);
 
-	return (
-		<span ref={textRef} className={className}>
-			{value === null ? '...' : formatBRL(value)}
-		</span>
-	);
+	return <span ref={textRef}>{value === null ? '...' : formatBRL(value)}</span>;
 };
 
 const CheckoutItemRow = ({
@@ -85,60 +77,33 @@ const CheckoutItemRow = ({
 	value,
 	priceLabel,
 	className,
-	containerClassName,
-	labelClassName,
-	valueClassName,
 }: {
 	label: string;
-	value: number;
+	value: number | null;
 	priceLabel?: string;
 	className?: string;
-	containerClassName?: string;
-	labelClassName?: string;
-	valueClassName?: string;
-}) => {
-	return (
-		<motion.div
-			layout
-			initial={{ opacity: 0, x: -15, height: 0, marginBottom: 0 }}
-			animate={{ opacity: 1, x: 0, height: 'auto', marginBottom: 4 }}
-			exit={{ opacity: 0, x: 15, height: 0, marginBottom: 0 }}
-			transition={{
-				type: 'spring',
-				stiffness: 300,
-				damping: 30,
-				opacity: { duration: 0.2 },
-			}}
-			className={cn(
-				'overflow-hidden flex justify-between gap-3 text-xs items-center',
-				containerClassName || className,
+}) => (
+	<div
+		className={cn('flex items-center justify-between gap-3 text-sm', className)}
+	>
+		<span className="text-white/65">{label}</span>
+		<span className="text-right font-bold text-white/85">
+			{value === null ? (
+				<Currency value={null} />
+			) : value === 0 ? (
+				'Grátis'
+			) : (
+				<>
+					{priceLabel ? (
+						<span className="mr-1.5 text-hextech-gold">{priceLabel}</span>
+					) : null}
+					{value < 0 ? '- ' : ''}
+					<Currency value={Math.abs(value)} />
+				</>
 			)}
-		>
-			<span className={cn('text-white/40', labelClassName)}>{label}</span>
-			<span className={cn('font-black text-white/70', valueClassName)}>
-				{value === 0 ? (
-					'Grátis'
-				) : (
-					<span className="flex items-center gap-1.5">
-						{priceLabel && (
-							<span className="text-hextech-gold">{priceLabel}</span>
-						)}
-						<span
-							className={cn(
-								priceLabel ? 'text-[10px] opacity-40 font-medium' : '',
-							)}
-						>
-							{priceLabel && '('}
-							{value < 0 ? '- ' : ''}
-							<AnimatedCurrency value={Math.abs(value)} />
-							{priceLabel && ')'}
-						</span>
-					</span>
-				)}
-			</span>
-		</motion.div>
-	);
-};
+		</span>
+	</div>
+);
 
 export const CheckoutSummary = ({
 	isQuotePreviewPending = false,
@@ -149,12 +114,10 @@ export const CheckoutSummary = ({
 }: CheckoutSummaryProps) => {
 	const [couponDraft, setCouponDraft] = useState(orderInput.couponCode ?? '');
 	const allExtras = quotePreview?.extras ?? [];
-
-	const paidExtrasTotal = useMemo(
-		() => allExtras.reduce((total, extra) => total + extra.price, 0),
-		[allExtras],
+	const paidExtrasTotal = allExtras.reduce(
+		(total, extra) => total + extra.price,
+		0,
 	);
-
 	const appliedCouponCode =
 		orderInput.couponCode && quotePreview && quotePreview.discountAmount > 0
 			? orderInput.couponCode
@@ -173,116 +136,88 @@ export const CheckoutSummary = ({
 	};
 
 	return (
-		<aside className="w-full lg:sticky lg:top-24 lg:w-80">
-			<Card className="overflow-hidden border-white/10 shadow-panel">
+		<aside
+			className="w-full lg:sticky lg:top-24 lg:w-80"
+			aria-label="Resumo do checkout"
+		>
+			<Card className="overflow-hidden border-white/10">
 				<div className="h-1 w-full bg-[var(--rank-accent)]" />
 				<CardHeader>
-					<CardTitle>Resumo de Checkout</CardTitle>
-					<CardDescription>Cálculo em tempo real</CardDescription>
+					<CardTitle className="text-sm">Resumo de Checkout</CardTitle>
+					<CardDescription className="text-sm text-white/60">
+						Valores atualizados em tempo real
+					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					<motion.div layout className="space-y-3">
-						<div className="flex justify-between text-xs">
-							<span className="text-white/40 uppercase tracking-widest">
-								Subtotal
-							</span>
-							<AnimatedCurrency
-								className="font-black"
-								value={quotePreview?.subtotal ?? null}
-							/>
-						</div>
+					<div className="space-y-3">
+						<CheckoutItemRow
+							label="Subtotal"
+							value={quotePreview?.subtotal ?? null}
+						/>
 
-						<div className="flex justify-between text-xs">
-							<span className="text-white/40 uppercase tracking-widest">
-								Taxa de Extras
-							</span>
-							<span className="font-black text-hextech-gold">
+						<div className="flex items-center justify-between gap-3 text-sm">
+							<span className="text-white/65">Taxa de extras</span>
+							<span className="text-right font-bold text-hextech-gold">
 								{paidExtrasTotal > 0 ? (
-									<AnimatedCurrency value={paidExtrasTotal} />
+									<Currency value={paidExtrasTotal} />
 								) : allExtras.length > 0 ? (
-									'Extras Selecionados'
+									'Extras selecionados'
 								) : (
 									'Sem extras'
 								)}
 							</span>
 						</div>
 
-						<AnimatePresence mode="popLayout" initial={false}>
-							{allExtras.length > 0 && (
-								<motion.div
-									key="extras-container"
-									initial={{ opacity: 0, scale: 0.95 }}
-									animate={{ opacity: 1, scale: 1 }}
-									exit={{ opacity: 0, scale: 0.95 }}
-									className="space-y-1 rounded-sm bg-white/[0.02] p-3"
-								>
-									{allExtras.map((extra) => (
-										<CheckoutItemRow
-											key={extra.type}
-											label={getExtraLabel(extra.type)}
-											value={extra.price}
-											priceLabel={
-												EXTRA_OPTIONS_BY_ID.get(extra.type)?.priceLabel
-											}
-											className="text-[10px] text-white/45"
-										/>
-									))}
-								</motion.div>
-							)}
-						</AnimatePresence>
+						{allExtras.length > 0 ? (
+							<div className="space-y-2 rounded-sm bg-white/[0.03] p-3">
+								{allExtras.map((extra) => (
+									<CheckoutItemRow
+										key={extra.type}
+										label={getExtraLabel(extra.type)}
+										value={extra.price}
+										priceLabel={EXTRA_OPTIONS_BY_ID.get(extra.type)?.priceLabel}
+									/>
+								))}
+							</div>
+						) : null}
 
-						<AnimatePresence mode="popLayout">
-							{quotePreview && quotePreview.discountAmount > 0 && (
-								<CheckoutItemRow
-									containerClassName="space-y-1 rounded-sm border border-emerald-400/10 bg-emerald-500/[0.04] p-3"
-									label={
-										appliedCouponCode
-											? `Cupom ${appliedCouponCode}`
-											: 'Desconto'
-									}
-									value={-quotePreview.discountAmount}
-									labelClassName={cn(
-										'min-w-0 truncate uppercase tracking-widest',
-										appliedCouponCode
-											? 'font-bold text-emerald-300'
-											: 'text-white/40',
-									)}
-									valueClassName="whitespace-nowrap font-black text-emerald-400"
-								/>
-							)}
-						</AnimatePresence>
+						{quotePreview && quotePreview.discountAmount > 0 ? (
+							<CheckoutItemRow
+								className="rounded-sm border border-success/20 bg-success/5 p-3"
+								label={
+									appliedCouponCode ? `Cupom ${appliedCouponCode}` : 'Desconto'
+								}
+								value={-quotePreview.discountAmount}
+							/>
+						) : null}
 
-						<motion.div
-							layout
-							className="pt-2 border-t border-white/5 flex justify-between"
-						>
-							<span className="text-xs font-black uppercase tracking-[0.2em] text-[var(--rank-accent)]">
+						<div className="flex items-center justify-between border-t border-white/10 pt-3">
+							<span className="text-sm font-black uppercase tracking-widest text-[var(--rank-accent)]">
 								Total
 							</span>
-							<span className="text-xl font-black text-white">
+							<span
+								className="text-xl font-black text-white"
+								aria-live="polite"
+							>
 								{quotePreview ? (
-									<AnimatedCurrency value={quotePreview.totalAmount} />
+									<Currency value={quotePreview.totalAmount} />
 								) : isQuotePreviewPending ? (
 									'Calculando...'
 								) : (
 									'Indisponível'
 								)}
 							</span>
-						</motion.div>
+						</div>
 
-						{quotePreviewError && (
-							<motion.p
-								initial={{ opacity: 0, y: 5 }}
-								animate={{ opacity: 1, y: 0 }}
-								className="text-[10px] text-red-400 uppercase tracking-widest"
-							>
+						{quotePreviewError ? (
+							<p className="text-sm text-red-300" role="alert">
 								{quotePreviewError}
-							</motion.p>
-						)}
-					</motion.div>
+							</p>
+						) : null}
+					</div>
 
-					<div className="space-y-2 pt-4 border-t border-white/5">
-						<Label htmlFor="coupon-code">Cupom de Desconto</Label>
+					<div className="space-y-2 border-t border-white/10 pt-4">
+						<Label htmlFor="coupon-code">Cupom de desconto</Label>
 						<div className="flex gap-2">
 							<Input
 								id="coupon-code"
@@ -297,11 +232,11 @@ export const CheckoutSummary = ({
 									applyCouponCode();
 								}}
 								placeholder="CÓDIGO"
-								className="uppercase font-mono"
+								className="h-12 font-mono text-base uppercase md:text-sm"
 							/>
 							<Button
 								type="button"
-								size="sm"
+								size="lg"
 								variant="outline"
 								disabled={isCouponApplyDisabled}
 								onClick={applyCouponCode}
@@ -311,11 +246,11 @@ export const CheckoutSummary = ({
 						</div>
 					</div>
 				</CardContent>
-				<CardFooter className="bg-white/[0.02] border-t border-white/5 py-4">
-					<div className="flex items-center gap-2 opacity-40">
-						<Target className="w-3 h-3" />
-						<span className="text-[8px] font-black uppercase tracking-widest">
-							Garantia de Entrega EloNew
+				<CardFooter className="border-t border-white/10 bg-white/[0.02] py-4">
+					<div className="flex items-center gap-2 text-white/60">
+						<Target className="h-4 w-4" aria-hidden="true" />
+						<span className="text-xs font-bold uppercase tracking-widest">
+							Garantia de entrega EloNew
 						</span>
 					</div>
 				</CardFooter>

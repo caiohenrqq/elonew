@@ -1,15 +1,21 @@
 import {
 	ArrowRight,
+	CalendarClock,
 	ChevronRight,
+	Gamepad2,
+	Gauge,
 	Globe,
+	KeyRound,
 	Layers,
 	type LucideIcon,
 	Shield,
+	TrendingUp,
+	UserRound,
 	Users,
 	Zap,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import Image from 'next/image';
+import { formatDateTime } from '@/shared/format/date';
 import { Badge } from '@/shared/ui/components/badge';
 import { Button } from '@/shared/ui/components/button';
 import {
@@ -30,8 +36,11 @@ import {
 	type RankOption,
 } from '../../model/rank-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
+import type { AccountInput } from './account-step';
 
 type ReviewStepProps = {
+	accountInput: AccountInput;
+	favoriteBoosterName: string;
 	orderInput: StartCheckoutInput;
 	hasAcceptedTerms: boolean;
 	onBack: () => void;
@@ -42,26 +51,42 @@ type ReviewStepProps = {
 };
 
 const DetailItem = ({
+	className,
 	icon: Icon,
 	label,
 	value,
+	preserveCase = false,
 }: {
+	className?: string;
 	icon: LucideIcon;
 	label: string;
 	value: string;
+	preserveCase?: boolean;
 }) => (
-	<div className="flex flex-col gap-1.5 p-3 rounded-sm bg-white/[0.03] border border-white/5">
+	<div
+		className={cn(
+			'flex flex-col gap-2 rounded-sm border border-white/10 bg-white/[0.03] p-4',
+			className,
+		)}
+	>
 		<div className="flex items-center gap-2">
-			<Icon className="w-3.5 h-3.5 text-hextech-cyan" />
-			<span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+			<Icon className="h-4 w-4 text-hextech-cyan" aria-hidden="true" />
+			<span className="text-xs font-bold uppercase tracking-widest text-white/60">
 				{label}
 			</span>
 		</div>
-		<p className="text-xs font-black uppercase text-white/90 truncate">
+		<p
+			className={cn(
+				'break-words text-sm font-black text-white/90',
+				preserveCase ? 'normal-case' : 'uppercase',
+			)}
+		>
 			{value}
 		</p>
 	</div>
 );
+
+const maskPassword = (password: string) => '•'.repeat(password.length);
 
 const RankDisplay = ({
 	rank,
@@ -75,42 +100,24 @@ const RankDisplay = ({
 	isDesired?: boolean;
 }) => {
 	return (
-		<div className="flex flex-col items-center gap-3 flex-1 group">
-			<div className="relative cursor-default">
-				<div
-					className={cn(
-						'absolute inset-0 blur-2xl rounded-full pointer-events-none transition-all duration-300 group-hover:opacity-40 group-hover:scale-[1.2]',
-						isDesired ? 'opacity-20' : 'opacity-0',
-					)}
-					style={{ backgroundColor: rank.accent }}
-				/>
-				<div
-					className={cn(
-						'relative transition-all duration-300 ease-out group-hover:-translate-y-2 group-hover:scale-105 group-hover:brightness-125 group-hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]',
-						isDesired
-							? 'drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]'
-							: 'drop-shadow-[0_0_0_rgba(255,255,255,0)]',
-					)}
-				>
-					<Image
-						src={rank.image}
-						alt={rank.label}
-						width={80}
-						height={80}
-						className="relative"
-					/>
-				</div>
-			</div>
-			<div className="text-center relative z-10">
+		<div className="group flex flex-1 flex-col items-center gap-3">
+			<Image
+				src={rank.image}
+				alt={rank.label}
+				width={80}
+				height={80}
+				className="transition duration-300 ease-out group-hover:-translate-y-1 group-hover:scale-105 group-hover:brightness-110 motion-reduce:transform-none motion-reduce:transition-none"
+			/>
+			<div className="text-center">
 				<p
 					className={cn(
-						'text-[10px] uppercase tracking-widest font-bold mb-0.5',
-						isDesired ? 'text-hextech-cyan' : 'text-white/40',
+						'mb-1 text-xs font-bold uppercase tracking-widest',
+						isDesired ? 'text-hextech-cyan' : 'text-white/60',
 					)}
 				>
 					{label}
 				</p>
-				<p className="text-xs font-black uppercase text-white">
+				<p className="text-sm font-black uppercase text-white">
 					{rank.label} {getRankDivisionLabel(division)}
 				</p>
 			</div>
@@ -119,6 +126,8 @@ const RankDisplay = ({
 };
 
 export const ReviewStep = ({
+	accountInput,
+	favoriteBoosterName,
 	orderInput,
 	hasAcceptedTerms,
 	onBack,
@@ -136,42 +145,36 @@ export const ReviewStep = ({
 	return (
 		<div className="space-y-8">
 			<div className="space-y-2">
-				<h2 className="text-2xl font-black uppercase tracking-[0.25em] text-white">
+				<h2 className="text-xl font-black uppercase tracking-[0.2em] text-white">
 					Revisão Final
 				</h2>
-				<p className="text-white/40 text-xs font-medium">
+				<p className="text-sm leading-relaxed text-white/65">
 					Confirme os detalhes do seu pedido antes de prosseguir para o
 					pagamento seguro.
 				</p>
 			</div>
 
-			<Card className="border-hextech-cyan/20 bg-[#0d0d0f]/60 backdrop-blur-sm overflow-hidden">
-				<div
-					className="absolute inset-0 opacity-10 pointer-events-none"
-					style={{
-						background: `radial-gradient(circle at 50% 0%, ${desiredRank.accent}, transparent 70%)`,
-					}}
-				/>
-
-				<CardHeader className="relative border-b border-white/5 pb-4">
+			<Card className="overflow-hidden border-white/10 bg-surface">
+				<CardHeader className="border-b border-white/10 pb-4">
 					<CardTitle className="flex items-center gap-3 text-sm tracking-widest uppercase">
-						<div className="p-1.5 rounded-full bg-hextech-cyan/10">
-							<Zap className="w-4 h-4 text-hextech-cyan shadow-[0_0_10px_rgba(14,165,233,0.5)]" />
-						</div>
+						<Zap className="h-4 w-4 text-hextech-cyan" aria-hidden="true" />
 						Resumo do Plano
 					</CardTitle>
 				</CardHeader>
 
-				<CardContent className="relative p-6 space-y-8">
-					<div className="flex items-center justify-between gap-4 py-4 px-2 bg-white/[0.02] rounded-lg border border-white/5 relative overflow-hidden">
+				<CardContent className="space-y-8 p-4 sm:p-6">
+					<div className="flex items-center justify-between gap-4 rounded-sm border border-white/10 bg-white/[0.02] px-2 py-4">
 						<RankDisplay
 							rank={currentRank}
 							label="Atual"
 							division={orderInput.currentDivision}
 						/>
 
-						<div className="flex flex-col items-center justify-center pointer-events-none z-0">
-							<ArrowRight className="w-5 h-5 text-white/10" />
+						<div className="pointer-events-none flex flex-col items-center justify-center">
+							<ArrowRight
+								className="h-5 w-5 text-white/40"
+								aria-hidden="true"
+							/>
 						</div>
 
 						<RankDisplay
@@ -202,9 +205,67 @@ export const ReviewStep = ({
 						/>
 					</div>
 
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+						<DetailItem
+							icon={Gauge}
+							label="PDL atual"
+							value={`${orderInput.currentLp} PDL`}
+						/>
+						<DetailItem
+							icon={TrendingUp}
+							label="Ganho por vitória"
+							value={`${orderInput.lpGain} PDL`}
+						/>
+						<DetailItem
+							className={favoriteBoosterName ? undefined : 'sm:col-span-2'}
+							icon={CalendarClock}
+							label="Prazo"
+							value={formatDateTime(orderInput.deadline)}
+							preserveCase
+						/>
+						{favoriteBoosterName ? (
+							<DetailItem
+								icon={UserRound}
+								label="Booster favorito"
+								value={favoriteBoosterName}
+								preserveCase
+							/>
+						) : null}
+					</div>
+
 					<div className="space-y-3">
 						<div className="flex items-center gap-2">
-							<span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+							<span className="text-xs font-bold uppercase tracking-widest text-white/60">
+								Dados da Conta
+							</span>
+							<div className="h-px flex-1 bg-white/5" />
+						</div>
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+							<DetailItem
+								icon={UserRound}
+								label="Login"
+								value={accountInput.login}
+								preserveCase
+							/>
+							<DetailItem
+								icon={Gamepad2}
+								label="Nome de invocador"
+								value={accountInput.summonerName}
+								preserveCase
+							/>
+							<DetailItem
+								className="sm:col-span-2"
+								icon={KeyRound}
+								label="Senha"
+								value={maskPassword(accountInput.password)}
+								preserveCase
+							/>
+						</div>
+					</div>
+
+					<div className="space-y-3">
+						<div className="flex items-center gap-2">
+							<span className="text-xs font-bold uppercase tracking-widest text-white/60">
 								Extras Ativos
 							</span>
 							<div className="h-px flex-1 bg-white/5" />
@@ -214,13 +275,13 @@ export const ReviewStep = ({
 								<Badge
 									key={id}
 									variant="outline"
-									className="bg-white/5 border-white/10 text-[10px] py-1 px-3 uppercase tracking-wider font-bold text-white/70 hover:bg-white/10 transition-colors"
+									className="border-white/10 bg-white/5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white/75"
 								>
 									{EXTRA_OPTIONS_BY_ID.get(id)?.label ?? id}
 								</Badge>
 							))}
 							{orderInput.extras.length === 0 ? (
-								<p className="text-[10px] text-white/20 italic font-medium">
+								<p className="text-sm text-white/60">
 									Nenhum extra selecionado para este pedido.
 								</p>
 							) : null}
@@ -229,31 +290,28 @@ export const ReviewStep = ({
 				</CardContent>
 			</Card>
 
-			<div className="flex flex-col items-center gap-8 pt-4">
-				<div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/[0.02] border border-white/5 w-full">
+			<div className="flex flex-col items-center gap-6 pt-4">
+				<div className="flex w-full items-start gap-3 rounded-sm border border-white/10 bg-white/[0.02] px-4 py-4">
 					<Checkbox
 						id="terms-confirmation"
 						name="termsConfirmation"
 						checked={hasAcceptedTerms}
 						onChange={(event) => onTermsChange(event.target.checked)}
-						className="shrink-0"
+						className="mt-0.5 h-5 w-5 shrink-0"
 					/>
 					<label
 						htmlFor="terms-confirmation"
-						className="text-[10px] leading-relaxed text-white/40 uppercase tracking-widest cursor-pointer select-none hover:text-white/60 transition-colors"
+						className="cursor-pointer select-none text-sm leading-relaxed text-white/70"
 					>
-						Eu concordo plenamente com os{' '}
-						<span className="text-hextech-cyan font-bold hover:underline">
-							Termos de Serviço
-						</span>{' '}
-						da EloNew e confirmo que todos os dados acima estão corretos.
+						Eu concordo com os Termos de Serviço da EloNew e confirmo que todos
+						os dados acima estão corretos.
 					</label>
 				</div>
 
-				<div className="flex flex-col sm:flex-row gap-4 w-full">
+				<div className="flex w-full flex-col gap-3 sm:flex-row">
 					<Button
 						variant="outline"
-						className="flex-1 h-14 border-white/10 hover:bg-white/5 uppercase tracking-[0.2em] text-[10px] font-black"
+						className="h-14 flex-1 border-white/10 text-xs"
 						onClick={onBack}
 					>
 						Ajustar Pedido
@@ -261,41 +319,31 @@ export const ReviewStep = ({
 					<Button
 						type="button"
 						variant="primary"
-						className={cn(
-							'flex-[2] h-14 bg-emerald-500 text-xs font-black text-black uppercase tracking-[0.2em] transition-colors duration-200 hover:bg-emerald-400',
-							(isSubmitting || !hasAcceptedTerms) &&
-								'opacity-50 grayscale pointer-events-none',
-						)}
+						className="h-14 flex-[2] text-xs"
 						onClick={onCheckout}
 						disabled={isSubmitting || !hasAcceptedTerms}
 					>
 						{isSubmitting ? (
 							<span className="flex items-center gap-2">
-								<motion.div
-									animate={{ rotate: 360 }}
-									transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-								>
-									<Zap className="w-4 h-4" />
-								</motion.div>
+								<Zap className="h-4 w-4" aria-hidden="true" />
 								Processando...
 							</span>
 						) : (
 							<span className="flex items-center justify-center gap-2">
 								Finalizar e Pagar
-								<ChevronRight className="h-5 w-5" />
+								<ChevronRight className="h-5 w-5" aria-hidden="true" />
 							</span>
 						)}
 					</Button>
 				</div>
 
 				{error ? (
-					<motion.p
-						initial={{ opacity: 0, y: 10 }}
-						animate={{ opacity: 1, y: 0 }}
-						className="text-[10px] text-red-400 font-black uppercase tracking-widest px-4 py-2 bg-red-400/10 border border-red-400/20 rounded-sm"
+					<p
+						className="w-full rounded-sm border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm font-medium text-red-300"
+						role="alert"
 					>
 						{error}
-					</motion.p>
+					</p>
 				) : null}
 			</div>
 		</div>

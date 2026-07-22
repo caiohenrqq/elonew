@@ -7,7 +7,7 @@ export const disabledState = 'disabled:cursor-not-allowed disabled:opacity-50';
 
 export const labelText = {
 	control:
-		'text-[10px] font-black uppercase tracking-[0.2em] leading-none text-white/40',
+		'text-xs font-black uppercase tracking-[0.16em] leading-none text-white/65',
 	nav: 'text-[10px] font-black uppercase tracking-[0.3em]',
 	eyebrow: 'text-[10px] font-black uppercase tracking-[0.4em]',
 };
@@ -19,7 +19,7 @@ export const panelSurface = {
 };
 
 export const fieldSurface = cn(
-	'flex h-10 w-full rounded-sm border border-white/10 bg-white/5 px-3 py-2 text-xs text-white ring-offset-black transition-all duration-200',
+	'flex h-11 w-full rounded-sm border border-white/10 bg-white/5 px-3 py-2 text-sm text-white ring-offset-black transition-all duration-200',
 	'placeholder:text-white/20 focus-visible:border-hextech-cyan',
 	focusRing,
 	'disabled:cursor-not-allowed disabled:opacity-50',

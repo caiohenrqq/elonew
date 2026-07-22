@@ -44,7 +44,7 @@ export const ServiceStep = ({
 				<h2 className="text-xl font-black uppercase tracking-[0.2em]">
 					Selecione o Serviço
 				</h2>
-				<p className="text-white/40 text-xs">
+				<p className="text-sm leading-relaxed text-white/65">
 					Escolha a modalidade de subida desejada.
 				</p>
 			</div>
@@ -66,6 +66,7 @@ export const ServiceStep = ({
 							selected={isSelected}
 						>
 							<Icon
+								aria-hidden="true"
 								className={cn(
 									'w-8 h-8 mb-4 transition-colors',
 									isSelected
@@ -76,7 +77,7 @@ export const ServiceStep = ({
 							<h3 className="font-black uppercase tracking-widest text-xs mb-1">
 								{type.label}
 							</h3>
-							<p className="text-[10px] text-white/40 leading-relaxed">
+							<p className="text-sm leading-relaxed text-white/60">
 								{type.description}
 							</p>
 						</SelectableOption>
@@ -86,16 +87,18 @@ export const ServiceStep = ({
 
 			<RankRoutePicker orderInput={orderInput} onChange={onChange} />
 
-			<div className="flex justify-end pt-6 border-t border-white/5 mt-8">
+			<div className="mt-8 flex justify-end border-t border-white/10 pt-6">
 				<Button
 					type="button"
+					size="lg"
+					className="w-full sm:w-auto"
 					onClick={onNext}
 					onFocus={onNextIntent}
 					onMouseEnter={onNextIntent}
 					disabled={!canContinue}
 				>
 					Próximo Passo
-					<ChevronRight className="ml-2 h-4 w-4" />
+					<ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
 				</Button>
 			</div>
 		</div>

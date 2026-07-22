@@ -1,7 +1,6 @@
 'use client';
 
 import type { OrderExtraType } from '@packages/shared/orders/order-extra';
-import { AnimatePresence } from 'motion/react';
 import dynamic from 'next/dynamic';
 import type { CSSProperties } from 'react';
 import { useCallback, useRef, useState } from 'react';
@@ -9,6 +8,7 @@ import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 import { createInitialCheckoutInput } from '../../model/checkout-defaults';
 import { getRankOption } from '../../model/rank-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
+import type { AccountInput } from './account-step';
 import { CheckoutSummary } from './checkout-summary';
 import { StepIndicator } from './step-indicator';
 import { useCheckoutSubmit } from './use-checkout-submit';
@@ -19,20 +19,31 @@ const loadServiceStep = () =>
 	import('./service-step').then((module) => module.ServiceStep);
 const loadDetailsStep = () =>
 	import('./details-step').then((module) => module.DetailsStep);
+const loadAccountStep = () =>
+	import('./account-step').then((module) => module.AccountStep);
 const loadReviewStep = () =>
 	import('./review-step').then((module) => module.ReviewStep);
 
 const ServiceStep = dynamic(loadServiceStep);
 const DetailsStep = dynamic(loadDetailsStep);
+const AccountStep = dynamic(loadAccountStep);
 const ReviewStep = dynamic(loadReviewStep);
 
 const INITIAL_STEP = 1;
+const INITIAL_ACCOUNT_INPUT: AccountInput = {
+	login: '',
+	summonerName: '',
+	password: '',
+	passwordConfirmation: '',
+};
 
 export const NewOrderWizard = () => {
 	const [step, setStep] = useState(INITIAL_STEP);
 	const [orderInput, setOrderInput] = useState<StartCheckoutInput>(
 		createInitialCheckoutInput,
 	);
+	const [accountInput, setAccountInput] = useState(INITIAL_ACCOUNT_INPUT);
+	const [favoriteBoosterName, setFavoriteBoosterName] = useState('');
 	const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 	const selectedRank = getRankOption(orderInput.desiredLeague);
 	const initialRank = useRef(selectedRank);
@@ -49,12 +60,18 @@ export const NewOrderWizard = () => {
 		void loadDetailsStep();
 	}, []);
 
+	const preloadAccountStep = useCallback(() => {
+		void loadAccountStep();
+	}, []);
+
 	const preloadReviewStep = useCallback(() => {
 		void loadReviewStep();
 	}, []);
 
 	useGSAP(
 		() => {
+			if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
 			gsap.to(wizardRef.current, {
 				'--rank-accent': selectedRank.accent,
 				'--rank-accent-soft': selectedRank.accentSoft,
@@ -94,14 +111,34 @@ export const NewOrderWizard = () => {
 		[],
 	);
 
-	const toggleExtra = useCallback((id: OrderExtraType) => {
-		setOrderInput((previousInput) => ({
-			...previousInput,
-			extras: previousInput.extras.includes(id)
-				? previousInput.extras.filter((extra) => extra !== id)
-				: [...previousInput.extras, id],
-		}));
-	}, []);
+	const toggleExtra = useCallback(
+		(id: OrderExtraType) => {
+			if (
+				id === 'favorite_booster' &&
+				orderInput.extras.includes('favorite_booster')
+			) {
+				setFavoriteBoosterName('');
+			}
+
+			setOrderInput((previousInput) => ({
+				...previousInput,
+				extras: previousInput.extras.includes(id)
+					? previousInput.extras.filter((extra) => extra !== id)
+					: [...previousInput.extras, id],
+			}));
+		},
+		[orderInput.extras],
+	);
+
+	const updateAccountInput = useCallback(
+		(key: keyof AccountInput, value: string) => {
+			setAccountInput((previousInput) => ({
+				...previousInput,
+				[key]: value,
+			}));
+		},
+		[],
+	);
 
 	const handleCouponCodeChange = useCallback(
 		(couponCode: string) => {
@@ -120,7 +157,7 @@ export const NewOrderWizard = () => {
 					'--rank-accent': initialRank.current.accent,
 					'--rank-accent-soft': initialRank.current.accentSoft,
 					background:
-						'linear-gradient(145deg, var(--rank-accent-soft), transparent 34%), #09090b',
+						'linear-gradient(145deg, var(--rank-accent-soft), transparent 34%), var(--color-background)',
 				} as CSSProperties
 			}
 		>
@@ -128,7 +165,7 @@ export const NewOrderWizard = () => {
 				<div className="flex-1 space-y-10">
 					<StepIndicator step={step} />
 
-					<AnimatePresence mode="wait">
+					<div>
 						{step === 1 ? (
 							<WizardStepTransition stepKey="step1">
 								<ServiceStep
@@ -143,22 +180,38 @@ export const NewOrderWizard = () => {
 						{step === 2 ? (
 							<WizardStepTransition stepKey="step2">
 								<DetailsStep
+									favoriteBoosterName={favoriteBoosterName}
 									orderInput={orderInput}
 									onBack={() => setStep(1)}
 									onNext={() => setStep(3)}
-									onNextIntent={preloadReviewStep}
+									onNextIntent={preloadAccountStep}
 									onChange={updateOrderInput}
 									onToggleExtra={toggleExtra}
+									onFavoriteBoosterNameChange={setFavoriteBoosterName}
 								/>
 							</WizardStepTransition>
 						) : null}
 
 						{step === 3 ? (
 							<WizardStepTransition stepKey="step3">
+								<AccountStep
+									accountInput={accountInput}
+									onBack={() => setStep(2)}
+									onChange={updateAccountInput}
+									onNext={() => setStep(4)}
+									onNextIntent={preloadReviewStep}
+								/>
+							</WizardStepTransition>
+						) : null}
+
+						{step === 4 ? (
+							<WizardStepTransition stepKey="step4">
 								<ReviewStep
+									accountInput={accountInput}
+									favoriteBoosterName={favoriteBoosterName}
 									orderInput={orderInput}
 									hasAcceptedTerms={hasAcceptedTerms}
-									onBack={() => setStep(2)}
+									onBack={() => setStep(3)}
 									onCheckout={handleCheckout}
 									onTermsChange={setHasAcceptedTerms}
 									isSubmitting={isPending}
@@ -166,7 +219,7 @@ export const NewOrderWizard = () => {
 								/>
 							</WizardStepTransition>
 						) : null}
-					</AnimatePresence>
+					</div>
 				</div>
 
 				<CheckoutSummary
