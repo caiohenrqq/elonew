@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 
 type WizardStepTransitionProps = {
@@ -14,14 +14,24 @@ export const WizardStepTransition = ({
 }: WizardStepTransitionProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 
+	useEffect(() => {
+		if (!stepKey) return;
+		const heading = containerRef.current?.querySelector<HTMLElement>('h2');
+		heading?.setAttribute('tabindex', '-1');
+		heading?.focus();
+	}, [stepKey]);
+
 	useGSAP(
 		() => {
+			if (
+				!stepKey ||
+				window.matchMedia('(prefers-reduced-motion: reduce)').matches
+			)
+				return;
+
 			gsap.fromTo(
 				containerRef.current,
-				{
-					autoAlpha: 0,
-					y: 20,
-				},
+				{ autoAlpha: 0, y: 20 },
 				{
 					autoAlpha: 1,
 					y: 0,

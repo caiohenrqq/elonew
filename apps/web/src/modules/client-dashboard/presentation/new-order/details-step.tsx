@@ -1,6 +1,6 @@
 import type { OrderExtraType } from '@packages/shared/orders/order-extra';
 import { CheckCircle2, ChevronRight } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { type MouseEvent, useRef } from 'react';
 import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 import { Badge } from '@/shared/ui/components/badge';
 import { Button } from '@/shared/ui/components/button';
@@ -20,6 +20,7 @@ import { EXTRAS, QUEUES, SERVERS } from '../../model/new-order-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
 
 type DetailsStepProps = {
+	favoriteBoosterName?: string;
 	orderInput: StartCheckoutInput;
 	onBack: () => void;
 	onNext: () => void;
@@ -28,46 +29,43 @@ type DetailsStepProps = {
 		value: StartCheckoutInput[Key],
 	) => void;
 	onToggleExtra: (extraId: OrderExtraType) => void;
+	onFavoriteBoosterNameChange?: (name: string) => void;
 	onNextIntent?: () => void;
 };
 
 const FILTERED_EXTRAS = EXTRAS.filter((extra) => extra.id !== 'mmr_nerfed');
 
 export const DetailsStep = ({
+	favoriteBoosterName = '',
 	orderInput,
 	onBack,
 	onNext,
 	onChange,
 	onToggleExtra,
+	onFavoriteBoosterNameChange,
 	onNextIntent,
 }: DetailsStepProps) => {
-	const [favoriteBoosterName, setFavoriteBoosterName] = useState('');
 	const containerRef = useRef<HTMLDivElement>(null);
 	const mmrWarningRef = useRef<HTMLDivElement>(null);
-	const boosterInputRefs = useRef<Record<string, HTMLDivElement | null>>({});
+	const favoriteBoosterRef = useRef<HTMLDivElement>(null);
+	const isFavoriteBoosterSelected =
+		orderInput.extras.includes('favorite_booster');
+	const isNextDisabled =
+		isFavoriteBoosterSelected && !favoriteBoosterName.trim();
 
-	const isFavoriteBoosterSelected = useMemo(
-		() => orderInput.extras.includes('favorite_booster'),
-		[orderInput.extras],
-	);
-	const isNextDisabled = useMemo(
-		() => isFavoriteBoosterSelected && !favoriteBoosterName.trim(),
-		[isFavoriteBoosterSelected, favoriteBoosterName],
-	);
-
+	const shouldShowMmrWarning = orderInput.lpGain <= 17;
 	const { contextSafe } = useGSAP({ scope: containerRef });
-
-	const handleToggleWithAnimation = contextSafe(
-		(id: OrderExtraType, event: React.MouseEvent) => {
-			const card = (event.currentTarget as HTMLElement).closest(
-				'.extra-option-card',
-			);
-			if (card) {
-				gsap.fromTo(
-					card,
-					{ scale: 0.97 },
-					{ scale: 1, duration: 0.4, ease: 'back.out(4)' },
-				);
+	const handleToggleExtra = contextSafe(
+		(id: OrderExtraType, event: MouseEvent<HTMLButtonElement>) => {
+			if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				const card = event.currentTarget.closest('.extra-option-card');
+				if (card) {
+					gsap.fromTo(
+						card,
+						{ scale: 0.97 },
+						{ scale: 1, duration: 0.4, ease: 'back.out(4)' },
+					);
+				}
 			}
 			onToggleExtra(id);
 		},
@@ -75,6 +73,7 @@ export const DetailsStep = ({
 
 	useGSAP(
 		() => {
+			if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 			gsap.from('.extra-option-card', {
 				y: 20,
 				opacity: 0,
@@ -86,61 +85,38 @@ export const DetailsStep = ({
 		{ scope: containerRef },
 	);
 
-	const shouldShowMmrWarning = orderInput.lpGain <= 17;
-
 	useGSAP(
 		() => {
-			if (shouldShowMmrWarning) {
-				gsap.fromTo(
-					mmrWarningRef.current,
-					{ height: 0, opacity: 0, marginTop: 0 },
-					{
-						height: 'auto',
-						opacity: 1,
-						marginTop: 16,
-						duration: 0.4,
-						ease: 'power3.out',
-					},
-				);
-			} else {
-				gsap.to(mmrWarningRef.current, {
-					height: 0,
-					opacity: 0,
-					marginTop: 0,
-					duration: 0.3,
-					ease: 'power3.in',
-				});
-			}
+			if (
+				!shouldShowMmrWarning ||
+				window.matchMedia('(prefers-reduced-motion: reduce)').matches
+			)
+				return;
+			gsap.from(mmrWarningRef.current, {
+				autoAlpha: 0,
+				y: -8,
+				duration: 0.25,
+				ease: 'power2.out',
+			});
 		},
-		{ dependencies: [shouldShowMmrWarning] },
+		{ scope: containerRef, dependencies: [shouldShowMmrWarning] },
 	);
 
 	useGSAP(
 		() => {
-			const el = boosterInputRefs.current.favorite_booster;
-			if (isFavoriteBoosterSelected) {
-				gsap.fromTo(
-					el,
-					{ height: 0, opacity: 0, marginTop: 0 },
-					{
-						height: 'auto',
-						opacity: 1,
-						marginTop: 12,
-						duration: 0.4,
-						ease: 'back.out(1.2)',
-					},
-				);
-			} else {
-				gsap.to(el, {
-					height: 0,
-					opacity: 0,
-					marginTop: 0,
-					duration: 0.3,
-					ease: 'power3.in',
-				});
-			}
+			if (
+				!isFavoriteBoosterSelected ||
+				window.matchMedia('(prefers-reduced-motion: reduce)').matches
+			)
+				return;
+			gsap.from(favoriteBoosterRef.current, {
+				autoAlpha: 0,
+				y: -8,
+				duration: 0.3,
+				ease: 'back.out(1.2)',
+			});
 		},
-		{ dependencies: [isFavoriteBoosterSelected] },
+		{ scope: containerRef, dependencies: [isFavoriteBoosterSelected] },
 	);
 
 	return (
@@ -149,7 +125,7 @@ export const DetailsStep = ({
 				<h2 className="text-xl font-black uppercase tracking-[0.2em]">
 					Detalhes e Extras
 				</h2>
-				<p className="text-white/40 text-xs">
+				<p className="text-sm leading-relaxed text-white/65">
 					Configure os detalhes técnicos do seu pedido.
 				</p>
 			</div>
@@ -161,7 +137,7 @@ export const DetailsStep = ({
 						value={orderInput.server}
 						onValueChange={(value: string) => onChange('server', value)}
 					>
-						<SelectTrigger id="server">
+						<SelectTrigger id="server" className="h-12 text-base md:text-sm">
 							<SelectValue placeholder="Selecione um servidor" />
 						</SelectTrigger>
 						<SelectContent>
@@ -179,7 +155,7 @@ export const DetailsStep = ({
 						value={orderInput.desiredQueue}
 						onValueChange={(value: string) => onChange('desiredQueue', value)}
 					>
-						<SelectTrigger id="queue">
+						<SelectTrigger id="queue" className="h-12 text-base md:text-sm">
 							<SelectValue placeholder="Selecione uma fila" />
 						</SelectTrigger>
 						<SelectContent>
@@ -200,33 +176,35 @@ export const DetailsStep = ({
 						value={orderInput.lpGain}
 						onChange={(value) => onChange('lpGain', value)}
 						placeholder="20"
+						className="[&_button]:h-12 [&_button]:w-12 [&_input]:h-12 [&_input]:text-base md:[&_input]:text-sm"
 					/>
 				</div>
 			</div>
 
 			<div className="space-y-4">
-				<div className="flex items-center justify-between">
-					<Label>Personalize sua experiência</Label>
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<h3 className="text-sm font-black uppercase tracking-widest text-white/80">
+						Personalize sua experiência
+					</h3>
 					{shouldShowMmrWarning && (
-						<span className="text-[10px] font-black uppercase tracking-widest text-hextech-cyan animate-pulse">
+						<span className="text-xs font-black uppercase tracking-widest text-hextech-cyan">
 							Taxa MMR Nerfado Aplicada
 						</span>
 					)}
 				</div>
 
-				<div
-					ref={mmrWarningRef}
-					className="overflow-hidden opacity-0"
-					style={{ height: 0 }}
-				>
-					<div className="rounded-sm border border-hextech-cyan/20 bg-hextech-cyan/5 p-3">
-						<p className="text-[10px] leading-relaxed text-hextech-cyan/80">
+				{shouldShowMmrWarning ? (
+					<div
+						ref={mmrWarningRef}
+						className="rounded-sm border border-hextech-cyan/20 bg-hextech-cyan/5 p-3"
+					>
+						<p className="text-sm leading-relaxed text-white/75">
 							Se seu ganho de PDL é menor ou igual a 17, isso aumenta a
 							dificuldade para nossos boosters. A taxa de MMR Nerfado foi
 							aplicada automaticamente.
 						</p>
 					</div>
-				</div>
+				) : null}
 
 				<div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
 					{FILTERED_EXTRAS.map((extra) => {
@@ -236,7 +214,7 @@ export const DetailsStep = ({
 						return (
 							<div key={extra.id} className="extra-option-card flex flex-col">
 								<SelectableOption
-									onClick={(e) => handleToggleWithAnimation(extra.id, e)}
+									onClick={(event) => handleToggleExtra(extra.id, event)}
 									layout="row"
 									selected={isSelected}
 									className="flex-1 items-start gap-4 text-left min-h-20"
@@ -251,17 +229,20 @@ export const DetailsStep = ({
 											)}
 										>
 											{isSelected ? (
-												<CheckCircle2 className="w-3 h-3 text-black" />
+												<CheckCircle2
+													className="h-3 w-3 text-black"
+													aria-hidden="true"
+												/>
 											) : null}
 										</div>
 										<div className="min-w-0 space-y-1">
-											<span className="block text-[10px] font-black uppercase tracking-widest">
+											<span className="block text-xs font-black uppercase tracking-widest">
 												{extra.label}
 											</span>
 											<span
 												className={cn(
-													'block text-[10px] leading-relaxed',
-													isSelected ? 'text-white/60' : 'text-white/35',
+													'block text-sm leading-relaxed',
+													isSelected ? 'text-white/75' : 'text-white/60',
 												)}
 											>
 												{extra.description}
@@ -275,24 +256,15 @@ export const DetailsStep = ({
 										{extra.priceLabel}
 									</Badge>
 								</SelectableOption>
-								{isFavoriteBooster ? (
-									<div
-										ref={(el) => {
-											boosterInputRefs.current.favorite_booster = el;
-										}}
-										className="overflow-hidden opacity-0"
-										style={{ height: 0 }}
-									>
+								{isFavoriteBooster && isFavoriteBoosterSelected ? (
+									<div ref={favoriteBoosterRef} className="mt-3">
 										<div className="rounded-sm border border-white/10 bg-black/20 p-3">
-											<div className="flex items-center justify-between">
-												<Label
-													htmlFor="favorite-booster-name"
-													className="text-[10px]"
-												>
+											<div className="flex items-center justify-between gap-3">
+												<Label htmlFor="favorite-booster-name">
 													Nome do Booster Favorito{' '}
 													<span className="text-hextech-cyan">*</span>
 												</Label>
-												<span className="text-[10px] text-white/20">
+												<span className="text-xs text-white/55">
 													{favoriteBoosterName.length}/50
 												</span>
 											</div>
@@ -301,12 +273,11 @@ export const DetailsStep = ({
 												name="favoriteBoosterName"
 												value={favoriteBoosterName}
 												onChange={(event) =>
-													setFavoriteBoosterName(
-														event.target.value.slice(0, 50),
-													)
+													onFavoriteBoosterNameChange?.(event.target.value)
 												}
+												maxLength={50}
 												placeholder="Digite o nome do booster"
-												className="mt-2"
+												className="mt-2 h-12 text-base md:text-sm"
 											/>
 										</div>
 									</div>
@@ -317,19 +288,25 @@ export const DetailsStep = ({
 				</div>
 			</div>
 
-			<div className="flex justify-end gap-4 pt-6 border-t border-white/5 mt-8">
-				<Button variant="outline" className="px-8" onClick={onBack}>
+			<div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:justify-end">
+				<Button
+					variant="outline"
+					size="lg"
+					className="w-full sm:w-auto"
+					onClick={onBack}
+				>
 					Voltar
 				</Button>
 				<Button
+					size="lg"
 					onClick={onNext}
 					onFocus={onNextIntent}
 					onMouseEnter={onNextIntent}
-					className="group px-8"
+					className="w-full sm:w-auto"
 					disabled={isNextDisabled}
 				>
-					Revisar Pedido
-					<ChevronRight className="ml-2 h-4 w-4" />
+					Próximo Passo
+					<ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
 				</Button>
 			</div>
 		</div>

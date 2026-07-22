@@ -93,9 +93,21 @@ const RankPanel = ({
 		selectedLeague,
 		selectedDivision,
 	);
+	const animateRankImage = (button: HTMLButtonElement, scale: number) => {
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		gsap.to(button.querySelector('img'), {
+			scale,
+			duration: 0.2,
+			ease: 'power2.out',
+			overwrite: 'auto',
+		});
+	};
 
 	useGSAP(
 		() => {
+			if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
 			gsap.to(panelRef.current, {
 				'--rank-accent': selectedRank.accent,
 				'--rank-accent-soft': selectedRank.accentSoft,
@@ -110,7 +122,7 @@ const RankPanel = ({
 	return (
 		<section
 			ref={panelRef}
-			className="relative overflow-hidden rounded-sm border border-white/10 bg-[#0d0d0f]/80 p-4"
+			className="relative overflow-hidden rounded-sm border border-white/10 bg-surface/80 p-4"
 			aria-labelledby={`${field}-rank-title`}
 			style={
 				{
@@ -135,21 +147,21 @@ const RankPanel = ({
 						>
 							{copy[field].title}
 						</h3>
-						<p className="mt-1 text-[10px] text-white/40">
+						<p className="mt-1 text-sm text-white/60">
 							{copy[field].description}
 						</p>
 					</div>
 					<div className="text-right">
-						<p className="text-[10px] font-black uppercase tracking-[0.16em] text-white">
+						<p className="text-xs font-black uppercase tracking-[0.16em] text-white">
 							{selectedRank.label}
 						</p>
-						<p className="text-[10px] text-white/45">
+						<p className="text-xs text-white/65">
 							{getRankDivisionLabel(selectedDivision)}
 						</p>
 					</div>
 				</div>
 
-				<div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
+				<div className="grid grid-cols-4 gap-2 xl:grid-cols-8">
 					{RANK_OPTIONS.map((rank) => {
 						const isSelected =
 							selectedLeague === rank.value && hasValidSelection;
@@ -177,8 +189,18 @@ const RankPanel = ({
 								aria-pressed={isSelected}
 								disabled={isDisabled}
 								onClick={() => onLeagueChange(rank.value)}
+								onFocus={(event) => animateRankImage(event.currentTarget, 1.05)}
+								onBlur={(event) =>
+									animateRankImage(event.currentTarget, isSelected ? 1.05 : 1)
+								}
+								onPointerEnter={(event) =>
+									animateRankImage(event.currentTarget, 1.05)
+								}
+								onPointerLeave={(event) =>
+									animateRankImage(event.currentTarget, isSelected ? 1.05 : 1)
+								}
 								className={cn(
-									'group flex min-h-[118px] cursor-pointer flex-col items-center justify-between rounded-sm border p-2 text-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-25',
+									'group flex min-h-24 cursor-pointer flex-col items-center justify-between rounded-sm border p-1.5 text-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--rank-accent)] disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[118px] sm:p-2',
 									isSelected
 										? 'border-[var(--rank-accent)] bg-white/[0.07] text-white'
 										: 'border-white/10 bg-black/20 text-white/45 hover:border-white/25 hover:text-white',
@@ -196,11 +218,12 @@ const RankPanel = ({
 									height={96}
 									sizes="64px"
 									className={cn(
-										'h-16 w-16 object-contain transition-transform duration-200',
-										isSelected ? 'scale-105' : 'group-hover:scale-105',
+										'h-12 w-12 object-contain sm:h-16 sm:w-16',
+										isSelected && 'brightness-110',
 									)}
+									style={{ transform: `scale(${isSelected ? 1.05 : 1})` }}
 								/>
-								<span className="text-[9px] font-black uppercase tracking-[0.14em]">
+								<span className="text-xs font-black uppercase tracking-[0.08em]">
 									{rank.label}
 								</span>
 							</button>
@@ -231,7 +254,7 @@ const RankPanel = ({
 									disabled={isDisabled}
 									onClick={() => onDivisionChange(division)}
 									className={cn(
-										'h-10 cursor-pointer border-r border-white/10 text-[10px] font-black uppercase tracking-[0.18em] transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--rank-accent)] disabled:cursor-not-allowed disabled:text-white/15',
+										'h-11 cursor-pointer border-r border-white/10 text-xs font-black uppercase tracking-[0.18em] transition-colors last:border-r-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--rank-accent)] disabled:cursor-not-allowed disabled:text-white/30',
 										isSelected
 											? 'bg-[var(--rank-accent)] text-black'
 											: 'text-white/50 hover:bg-white/5 hover:text-white',
@@ -255,8 +278,9 @@ const RankPanel = ({
 							onChange={(value) =>
 								onDivisionChange(normalizeMasterPdlDivision(value))
 							}
+							className="[&_button]:h-12 [&_button]:w-12 [&_input]:h-12 [&_input]:text-base md:[&_input]:text-sm"
 						/>
-						<p className="text-[10px] text-white/35">
+						<p className="text-sm leading-relaxed text-white/60">
 							Master não usa divisões I, II, III ou IV. Informe entre{' '}
 							{MASTER_PDL_MIN} e {MASTER_PDL_MAX} PDL.
 						</p>
@@ -350,7 +374,7 @@ export const RankRoutePicker = ({
 				}
 			/>
 			{canSelectDesiredRank ? null : (
-				<p className="text-[10px] text-red-300 uppercase tracking-widest">
+				<p className="text-sm text-red-300" role="alert">
 					Escolha um rank desejado acima do rank atual.
 				</p>
 			)}
