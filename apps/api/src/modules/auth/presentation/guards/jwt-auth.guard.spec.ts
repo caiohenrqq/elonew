@@ -42,7 +42,7 @@ class TestExecutionContext implements ExecutionContext {
 	}
 
 	getHandler(): (...args: unknown[]) => unknown {
-		return createExecutionContext;
+		return createExecutionContext as (...args: unknown[]) => unknown;
 	}
 
 	getArgs<T extends unknown[] = unknown[]>(): T {
