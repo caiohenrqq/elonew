@@ -190,6 +190,7 @@ describe('Orders module integration (db)', () => {
 		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'awaiting_payment',
+			hasCredentials: false,
 			subtotal: 2520,
 			totalAmount: 2520,
 			discountAmount: 0,
@@ -752,6 +753,7 @@ describe('Orders module integration (db)', () => {
 		await expect(controller.get(createdOrder.id, clientUser)).resolves.toEqual({
 			id: createdOrder.id,
 			status: 'in_progress',
+			hasCredentials: false,
 			subtotal: 2520,
 			totalAmount: 2520,
 			discountAmount: 0,

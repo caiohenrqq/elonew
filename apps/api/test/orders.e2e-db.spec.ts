@@ -119,6 +119,7 @@ describe('Orders (e2e db)', () => {
 			.expect(200, {
 				id: orderId,
 				status: 'awaiting_payment',
+				hasCredentials: false,
 				subtotal: 2520,
 				totalAmount: 2520,
 				discountAmount: 0,
