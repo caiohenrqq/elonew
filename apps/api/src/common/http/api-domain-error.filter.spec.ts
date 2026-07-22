@@ -14,16 +14,23 @@ import {
 	OrderInvalidTransitionError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
+import { CouponCodeAlreadyExistsError } from '@modules/orders/domain/order-pricing.errors';
 import {
 	PaymentHoldReleaseNotAllowedError,
 	PaymentNotFoundError,
 } from '@modules/payments/domain/payment.errors';
+import { RatingAlreadySubmittedError } from '@modules/ratings/domain/rating.errors';
+import {
+	UserEmailAlreadyInUseError,
+	UsernameAlreadyInUseError,
+} from '@modules/users/domain/user.errors';
 import {
 	WalletInsufficientWithdrawableBalanceError,
 	WalletNotFoundError,
 } from '@modules/wallet/domain/wallet.errors';
 import {
 	BadRequestException,
+	ConflictException,
 	ForbiddenException,
 	NotFoundException,
 	UnauthorizedException,
@@ -86,6 +93,28 @@ describe('mapApiDomainErrorToHttpException', () => {
 		expect(
 			mapApiDomainErrorToHttpException(new AuthUserInactiveError()),
 		).toBeInstanceOf(ForbiddenException);
+	});
+
+	it('maps conflict domain errors to ConflictException', () => {
+		expect(
+			mapApiDomainErrorToHttpException(new RatingAlreadySubmittedError()),
+		).toBeInstanceOf(ConflictException);
+		expect(
+			mapApiDomainErrorToHttpException(new CouponCodeAlreadyExistsError()),
+		).toBeInstanceOf(ConflictException);
+	});
+
+	it('masks sign-up conflicts so accounts cannot be enumerated', () => {
+		for (const error of [
+			new UserEmailAlreadyInUseError(),
+			new UsernameAlreadyInUseError(),
+		]) {
+			const exception = mapApiDomainErrorToHttpException(error);
+
+			expect(exception).toBeInstanceOf(BadRequestException);
+			expect(exception?.message).toBe('Registration is unavailable.');
+			expect(exception?.message).not.toContain('already in use');
+		}
 	});
 
 	it('returns null for unmapped errors', () => {
