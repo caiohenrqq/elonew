@@ -116,6 +116,12 @@ export const envSchema = z
 			.default('http://localhost:3001'),
 		WEB_APP_URL: z.string().trim().url().default(DEFAULT_WEB_APP_URL),
 		ORDER_QUOTE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
+		API_MUTATION_THROTTLE_LIMIT: z.coerce.number().int().positive().default(60),
+		API_MUTATION_THROTTLE_TTL_SECONDS: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(60),
 		AUTH_LOGIN_THROTTLE_LIMIT: z.coerce.number().int().positive().default(5),
 		AUTH_LOGIN_THROTTLE_TTL_SECONDS: z.coerce
 			.number()

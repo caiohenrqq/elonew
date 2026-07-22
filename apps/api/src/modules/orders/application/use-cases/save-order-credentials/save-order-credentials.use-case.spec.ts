@@ -1,14 +1,19 @@
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
-import { Order } from '@modules/orders/domain/order.entity';
+import {
+	Order,
+	type OrderCredentials,
+} from '@modules/orders/domain/order.entity';
 import {
 	OrderCredentialsPasswordMismatchError,
 	OrderCredentialsStorageNotAllowedError,
 	OrderNotFoundError,
 } from '@modules/orders/domain/order.errors';
+import { persistedOrderCopy } from '../../../../../../test/support/in-memory/orders/in-memory-order.repository';
 
 class InMemoryOrderRepository implements OrderRepositoryPort {
 	private readonly orders = new Map<string, Order>();
+	lastSavedPendingCredentials: OrderCredentials | null = null;
 
 	async create(order: Order): Promise<Order> {
 		this.orders.set(order.id, order);
@@ -27,11 +32,12 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	}
 
 	async save(order: Order): Promise<void> {
-		this.orders.set(order.id, order);
+		this.lastSavedPendingCredentials = order.pendingCredentials;
+		this.orders.set(order.id, persistedOrderCopy(order));
 	}
 
 	insert(order: Order): void {
-		this.orders.set(order.id, order);
+		this.orders.set(order.id, persistedOrderCopy(order));
 	}
 }
 
@@ -52,12 +58,14 @@ describe('SaveOrderCredentialsUseCase', () => {
 			confirmPassword: 'secret',
 		});
 
-		const savedOrder = await repository.findById('order-1');
-		expect(savedOrder?.credentials).toEqual({
+		expect(repository.lastSavedPendingCredentials).toEqual({
 			login: 'login',
 			summonerName: 'summoner',
 			password: 'secret',
 		});
+		const savedOrder = await repository.findById('order-1');
+		expect(savedOrder?.hasCredentials).toBe(true);
+		expect(savedOrder?.pendingCredentials).toBeNull();
 	});
 
 	it('throws when passwords do not match', async () => {
@@ -136,12 +144,14 @@ describe('SaveOrderCredentialsUseCase', () => {
 			confirmPassword: 'secret-2',
 		});
 
-		const savedOrder = await repository.findById('order-4');
-		expect(savedOrder?.credentials).toEqual({
+		expect(repository.lastSavedPendingCredentials).toEqual({
 			login: 'login-2',
 			summonerName: 'summoner-2',
 			password: 'secret-2',
 		});
+		const savedOrder = await repository.findById('order-4');
+		expect(savedOrder?.hasCredentials).toBe(true);
+		expect(savedOrder?.pendingCredentials).toBeNull();
 	});
 
 	it('throws when a different client tries to store credentials', async () => {

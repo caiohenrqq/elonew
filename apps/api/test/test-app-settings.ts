@@ -18,6 +18,8 @@ export function createTestAppSettings(
 		internalApiKey: 'test-internal-api-key',
 		orderCredentialsEncryptionKey:
 			'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=',
+		apiMutationThrottleLimit: 10_000,
+		apiMutationThrottleTtlSeconds: 60,
 		authLoginThrottleLimit: 10,
 		authLoginThrottleTtlSeconds: 60,
 		authRefreshThrottleLimit: 10,

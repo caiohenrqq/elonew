@@ -17,3 +17,4 @@ process.env.WEB_SESSION_SECRET ??=
 	'a-very-secret-and-long-session-key-for-development-32chars';
 process.env.ORDER_CREDENTIALS_ENCRYPTION_KEY ??=
 	'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=';
+process.env.API_MUTATION_THROTTLE_LIMIT ??= '10000';

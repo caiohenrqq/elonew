@@ -6,6 +6,23 @@ import type { OrderRepositoryPort } from '@modules/orders/application/ports/orde
 import { Order } from '@modules/orders/domain/order.entity';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 
+export const persistedOrderCopy = (order: Order): Order =>
+	Order.rehydrate({
+		id: order.id,
+		clientId: order.clientId,
+		boosterId: order.boosterId,
+		couponId: order.couponId,
+		pricingVersionId: order.pricingVersionId,
+		status: order.status,
+		hasStoredCredentials: order.hasCredentials,
+		requestDetails: order.requestDetails,
+		subtotal: order.subtotal,
+		totalAmount: order.totalAmount,
+		discountAmount: order.discountAmount,
+		extras: order.extras,
+		completedAt: order.completedAt,
+	});
+
 export class InMemoryOrderRepository
 	implements OrderRepositoryPort, ClientOrderReaderPort
 {
@@ -22,12 +39,13 @@ export class InMemoryOrderRepository
 			couponId: order.couponId,
 			pricingVersionId: order.pricingVersionId,
 			status: order.status,
-			credentials: order.credentials,
+			hasStoredCredentials: order.hasCredentials,
 			requestDetails: order.requestDetails,
 			subtotal: order.subtotal,
 			totalAmount: order.totalAmount,
 			discountAmount: order.discountAmount,
 			extras: order.extras,
+			completedAt: order.completedAt,
 		});
 		this.orders.set(createdOrder.id, createdOrder);
 		this.createdAtByOrderId.set(
@@ -134,7 +152,7 @@ export class InMemoryOrderRepository
 	}
 
 	save(order: Order): Promise<void> {
-		this.orders.set(order.id, order);
+		this.orders.set(order.id, persistedOrderCopy(order));
 		if (!this.createdAtByOrderId.has(order.id)) {
 			this.createdAtByOrderId.set(
 				order.id,

@@ -51,6 +51,7 @@ describe('GetOrderUseCase', () => {
 		).resolves.toEqual({
 			id: 'order-1',
 			status: 'awaiting_payment',
+			hasCredentials: false,
 			subtotal: 25.2,
 			totalAmount: 25.2,
 			discountAmount: 0,
