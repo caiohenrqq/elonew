@@ -21,25 +21,16 @@ import { Module } from '@nestjs/common';
 		Argon2PasswordHasher,
 		{
 			provide: PASSWORD_HASHER_KEY,
-			useFactory: (
-				passwordHasher: Argon2PasswordHasher,
-			): Argon2PasswordHasher => passwordHasher,
-			inject: [Argon2PasswordHasher],
+			useExisting: Argon2PasswordHasher,
 		},
 		HmacEmailConfirmationTokenService,
 		{
 			provide: EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY,
-			useFactory: (
-				emailConfirmationTokenService: HmacEmailConfirmationTokenService,
-			): HmacEmailConfirmationTokenService => emailConfirmationTokenService,
-			inject: [HmacEmailConfirmationTokenService],
+			useExisting: HmacEmailConfirmationTokenService,
 		},
 		{
 			provide: USER_REPOSITORY_KEY,
-			useFactory: (
-				userRepository: PrismaUserRepository,
-			): PrismaUserRepository => userRepository,
-			inject: [PrismaUserRepository],
+			useExisting: PrismaUserRepository,
 		},
 		SignUpUseCase,
 		ConfirmEmailUseCase,

@@ -98,104 +98,62 @@ import { Module } from '@nestjs/common';
 		OrderCredentialsCipherService,
 		{
 			provide: BOOSTER_USER_READER_KEY,
-			useFactory: (
-				boosterUserReader: PrismaBoosterUserReader,
-			): PrismaBoosterUserReader => boosterUserReader,
-			inject: [PrismaBoosterUserReader],
+			useExisting: PrismaBoosterUserReader,
 		},
 		{
 			provide: COUPON_LOOKUP_PORT_KEY,
-			useFactory: (
-				couponLookupRepository: PrismaCouponLookupRepository,
-			): PrismaCouponLookupRepository => couponLookupRepository,
-			inject: [PrismaCouponLookupRepository],
+			useExisting: PrismaCouponLookupRepository,
 		},
 		{
 			provide: COUPON_ADMIN_REPOSITORY_KEY,
-			useFactory: (
-				couponAdminRepository: PrismaCouponAdminRepository,
-			): PrismaCouponAdminRepository => couponAdminRepository,
-			inject: [PrismaCouponAdminRepository],
+			useExisting: PrismaCouponAdminRepository,
 		},
 		{
 			provide: COUPON_EVENT_RECORDER_KEY,
-			useFactory: (
-				couponEventRecorder: PrismaCouponEventRecorder,
-			): PrismaCouponEventRecorder => couponEventRecorder,
-			inject: [PrismaCouponEventRecorder],
+			useExisting: PrismaCouponEventRecorder,
 		},
 		{
 			provide: ORDER_CLIENT_READER_KEY,
-			useFactory: (
-				orderClientReader: PrismaOrderClientReader,
-			): PrismaOrderClientReader => orderClientReader,
-			inject: [PrismaOrderClientReader],
+			useExisting: PrismaOrderClientReader,
 		},
 		ApplyOrderCouponService,
 		OrderLifecycleEmailService,
 		{
 			provide: ORDER_COUPON_SERVICE_KEY,
-			useFactory: (
-				orderCouponService: ApplyOrderCouponService,
-			): ApplyOrderCouponService => orderCouponService,
-			inject: [ApplyOrderCouponService],
+			useExisting: ApplyOrderCouponService,
 		},
 		{
 			provide: ORDER_REPOSITORY_KEY,
-			useFactory: (
-				orderRepository: PrismaOrderRepository,
-			): PrismaOrderRepository => orderRepository,
-			inject: [PrismaOrderRepository],
+			useExisting: PrismaOrderRepository,
 		},
 		{
 			provide: ORDER_EVENT_PUBLISHER_KEY,
-			useFactory: (
-				orderEventBus: InMemoryOrderEventBus,
-			): InMemoryOrderEventBus => orderEventBus,
-			inject: [InMemoryOrderEventBus],
+			useExisting: InMemoryOrderEventBus,
 		},
 		{
 			provide: CLIENT_ORDER_READER_KEY,
-			useFactory: (
-				orderRepository: PrismaOrderRepository,
-			): PrismaOrderRepository => orderRepository,
-			inject: [PrismaOrderRepository],
+			useExisting: PrismaOrderRepository,
 		},
 		{
 			provide: BOOSTER_ORDER_READER_KEY,
-			useFactory: (
-				orderRepository: PrismaOrderRepository,
-			): PrismaOrderRepository => orderRepository,
-			inject: [PrismaOrderRepository],
+			useExisting: PrismaOrderRepository,
 		},
 		{
 			provide: ORDER_CHECKOUT_PORT_KEY,
-			useFactory: (
-				orderCheckoutRepository: PrismaOrderCheckoutRepository,
-			): PrismaOrderCheckoutRepository => orderCheckoutRepository,
-			inject: [PrismaOrderCheckoutRepository],
+			useExisting: PrismaOrderCheckoutRepository,
 		},
 		{
 			provide: ORDER_PRICING_VERSION_REPOSITORY_KEY,
-			useFactory: (
-				orderPricingVersionRepository: PrismaOrderPricingVersionRepository,
-			): PrismaOrderPricingVersionRepository => orderPricingVersionRepository,
-			inject: [PrismaOrderPricingVersionRepository],
+			useExisting: PrismaOrderPricingVersionRepository,
 		},
 		VersionedOrderPricingService,
 		{
 			provide: ORDER_PRICING_SERVICE_KEY,
-			useFactory: (
-				orderPricingService: VersionedOrderPricingService,
-			): VersionedOrderPricingService => orderPricingService,
-			inject: [VersionedOrderPricingService],
+			useExisting: VersionedOrderPricingService,
 		},
 		{
 			provide: ORDER_QUOTE_REPOSITORY_KEY,
-			useFactory: (
-				orderQuoteRepository: PrismaOrderQuoteRepository,
-			): PrismaOrderQuoteRepository => orderQuoteRepository,
-			inject: [PrismaOrderQuoteRepository],
+			useExisting: PrismaOrderQuoteRepository,
 		},
 		CreateOrderQuoteUseCase,
 		CreateCouponUseCase,

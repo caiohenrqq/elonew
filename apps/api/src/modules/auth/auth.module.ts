@@ -27,27 +27,18 @@ import { Module } from '@nestjs/common';
 		PrismaAuthSessionRepository,
 		{
 			provide: AUTH_SESSION_REPOSITORY_KEY,
-			useFactory: (
-				authSessionRepository: PrismaAuthSessionRepository,
-			): PrismaAuthSessionRepository => authSessionRepository,
-			inject: [PrismaAuthSessionRepository],
+			useExisting: PrismaAuthSessionRepository,
 		},
 		HmacAccessTokenService,
 		WebSessionCookieService,
 		{
 			provide: ACCESS_TOKEN_SERVICE_KEY,
-			useFactory: (
-				accessTokenService: HmacAccessTokenService,
-			): HmacAccessTokenService => accessTokenService,
-			inject: [HmacAccessTokenService],
+			useExisting: HmacAccessTokenService,
 		},
 		HmacRefreshTokenService,
 		{
 			provide: REFRESH_TOKEN_SERVICE_KEY,
-			useFactory: (
-				refreshTokenService: HmacRefreshTokenService,
-			): HmacRefreshTokenService => refreshTokenService,
-			inject: [HmacRefreshTokenService],
+			useExisting: HmacRefreshTokenService,
 		},
 		LoginUseCase,
 		RefreshSessionUseCase,

@@ -7,9 +7,7 @@ import { EMAIL_SENDER_KEY } from './ports/email-sender.port';
 		ResendEmailSender,
 		{
 			provide: EMAIL_SENDER_KEY,
-			useFactory: (emailSender: ResendEmailSender): ResendEmailSender =>
-				emailSender,
-			inject: [ResendEmailSender],
+			useExisting: ResendEmailSender,
 		},
 	],
 	exports: [EMAIL_SENDER_KEY],

@@ -22,35 +22,21 @@ import { Module } from '@nestjs/common';
 		PrismaWalletRepository,
 		{
 			provide: WALLET_REPOSITORY_KEY,
-			useFactory: (
-				walletRepository: PrismaWalletRepository,
-			): PrismaWalletRepository => walletRepository,
-			inject: [PrismaWalletRepository],
+			useExisting: PrismaWalletRepository,
 		},
 		{
 			provide: WALLET_TRANSACTION_READER_KEY,
-			useFactory: (
-				walletRepository: PrismaWalletRepository,
-			): PrismaWalletRepository => walletRepository,
-			inject: [PrismaWalletRepository],
+			useExisting: PrismaWalletRepository,
 		},
 		BullmqWalletFundsReleaseJobSchedulerAdapter,
 		{
 			provide: WALLET_FUNDS_RELEASE_JOB_SCHEDULER_PORT_KEY,
-			useFactory: (
-				walletFundsReleaseJobScheduler: BullmqWalletFundsReleaseJobSchedulerAdapter,
-			): BullmqWalletFundsReleaseJobSchedulerAdapter =>
-				walletFundsReleaseJobScheduler,
-			inject: [BullmqWalletFundsReleaseJobSchedulerAdapter],
+			useExisting: BullmqWalletFundsReleaseJobSchedulerAdapter,
 		},
 		OrderCompletionEarningsFromWalletAdapter,
 		{
 			provide: ORDER_COMPLETION_EARNINGS_PORT_KEY,
-			useFactory: (
-				orderCompletionEarningsPort: OrderCompletionEarningsFromWalletAdapter,
-			): OrderCompletionEarningsFromWalletAdapter =>
-				orderCompletionEarningsPort,
-			inject: [OrderCompletionEarningsFromWalletAdapter],
+			useExisting: OrderCompletionEarningsFromWalletAdapter,
 		},
 		GetWalletUseCase,
 		ListWalletTransactionsUseCase,

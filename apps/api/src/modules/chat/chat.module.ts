@@ -19,17 +19,11 @@ import { Module } from '@nestjs/common';
 		PrismaChatRepository,
 		{
 			provide: CHAT_REPOSITORY_KEY,
-			useFactory: (
-				chatRepository: PrismaChatRepository,
-			): PrismaChatRepository => chatRepository,
-			inject: [PrismaChatRepository],
+			useExisting: PrismaChatRepository,
 		},
 		{
 			provide: CHAT_THREAD_WRITER_KEY,
-			useFactory: (
-				chatRepository: PrismaChatRepository,
-			): PrismaChatRepository => chatRepository,
-			inject: [PrismaChatRepository],
+			useExisting: PrismaChatRepository,
 		},
 		ListChatMessagesUseCase,
 		SendChatMessageUseCase,

@@ -26,17 +26,11 @@ import { Module } from '@nestjs/common';
 		PrismaAdminGovernanceRepository,
 		{
 			provide: ADMIN_DASHBOARD_READER_KEY,
-			useFactory: (
-				reader: PrismaAdminDashboardReader,
-			): PrismaAdminDashboardReader => reader,
-			inject: [PrismaAdminDashboardReader],
+			useExisting: PrismaAdminDashboardReader,
 		},
 		{
 			provide: ADMIN_GOVERNANCE_REPOSITORY_KEY,
-			useFactory: (
-				repository: PrismaAdminGovernanceRepository,
-			): PrismaAdminGovernanceRepository => repository,
-			inject: [PrismaAdminGovernanceRepository],
+			useExisting: PrismaAdminGovernanceRepository,
 		},
 		GetAdminDashboardUseCase,
 		AdminUserLifecycleLogger,
