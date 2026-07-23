@@ -1,8 +1,5 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
-import {
-	ACCESS_TOKEN_SERVICE_KEY,
-	type AccessTokenServicePort,
-} from '@modules/auth/application/ports/token-service.port';
+import { AuthenticateAccessTokenUseCase } from '@modules/auth/application/use-cases/authenticate-access-token/authenticate-access-token.use-case';
 import {
 	AuthenticationRequiredError,
 	InsufficientPermissionsError,
@@ -17,7 +14,6 @@ import {
 	ChatNotWritableError,
 	ChatOrderNotFoundError,
 } from '@modules/chat/domain/chat.errors';
-import { Inject } from '@nestjs/common';
 import {
 	ConnectedSocket,
 	MessageBody,
@@ -62,16 +58,15 @@ export class ChatGateway implements OnGatewayConnection<ChatSocket> {
 	private server?: Server;
 
 	constructor(
-		@Inject(ACCESS_TOKEN_SERVICE_KEY)
-		private readonly accessTokenService: AccessTokenServicePort,
+		private readonly authenticateAccessToken: AuthenticateAccessTokenUseCase,
 		private readonly webSessionCookieService: WebSessionCookieService,
 		private readonly listChatMessagesUseCase: ListChatMessagesUseCase,
 		private readonly sendChatMessageUseCase: SendChatMessageUseCase,
 	) {}
 
-	handleConnection(client: ChatSocket): void {
+	async handleConnection(client: ChatSocket): Promise<void> {
 		try {
-			const user = this.getAuthenticatedUser(client);
+			const user = await this.getAuthenticatedUser(client);
 			if (user.role !== Role.CLIENT && user.role !== Role.BOOSTER)
 				throw new InsufficientPermissionsError();
 
@@ -82,16 +77,18 @@ export class ChatGateway implements OnGatewayConnection<ChatSocket> {
 		}
 	}
 
-	private getAuthenticatedUser(client: ChatSocket): AuthenticatedUser {
+	private async getAuthenticatedUser(
+		client: ChatSocket,
+	): Promise<AuthenticatedUser> {
 		const token = this.getToken(client);
-		if (token) return this.accessTokenService.verify(token);
+		if (token) return await this.authenticateAccessToken.execute(token);
 
 		const user = this.webSessionCookieService.verifyCookieHeader(
 			client.handshake.headers.cookie,
 		);
 		if (!user) throw new AuthenticationRequiredError();
 
-		return user;
+		return await this.authenticateAccessToken.ensureUsable(user.id);
 	}
 
 	@SubscribeMessage('chat:join')

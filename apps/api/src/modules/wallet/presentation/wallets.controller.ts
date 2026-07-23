@@ -1,10 +1,8 @@
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
+import { InternalApi } from '@modules/auth/presentation/decorators/internal-api.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
 import { GetWalletUseCase } from '@modules/wallet/application/use-cases/get-wallet/get-wallet.use-case';
 import { ListWalletTransactionsUseCase } from '@modules/wallet/application/use-cases/list-wallet-transactions/list-wallet-transactions.use-case';
@@ -18,7 +16,6 @@ import {
 	Param,
 	Post,
 	Query,
-	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import { WALLET_FUNDS_RELEASE_INTERNAL_ROUTE } from '@packages/shared/wallet/wallet-funds-release.contract';
@@ -47,7 +44,6 @@ export class WalletsController {
 	) {}
 
 	@Get(':boosterId')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.BOOSTER)
 	async get(
 		@Param('boosterId', new ZodValidationPipe(boosterIdParamSchema))
@@ -63,7 +59,6 @@ export class WalletsController {
 	}
 
 	@Get(':boosterId/transactions')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.BOOSTER)
 	async listTransactions(
 		@Param('boosterId', new ZodValidationPipe(boosterIdParamSchema))
@@ -80,7 +75,7 @@ export class WalletsController {
 	}
 
 	@Post('credits/order-completed')
-	@UseGuards(InternalApiKeyGuard)
+	@InternalApi()
 	@HttpCode(200)
 	async creditCompletedOrderEarnings(
 		@Body(new ZodValidationPipe(creditCompletedOrderEarningsSchema))
@@ -97,7 +92,7 @@ export class WalletsController {
 	}
 
 	@Post(WALLET_FUNDS_RELEASE_INTERNAL_ROUTE.replace('/wallets/', ''))
-	@UseGuards(InternalApiKeyGuard)
+	@InternalApi()
 	@HttpCode(200)
 	async releaseMaturedFunds(
 		@Body(new ZodValidationPipe(releaseMaturedWalletFundsSchema))
@@ -112,7 +107,6 @@ export class WalletsController {
 	}
 
 	@Post(':boosterId/withdrawals')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.BOOSTER)
 	@HttpCode(200)
 	async requestWithdrawal(

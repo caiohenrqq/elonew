@@ -1,5 +1,7 @@
 import { AdminModule } from '@modules/admin/admin.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { ChatModule } from '@modules/chat/chat.module';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { OrdersModule } from '@modules/orders/orders.module';
@@ -47,6 +49,16 @@ import { AppSettingsModule } from './common/settings/app-settings.module';
 		{
 			provide: APP_GUARD,
 			useClass: ApiMutationThrottlerGuard,
+		},
+		// Order matters: authentication populates request.user, which RolesGuard
+		// then checks. Both run after throttling so floods are shed first.
+		{
+			provide: APP_GUARD,
+			useExisting: JwtAuthGuard,
+		},
+		{
+			provide: APP_GUARD,
+			useExisting: RolesGuard,
 		},
 	],
 })

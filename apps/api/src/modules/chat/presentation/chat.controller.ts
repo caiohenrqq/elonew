@@ -2,8 +2,6 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import type {
 	ChatMessageResponse,
 	ListChatMessagesResponse,
@@ -18,7 +16,6 @@ import {
 	Param,
 	Post,
 	Query,
-	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
@@ -31,7 +28,6 @@ import {
 } from './chat.request-schemas';
 
 @Controller('orders/:orderId/chat')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class ChatController {
 	constructor(
 		private readonly listChatMessagesUseCase: ListChatMessagesUseCase,

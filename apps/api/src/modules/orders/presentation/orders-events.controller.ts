@@ -1,11 +1,9 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import type { OrderEvent } from '@modules/orders/application/ports/order-event-publisher.port';
 import { InMemoryOrderEventBus } from '@modules/orders/infrastructure/events/in-memory-order-event-bus';
-import { Controller, type MessageEvent, Sse, UseGuards } from '@nestjs/common';
+import { Controller, type MessageEvent, Sse } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import { Observable } from 'rxjs';
 
@@ -21,7 +19,6 @@ export class OrdersEventsController {
 	constructor(private readonly orderEventBus: InMemoryOrderEventBus) {}
 
 	@Sse()
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT, Role.BOOSTER)
 	stream(
 		@CurrentUser() currentUser: AuthenticatedUser,

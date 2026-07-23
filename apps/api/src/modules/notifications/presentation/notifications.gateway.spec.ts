@@ -1,21 +1,28 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
-import type { AccessTokenServicePort } from '@modules/auth/application/ports/token-service.port';
+import type { AuthenticateAccessTokenUseCase } from '@modules/auth/application/use-cases/authenticate-access-token/authenticate-access-token.use-case';
 import { InvalidAccessTokenError } from '@modules/auth/domain/auth.errors';
 import type { WebSessionCookieService } from '@modules/auth/infrastructure/security/web-session-cookie.service';
 import type { NotificationResponse } from '@modules/notifications/application/use-cases/notification-response';
 import { NotificationsGateway } from '@modules/notifications/presentation/notifications.gateway';
 import { Role } from '@packages/auth/roles/role';
 
-class AccessTokenVerifierStub implements AccessTokenServicePort {
-	constructor(private readonly user: AuthenticatedUser | Error) {}
+class AuthenticateAccessTokenStub {
+	constructor(
+		private readonly result: AuthenticatedUser | Error,
+		private readonly rejection: Error | null = null,
+	) {}
 
-	sign(): { token: string; expiresInSeconds: number } {
-		return { token: 'token', expiresInSeconds: 900 };
+	async execute(): Promise<AuthenticatedUser> {
+		if (this.rejection) throw this.rejection;
+		if (this.result instanceof Error) throw this.result;
+		return this.result;
 	}
 
-	verify(): AuthenticatedUser {
-		if (this.user instanceof Error) throw this.user;
-		return this.user;
+	async ensureUsable(userId: string): Promise<AuthenticatedUser> {
+		if (this.rejection) throw this.rejection;
+		// An invalid bearer token does not invalidate a cookie session.
+		if (this.result instanceof Error) return { id: userId, role: Role.CLIENT };
+		return { id: userId, role: this.result.role };
 	}
 }
 
@@ -52,6 +59,7 @@ class NotificationSocketStub {
 
 const makeGateway = (
 	user: AuthenticatedUser | Error = { id: 'client-1', role: Role.CLIENT },
+	rejection: Error | null = null,
 ) => {
 	const webSessionCookieService = new WebSessionCookieServiceStub();
 	const emittedToRooms: Array<{
@@ -60,7 +68,10 @@ const makeGateway = (
 		payload: unknown;
 	}> = [];
 	const gateway = new NotificationsGateway(
-		new AccessTokenVerifierStub(user),
+		new AuthenticateAccessTokenStub(
+			user,
+			rejection,
+		) as unknown as AuthenticateAccessTokenUseCase,
 		webSessionCookieService as unknown as WebSessionCookieService,
 	);
 	(
@@ -87,12 +98,12 @@ describe('NotificationsGateway', () => {
 		Role.CLIENT,
 		Role.BOOSTER,
 		Role.ADMIN,
-	])('authenticates %s connections and joins a recipient room', (role) => {
+	])('authenticates %s connections and joins a recipient room', async (role) => {
 		const { gateway } = makeGateway({ id: 'user-1', role });
 		const socket = new NotificationSocketStub();
 		socket.handshake.auth.token = 'Bearer valid-token';
 
-		gateway.handleConnection(socket as never);
+		await gateway.handleConnection(socket as never);
 
 		expect(socket.data.user).toEqual({ id: 'user-1', role });
 		expect(socket.joinedRooms).toEqual(['user:user-1:notifications']);
@@ -102,12 +113,12 @@ describe('NotificationsGateway', () => {
 		});
 	});
 
-	it('disconnects unauthenticated connections', () => {
+	it('disconnects unauthenticated connections', async () => {
 		const { gateway } = makeGateway(new InvalidAccessTokenError());
 		const socket = new NotificationSocketStub();
 		socket.handshake.auth.token = 'invalid-token';
 
-		gateway.handleConnection(socket as never);
+		await gateway.handleConnection(socket as never);
 
 		expect(socket.disconnectCalled).toBe(true);
 		expect(socket.emitted).toContainEqual({
@@ -119,7 +130,7 @@ describe('NotificationsGateway', () => {
 		});
 	});
 
-	it('authenticates browser connections with the web session cookie', () => {
+	it('authenticates browser connections with the web session cookie', async () => {
 		const { gateway, webSessionCookieService } = makeGateway(
 			new InvalidAccessTokenError(),
 		);
@@ -127,7 +138,7 @@ describe('NotificationsGateway', () => {
 		socket.handshake.headers.cookie = 'elonew.session=sealed-session';
 		webSessionCookieService.user = { id: 'client-cookie', role: Role.CLIENT };
 
-		gateway.handleConnection(socket as never);
+		await gateway.handleConnection(socket as never);
 
 		expect(socket.data.user).toEqual({
 			id: 'client-cookie',

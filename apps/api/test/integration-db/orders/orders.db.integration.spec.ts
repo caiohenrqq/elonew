@@ -595,13 +595,9 @@ describe('Orders module integration (db)', () => {
 		const successfulResults = results.filter(
 			(
 				result,
-			): result is PromiseFulfilledResult<{
-				id: string;
-				status: string;
-				subtotal: number | null;
-				totalAmount: number | null;
-				discountAmount: number;
-			}> => result.status === 'fulfilled',
+			): result is PromiseFulfilledResult<
+				Awaited<ReturnType<typeof controller.create>>
+			> => result.status === 'fulfilled',
 		);
 		const failedResults = results.filter(
 			(result): result is PromiseRejectedResult => result.status === 'rejected',
@@ -664,13 +660,9 @@ describe('Orders module integration (db)', () => {
 		const successfulResults = results.filter(
 			(
 				result,
-			): result is PromiseFulfilledResult<{
-				id: string;
-				status: string;
-				subtotal: number | null;
-				totalAmount: number | null;
-				discountAmount: number;
-			}> => result.status === 'fulfilled',
+			): result is PromiseFulfilledResult<
+				Awaited<ReturnType<typeof controller.create>>
+			> => result.status === 'fulfilled',
 		);
 		const failedResults = results.filter(
 			(result): result is PromiseRejectedResult => result.status === 'rejected',

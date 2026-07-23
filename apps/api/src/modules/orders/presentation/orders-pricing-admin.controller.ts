@@ -2,8 +2,6 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { ActivateOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/activate-order-pricing-version/activate-order-pricing-version.use-case';
 import { CreateOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/create-order-pricing-version/create-order-pricing-version.use-case';
 import { GetOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/get-order-pricing-version/get-order-pricing-version.use-case';
@@ -17,7 +15,6 @@ import {
 	Param,
 	Post,
 	Put,
-	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
@@ -28,7 +25,6 @@ import {
 } from './orders-pricing-admin.request-schemas';
 
 @Controller('admin/order-pricing/versions')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
 export class OrdersPricingAdminController {
 	constructor(

@@ -6,6 +6,7 @@ import {
 	ACCESS_TOKEN_SERVICE_KEY,
 	REFRESH_TOKEN_SERVICE_KEY,
 } from '@modules/auth/application/ports/token-service.port';
+import { AuthenticateAccessTokenUseCase } from '@modules/auth/application/use-cases/authenticate-access-token/authenticate-access-token.use-case';
 import { LoginUseCase } from '@modules/auth/application/use-cases/login/login.use-case';
 import { LogoutUseCase } from '@modules/auth/application/use-cases/logout/logout.use-case';
 import { RefreshSessionUseCase } from '@modules/auth/application/use-cases/refresh-session/refresh-session.use-case';
@@ -40,6 +41,7 @@ import { Module } from '@nestjs/common';
 			provide: REFRESH_TOKEN_SERVICE_KEY,
 			useExisting: HmacRefreshTokenService,
 		},
+		AuthenticateAccessTokenUseCase,
 		LoginUseCase,
 		RefreshSessionUseCase,
 		LogoutUseCase,
@@ -50,6 +52,7 @@ import { Module } from '@nestjs/common';
 	exports: [
 		UsersModule,
 		ACCESS_TOKEN_SERVICE_KEY,
+		AuthenticateAccessTokenUseCase,
 		WebSessionCookieService,
 		InternalApiKeyGuard,
 		JwtAuthGuard,

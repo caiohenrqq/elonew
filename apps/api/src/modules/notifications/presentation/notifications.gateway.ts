@@ -1,8 +1,5 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
-import {
-	ACCESS_TOKEN_SERVICE_KEY,
-	type AccessTokenServicePort,
-} from '@modules/auth/application/ports/token-service.port';
+import { AuthenticateAccessTokenUseCase } from '@modules/auth/application/use-cases/authenticate-access-token/authenticate-access-token.use-case';
 import {
 	AuthenticationRequiredError,
 	InsufficientPermissionsError,
@@ -14,7 +11,6 @@ import type {
 	NotificationsReadAllEventResponse,
 	NotificationUpdatedEventResponse,
 } from '@modules/notifications/application/use-cases/notification-response';
-import { Inject } from '@nestjs/common';
 import {
 	OnGatewayConnection,
 	WebSocketGateway,
@@ -45,14 +41,13 @@ export class NotificationsGateway
 	private server?: Server;
 
 	constructor(
-		@Inject(ACCESS_TOKEN_SERVICE_KEY)
-		private readonly accessTokenService: AccessTokenServicePort,
+		private readonly authenticateAccessToken: AuthenticateAccessTokenUseCase,
 		private readonly webSessionCookieService: WebSessionCookieService,
 	) {}
 
-	handleConnection(client: NotificationSocket): void {
+	async handleConnection(client: NotificationSocket): Promise<void> {
 		try {
-			const user = this.getAuthenticatedUser(client);
+			const user = await this.getAuthenticatedUser(client);
 			if (
 				user.role !== Role.CLIENT &&
 				user.role !== Role.BOOSTER &&
@@ -87,16 +82,18 @@ export class NotificationsGateway
 			.emit('notifications:read-all', event);
 	}
 
-	private getAuthenticatedUser(client: NotificationSocket): AuthenticatedUser {
+	private async getAuthenticatedUser(
+		client: NotificationSocket,
+	): Promise<AuthenticatedUser> {
 		const token = this.getToken(client);
-		if (token) return this.accessTokenService.verify(token);
+		if (token) return await this.authenticateAccessToken.execute(token);
 
 		const user = this.webSessionCookieService.verifyCookieHeader(
 			client.handshake.headers.cookie,
 		);
 		if (!user) throw new AuthenticationRequiredError();
 
-		return user;
+		return await this.authenticateAccessToken.ensureUsable(user.id);
 	}
 
 	private getToken(client: NotificationSocket): string | null {

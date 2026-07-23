@@ -2,6 +2,7 @@ import { RouteThrottle } from '@app/common/http/route-throttle.decorator';
 import { RouteThrottlerGuard } from '@app/common/http/route-throttler.guard';
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
+import { Public } from '@modules/auth/presentation/decorators/public.decorator';
 import { ConfirmEmailUseCase } from '@modules/users/application/use-cases/confirm-email/confirm-email.use-case';
 import { SetPasswordUseCase } from '@modules/users/application/use-cases/set-password/set-password.use-case';
 import { SignUpUseCase } from '@modules/users/application/use-cases/sign-up/sign-up.use-case';
@@ -16,6 +17,7 @@ import {
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 
 @Controller('users')
+@Public()
 @UseGuards(RouteThrottlerGuard)
 export class UsersController {
 	constructor(

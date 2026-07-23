@@ -1,46 +1,39 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
-import {
-	ACCESS_TOKEN_SERVICE_KEY,
-	type AccessTokenServicePort,
-} from '@modules/auth/application/ports/token-service.port';
-import {
-	AuthenticationRequiredError,
-	AuthUserBlockedError,
-	AuthUserInactiveError,
-} from '@modules/auth/domain/auth.errors';
-import {
-	USER_REPOSITORY_KEY,
-	type UserRepositoryPort,
-} from '@modules/users/application/ports/user-repository.port';
-import {
-	CanActivate,
-	type ExecutionContext,
-	Inject,
-	Injectable,
-} from '@nestjs/common';
+import { AuthenticateAccessTokenUseCase } from '@modules/auth/application/use-cases/authenticate-access-token/authenticate-access-token.use-case';
+import { AuthenticationRequiredError } from '@modules/auth/domain/auth.errors';
+import { IS_PUBLIC_KEY } from '@modules/auth/presentation/decorators/public.decorator';
+import { CanActivate, type ExecutionContext, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
 	constructor(
-		@Inject(ACCESS_TOKEN_SERVICE_KEY)
-		private readonly accessTokenService: AccessTokenServicePort,
-		@Inject(USER_REPOSITORY_KEY)
-		private readonly users: UserRepositoryPort,
+		private readonly authenticateAccessToken: AuthenticateAccessTokenUseCase,
+		private readonly reflector: Reflector,
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		// Gateways authenticate their own handshake; this guard only covers HTTP.
+		if (context.getType() !== 'http') return true;
+		if (this.isPublic(context)) return true;
+
 		const request = context.switchToHttp().getRequest<{
 			headers?: { authorization?: string };
 			user?: AuthenticatedUser;
 		}>();
 		const token = this.getBearerToken(request.headers?.authorization);
-		const tokenUser = this.accessTokenService.verify(token);
-		const user = await this.users.findById(tokenUser.id);
-		if (!user || !user.isActive) throw new AuthUserInactiveError();
-		if (user.isBlocked) throw new AuthUserBlockedError();
-		request.user = { id: user.id, role: user.role };
+		request.user = await this.authenticateAccessToken.execute(token);
 
 		return true;
+	}
+
+	private isPublic(context: ExecutionContext): boolean {
+		return (
+			this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+				context.getHandler(),
+				context.getClass(),
+			]) === true
+		);
 	}
 
 	private getBearerToken(authorization?: string): string {
