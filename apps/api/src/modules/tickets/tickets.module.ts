@@ -21,10 +21,7 @@ import { Module } from '@nestjs/common';
 		PrismaTicketRepository,
 		{
 			provide: TICKET_REPOSITORY_KEY,
-			useFactory: (
-				ticketRepository: PrismaTicketRepository,
-			): PrismaTicketRepository => ticketRepository,
-			inject: [PrismaTicketRepository],
+			useExisting: PrismaTicketRepository,
 		},
 		AddAdminTicketMessageUseCase,
 		AddTicketMessageUseCase,

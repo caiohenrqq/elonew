@@ -20,18 +20,12 @@ import { Module } from '@nestjs/common';
 		PrismaNotificationRepository,
 		{
 			provide: NOTIFICATION_REPOSITORY_KEY,
-			useFactory: (
-				notificationRepository: PrismaNotificationRepository,
-			): PrismaNotificationRepository => notificationRepository,
-			inject: [PrismaNotificationRepository],
+			useExisting: PrismaNotificationRepository,
 		},
 		NotificationsGateway,
 		{
 			provide: NOTIFICATION_EVENTS_KEY,
-			useFactory: (
-				notificationsGateway: NotificationsGateway,
-			): NotificationsGateway => notificationsGateway,
-			inject: [NotificationsGateway],
+			useExisting: NotificationsGateway,
 		},
 		ListNotificationsUseCase,
 		MarkNotificationReadUseCase,

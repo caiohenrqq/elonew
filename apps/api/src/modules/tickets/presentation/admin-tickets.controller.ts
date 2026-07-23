@@ -2,8 +2,6 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { AddAdminTicketMessageUseCase } from '@modules/tickets/application/use-cases/add-admin-ticket-message/add-admin-ticket-message.use-case';
 import { GetAdminTicketUseCase } from '@modules/tickets/application/use-cases/get-admin-ticket/get-admin-ticket.use-case';
 import { ListAdminTicketsUseCase } from '@modules/tickets/application/use-cases/list-admin-tickets/list-admin-tickets.use-case';
@@ -16,7 +14,6 @@ import {
 	Patch,
 	Post,
 	Query,
-	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
@@ -31,7 +28,6 @@ import {
 } from './tickets.request-schemas';
 
 @Controller('admin/tickets')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
 export class AdminTicketsController {
 	constructor(

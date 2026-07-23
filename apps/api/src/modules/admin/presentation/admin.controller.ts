@@ -9,8 +9,6 @@ import { UpdateAdminUserUseCase } from '@modules/admin/application/use-cases/upd
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import {
 	Body,
 	Controller,
@@ -20,7 +18,6 @@ import {
 	Patch,
 	Post,
 	Query,
-	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
@@ -37,7 +34,6 @@ import {
 } from './admin.request-schemas';
 
 @Controller('admin')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
 export class AdminController {
 	constructor(

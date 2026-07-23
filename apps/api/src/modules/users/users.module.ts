@@ -11,7 +11,6 @@ import { PrismaUserRepository } from '@modules/users/infrastructure/repositories
 import { Argon2PasswordHasher } from '@modules/users/infrastructure/security/argon2-password-hasher';
 import { HmacEmailConfirmationTokenService } from '@modules/users/infrastructure/security/hmac-email-confirmation-token.service';
 import { UsersController } from '@modules/users/presentation/users.controller';
-import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler.guard';
 import { Module } from '@nestjs/common';
 
 @Module({
@@ -20,28 +19,18 @@ import { Module } from '@nestjs/common';
 	providers: [
 		PrismaUserRepository,
 		Argon2PasswordHasher,
-		UsersThrottlerGuard,
 		{
 			provide: PASSWORD_HASHER_KEY,
-			useFactory: (
-				passwordHasher: Argon2PasswordHasher,
-			): Argon2PasswordHasher => passwordHasher,
-			inject: [Argon2PasswordHasher],
+			useExisting: Argon2PasswordHasher,
 		},
 		HmacEmailConfirmationTokenService,
 		{
 			provide: EMAIL_CONFIRMATION_TOKEN_SERVICE_KEY,
-			useFactory: (
-				emailConfirmationTokenService: HmacEmailConfirmationTokenService,
-			): HmacEmailConfirmationTokenService => emailConfirmationTokenService,
-			inject: [HmacEmailConfirmationTokenService],
+			useExisting: HmacEmailConfirmationTokenService,
 		},
 		{
 			provide: USER_REPOSITORY_KEY,
-			useFactory: (
-				userRepository: PrismaUserRepository,
-			): PrismaUserRepository => userRepository,
-			inject: [PrismaUserRepository],
+			useExisting: PrismaUserRepository,
 		},
 		SignUpUseCase,
 		ConfirmEmailUseCase,

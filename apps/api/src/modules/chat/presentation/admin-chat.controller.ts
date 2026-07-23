@@ -2,11 +2,9 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import type { ListChatMessagesResponse } from '@modules/chat/application/use-cases/chat-response';
 import { ListChatMessagesUseCase } from '@modules/chat/application/use-cases/list-chat-messages/list-chat-messages.use-case';
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
 	type ChatOrderIdParamSchemaInput,
@@ -16,7 +14,6 @@ import {
 } from './chat.request-schemas';
 
 @Controller('admin/orders/:orderId/chat')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
 export class AdminChatController {
 	constructor(

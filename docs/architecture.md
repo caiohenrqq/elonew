@@ -52,6 +52,18 @@ Rules:
 - DI tokens live beside their port contracts.
 - Map data once at each boundary.
 
+Cross-cutting HTTP concerns are declared, not registered in a central list, so
+adding a route cannot silently skip them:
+
+- Every route requires a bearer token. `JwtAuthGuard` and `RolesGuard` run as
+  global guards, after throttling. Opt out with `@Public()`, or `@InternalApi()`
+  for worker-to-API routes, which pairs the opt-out with the API key check.
+- Rate limits come from `@RouteThrottle({ name, limit, ttlSeconds })`, where
+  `limit` and `ttlSeconds` name numeric fields of `AppSettingsService`.
+- Domain errors extend a status-bearing base (`NotFoundDomainError`,
+  `ConflictDomainError`, ...) and the global filter derives the HTTP status from
+  it. Override `httpMessage` when the response must not leak the reason.
+
 ## Frontend
 
 - Route files compose feature modules and stay thin.

@@ -1,34 +1,40 @@
-export class PaymentNotFoundError extends Error {
+import {
+	BadRequestDomainError,
+	NotFoundDomainError,
+	UnauthorizedDomainError,
+} from '@app/common/errors/domain.error';
+
+export class PaymentNotFoundError extends NotFoundDomainError {
 	constructor() {
 		super('Payment not found.');
 	}
 }
 
-export class PaymentAlreadyExistsError extends Error {
+export class PaymentAlreadyExistsError extends BadRequestDomainError {
 	constructor() {
 		super('Payment already exists.');
 	}
 }
 
-export class PaymentAmountInvalidError extends Error {
+export class PaymentAmountInvalidError extends BadRequestDomainError {
 	constructor() {
 		super('Payment amount must be greater than zero.');
 	}
 }
 
-export class PaymentInvalidTransitionError extends Error {
+export class PaymentInvalidTransitionError extends BadRequestDomainError {
 	constructor(currentStatus: string, nextStatus: string) {
 		super(`Invalid payment transition: ${currentStatus} -> ${nextStatus}.`);
 	}
 }
 
-export class PaymentHoldReleaseNotAllowedError extends Error {
+export class PaymentHoldReleaseNotAllowedError extends BadRequestDomainError {
 	constructor() {
 		super('Payment hold can only be released after order completion.');
 	}
 }
 
-export class PaymentCheckoutResumeNotAllowedError extends Error {
+export class PaymentCheckoutResumeNotAllowedError extends BadRequestDomainError {
 	constructor() {
 		super(
 			'Payment checkout can only be resumed while the order is awaiting payment and the payment is awaiting confirmation.',
@@ -36,7 +42,7 @@ export class PaymentCheckoutResumeNotAllowedError extends Error {
 	}
 }
 
-export class PaymentOrderNotFoundError extends Error {
+export class PaymentOrderNotFoundError extends NotFoundDomainError {
 	constructor() {
 		super('Order not found.');
 	}
@@ -53,19 +59,19 @@ export class PaymentGatewayError extends Error {
 	}
 }
 
-export class PaymentWebhookSignatureInvalidError extends Error {
+export class PaymentWebhookSignatureInvalidError extends UnauthorizedDomainError {
 	constructor() {
 		super('Invalid payment webhook signature.');
 	}
 }
 
-export class PaymentWebhookNotificationMismatchError extends Error {
+export class PaymentWebhookNotificationMismatchError extends UnauthorizedDomainError {
 	constructor() {
 		super('Payment webhook notification is invalid.');
 	}
 }
 
-export class PaymentWebhookTopicNotSupportedError extends Error {
+export class PaymentWebhookTopicNotSupportedError extends UnauthorizedDomainError {
 	constructor() {
 		super('Payment webhook topic is not supported.');
 	}

@@ -2,11 +2,9 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { GetOrderRatingsUseCase } from '@modules/ratings/application/use-cases/get-order-ratings/get-order-ratings.use-case';
 import { SubmitRatingUseCase } from '@modules/ratings/application/use-cases/submit-rating/submit-rating.use-case';
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
 	type OrderIdParamSchemaInput,
@@ -16,7 +14,6 @@ import {
 } from './ratings.request-schemas';
 
 @Controller('ratings')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.CLIENT, Role.BOOSTER)
 export class RatingsController {
 	constructor(

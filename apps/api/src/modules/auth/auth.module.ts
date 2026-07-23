@@ -6,6 +6,7 @@ import {
 	ACCESS_TOKEN_SERVICE_KEY,
 	REFRESH_TOKEN_SERVICE_KEY,
 } from '@modules/auth/application/ports/token-service.port';
+import { AuthenticateAccessTokenUseCase } from '@modules/auth/application/use-cases/authenticate-access-token/authenticate-access-token.use-case';
 import { LoginUseCase } from '@modules/auth/application/use-cases/login/login.use-case';
 import { LogoutUseCase } from '@modules/auth/application/use-cases/logout/logout.use-case';
 import { RefreshSessionUseCase } from '@modules/auth/application/use-cases/refresh-session/refresh-session.use-case';
@@ -14,7 +15,6 @@ import { HmacAccessTokenService } from '@modules/auth/infrastructure/security/hm
 import { HmacRefreshTokenService } from '@modules/auth/infrastructure/security/hmac-refresh-token.service';
 import { WebSessionCookieService } from '@modules/auth/infrastructure/security/web-session-cookie.service';
 import { AuthController } from '@modules/auth/presentation/auth.controller';
-import { AuthThrottlerGuard } from '@modules/auth/presentation/guards/auth-throttler.guard';
 import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
@@ -28,32 +28,23 @@ import { Module } from '@nestjs/common';
 		PrismaAuthSessionRepository,
 		{
 			provide: AUTH_SESSION_REPOSITORY_KEY,
-			useFactory: (
-				authSessionRepository: PrismaAuthSessionRepository,
-			): PrismaAuthSessionRepository => authSessionRepository,
-			inject: [PrismaAuthSessionRepository],
+			useExisting: PrismaAuthSessionRepository,
 		},
 		HmacAccessTokenService,
 		WebSessionCookieService,
 		{
 			provide: ACCESS_TOKEN_SERVICE_KEY,
-			useFactory: (
-				accessTokenService: HmacAccessTokenService,
-			): HmacAccessTokenService => accessTokenService,
-			inject: [HmacAccessTokenService],
+			useExisting: HmacAccessTokenService,
 		},
 		HmacRefreshTokenService,
 		{
 			provide: REFRESH_TOKEN_SERVICE_KEY,
-			useFactory: (
-				refreshTokenService: HmacRefreshTokenService,
-			): HmacRefreshTokenService => refreshTokenService,
-			inject: [HmacRefreshTokenService],
+			useExisting: HmacRefreshTokenService,
 		},
+		AuthenticateAccessTokenUseCase,
 		LoginUseCase,
 		RefreshSessionUseCase,
 		LogoutUseCase,
-		AuthThrottlerGuard,
 		InternalApiKeyGuard,
 		JwtAuthGuard,
 		RolesGuard,
@@ -61,6 +52,7 @@ import { Module } from '@nestjs/common';
 	exports: [
 		UsersModule,
 		ACCESS_TOKEN_SERVICE_KEY,
+		AuthenticateAccessTokenUseCase,
 		WebSessionCookieService,
 		InternalApiKeyGuard,
 		JwtAuthGuard,

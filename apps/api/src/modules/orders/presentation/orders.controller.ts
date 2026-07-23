@@ -1,10 +1,8 @@
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
+import { InternalApi } from '@modules/auth/presentation/decorators/internal-api.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { AcceptOrderUseCase } from '@modules/orders/application/use-cases/accept-order/accept-order.use-case';
 import { CancelOrderUseCase } from '@modules/orders/application/use-cases/cancel-order/cancel-order.use-case';
 import { CleanupExpiredOrderQuotesUseCase } from '@modules/orders/application/use-cases/cleanup-expired-order-quotes/cleanup-expired-order-quotes.use-case';
@@ -26,7 +24,6 @@ import {
 	Param,
 	Post,
 	Query,
-	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
@@ -50,6 +47,17 @@ import {
 	saveOrderCredentialsSchema,
 } from './orders.request-schemas';
 
+type ListClientOrdersResult = Awaited<
+	ReturnType<ListClientOrdersUseCase['execute']>
+>;
+
+// The client owns every order in the list, so the redundant ownership column is
+// dropped from the response.
+type ClientOrderResponse = Omit<
+	ListClientOrdersResult['orders'][number],
+	'clientId'
+>;
+
 @Controller('orders')
 export class OrdersController {
 	constructor(
@@ -69,21 +77,12 @@ export class OrdersController {
 	) {}
 
 	@Post('quote/preview')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async previewQuote(
 		@Body(new ZodValidationPipe(createOrderQuoteSchema))
 		body: CreateOrderQuoteSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
-	): Promise<{
-		subtotal: number;
-		totalAmount: number;
-		discountAmount: number;
-		extras: {
-			type: string;
-			price: number;
-		}[];
-	}> {
+	): Promise<Awaited<ReturnType<PreviewOrderQuoteUseCase['execute']>>> {
 		return await this.previewOrderQuoteUseCase.execute({
 			clientId: currentUser.id,
 			couponCode: body.couponCode,
@@ -102,18 +101,12 @@ export class OrdersController {
 	}
 
 	@Post('quote')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async quote(
 		@Body(new ZodValidationPipe(createOrderQuoteSchema))
 		body: CreateOrderQuoteSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
-	): Promise<{
-		quoteId: string;
-		subtotal: number;
-		totalAmount: number;
-		discountAmount: number;
-	}> {
+	): Promise<Awaited<ReturnType<CreateOrderQuoteUseCase['execute']>>> {
 		return await this.createOrderQuoteUseCase.execute({
 			clientId: currentUser.id,
 			couponCode: body.couponCode,
@@ -133,19 +126,12 @@ export class OrdersController {
 	}
 
 	@Post()
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async create(
 		@Body(new ZodValidationPipe(createOrderSchema))
 		body: CreateOrderSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
-	): Promise<{
-		id: string;
-		status: string;
-		subtotal: number | null;
-		totalAmount: number | null;
-		discountAmount: number;
-	}> {
+	): Promise<Awaited<ReturnType<CreateOrderUseCase['execute']>>> {
 		return await this.createOrderUseCase.execute({
 			clientId: currentUser.id,
 			boosterId: body.boosterId,
@@ -155,12 +141,12 @@ export class OrdersController {
 	}
 
 	@Post('internal/quotes/cleanup-expired')
-	@UseGuards(InternalApiKeyGuard)
+	@InternalApi()
 	@HttpCode(200)
 	async cleanupExpiredQuotes(
 		@Body(new ZodValidationPipe(cleanupExpiredOrderQuotesSchema))
 		body: CleanupExpiredOrderQuotesSchemaInput,
-	): Promise<{ deletedCount: number; expiresBefore: string }> {
+	): Promise<Awaited<ReturnType<CleanupExpiredOrderQuotesUseCase['execute']>>> {
 		return await this.cleanupExpiredOrderQuotesUseCase.execute({
 			now: new Date(body.now),
 			limit: body.limit,
@@ -168,36 +154,14 @@ export class OrdersController {
 	}
 
 	@Get()
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async list(
 		@Query(new ZodValidationPipe(listClientOrdersQuerySchema))
 		query: ListClientOrdersQuerySchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{
-		orders: Array<{
-			id: string;
-			status: string;
-			serviceType: string | null;
-			currentLeague: string | null;
-			currentDivision: string | null;
-			currentLp: number | null;
-			desiredLeague: string | null;
-			desiredDivision: string | null;
-			server: string | null;
-			desiredQueue: string | null;
-			lpGain: number | null;
-			deadline: Date | null;
-			subtotal: number | null;
-			totalAmount: number | null;
-			discountAmount: number;
-			createdAt: Date;
-		}>;
-		summary: {
-			activeOrders: number;
-			totalOrders: number;
-			totalInvested: number;
-		};
+		orders: ClientOrderResponse[];
+		summary: ListClientOrdersResult['summary'];
 	}> {
 		const result = await this.listClientOrdersUseCase.execute({
 			clientId: currentUser.id,
@@ -211,7 +175,6 @@ export class OrdersController {
 	}
 
 	@Get('booster/queue')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.BOOSTER)
 	async listBoosterQueue(
 		@Query(new ZodValidationPipe(listBoosterOrdersQuerySchema))
@@ -225,7 +188,6 @@ export class OrdersController {
 	}
 
 	@Get('booster/work')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.BOOSTER)
 	async listBoosterWork(
 		@Query(new ZodValidationPipe(listBoosterOrdersQuerySchema))
@@ -239,25 +201,12 @@ export class OrdersController {
 	}
 
 	@Get(':orderId')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async get(
 		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
 		orderId: OrderIdParamSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
-	): Promise<{
-		id: string;
-		status: string;
-		hasCredentials: boolean;
-		subtotal: number | null;
-		totalAmount: number | null;
-		discountAmount: number;
-		serviceType: string | null;
-		currentLeague: string | null;
-		currentDivision: string | null;
-		desiredLeague: string | null;
-		desiredDivision: string | null;
-	}> {
+	): Promise<Awaited<ReturnType<GetOrderUseCase['execute']>>> {
 		return await this.getOrderUseCase.execute({
 			orderId,
 			clientId: currentUser.id,
@@ -265,7 +214,6 @@ export class OrdersController {
 	}
 
 	@Post(':orderId/accept')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.BOOSTER)
 	@HttpCode(200)
 	async accept(
@@ -281,7 +229,6 @@ export class OrdersController {
 	}
 
 	@Post(':orderId/reject')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.BOOSTER)
 	@HttpCode(200)
 	async reject(
@@ -297,7 +244,6 @@ export class OrdersController {
 	}
 
 	@Post(':orderId/cancel')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	@HttpCode(200)
 	async cancel(
@@ -313,7 +259,6 @@ export class OrdersController {
 	}
 
 	@Post(':orderId/complete')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.BOOSTER)
 	@HttpCode(200)
 	async complete(
@@ -329,7 +274,6 @@ export class OrdersController {
 	}
 
 	@Post(':orderId/credentials')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	@HttpCode(200)
 	async saveCredentials(

@@ -1,214 +1,48 @@
 import {
-	mapAsBadRequest,
-	mapAsConflict,
-	mapAsForbidden,
-	mapAsNotFound,
-	mapAsUnauthorized,
-	mapDomainErrorToHttpException,
-	tryMapDomainErrorToHttpException,
-} from '@app/common/http/domain-error.mapper';
-import {
-	AdminGovernanceReasonRequiredError,
-	AdminOrderNotFoundError,
-	AdminSelfBlockError,
-	AdminSelfRoleChangeError,
-	AdminUserEmailAlreadyInUseError,
-	AdminUserNotFoundError,
-	AdminUsernameAlreadyInUseError,
-	AdminUserPasswordSetupUnavailableError,
-} from '@modules/admin/domain/admin.errors';
-import {
-	AuthenticationRequiredError,
-	AuthInvalidCredentialsError,
-	AuthRefreshTokenInvalidError,
-	AuthRefreshTokenRevokedError,
-	AuthUserBlockedError,
-	AuthUserInactiveError,
-	InsufficientPermissionsError,
-	InternalApiKeyRequiredError,
-	InvalidAccessTokenError,
-	InvalidInternalApiKeyError,
-} from '@modules/auth/domain/auth.errors';
-import {
-	ChatForbiddenError,
-	ChatMessageNotFoundError,
-	ChatNotWritableError,
-	ChatOrderNotFoundError,
-} from '@modules/chat/domain/chat.errors';
-import {
-	NotificationNotFoundError,
-	NotificationReadConflictError,
-} from '@modules/notifications/domain/notification.errors';
-import {
-	OrderAlreadyExistsError,
-	OrderBoosterNotEligibleError,
-	OrderBoosterNotFoundError,
-	OrderCancellationNotAllowedError,
-	OrderCredentialsPasswordMismatchError,
-	OrderCredentialsStorageNotAllowedError,
-	OrderInvalidTransitionError,
-	OrderNotFoundError,
-} from '@modules/orders/domain/order.errors';
-import {
-	CouponCodeAlreadyExistsError,
-	CouponNotFoundError,
-	OrderCouponInvalidError,
-	OrderPricingVersionActiveConflictError,
-	OrderPricingVersionImmutableError,
-	OrderPricingVersionIncompleteError,
-	OrderPricingVersionNameInvalidError,
-	OrderPricingVersionNotActiveError,
-	OrderPricingVersionNotFoundError,
-	OrderQuoteAlreadyUsedError,
-	OrderQuoteExpiredError,
-	OrderQuoteNotFoundError,
-	OrderRankNotPricedError,
-	OrderRankProgressionInvalidError,
-	OrderUnsupportedPricingServiceTypeError,
-} from '@modules/orders/domain/order-pricing.errors';
-import {
-	PaymentAlreadyExistsError,
-	PaymentAmountInvalidError,
-	PaymentCheckoutResumeNotAllowedError,
-	PaymentHoldReleaseNotAllowedError,
-	PaymentInvalidTransitionError,
-	PaymentNotFoundError,
-	PaymentOrderNotFoundError,
-	PaymentWebhookNotificationMismatchError,
-	PaymentWebhookSignatureInvalidError,
-	PaymentWebhookTopicNotSupportedError,
-} from '@modules/payments/domain/payment.errors';
-import {
-	InvalidRatingScoreError,
-	OrderNotRatableError,
-	RatingAlreadySubmittedError,
-	RatingNotAllowedError,
-	RatingOrderNotFoundError,
-	RatingWindowClosedError,
-} from '@modules/ratings/domain/rating.errors';
-import {
-	TicketAccessDeniedError,
-	TicketInvalidStatusTransitionError,
-	TicketMessageOperationInvalidError,
-	TicketNotFoundError,
-	TicketOrderAccessDeniedError,
-	TicketOrderLinkUnsupportedError,
-} from '@modules/tickets/domain/ticket.errors';
-import {
-	UserEmailAlreadyInUseError,
-	UserEmailConfirmationTokenInvalidError,
-	UsernameAlreadyInUseError,
-	UserPasswordResetTokenInvalidError,
-} from '@modules/users/domain/user.errors';
-import {
-	WalletInsufficientWithdrawableBalanceError,
-	WalletInvalidAmountError,
-	WalletNotFoundError,
-} from '@modules/wallet/domain/wallet.errors';
+	BadRequestDomainError,
+	ConflictDomainError,
+	DomainError,
+	ForbiddenDomainError,
+	NotFoundDomainError,
+	UnauthorizedDomainError,
+} from '@app/common/errors/domain.error';
 import {
 	ArgumentsHost,
 	BadRequestException,
 	Catch,
+	ConflictException,
 	type ExceptionFilter,
+	ForbiddenException,
 	type HttpException,
+	NotFoundException,
+	UnauthorizedException,
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
+
+type DomainErrorConstructor = abstract new (...args: never[]) => DomainError;
+
+type DomainErrorRule = [
+	DomainErrorConstructor,
+	(message: string) => HttpException,
+];
+
+const RULES: DomainErrorRule[] = [
+	[UnauthorizedDomainError, (message) => new UnauthorizedException(message)],
+	[ForbiddenDomainError, (message) => new ForbiddenException(message)],
+	[NotFoundDomainError, (message) => new NotFoundException(message)],
+	[ConflictDomainError, (message) => new ConflictException(message)],
+	[BadRequestDomainError, (message) => new BadRequestException(message)],
+];
 
 export function mapApiDomainErrorToHttpException(
 	error: unknown,
 ): HttpException | null {
-	if (
-		error instanceof UserEmailAlreadyInUseError ||
-		error instanceof UsernameAlreadyInUseError
-	)
-		return mapDomainErrorToHttpException(error, [
-			{
-				errorTypes: [UserEmailAlreadyInUseError, UsernameAlreadyInUseError],
-				toException: () =>
-					new BadRequestException('Registration is unavailable.'),
-			},
-		]);
+	if (!(error instanceof DomainError)) return null;
 
-	return tryMapDomainErrorToHttpException(error, [
-		mapAsUnauthorized(
-			AuthenticationRequiredError,
-			InvalidAccessTokenError,
-			InternalApiKeyRequiredError,
-			InvalidInternalApiKeyError,
-			AuthInvalidCredentialsError,
-			AuthRefreshTokenInvalidError,
-			AuthRefreshTokenRevokedError,
-			PaymentWebhookSignatureInvalidError,
-			PaymentWebhookNotificationMismatchError,
-			PaymentWebhookTopicNotSupportedError,
-		),
-		mapAsForbidden(AuthUserInactiveError, AuthUserBlockedError),
-		mapAsForbidden(InsufficientPermissionsError),
-		mapAsForbidden(ChatForbiddenError),
-		mapAsForbidden(TicketAccessDeniedError),
-		mapAsForbidden(RatingNotAllowedError),
-		mapAsNotFound(
-			ChatOrderNotFoundError,
-			ChatMessageNotFoundError,
-			OrderNotFoundError,
-			OrderBoosterNotFoundError,
-			OrderQuoteNotFoundError,
-			OrderPricingVersionNotFoundError,
-			AdminOrderNotFoundError,
-			AdminUserNotFoundError,
-			PaymentNotFoundError,
-			PaymentOrderNotFoundError,
-			WalletNotFoundError,
-			NotificationNotFoundError,
-			TicketNotFoundError,
-			RatingOrderNotFoundError,
-			CouponNotFoundError,
-		),
-		mapAsBadRequest(
-			OrderAlreadyExistsError,
-			OrderBoosterNotEligibleError,
-			OrderInvalidTransitionError,
-			OrderCancellationNotAllowedError,
-			OrderCredentialsStorageNotAllowedError,
-			OrderCredentialsPasswordMismatchError,
-			OrderCouponInvalidError,
-			OrderUnsupportedPricingServiceTypeError,
-			OrderRankNotPricedError,
-			OrderRankProgressionInvalidError,
-			OrderQuoteExpiredError,
-			OrderQuoteAlreadyUsedError,
-			OrderPricingVersionImmutableError,
-			OrderPricingVersionIncompleteError,
-			OrderPricingVersionNameInvalidError,
-			OrderPricingVersionNotActiveError,
-			PaymentAlreadyExistsError,
-			PaymentAmountInvalidError,
-			PaymentCheckoutResumeNotAllowedError,
-			PaymentInvalidTransitionError,
-			PaymentHoldReleaseNotAllowedError,
-			WalletInvalidAmountError,
-			WalletInsufficientWithdrawableBalanceError,
-			UserEmailConfirmationTokenInvalidError,
-			UserPasswordResetTokenInvalidError,
-			AdminGovernanceReasonRequiredError,
-			AdminUserEmailAlreadyInUseError,
-			AdminUsernameAlreadyInUseError,
-			AdminUserPasswordSetupUnavailableError,
-			AdminSelfBlockError,
-			AdminSelfRoleChangeError,
-			TicketInvalidStatusTransitionError,
-			TicketMessageOperationInvalidError,
-			TicketOrderAccessDeniedError,
-			TicketOrderLinkUnsupportedError,
-			OrderNotRatableError,
-			RatingWindowClosedError,
-			InvalidRatingScoreError,
-		),
-		mapAsConflict(OrderPricingVersionActiveConflictError, ChatNotWritableError),
-		mapAsConflict(NotificationReadConflictError),
-		mapAsConflict(RatingAlreadySubmittedError),
-		mapAsConflict(CouponCodeAlreadyExistsError),
-	]);
+	for (const [base, toException] of RULES)
+		if (error instanceof base) return toException(error.httpMessage);
+
+	return null;
 }
 
 @Catch()

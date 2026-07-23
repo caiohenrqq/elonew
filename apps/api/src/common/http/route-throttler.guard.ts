@@ -2,6 +2,10 @@ import {
 	ConfigurableThrottlerGuard,
 	type RouteThrottleConfig,
 } from '@app/common/http/configurable-throttler.guard';
+import {
+	ROUTE_THROTTLE_METADATA_KEY,
+	type RouteThrottleMetadata,
+} from '@app/common/http/route-throttle.decorator';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { type ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -13,7 +17,7 @@ import {
 } from '@nestjs/throttler';
 
 @Injectable()
-export class AuthThrottlerGuard extends ConfigurableThrottlerGuard {
+export class RouteThrottlerGuard extends ConfigurableThrottlerGuard {
 	constructor(
 		@InjectThrottlerOptions()
 		options: ThrottlerModuleOptions,
@@ -28,21 +32,16 @@ export class AuthThrottlerGuard extends ConfigurableThrottlerGuard {
 	protected getThrottleConfig(
 		context: ExecutionContext,
 	): RouteThrottleConfig | null {
-		switch (context.getHandler().name) {
-			case 'login':
-				return {
-					name: 'auth-login',
-					limit: this.appSettings.authLoginThrottleLimit,
-					ttl: this.appSettings.authLoginThrottleTtlSeconds * 1000,
-				};
-			case 'refresh':
-				return {
-					name: 'auth-refresh',
-					limit: this.appSettings.authRefreshThrottleLimit,
-					ttl: this.appSettings.authRefreshThrottleTtlSeconds * 1000,
-				};
-			default:
-				return null;
-		}
+		const metadata = this.reflector.getAllAndOverride<RouteThrottleMetadata>(
+			ROUTE_THROTTLE_METADATA_KEY,
+			[context.getHandler(), context.getClass()],
+		);
+		if (!metadata) return null;
+
+		return {
+			name: metadata.name,
+			limit: this.appSettings[metadata.limit],
+			ttl: this.appSettings[metadata.ttlSeconds] * 1000,
+		};
 	}
 }

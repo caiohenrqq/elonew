@@ -2,11 +2,9 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
+import { InternalApi } from '@modules/auth/presentation/decorators/internal-api.decorator';
 import { Public } from '@modules/auth/presentation/decorators/public.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { PaymentLifecycleLogger } from '@modules/payments/application/logging/payment-lifecycle.logger';
 import { ConfirmPaymentUseCase } from '@modules/payments/application/use-cases/confirm-payment/confirm-payment.use-case';
 import { CreatePaymentUseCase } from '@modules/payments/application/use-cases/create-payment/create-payment.use-case';
@@ -28,7 +26,6 @@ import {
 	Optional,
 	Param,
 	Post,
-	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import type { PaymentMethod } from '@packages/shared/payments/payment-method';
@@ -67,7 +64,6 @@ export class PaymentsController {
 	) {}
 
 	@Post()
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async create(
 		@Body(new ZodValidationPipe(createPaymentSchema))
@@ -89,7 +85,6 @@ export class PaymentsController {
 	}
 
 	@Post('checkout')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async checkout(
 		@Body(new ZodValidationPipe(startCheckoutSchema))
@@ -113,7 +108,6 @@ export class PaymentsController {
 	}
 
 	@Get(':paymentId')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	async get(
 		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
@@ -134,7 +128,7 @@ export class PaymentsController {
 	}
 
 	@Post('internal/:paymentId/confirm')
-	@UseGuards(InternalApiKeyGuard)
+	@InternalApi()
 	@HttpCode(200)
 	async confirm(
 		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
@@ -145,7 +139,6 @@ export class PaymentsController {
 	}
 
 	@Post('orders/:orderId/resume')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	@HttpCode(200)
 	async resumeCheckout(
@@ -163,7 +156,7 @@ export class PaymentsController {
 	}
 
 	@Post('internal/:paymentId/fail')
-	@UseGuards(InternalApiKeyGuard)
+	@InternalApi()
 	@HttpCode(200)
 	async fail(
 		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
@@ -206,7 +199,7 @@ export class PaymentsController {
 	}
 
 	@Post('internal/:paymentId/release')
-	@UseGuards(InternalApiKeyGuard)
+	@InternalApi()
 	@HttpCode(200)
 	async release(
 		@Param('paymentId', new ZodValidationPipe(paymentIdParamSchema))
@@ -217,7 +210,7 @@ export class PaymentsController {
 	}
 
 	@Post('internal/reconcile-stale-checkouts')
-	@UseGuards(InternalApiKeyGuard)
+	@InternalApi()
 	@HttpCode(200)
 	async reconcileStaleCheckouts(
 		@Body(new ZodValidationPipe(reconcileStaleCheckoutsSchema))
@@ -240,7 +233,6 @@ export class PaymentsController {
 	}
 
 	@Post('dev/:paymentId/simulate')
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles(Role.CLIENT)
 	@HttpCode(200)
 	async simulateDevPaymentOutcome(

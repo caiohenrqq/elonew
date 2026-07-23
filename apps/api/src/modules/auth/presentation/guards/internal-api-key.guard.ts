@@ -5,7 +5,7 @@ import {
 	InvalidInternalApiKeyError,
 } from '@modules/auth/domain/auth.errors';
 import {
-	CanActivate,
+	type CanActivate,
 	type ExecutionContext,
 	Inject,
 	Injectable,

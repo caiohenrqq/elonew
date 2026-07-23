@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import type { AppSettingsService } from '@app/common/settings/app-settings.service';
+import { AuthenticateAccessTokenUseCase } from '@modules/auth/application/use-cases/authenticate-access-token/authenticate-access-token.use-case';
 import {
 	AuthenticationRequiredError,
 	AuthUserBlockedError,
@@ -10,6 +11,7 @@ import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import type { UserRepositoryPort } from '@modules/users/application/ports/user-repository.port';
 import { User } from '@modules/users/domain/user.entity';
 import type { ContextType, ExecutionContext, Type } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { Role } from '@packages/auth/roles/role';
 
 function encodeBase64Url(value: string): string {
@@ -42,7 +44,7 @@ class TestExecutionContext implements ExecutionContext {
 	}
 
 	getHandler(): (...args: unknown[]) => unknown {
-		return createExecutionContext;
+		return createExecutionContext as (...args: unknown[]) => unknown;
 	}
 
 	getArgs<T extends unknown[] = unknown[]>(): T {
@@ -103,6 +105,17 @@ describe('JwtAuthGuard', () => {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});
+	const createGuard = (
+		appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'>,
+		repository: UserRepositoryPort,
+	) =>
+		new JwtAuthGuard(
+			new AuthenticateAccessTokenUseCase(
+				new HmacAccessTokenService(appSettings as AppSettingsService),
+				repository,
+			),
+			new Reflector(),
+		);
 	const users = (current = user()) =>
 		({
 			findById: jest.fn().mockResolvedValue(current),
@@ -112,10 +125,7 @@ describe('JwtAuthGuard', () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(
-			new HmacAccessTokenService(appSettings as AppSettingsService),
-			users(user(Role.ADMIN)),
-		);
+		const guard = createGuard(appSettings, users(user(Role.ADMIN)));
 		const token = signTestToken(
 			{
 				sub: 'user-1',
@@ -140,10 +150,7 @@ describe('JwtAuthGuard', () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(
-			new HmacAccessTokenService(appSettings as AppSettingsService),
-			users(),
-		);
+		const guard = createGuard(appSettings, users());
 		const context = createExecutionContext({});
 
 		await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
@@ -155,10 +162,7 @@ describe('JwtAuthGuard', () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(
-			new HmacAccessTokenService(appSettings as AppSettingsService),
-			users(),
-		);
+		const guard = createGuard(appSettings, users());
 		const header = encodeBase64Url(
 			JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
 		);
@@ -179,10 +183,7 @@ describe('JwtAuthGuard', () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(
-			new HmacAccessTokenService(appSettings as AppSettingsService),
-			users(),
-		);
+		const guard = createGuard(appSettings, users());
 		const token = signTestToken(
 			{
 				sub: 'user-1',
@@ -201,14 +202,30 @@ describe('JwtAuthGuard', () => {
 		);
 	});
 
+	it('lets @Public routes through without a bearer token', async () => {
+		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
+			jwtAccessTokenSecret: 'test-secret',
+		};
+		const reflector = new Reflector();
+		jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(true);
+		const guard = new JwtAuthGuard(
+			new AuthenticateAccessTokenUseCase(
+				new HmacAccessTokenService(appSettings as AppSettingsService),
+				users(),
+			),
+			reflector,
+		);
+
+		await expect(guard.canActivate(createExecutionContext({}))).resolves.toBe(
+			true,
+		);
+	});
+
 	it('rejects a blocked user immediately', async () => {
 		const appSettings: Pick<AppSettingsService, 'jwtAccessTokenSecret'> = {
 			jwtAccessTokenSecret: 'test-secret',
 		};
-		const guard = new JwtAuthGuard(
-			new HmacAccessTokenService(appSettings as AppSettingsService),
-			users(user(Role.CLIENT, true)),
-		);
+		const guard = createGuard(appSettings, users(user(Role.CLIENT, true)));
 		const token = signTestToken(
 			{
 				sub: 'user-1',

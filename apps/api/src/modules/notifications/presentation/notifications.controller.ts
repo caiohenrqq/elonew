@@ -2,8 +2,6 @@ import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
-import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
 import { ListNotificationsUseCase } from '@modules/notifications/application/use-cases/list-notifications/list-notifications.use-case';
 import { MarkAllNotificationsReadUseCase } from '@modules/notifications/application/use-cases/mark-all-notifications-read/mark-all-notifications-read.use-case';
 import { MarkNotificationReadUseCase } from '@modules/notifications/application/use-cases/mark-notification-read/mark-notification-read.use-case';
@@ -16,7 +14,6 @@ import {
 	Param,
 	Patch,
 	Query,
-	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import type {
@@ -33,7 +30,6 @@ import {
 } from './notifications.request-schemas';
 
 @Controller('notifications')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.CLIENT, Role.BOOSTER, Role.ADMIN)
 export class NotificationsController {
 	constructor(
