@@ -23,20 +23,19 @@ export class RouteThrottlerGuard extends ConfigurableThrottlerGuard {
 		options: ThrottlerModuleOptions,
 		@InjectThrottlerStorage()
 		storageService: ThrottlerStorage,
-		private readonly routeReflector: Reflector,
+		reflector: Reflector,
 		private readonly appSettings: AppSettingsService,
 	) {
-		super(options, storageService, routeReflector);
+		super(options, storageService, reflector);
 	}
 
 	protected getThrottleConfig(
 		context: ExecutionContext,
 	): RouteThrottleConfig | null {
-		const metadata =
-			this.routeReflector.getAllAndOverride<RouteThrottleMetadata>(
-				ROUTE_THROTTLE_METADATA_KEY,
-				[context.getHandler(), context.getClass()],
-			);
+		const metadata = this.reflector.getAllAndOverride<RouteThrottleMetadata>(
+			ROUTE_THROTTLE_METADATA_KEY,
+			[context.getHandler(), context.getClass()],
+		);
 		if (!metadata) return null;
 
 		return {
