@@ -14,7 +14,6 @@ import { HmacAccessTokenService } from '@modules/auth/infrastructure/security/hm
 import { HmacRefreshTokenService } from '@modules/auth/infrastructure/security/hmac-refresh-token.service';
 import { WebSessionCookieService } from '@modules/auth/infrastructure/security/web-session-cookie.service';
 import { AuthController } from '@modules/auth/presentation/auth.controller';
-import { AuthThrottlerGuard } from '@modules/auth/presentation/guards/auth-throttler.guard';
 import { InternalApiKeyGuard } from '@modules/auth/presentation/guards/internal-api-key.guard';
 import { JwtAuthGuard } from '@modules/auth/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/presentation/guards/roles.guard';
@@ -53,7 +52,6 @@ import { Module } from '@nestjs/common';
 		LoginUseCase,
 		RefreshSessionUseCase,
 		LogoutUseCase,
-		AuthThrottlerGuard,
 		InternalApiKeyGuard,
 		JwtAuthGuard,
 		RolesGuard,

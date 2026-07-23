@@ -1,3 +1,5 @@
+import { RouteThrottle } from '@app/common/http/route-throttle.decorator';
+import { RouteThrottlerGuard } from '@app/common/http/route-throttler.guard';
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { ConfirmEmailUseCase } from '@modules/users/application/use-cases/confirm-email/confirm-email.use-case';
@@ -11,11 +13,10 @@ import {
 	setPasswordSchema,
 	signUpSchema,
 } from '@modules/users/presentation/users.request-schemas';
-import { UsersThrottlerGuard } from '@modules/users/presentation/users-throttler.guard';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 
 @Controller('users')
-@UseGuards(UsersThrottlerGuard)
+@UseGuards(RouteThrottlerGuard)
 export class UsersController {
 	constructor(
 		private readonly signUpUseCase: SignUpUseCase,
@@ -25,6 +26,11 @@ export class UsersController {
 	) {}
 
 	@Post('sign-up')
+	@RouteThrottle({
+		name: 'users-sign-up',
+		limit: 'usersSignUpThrottleLimit',
+		ttlSeconds: 'usersSignUpThrottleTtlSeconds',
+	})
 	async signUp(
 		@Body(new ZodValidationPipe(signUpSchema)) body: SignUpSchemaInput,
 	) {
@@ -49,6 +55,11 @@ export class UsersController {
 	}
 
 	@Post('confirm-email')
+	@RouteThrottle({
+		name: 'users-confirm-email',
+		limit: 'usersConfirmEmailThrottleLimit',
+		ttlSeconds: 'usersConfirmEmailThrottleTtlSeconds',
+	})
 	confirmEmail(
 		@Body(new ZodValidationPipe(confirmEmailSchema))
 		body: ConfirmEmailSchemaInput,
