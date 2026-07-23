@@ -2,7 +2,11 @@ import type { AuthenticatedUser } from '@modules/auth/application/authenticated-
 import { AuthenticateAccessTokenUseCase } from '@modules/auth/application/use-cases/authenticate-access-token/authenticate-access-token.use-case';
 import { AuthenticationRequiredError } from '@modules/auth/domain/auth.errors';
 import { IS_PUBLIC_KEY } from '@modules/auth/presentation/decorators/public.decorator';
-import { CanActivate, type ExecutionContext, Injectable } from '@nestjs/common';
+import {
+	type CanActivate,
+	type ExecutionContext,
+	Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 @Injectable()
