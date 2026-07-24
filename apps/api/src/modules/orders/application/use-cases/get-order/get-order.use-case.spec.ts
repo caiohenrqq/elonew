@@ -52,6 +52,7 @@ describe('GetOrderUseCase', () => {
 			id: 'order-1',
 			status: 'awaiting_payment',
 			hasCredentials: false,
+			summonerName: null,
 			subtotal: 25.2,
 			totalAmount: 25.2,
 			discountAmount: 0,

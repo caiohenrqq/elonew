@@ -28,6 +28,7 @@ export type OrderPricingSnapshot = {
 
 export type OrderQuoteSnapshot = {
 	couponId: string | null;
+	summonerName: string;
 	requestDetails: OrderQuoteRequestDetails;
 	pricing: OrderPricingSnapshot;
 };

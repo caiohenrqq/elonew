@@ -126,6 +126,7 @@ describe('Auth (e2e)', () => {
 	function makeOrderPayload() {
 		return {
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			currentLp: 50,

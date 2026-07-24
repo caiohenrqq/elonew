@@ -36,6 +36,7 @@ export type OrderCredentials = {
 
 export type OrderRequestDetails = {
 	serviceType: OrderServiceType;
+	summonerName: string;
 	currentLeague: string;
 	currentDivision: string;
 	currentLp: number;

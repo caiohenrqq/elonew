@@ -30,6 +30,7 @@ type OrderRecord = {
 	pricingVersionId: string | null;
 	status: string;
 	serviceType: string | null;
+	summonerName: string | null;
 	currentLeague: string | null;
 	currentDivision: string | null;
 	currentLp: number | null;
@@ -97,6 +98,7 @@ type OrderDelegate = {
 			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
+			summonerName: string | null;
 			currentLeague: string | null;
 			currentDivision: string | null;
 			currentLp: number | null;
@@ -138,6 +140,7 @@ type OrderDelegate = {
 			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
+			summonerName: string | null;
 			currentLeague: string | null;
 			currentDivision: string | null;
 			currentLp: number | null;
@@ -174,6 +177,7 @@ type OrderDelegate = {
 			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
+			summonerName: string | null;
 			currentLeague: string | null;
 			currentDivision: string | null;
 			currentLp: number | null;
@@ -660,6 +664,7 @@ export class PrismaOrderRepository
 
 	private mapRequestDetails(requestDetails: OrderRequestDetails | null): {
 		serviceType: string | null;
+		summonerName: string | null;
 		currentLeague: string | null;
 		currentDivision: string | null;
 		currentLp: number | null;
@@ -674,6 +679,7 @@ export class PrismaOrderRepository
 			serviceType: requestDetails
 				? this.mapServiceTypeToPersistence(requestDetails.serviceType)
 				: null,
+			summonerName: requestDetails?.summonerName ?? null,
 			currentLeague: requestDetails?.currentLeague ?? null,
 			currentDivision: requestDetails?.currentDivision ?? null,
 			currentLp: requestDetails?.currentLp ?? null,
@@ -705,6 +711,7 @@ export class PrismaOrderRepository
 
 		return {
 			serviceType: this.mapServiceTypeFromPersistence(record.serviceType),
+			summonerName: record.summonerName ?? '',
 			currentLeague: record.currentLeague,
 			currentDivision: record.currentDivision,
 			currentLp: record.currentLp,

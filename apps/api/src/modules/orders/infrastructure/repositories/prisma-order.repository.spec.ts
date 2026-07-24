@@ -16,6 +16,7 @@ const withTransaction = <T extends object>(prisma: T) =>
 
 const requestDetails = {
 	serviceType: 'elo_boost',
+	summonerName: 'Invocador',
 	currentLeague: 'gold',
 	currentDivision: 'II',
 	currentLp: 50,

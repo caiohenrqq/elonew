@@ -129,6 +129,7 @@ describe('Order domain rules', () => {
 			pricingVersionId: 'pricing-version-1',
 			requestDetails: {
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,

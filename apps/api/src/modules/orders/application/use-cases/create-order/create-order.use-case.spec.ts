@@ -37,6 +37,7 @@ class OrderCheckoutStub implements OrderCheckoutPort {
 		status: OrderStatus.AWAITING_PAYMENT,
 		requestDetails: {
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			currentLp: 50,
@@ -147,6 +148,7 @@ describe('CreateOrderUseCase', () => {
 			status: OrderStatus.AWAITING_PAYMENT,
 			requestDetails: {
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,

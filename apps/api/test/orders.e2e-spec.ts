@@ -86,6 +86,7 @@ describe('Orders (e2e)', () => {
 	function makeQuotePayload() {
 		return {
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			currentLp: 50,
@@ -237,6 +238,7 @@ describe('Orders (e2e)', () => {
 				id: createdOrder.id,
 				status: 'awaiting_payment',
 				hasCredentials: false,
+				summonerName: 'Invocador',
 				subtotal: 2520,
 				totalAmount: 2520,
 				discountAmount: 0,
@@ -403,6 +405,7 @@ describe('Orders (e2e)', () => {
 				id: createdOrder.id,
 				status: 'in_progress',
 				hasCredentials: false,
+				summonerName: 'Invocador',
 				subtotal: 2520,
 				totalAmount: 2520,
 				discountAmount: 0,

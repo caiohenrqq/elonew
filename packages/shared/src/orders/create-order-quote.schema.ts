@@ -20,7 +20,7 @@ const isValidMasterDivision = (division: string) => {
 	return division === MASTER_RANK_DIVISION || isMasterPdlDivision(division);
 };
 
-export const createOrderQuoteSchema = z
+const orderQuoteBaseSchema = z
 	.object({
 		serviceType: z.enum(orderServiceTypes),
 		couponCode: z.string().trim().min(1).optional(),
@@ -75,6 +75,17 @@ export const createOrderQuoteSchema = z
 		}
 	});
 
+export const previewOrderQuoteSchema = orderQuoteBaseSchema;
+
+// Summoner name is order data, not a pricing input, so only the persisting
+// quote endpoint requires it.
+export const createOrderQuoteSchema = z
+	.object({ summonerName: z.string().trim().min(1).max(64) })
+	.and(orderQuoteBaseSchema);
+
+export type PreviewOrderQuoteSchemaInput = z.input<
+	typeof previewOrderQuoteSchema
+>;
 export type CreateOrderQuoteSchemaInput = z.input<
 	typeof createOrderQuoteSchema
 >;

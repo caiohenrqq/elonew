@@ -33,6 +33,8 @@ import {
 import {
 	type CreateOrderQuoteSchemaInput,
 	createOrderQuoteSchema,
+	type PreviewOrderQuoteSchemaInput,
+	previewOrderQuoteSchema,
 } from '@packages/shared/orders/create-order-quote.schema';
 import {
 	type CleanupExpiredOrderQuotesSchemaInput,
@@ -79,8 +81,8 @@ export class OrdersController {
 	@Post('quote/preview')
 	@Roles(Role.CLIENT)
 	async previewQuote(
-		@Body(new ZodValidationPipe(createOrderQuoteSchema))
-		body: CreateOrderQuoteSchemaInput,
+		@Body(new ZodValidationPipe(previewOrderQuoteSchema))
+		body: PreviewOrderQuoteSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<Awaited<ReturnType<PreviewOrderQuoteUseCase['execute']>>> {
 		return await this.previewOrderQuoteUseCase.execute({
@@ -113,6 +115,7 @@ export class OrdersController {
 			extras: body.extras,
 			now: new Date(),
 			serviceType: body.serviceType,
+			summonerName: body.summonerName,
 			currentLeague: body.currentLeague,
 			currentDivision: body.currentDivision,
 			currentLp: body.currentLp,

@@ -6,6 +6,7 @@ export interface OrderQuoteRepositoryPort {
 	create(input: {
 		clientId: string;
 		couponId: string | null;
+		summonerName: string;
 		requestDetails: OrderQuoteSnapshot['requestDetails'];
 		pricing: OrderQuoteSnapshot['pricing'];
 		expiresAt: Date;

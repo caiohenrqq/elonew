@@ -152,6 +152,7 @@ class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 
 		return {
 			couponId: quote.couponId,
+			summonerName: 'Invocador',
 			requestDetails: quote.requestDetails,
 			pricing: quote.pricing,
 		};
@@ -315,7 +316,10 @@ describe('InMemoryOrderCheckoutRepository', () => {
 			clientId: 'client-1',
 			couponId: null,
 			pricingVersionId: 'pricing-version-1',
-			requestDetails: makeQuote().requestDetails,
+			requestDetails: {
+				...makeQuote().requestDetails,
+				summonerName: 'Invocador',
+			},
 			pricing: makeQuote().pricing,
 		});
 		existingOrder.confirmPayment();
