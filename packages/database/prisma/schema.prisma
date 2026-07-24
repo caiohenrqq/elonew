@@ -140,7 +140,8 @@ model Order {
   booster          User?        @relation("BoosterOrders", fields: [boosterId], references: [id])
   status           OrderStatus  @default(awaiting_payment)
   serviceType      ServiceType?
-  
+  summonerName     String?
+
   currentLeague    String?
   currentDivision  String?
   currentLp        Int?
@@ -201,6 +202,7 @@ model OrderQuote {
   couponId         String?
   coupon           Coupon?      @relation(fields: [couponId], references: [id])
   serviceType      ServiceType
+  summonerName     String?
   currentLeague    String
   currentDivision  String
   currentLp        Int
