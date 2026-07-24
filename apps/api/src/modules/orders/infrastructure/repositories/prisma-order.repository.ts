@@ -72,6 +72,7 @@ type OrderDelegate = {
 			| { clientId: string }
 			| {
 					status: string;
+					credentials?: { isNot: null };
 					OR?: Array<{ boosterId: string | null }>;
 					boosterId?: string;
 					boosterRejections?: { none: { boosterId: string } };
@@ -344,6 +345,7 @@ export class PrismaOrderRepository
 		const records = await this.getDelegate().findMany({
 			where: {
 				status: OrderStatus.PENDING_BOOSTER,
+				credentials: { isNot: null },
 				OR: [{ boosterId: null }, { boosterId }],
 				boosterRejections: { none: { boosterId } },
 			},
