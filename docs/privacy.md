@@ -9,6 +9,12 @@
 Order credentials follow the product credential lifecycle in
 `docs/requirements.md`.
 
+`Order.summonerName` is retained for the life of the order record. It is a
+public in-game identifier collected before payment, and it is deliberately not
+wiped with the encrypted credentials when an order completes or is cancelled —
+support, disputes, and account lookups need it after the login and password are
+destroyed.
+
 ## Current policy
 
 - Chat and support history remain while their account and order records remain.
