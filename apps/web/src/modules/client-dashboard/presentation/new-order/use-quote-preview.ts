@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { previewOrderQuoteAction } from '../../actions/order-actions';
 import type {
 	OrderQuotePreviewOutput,
+	PreviewCheckoutInput,
 	StartCheckoutInput,
 } from '../../server/order-contracts';
 
@@ -41,7 +42,7 @@ export const useQuotePreview = (
 	useEffect(() => {
 		const requestId = ++previewRequestId.current;
 		let isCancelled = false;
-		const previewInput: StartCheckoutInput = {
+		const previewInput: PreviewCheckoutInput = {
 			couponCode,
 			currentDivision,
 			currentLeague,

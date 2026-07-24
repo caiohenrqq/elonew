@@ -2,6 +2,7 @@ import type { CreateOrderSchemaInput } from '@packages/shared/orders/create-orde
 import {
 	type CreateOrderQuoteSchemaInput,
 	createOrderQuoteSchema,
+	previewOrderQuoteSchema,
 } from '@packages/shared/orders/create-order-quote.schema';
 import {
 	type CreatePaymentSchemaInput,
@@ -24,6 +25,15 @@ export const startCheckoutSchema = createOrderQuoteSchema.and(
 		paymentMethod: createPaymentSchema.shape.paymentMethod,
 	}),
 );
+
+// The price preview never persists a quote, so it omits the summoner name.
+export const previewCheckoutSchema = previewOrderQuoteSchema.and(
+	z.object({
+		paymentMethod: createPaymentSchema.shape.paymentMethod,
+	}),
+);
+
+export type PreviewCheckoutInput = z.infer<typeof previewCheckoutSchema>;
 
 export const checkoutResultSchema = z.object({
 	orderId: z.string().trim().min(1),
@@ -76,9 +86,27 @@ export type CreatePaymentOutput = {
 	checkoutUrl: string;
 };
 
+export const saveOrderCredentialsSchema = z
+	.object({
+		login: z.string().trim().min(8).max(64),
+		summonerName: z.string().trim().min(1).max(64),
+		password: z.string().min(8).max(128),
+		confirmPassword: z.string().min(8).max(128),
+	})
+	.refine((input) => input.password === input.confirmPassword, {
+		message: 'As senhas não coincidem.',
+		path: ['confirmPassword'],
+	});
+
+export type SaveOrderCredentialsInput = z.infer<
+	typeof saveOrderCredentialsSchema
+>;
+
 export type GetOrderOutput = {
 	id: string;
 	status: string;
+	hasCredentials: boolean;
+	summonerName: string | null;
 	subtotal: number | null;
 	totalAmount: number | null;
 	discountAmount: number;

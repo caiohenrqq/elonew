@@ -36,10 +36,8 @@ import {
 	type RankOption,
 } from '../../model/rank-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
-import type { AccountInput } from './account-step';
 
 type ReviewStepProps = {
-	accountInput: AccountInput;
 	favoriteBoosterName: string;
 	orderInput: StartCheckoutInput;
 	hasAcceptedTerms: boolean;
@@ -86,8 +84,6 @@ const DetailItem = ({
 	</div>
 );
 
-const maskPassword = (password: string) => '•'.repeat(password.length);
-
 const RankDisplay = ({
 	rank,
 	label,
@@ -126,7 +122,6 @@ const RankDisplay = ({
 };
 
 export const ReviewStep = ({
-	accountInput,
 	favoriteBoosterName,
 	orderInput,
 	hasAcceptedTerms,
@@ -242,22 +237,16 @@ export const ReviewStep = ({
 						</div>
 						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 							<DetailItem
-								icon={UserRound}
-								label="Login"
-								value={accountInput.login}
-								preserveCase
-							/>
-							<DetailItem
 								icon={Gamepad2}
 								label="Nome de invocador"
-								value={accountInput.summonerName}
+								value={orderInput.summonerName}
 								preserveCase
 							/>
 							<DetailItem
 								className="sm:col-span-2"
 								icon={KeyRound}
-								label="Senha"
-								value={maskPassword(accountInput.password)}
+								label="Login e senha"
+								value="Solicitados após a confirmação do pagamento"
 								preserveCase
 							/>
 						</div>

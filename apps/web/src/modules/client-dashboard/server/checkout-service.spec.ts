@@ -13,6 +13,7 @@ describe('getClientDashboardOrders', () => {
 					id: 'order-1',
 					status: 'awaiting_payment',
 					serviceType: 'elo_boost',
+					summonerName: 'Invocador',
 					currentLeague: 'gold',
 					currentDivision: 'II',
 					currentLp: 40,
@@ -61,6 +62,7 @@ describe('previewOrderQuote', () => {
 		const result = await previewOrderQuote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				extras: ['priority_service'],
 				currentLeague: 'silver',
 				currentDivision: 'IV',
@@ -110,6 +112,7 @@ describe('startCheckout', () => {
 		const result = await startCheckout(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				extras: ['priority_service'],
 				currentLeague: 'silver',
 				currentDivision: 'IV',
@@ -161,6 +164,7 @@ describe('startCheckout', () => {
 			startCheckout(
 				{
 					serviceType: 'elo_boost',
+					summonerName: 'Invocador',
 					extras: [],
 					currentLeague: 'silver',
 					currentDivision: 'IV',
@@ -197,6 +201,7 @@ describe('startCheckout', () => {
 			startCheckout(
 				{
 					serviceType: 'elo_boost',
+					summonerName: 'Invocador',
 					extras: [],
 					currentLeague: 'silver',
 					currentDivision: 'IV',

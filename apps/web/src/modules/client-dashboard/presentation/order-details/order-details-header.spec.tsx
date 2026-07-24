@@ -22,6 +22,8 @@ jest.mock('../../actions/order-actions', () => ({
 const makeOrder = (status: string) => ({
 	id: 'order-1',
 	status,
+	hasCredentials: false,
+	summonerName: null,
 	subtotal: 100,
 	totalAmount: 100,
 	discountAmount: 0,
