@@ -9,6 +9,7 @@ Repository rules for coding agents.
 - Local workflow: `docs/development.md`
 - Production operations: `docs/deployment.md`
 - Logging: `docs/observability.md`
+- Recurring jobs: `docs/scheduled-jobs.md`
 - Contribution workflow: `docs/contributing.md`
 
 Read the relevant document fully before changing its subject.

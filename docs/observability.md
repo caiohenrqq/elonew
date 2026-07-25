@@ -314,6 +314,38 @@ Rules specific to this family:
 - `api_request_id` is the `x-request-id` the worker sent and the API echoed, so a
   worker line joins the matching API lifecycle event.
 
+## Scheduled Task Event
+
+Recurring work declared in the workers scheduled-task registry must use the
+`scheduled_task.lifecycle` event family with operation `run_task`.
+
+```text
+event
+operation
+outcome
+duration_ms
+task_name
+cron
+job_id
+queue_name
+attempt
+api_status
+api_request_id
+error_type
+error_message
+```
+
+Rules specific to this family:
+
+- One event per attempt, emitted in `finally`. A recurring job that stops working
+  is otherwise invisible: nobody watches a schedule that simply goes quiet.
+- `cron` is included so a log line explains its own cadence without a deploy
+  lookup, and a wrong interval is visible in the data.
+- An undeclared task name must fail with `error_type:
+  "UnknownScheduledTaskError"` before any HTTP call, and the event must record it.
+- `api_request_id` is the `x-request-id` the worker sent and the API echoed, so a
+  tick can be joined to the workflow event it triggered.
+
 ## Review Checklist
 
 Before merging code that adds or changes a production workflow, verify:
