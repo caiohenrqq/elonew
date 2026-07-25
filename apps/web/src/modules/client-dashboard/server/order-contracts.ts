@@ -134,9 +134,7 @@ export const getOrderSchema = z.object({
 	desiredQueue: z.string().nullable().optional(),
 	lpGain: z.number().nullable().optional(),
 	deadline: z.string().nullable().optional(),
-	extras: z
-		.array(z.object({ type: z.string(), price: z.number() }))
-		.optional(),
+	extras: z.array(z.object({ type: z.string(), price: z.number() })).optional(),
 	booster: z
 		.object({
 			username: z.string(),

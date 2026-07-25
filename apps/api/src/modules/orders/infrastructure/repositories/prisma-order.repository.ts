@@ -4,8 +4,8 @@ import type {
 	BoosterOrderReaderPort,
 } from '@modules/orders/application/ports/booster-order-reader.port';
 import type {
-	ClientOrderDetailsSnapshot,
 	ClientOrderDashboardSnapshot,
+	ClientOrderDetailsSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';

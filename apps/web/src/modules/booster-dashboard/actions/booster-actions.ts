@@ -184,11 +184,7 @@ export const acceptBoosterOrderAction = async (
 
 	await assertSameOriginRequest();
 	await getBoosterSessionOrRedirect();
-	await acceptBoosterOrder(
-		orderId,
-		{ deadline },
-		api.request,
-	);
+	await acceptBoosterOrder(orderId, { deadline }, api.request);
 	redirect(`/booster/orders/${encodeURIComponent(orderId)}`);
 };
 

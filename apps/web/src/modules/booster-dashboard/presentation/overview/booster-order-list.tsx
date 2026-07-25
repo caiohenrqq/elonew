@@ -6,6 +6,7 @@ import {
 	XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { getExtraLabel } from '@/modules/client-dashboard/model/new-order-options';
 import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import { DashboardSectionHeader } from '@/shared/dashboard/dashboard-section-header';
 import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-button';
@@ -25,7 +26,6 @@ import {
 } from '@/shared/ui/components/table';
 import { rejectBoosterOrderAction } from '../../actions/booster-actions';
 import type { BoosterOrder } from '../../model/booster-orders';
-import { getExtraLabel } from '@/modules/client-dashboard/model/new-order-options';
 import {
 	AcceptBoosterOrderButton,
 	CompleteBoosterOrderButton,
@@ -147,7 +147,8 @@ const BoosterOrderSummary = ({
 		</p>
 		{order.extras?.length ? (
 			<p className="text-white/45">
-				Extras: {order.extras.map((extra) => getExtraLabel(extra.type)).join(', ')}
+				Extras:{' '}
+				{order.extras.map((extra) => getExtraLabel(extra.type)).join(', ')}
 			</p>
 		) : null}
 	</div>

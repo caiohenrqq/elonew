@@ -57,9 +57,7 @@ export const adminOrderSchema = z.object({
 	subtotal: z.number().nullable().optional(),
 	totalAmount: z.number().nullable(),
 	discountAmount: z.number().optional(),
-	extras: z
-		.array(z.object({ type: z.string(), price: z.number() }))
-		.optional(),
+	extras: z.array(z.object({ type: z.string(), price: z.number() })).optional(),
 	client: z.object({ username: z.string() }).nullable().optional(),
 	booster: z.object({ username: z.string() }).nullable().optional(),
 	createdAt: z.string(),

@@ -18,7 +18,11 @@ type OrderCredentialsCardProps = {
 	orderId?: string;
 };
 
-export const OrderCredentialsSavedNotice = ({ orderId }: { orderId: string }) => {
+export const OrderCredentialsSavedNotice = ({
+	orderId,
+}: {
+	orderId: string;
+}) => {
 	const storageKey = `order-credentials-notice-dismissed:${orderId}`;
 	const [dismissed, setDismissed] = useState(true);
 

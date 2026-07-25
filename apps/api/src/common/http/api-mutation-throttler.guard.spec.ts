@@ -103,9 +103,9 @@ describe('ApiMutationThrottlerGuard', () => {
 		const guard = await createGuard(1);
 
 		for (let i = 0; i < 5; i++)
-			await expect(guard.canActivate(createRouteThrottledContext())).resolves.toBe(
-				true,
-			);
+			await expect(
+				guard.canActivate(createRouteThrottledContext()),
+			).resolves.toBe(true);
 	});
 
 	it('throttles mutating requests beyond the configured limit', async () => {

@@ -1,6 +1,6 @@
 import type {
-	ClientOrderDetailsSnapshot,
 	ClientOrderDashboardSnapshot,
+	ClientOrderDetailsSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
@@ -128,8 +128,11 @@ export class InMemoryOrderRepository
 		const order = this.orders.get(orderId);
 		if (!order || order.clientId !== clientId) return Promise.resolve(null);
 
-		const { clientId: _clientId, createdAt: _createdAt, ...details } =
-			this.mapDashboardSnapshot(order);
+		const {
+			clientId: _clientId,
+			createdAt: _createdAt,
+			...details
+		} = this.mapDashboardSnapshot(order);
 		return Promise.resolve({
 			...details,
 			hasCredentials: order.hasCredentials,

@@ -87,7 +87,8 @@ export const AcceptBoosterOrderButton = ({ orderId }: { orderId: string }) => {
 								className="h-10 rounded-sm border border-white/10 bg-black/20 px-3 text-sm text-white focus:border-hextech-cyan focus:outline-none"
 							/>
 						</label>
-						<div className="flex flex-wrap gap-2" aria-label="Atalhos de prazo">
+						<fieldset className="flex flex-wrap gap-2">
+							<legend className="sr-only">Atalhos de prazo</legend>
 							{[1, 3, 7, 14].map((days) => (
 								<button
 									key={days}
@@ -101,7 +102,7 @@ export const AcceptBoosterOrderButton = ({ orderId }: { orderId: string }) => {
 									{days} {days === 1 ? 'dia' : 'dias'}
 								</button>
 							))}
-						</div>
+						</fieldset>
 						<p aria-live="polite" className="min-h-4 text-xs text-white/55">
 							{deadline
 								? `Entrega até ${new Intl.DateTimeFormat('pt-BR').format(

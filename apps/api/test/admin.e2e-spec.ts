@@ -78,7 +78,9 @@ describe('Admin dashboard (e2e)', () => {
 		}
 
 		async getOrder(orderId: string) {
-			return (await this.listOrders()).find((order) => order.id === orderId) ?? null;
+			return (
+				(await this.listOrders()).find((order) => order.id === orderId) ?? null
+			);
 		}
 
 		async listSupportTickets() {

@@ -59,9 +59,7 @@ describe('ListBoosterQueueUseCase', () => {
 		const reader = new BoosterOrderReaderStub();
 		const useCase = new ListBoosterQueueUseCase(reader);
 
-		await expect(
-			useCase.execute({ boosterId: 'booster-1' }),
-		).resolves.toEqual({
+		await expect(useCase.execute({ boosterId: 'booster-1' })).resolves.toEqual({
 			availableOrders: [
 				expect.objectContaining({ id: 'queue-1' }),
 				expect.objectContaining({ id: 'queue-2' }),
@@ -73,5 +71,4 @@ describe('ListBoosterQueueUseCase', () => {
 		});
 		expect(reader.calls).toEqual(['available']);
 	});
-
 });

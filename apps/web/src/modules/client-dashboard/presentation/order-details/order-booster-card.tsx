@@ -1,4 +1,5 @@
 import { Shield, User } from 'lucide-react';
+import Image from 'next/image';
 import {
 	Card,
 	CardContent,
@@ -6,8 +7,8 @@ import {
 	CardTitle,
 } from '@/shared/ui/components/card';
 import { cn } from '@/shared/ui/utils/cn';
-import { orderDetailsLayout } from './order-details-layout';
 import type { ClientOrder } from '../../model/orders';
+import { orderDetailsLayout } from './order-details-layout';
 
 export const OrderBoosterCard = ({
 	booster,
@@ -26,12 +27,12 @@ export const OrderBoosterCard = ({
 				<div className="flex items-center gap-4">
 					<div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-sm border border-white/10 bg-white/5">
 						{booster?.avatarUrl ? (
-							<img
+							<Image
 								src={booster.avatarUrl}
 								alt=""
 								width={48}
 								height={48}
-								referrerPolicy="no-referrer"
+								unoptimized
 								className="h-full w-full object-cover"
 							/>
 						) : (

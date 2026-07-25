@@ -2,7 +2,6 @@ import { FileText } from 'lucide-react';
 import { DefinitionItem } from '@/shared/dashboard/definition-item';
 import { formatCurrency } from '@/shared/format/currency';
 import { OrderRankRoute } from '@/shared/orders/order-rank-route';
-import { getExtraLabel } from '../../model/new-order-options';
 import {
 	Card,
 	CardContent,
@@ -10,6 +9,7 @@ import {
 	CardTitle,
 } from '@/shared/ui/components/card';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
+import { getExtraLabel } from '../../model/new-order-options';
 import type { ClientOrder } from '../../model/orders';
 import { orderDetailsLayout } from './order-details-layout';
 

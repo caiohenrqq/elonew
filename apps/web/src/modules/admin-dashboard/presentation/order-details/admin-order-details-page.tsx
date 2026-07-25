@@ -188,14 +188,14 @@ export const AdminOrderDetailsView = ({
 						<CardContent className="grid gap-6 md:grid-cols-2">
 							<DefinitionItem
 								label="Cliente"
-								value={order.client?.username ?? order.clientId ?? 'Não informado'}
+								value={
+									order.client?.username ?? order.clientId ?? 'Não informado'
+								}
 							/>
 							<DefinitionItem
 								label="Booster"
 								value={
-									order.booster?.username ??
-									order.boosterId ??
-									'Não informado'
+									order.booster?.username ?? order.boosterId ?? 'Não informado'
 								}
 							/>
 						</CardContent>
