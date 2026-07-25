@@ -73,8 +73,28 @@ export class BullmqScheduledTasksConsumerAdapter
 	private async syncSchedules(queue: ScheduledTasksQueueInstance) {
 		const tasks = this.runScheduledTask.tasks();
 
-		for (const task of tasks)
-			await queue.upsertSchedule({ name: task.name, cron: task.cron });
+		// One schedule that cannot be armed must not stop this process: the same
+		// worker consumes the wallet release queue, and refusing to boot would keep
+		// booster payments locked over a broken cron entry. The failure is loud
+		// instead of fatal.
+		for (const task of tasks) {
+			try {
+				await queue.upsertSchedule({ name: task.name, cron: task.cron });
+			} catch (error) {
+				this.logger.error({
+					event: 'scheduled_task.consumer',
+					operation: 'arm_schedule',
+					outcome: 'error',
+					queue_name: this.appSettings.scheduledTasksQueueName,
+					task_name: task.name,
+					cron: task.cron,
+					error_type:
+						error instanceof Error ? error.constructor.name : typeof error,
+					error_message:
+						error instanceof Error ? error.message : 'Unknown error',
+				});
+			}
+		}
 
 		const declared = new Set<string>(tasks.map((task) => task.name));
 		for (const scheduler of await queue.listSchedules()) {
@@ -87,6 +107,27 @@ export class BullmqScheduledTasksConsumerAdapter
 				outcome: 'success',
 				queue_name: this.appSettings.scheduledTasksQueueName,
 				task_name: scheduler.name,
+			});
+		}
+
+		// The index BullMQ answers getJobSchedulers() from can disagree with the
+		// scheduler definitions if Redis is edited by hand. A declared task missing
+		// from the listing still fires but is invisible to the admin view, so it is
+		// reported rather than assumed healthy.
+		const armed = new Set(
+			(await queue.listSchedules()).map((scheduler) => scheduler.name),
+		);
+		for (const task of tasks) {
+			if (armed.has(task.name)) continue;
+
+			this.logger.error({
+				event: 'scheduled_task.consumer',
+				operation: 'verify_schedule',
+				outcome: 'error',
+				queue_name: this.appSettings.scheduledTasksQueueName,
+				task_name: task.name,
+				error_message:
+					'Declared task is not listed as a job scheduler after sync.',
 			});
 		}
 

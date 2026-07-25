@@ -2,6 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { createBullmqRedisConnection } from '@packages/config/queue/bullmq-redis.connection';
 import { Queue, Worker } from 'bullmq';
 
+// Mirrors WALLET_FUNDS_RELEASE_JOB_OPTIONS: a sweep that fails transiently is
+// retried, and a handful of terminal jobs are kept so the admin view and Loki
+// can still show what happened.
+export const SCHEDULED_TASK_JOB_OPTIONS = {
+	attempts: 3,
+	backoff: {
+		type: 'exponential' as const,
+		delay: 10_000,
+	},
+	removeOnComplete: 50,
+	removeOnFail: 50,
+};
+
 export type ScheduledTaskJob = { name: string };
 
 export type ScheduledTaskJobExecution = {
@@ -45,16 +58,7 @@ export class BullmqScheduledTasksQueueFactory {
 				await queue.upsertJobScheduler(
 					name,
 					{ pattern: cron },
-					{
-						name,
-						data: { name },
-						opts: {
-							attempts: 3,
-							backoff: { type: 'exponential', delay: 10_000 },
-							removeOnComplete: 50,
-							removeOnFail: 50,
-						},
-					},
+					{ name, data: { name }, opts: SCHEDULED_TASK_JOB_OPTIONS },
 				);
 			},
 			listSchedules: async () => {

@@ -32,6 +32,7 @@ const createScenario = (
 			taskName: string,
 		) => Promise<{ apiStatus: number; apiRequestId: string }>;
 		queuesEnabled?: boolean;
+		failUpsertFor?: string;
 	} = {},
 ) => {
 	const upserted: Array<{ name: string; cron: string }> = [];
@@ -67,6 +68,10 @@ const createScenario = (
 
 				return {
 					upsertSchedule: async (input: { name: string; cron: string }) => {
+						if (options.failUpsertFor === input.name)
+							throw new Error(
+								'Cannot create job scheduler iteration - job ID already exists.',
+							);
 						upserted.push(input);
 						if (!schedules.some((s) => s.name === input.name))
 							schedules.push({
@@ -234,3 +239,44 @@ test('records the API status when a task fails so a retry is queryable', async (
 	);
 });
 
+test('a schedule that cannot be armed is reported without stopping the worker', async () => {
+	const scenario = createScenario({
+		failUpsertFor: 'reconcile_stale_checkouts',
+	});
+
+	await scenario.adapter.onApplicationBootstrap();
+
+	// The healthy task is still armed and the worker still consumes the queue, so
+	// one wedged cron entry cannot hold back unrelated jobs.
+	assert.deepEqual(scenario.upserted, [
+		{ name: 'cleanup_expired_order_quotes', cron: '*/15 * * * *' },
+	]);
+	assert.equal(scenario.state.workerStarted, true);
+	assert.ok(
+		scenario.logs.some(
+			(log) =>
+				log.operation === 'arm_schedule' &&
+				log.outcome === 'error' &&
+				log.task_name === 'reconcile_stale_checkouts',
+		),
+		'expected an arm_schedule error event',
+	);
+});
+
+test('a declared task missing from the scheduler listing is reported', async () => {
+	const scenario = createScenario({
+		failUpsertFor: 'cleanup_expired_order_quotes',
+	});
+
+	await scenario.adapter.onApplicationBootstrap();
+
+	assert.ok(
+		scenario.logs.some(
+			(log) =>
+				log.operation === 'verify_schedule' &&
+				log.outcome === 'error' &&
+				log.task_name === 'cleanup_expired_order_quotes',
+		),
+		'expected a verify_schedule error event',
+	);
+});
