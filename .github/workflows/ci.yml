@@ -125,11 +125,13 @@ jobs:
 
       - uses: pnpm/action-setup@v6
 
-      - name: Build Vercel production artifact
+      - name: Stage Vercel production deployment
+        id: vercel
         run: |
           npm install --global vercel@latest
-          vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
-          vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+          deployment_url="$(vercel deploy --prod --skip-domain --yes \
+            --token="${{ secrets.VERCEL_TOKEN }}")"
+          printf 'deployment_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
 
       - name: Configure VPS SSH access
         env:
@@ -162,5 +164,7 @@ jobs:
           exit 1
           REMOTE
 
-      - name: Deploy Vercel
-        run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
+      - name: Promote Vercel deployment
+        run: |
+          vercel promote "${{ steps.vercel.outputs.deployment_url }}" --yes \
+            --token="${{ secrets.VERCEL_TOKEN }}"
