@@ -16,6 +16,7 @@ import type {
 	AdminGovernanceInput,
 	AdminMetricsOutput,
 	AdminOrderOutput,
+	AdminScheduledJobsOutput,
 	AdminSupportTicketOutput,
 	AdminUserOutput,
 } from '../server/admin-contracts';
@@ -34,6 +35,7 @@ import {
 	getAdminMetrics as getAdminMetricsFromApi,
 	getAdminOrderChatMessages as getAdminOrderChatMessagesFromApi,
 	getAdminOrders as getAdminOrdersFromApi,
+	getAdminScheduledJobs as getAdminScheduledJobsFromApi,
 	getAdminSupportTickets as getAdminSupportTicketsFromApi,
 	getAdminUsers as getAdminUsersFromApi,
 	releaseAdminOrderBoosterPayment,
@@ -132,6 +134,16 @@ export const getAdminOrderChatMessages = async (
 		return redirectOnAuthError(error);
 	}
 };
+
+export const getAdminScheduledJobs =
+	async (): Promise<AdminScheduledJobsOutput> => {
+		await getAdminSessionOrRedirect();
+		try {
+			return await getAdminScheduledJobsFromApi(renderReadApiRequest);
+		} catch (error) {
+			return redirectOnAuthError(error);
+		}
+	};
 
 export const getAdminSupportTickets = async (): Promise<
 	AdminSupportTicketOutput[]

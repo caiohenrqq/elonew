@@ -5,6 +5,7 @@ import {
 	type AdminDashboardOutput,
 	type AdminMetricsOutput,
 	type AdminOrderOutput,
+	type AdminScheduledJobsOutput,
 	type AdminSupportTicketOutput,
 	type AdminUserOutput,
 	adminChangeUserRoleInputSchema,
@@ -14,6 +15,7 @@ import {
 	adminMetricsSchema,
 	adminOrderSchema,
 	adminRenameUserInputSchema,
+	adminScheduledJobsSchema,
 	adminSupportTicketSchema,
 	adminUserSchema,
 } from './admin-contracts';
@@ -96,6 +98,20 @@ export const getAdminOrders = async (
 				auth: true,
 			});
 			return adminOrderSchema.array().parse(response);
+		},
+	);
+};
+
+export const getAdminScheduledJobs = async (
+	apiRequest: AuthenticatedApiRequest,
+): Promise<AdminScheduledJobsOutput> => {
+	const path = '/admin/scheduled-jobs';
+	return await withAdminReadErrorContext(
+		'Admin scheduled jobs request',
+		path,
+		async () => {
+			const response = await apiRequest<unknown>(path, { auth: true });
+			return adminScheduledJobsSchema.parse(response);
 		},
 	);
 };
