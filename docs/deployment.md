@@ -74,6 +74,7 @@ The workflow rejects tags whose commit is not contained in `main`, runs all CI
 lanes, applies Prisma migrations, stages a production frontend build in Vercel,
 rebuilds the VPS stack, verifies API health, and promotes the staged frontend.
 The remote Vercel build keeps Sensitive environment variables inside Vercel.
+Production deploy jobs share one queue and run one at a time.
 
 ## Verify
 

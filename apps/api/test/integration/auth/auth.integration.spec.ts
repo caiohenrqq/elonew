@@ -3,7 +3,7 @@ import { AUTH_SESSION_REPOSITORY_KEY } from '@modules/auth/application/ports/aut
 import { AuthController } from '@modules/auth/presentation/auth.controller';
 import { USER_REPOSITORY_KEY } from '@modules/users/application/ports/user-repository.port';
 import { UsersController } from '@modules/users/presentation/users.controller';
-import { Test } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { AppModule } from '../../../src/app.module';
 import { InMemoryAuthSessionRepository } from '../../support/in-memory/auth/in-memory-auth-session.repository';
 import { InMemoryUserRepository } from '../../support/in-memory/users/in-memory-user.repository';
@@ -12,9 +12,10 @@ import { createTestAppSettings } from '../../test-app-settings';
 describe('Auth module integration', () => {
 	let usersController: UsersController;
 	let authController: AuthController;
+	let moduleRef: TestingModule;
 
 	beforeEach(async () => {
-		const moduleRef = await Test.createTestingModule({
+		moduleRef = await Test.createTestingModule({
 			imports: [AppModule],
 		})
 			.overrideProvider(USER_REPOSITORY_KEY)
@@ -27,6 +28,10 @@ describe('Auth module integration', () => {
 
 		usersController = moduleRef.get(UsersController);
 		authController = moduleRef.get(AuthController);
+	});
+
+	afterEach(async () => {
+		await moduleRef.close();
 	});
 
 	it('logs in, rotates refresh tokens, and revokes them on logout', async () => {
