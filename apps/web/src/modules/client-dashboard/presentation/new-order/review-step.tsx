@@ -235,7 +235,7 @@ export const ReviewStep = ({
 							</span>
 							<div className="h-px flex-1 bg-white/5" />
 						</div>
-						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+						<div className="grid grid-cols-1 gap-3">
 							<DetailItem
 								icon={Gamepad2}
 								label="Nome de invocador"
@@ -243,7 +243,6 @@ export const ReviewStep = ({
 								preserveCase
 							/>
 							<DetailItem
-								className="sm:col-span-2"
 								icon={KeyRound}
 								label="Login e senha"
 								value="Solicitados após a confirmação do pagamento"
