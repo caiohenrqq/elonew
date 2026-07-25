@@ -1,0 +1,5 @@
+export const DEFAULT_SCHEDULED_TASKS_QUEUE_NAME = 'scheduled-tasks';
+export const DEFAULT_STALE_CHECKOUT_RECONCILE_CRON = '*/10 * * * *';
+export const DEFAULT_STALE_CHECKOUT_RECONCILE_LIMIT = 50;
+export const DEFAULT_ORDER_QUOTE_CLEANUP_CRON = '*/15 * * * *';
+export const DEFAULT_ORDER_QUOTE_CLEANUP_LIMIT = 500;

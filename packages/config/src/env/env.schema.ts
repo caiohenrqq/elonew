@@ -5,6 +5,7 @@ import {
 } from './chat-socket.config';
 import { databaseEnvSchema } from './database-env.config';
 import { orderCredentialsEncryptionKeySchema } from './order-credentials-encryption-key';
+import { DEFAULT_SCHEDULED_TASKS_QUEUE_NAME } from './scheduled-tasks.config';
 import {
 	DEFAULT_REDIS_URL,
 	DEFAULT_WALLET_FUNDS_RELEASE_QUEUE_NAME,
@@ -156,6 +157,11 @@ export const envSchema = z
 			.trim()
 			.min(1)
 			.default(DEFAULT_WALLET_FUNDS_RELEASE_QUEUE_NAME),
+		SCHEDULED_TASKS_QUEUE_NAME: z
+			.string()
+			.trim()
+			.min(1)
+			.default(DEFAULT_SCHEDULED_TASKS_QUEUE_NAME),
 	})
 	.superRefine((env, context) => {
 		if (env.NODE_ENV !== 'production') return;

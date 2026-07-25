@@ -29,6 +29,7 @@ import {
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import type { PaymentMethod } from '@packages/shared/payments/payment-method';
+import { PAYMENTS_RECONCILE_STALE_CHECKOUTS_INTERNAL_ROUTE } from '@packages/shared/scheduled-tasks/scheduled-tasks.contract';
 import {
 	type CreatePaymentSchemaInput,
 	createPaymentSchema,
@@ -209,7 +210,9 @@ export class PaymentsController {
 		return { success: true };
 	}
 
-	@Post('internal/reconcile-stale-checkouts')
+	@Post(
+		PAYMENTS_RECONCILE_STALE_CHECKOUTS_INTERNAL_ROUTE.replace('/payments/', ''),
+	)
 	@InternalApi()
 	@HttpCode(200)
 	async reconcileStaleCheckouts(
