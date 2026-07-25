@@ -26,6 +26,7 @@ import type {
 	BoosterWalletTransactionsOutput,
 	BoosterWorkOutput,
 } from '../server/booster-contracts';
+import { acceptBoosterOrderSchema } from '../server/booster-contracts';
 import {
 	acceptBoosterOrder,
 	completeBoosterOrder,
@@ -175,14 +176,17 @@ export const acceptBoosterOrderAction = async (
 	formData: FormData,
 ): Promise<void> => {
 	const deadline = formData.get('deadline');
-	if (typeof deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(deadline))
+	if (
+		typeof deadline !== 'string' ||
+		!acceptBoosterOrderSchema.safeParse({ deadline }).success
+	)
 		throw new Error('Prazo inválido.');
 
 	await assertSameOriginRequest();
 	await getBoosterSessionOrRedirect();
 	await acceptBoosterOrder(
 		orderId,
-		{ deadline: `${deadline}T23:59:59.999Z` },
+		{ deadline },
 		api.request,
 	);
 	redirect(`/booster/orders/${encodeURIComponent(orderId)}`);

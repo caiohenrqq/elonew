@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-button';
 import { getButtonClassName } from '@/shared/ui/components/button';
 import { Modal } from '@/shared/ui/components/modal';
@@ -10,9 +10,29 @@ import {
 	completeBoosterOrderAction,
 } from '../actions/booster-actions';
 
+const toDateInputValue = (date: Date) =>
+	`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+		date.getDate(),
+	).padStart(2, '0')}`;
+
+export const deadlineAtLocalEndOfDay = (date: string) => {
+	const [year, month, day] = date.split('-').map(Number);
+	return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString();
+};
+
 export const AcceptBoosterOrderButton = ({ orderId }: { orderId: string }) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const [deadline, setDeadline] = useState('');
+	const [today, setToday] = useState('');
 	const titleId = `accept-order-${orderId}`;
+
+	useEffect(() => setToday(toDateInputValue(new Date())), []);
+
+	const chooseDaysFromToday = (days: number) => {
+		const date = new Date();
+		date.setDate(date.getDate() + days);
+		setDeadline(toDateInputValue(date));
+	};
 
 	return (
 		<>
@@ -51,16 +71,44 @@ export const AcceptBoosterOrderButton = ({ orderId }: { orderId: string }) => {
 						action={acceptBoosterOrderAction.bind(null, orderId)}
 						className="mt-5 grid gap-4"
 					>
+						<input
+							type="hidden"
+							name="deadline"
+							value={deadline ? deadlineAtLocalEndOfDay(deadline) : ''}
+						/>
 						<label className="grid gap-2 text-xs text-white/65">
 							Prazo
 							<input
 								type="date"
-								name="deadline"
 								required
-								min={new Date().toISOString().slice(0, 10)}
+								min={today || undefined}
+								value={deadline}
+								onChange={(event) => setDeadline(event.target.value)}
 								className="h-10 rounded-sm border border-white/10 bg-black/20 px-3 text-sm text-white focus:border-hextech-cyan focus:outline-none"
 							/>
 						</label>
+						<div className="flex flex-wrap gap-2" aria-label="Atalhos de prazo">
+							{[1, 3, 7, 14].map((days) => (
+								<button
+									key={days}
+									type="button"
+									onClick={() => chooseDaysFromToday(days)}
+									className={getButtonClassName({
+										variant: 'outline',
+										size: 'sm',
+									})}
+								>
+									{days} {days === 1 ? 'dia' : 'dias'}
+								</button>
+							))}
+						</div>
+						<p aria-live="polite" className="min-h-4 text-xs text-white/55">
+							{deadline
+								? `Entrega até ${new Intl.DateTimeFormat('pt-BR').format(
+										new Date(`${deadline}T12:00:00`),
+									)}`
+								: 'Selecione a data de entrega.'}
+						</p>
 						<div className="flex justify-end gap-2">
 							<button
 								type="button"

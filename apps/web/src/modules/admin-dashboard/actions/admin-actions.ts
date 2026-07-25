@@ -34,6 +34,7 @@ import {
 	getAdminDashboard as getAdminDashboardFromApi,
 	getAdminMetrics as getAdminMetricsFromApi,
 	getAdminOrderChatMessages as getAdminOrderChatMessagesFromApi,
+	getAdminOrder as getAdminOrderFromApi,
 	getAdminOrders as getAdminOrdersFromApi,
 	getAdminScheduledJobs as getAdminScheduledJobsFromApi,
 	getAdminSupportTickets as getAdminSupportTicketsFromApi,
@@ -47,6 +48,7 @@ import {
 export type AdminGovernanceActionState = {
 	error?: string;
 	success?: boolean;
+	role?: AdminUserOutput['role'];
 };
 
 export type AdminCreateUserActionState = AdminGovernanceActionState;
@@ -113,6 +115,18 @@ export const getAdminOrders = async (): Promise<AdminOrderOutput[]> => {
 	try {
 		return await getAdminOrdersFromApi(renderReadApiRequest);
 	} catch (error) {
+		return redirectOnAuthError(error);
+	}
+};
+
+export const getAdminOrder = async (
+	orderId: string,
+): Promise<AdminOrderOutput | null> => {
+	await getAdminSessionOrRedirect();
+	try {
+		return await getAdminOrderFromApi(orderId, renderReadApiRequest);
+	} catch (error) {
+		if (error instanceof ApiRequestError && error.status === 404) return null;
 		return redirectOnAuthError(error);
 	}
 };
@@ -217,16 +231,14 @@ export const changeAdminUserRoleAction = async (
 	try {
 		await assertSameOriginRequest();
 		await getAdminSessionOrRedirect();
-		await changeAdminUserRole(
-			adminChangeUserRoleInputSchema.parse({
-				targetId: formData.get('targetId'),
-				role: formData.get('role'),
-			}),
-			api.request,
-		);
+		const input = adminChangeUserRoleInputSchema.parse({
+			targetId: formData.get('targetId'),
+			role: formData.get('role'),
+		});
+		await changeAdminUserRole(input, api.request);
 		revalidatePath('/admin');
 		revalidatePath('/admin/users');
-		return { success: true };
+		return { success: true, role: input.role };
 	} catch (error) {
 		return { error: getAuthErrorMessage(error) };
 	}

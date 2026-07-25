@@ -1,6 +1,8 @@
 import { FileText } from 'lucide-react';
 import { DefinitionItem } from '@/shared/dashboard/definition-item';
 import { formatCurrency } from '@/shared/format/currency';
+import { OrderRankRoute } from '@/shared/orders/order-rank-route';
+import { getExtraLabel } from '../../model/new-order-options';
 import {
 	Card,
 	CardContent,
@@ -9,7 +11,6 @@ import {
 } from '@/shared/ui/components/card';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import type { ClientOrder } from '../../model/orders';
-import { OrderRankRoute } from '../order-rank-route';
 import { orderDetailsLayout } from './order-details-layout';
 
 type OrderServiceCardProps = {
@@ -62,6 +63,18 @@ export const OrderServiceCard = ({ order }: OrderServiceCardProps) => {
 						value={formatCurrency(order.totalAmount)}
 						valueClassName="text-hextech-cyan"
 					/>
+				</div>
+				<div className="space-y-2 border-t border-white/10 pt-5">
+					<p className="text-[10px] text-white/40 uppercase tracking-widest">
+						Extras
+					</p>
+					<p className="text-xs leading-relaxed text-white/65">
+						{order.extras?.length
+							? order.extras
+									.map((extra) => getExtraLabel(extra.type))
+									.join(', ')
+							: 'Nenhum extra'}
+					</p>
 				</div>
 			</CardContent>
 		</Card>

@@ -13,6 +13,7 @@ import { DashboardTableSection } from '@/shared/dashboard/dashboard-table-sectio
 import { formatCurrency } from '@/shared/format/currency';
 import { formatDate } from '@/shared/format/date';
 import { formatOrderRoute, formatServiceType } from '@/shared/format/orders';
+import { OrderRankRoute } from '@/shared/orders/order-rank-route';
 import { getButtonClassName } from '@/shared/ui/components/button';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import {
@@ -24,6 +25,7 @@ import {
 } from '@/shared/ui/components/table';
 import { rejectBoosterOrderAction } from '../../actions/booster-actions';
 import type { BoosterOrder } from '../../model/booster-orders';
+import { getExtraLabel } from '@/modules/client-dashboard/model/new-order-options';
 import {
 	AcceptBoosterOrderButton,
 	CompleteBoosterOrderButton,
@@ -121,6 +123,36 @@ const BoosterOrderActions = ({
 	return null;
 };
 
+const BoosterOrderSummary = ({
+	order,
+	compact = false,
+}: {
+	order: BoosterOrder;
+	compact?: boolean;
+}) => (
+	<div className={compact ? 'mt-3 space-y-2 text-xs' : 'space-y-2 text-xs'}>
+		<OrderRankRoute
+			currentLeague={order.currentLeague}
+			currentDivision={order.currentDivision}
+			desiredLeague={order.desiredLeague}
+			desiredDivision={order.desiredDivision}
+		/>
+		<p className="text-white/55">
+			{order.summonerName ?? 'Invocador não informado'} ·{' '}
+			{order.server ?? 'Servidor não informado'} ·{' '}
+			{order.desiredQueue ?? 'Fila não informada'}
+		</p>
+		<p className="text-white/55">
+			{order.currentLp ?? '—'} PDL · ganho estimado de {order.lpGain ?? '—'} PDL
+		</p>
+		{order.extras?.length ? (
+			<p className="text-white/45">
+				Extras: {order.extras.map((extra) => getExtraLabel(extra.type)).join(', ')}
+			</p>
+		) : null}
+	</div>
+);
+
 const BoosterOrderCard = ({
 	order,
 	mode,
@@ -138,8 +170,11 @@ const BoosterOrderCard = ({
 					</p>
 				</div>
 				<p className="mt-2 font-bold text-white/75">
-					{formatOrderRoute(order)}
+					{mode === 'available' ? null : formatOrderRoute(order)}
 				</p>
+				{mode === 'available' ? (
+					<BoosterOrderSummary order={order} compact />
+				) : null}
 			</div>
 			<OrderStatusBadge status={order.status} />
 		</div>
@@ -187,7 +222,11 @@ const BoosterOrderRow = ({
 			</div>
 		</TableCell>
 		<TableCell className="font-bold text-white/70 whitespace-nowrap">
-			{formatOrderRoute(order)}
+			{mode === 'available' ? (
+				<BoosterOrderSummary order={order} />
+			) : (
+				formatOrderRoute(order)
+			)}
 		</TableCell>
 		<TableCell>
 			<OrderStatusBadge status={order.status} />

@@ -1,13 +1,20 @@
 'use client';
 
 import { Ellipsis, MailPlus, UserPlus, Users, X } from 'lucide-react';
-import { useActionState, useEffect, useId, useState } from 'react';
+import { useActionState, useEffect, useId, useRef, useState } from 'react';
 import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import { DashboardTableSection } from '@/shared/dashboard/dashboard-table-section';
 import { formatDateTime } from '@/shared/format/date';
 import { Badge } from '@/shared/ui/components/badge';
 import { getButtonClassName } from '@/shared/ui/components/button';
 import { Modal } from '@/shared/ui/components/modal';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/shared/ui/components/select';
 import {
 	TableBody,
 	TableCell,
@@ -42,13 +49,18 @@ type ActionKind = 'rename' | 'role' | 'block' | null;
 const UserActions = ({
 	user,
 	currentAdminId,
+	onRoleChange,
 }: {
 	user: AdminUserOutput;
 	currentAdminId?: string;
+	onRoleChange: (role: AdminUserOutput['role']) => void;
 }) => {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [kind, setKind] = useState<ActionKind>(null);
 	const titleId = useId();
+	const roleId = useId();
+	const [selectedRole, setSelectedRole] = useState(user.role);
+	const onRoleChangeRef = useRef(onRoleChange);
 	const [renameState, renameAction, renamePending] = useActionState(
 		renameAdminUserAction,
 		{},
@@ -70,12 +82,27 @@ const UserActions = ({
 	);
 
 	useEffect(() => {
-		if (renameState.success || roleState.success || blockState.success)
-			setKind(null);
-	}, [renameState.success, roleState.success, blockState.success]);
+		if (renameState.success || blockState.success) setKind(null);
+		if (roleState.success && roleState.role) {
+			setSelectedRole(roleState.role);
+			onRoleChangeRef.current(roleState.role);
+		}
+	}, [
+		renameState.success,
+		roleState.role,
+		roleState.success,
+		blockState.success,
+	]);
+
+	useEffect(() => {
+		onRoleChangeRef.current = onRoleChange;
+	}, [onRoleChange]);
+
+	useEffect(() => setSelectedRole(user.role), [user.role]);
 
 	const open = (next: Exclude<ActionKind, null>) => {
 		setMenuOpen(false);
+		if (next === 'role') setSelectedRole(user.role);
 		setKind(next);
 	};
 
@@ -201,23 +228,31 @@ const UserActions = ({
 								<strong>{roleLabels[user.role]}</strong> e encerra as sessões
 								atuais. Pedidos e saldo existentes não serão alterados.
 							</p>
-							<label className="grid gap-2 text-xs text-white/60">
-								Novo tipo
-								<select
+							<div className="grid gap-2 text-xs text-white/60">
+								<label htmlFor={roleId}>Novo tipo</label>
+								<Select
 									name="role"
-									defaultValue={user.role}
-									className={cn(fieldSurface, 'bg-black/20')}
+									value={selectedRole}
+									onValueChange={(role) => setSelectedRole(role)}
 								>
-									{roleOptions.map((option) => (
-										<option key={option.value} value={option.value}>
-											{option.label}
-										</option>
-									))}
-								</select>
-							</label>
+									<SelectTrigger id={roleId} className="bg-black/20">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent className="z-[110]">
+										{roleOptions.map((option) => (
+											<SelectItem key={option.value} value={option.value}>
+												{option.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 							<ActionFooter
 								pending={rolePending}
 								error={roleState.error}
+								success={
+									roleState.success ? 'Tipo de conta atualizado.' : undefined
+								}
 								label="Confirmar alteração"
 								close={() => setKind(null)}
 							/>
@@ -250,16 +285,26 @@ const UserActions = ({
 const ActionFooter = ({
 	pending,
 	error,
+	success,
 	label,
 	close,
 }: {
 	pending: boolean;
 	error?: string;
+	success?: string;
 	label: string;
 	close: () => void;
 }) => (
 	<>
-		<p className="min-h-4 text-[10px] text-red-300">{error ?? ''}</p>
+		<p
+			aria-live="polite"
+			className={cn(
+				'min-h-4 text-[10px]',
+				error ? 'text-red-300' : 'text-emerald-300',
+			)}
+		>
+			{error ?? success ?? ''}
+		</p>
 		<div className="flex justify-end gap-2">
 			<button
 				type="button"
@@ -282,9 +327,11 @@ const ActionFooter = ({
 const UserCard = ({
 	user,
 	currentAdminId,
+	onRoleChange,
 }: {
 	user: AdminUserOutput;
 	currentAdminId?: string;
+	onRoleChange: (role: AdminUserOutput['role']) => void;
 }) => {
 	const status = effectiveStatus(user);
 	return (
@@ -296,7 +343,11 @@ const UserCard = ({
 					</p>
 					<p className="mt-1 truncate text-xs text-white/45">{user.email}</p>
 				</div>
-				<UserActions user={user} currentAdminId={currentAdminId} />
+				<UserActions
+					user={user}
+					currentAdminId={currentAdminId}
+					onRoleChange={onRoleChange}
+				/>
 			</div>
 			<div className="mt-4 flex items-center justify-between border-white/5 border-t pt-3">
 				<Badge>{roleLabels[user.role] ?? user.role}</Badge>
@@ -312,65 +363,86 @@ export const AdminUsersTable = ({
 }: {
 	users: AdminUserOutput[];
 	currentAdminId?: string;
-}) => (
-	<DashboardTableSection
-		isEmpty={users.length === 0}
-		colSpan={5}
-		mobileContent={users.map((user) => (
-			<UserCard key={user.id} user={user} currentAdminId={currentAdminId} />
-		))}
-		emptyState={
-			<DashboardEmptyState
-				icon={Users}
-				title="Nenhum usuário encontrado"
-				description="Crie o primeiro usuário para começar a gerenciar contas."
-			/>
-		}
-	>
-		<TableHeader>
-			<TableRow>
-				<TableHead>Usuário</TableHead>
-				<TableHead>Tipo de conta</TableHead>
-				<TableHead>Status</TableHead>
-				<TableHead>Criado em</TableHead>
-				<TableHead>
-					<span className="sr-only">Ações</span>
-				</TableHead>
-			</TableRow>
-		</TableHeader>
-		<TableBody>
-			{users.map((user) => {
-				const status = effectiveStatus(user);
-				return (
-					<TableRow key={user.id}>
-						<TableCell>
-							<div className="min-w-0">
-								<p className="truncate text-sm font-black text-white">
-									{user.username}
-								</p>
-								<p className="mt-1 truncate text-xs text-white/45">
-									{user.email}
-								</p>
-							</div>
-						</TableCell>
-						<TableCell>
-							<Badge>{roleLabels[user.role] ?? user.role}</Badge>
-						</TableCell>
-						<TableCell>
-							<Badge variant={status.variant}>{status.label}</Badge>
-						</TableCell>
-						<TableCell className="text-xs text-white/45">
-							{formatDateTime(user.createdAt)}
-						</TableCell>
-						<TableCell>
-							<UserActions user={user} currentAdminId={currentAdminId} />
-						</TableCell>
-					</TableRow>
-				);
-			})}
-		</TableBody>
-	</DashboardTableSection>
-);
+}) => {
+	const [visibleUsers, setVisibleUsers] = useState(users);
+
+	useEffect(() => setVisibleUsers(users), [users]);
+
+	const updateRole = (userId: string, role: AdminUserOutput['role']) => {
+		setVisibleUsers((current) =>
+			current.map((user) => (user.id === userId ? { ...user, role } : user)),
+		);
+	};
+
+	return (
+		<DashboardTableSection
+			isEmpty={visibleUsers.length === 0}
+			colSpan={5}
+			mobileContent={visibleUsers.map((user) => (
+				<UserCard
+					key={user.id}
+					user={user}
+					currentAdminId={currentAdminId}
+					onRoleChange={(role) => updateRole(user.id, role)}
+				/>
+			))}
+			emptyState={
+				<DashboardEmptyState
+					icon={Users}
+					title="Nenhum usuário encontrado"
+					description="Crie o primeiro usuário para começar a gerenciar contas."
+				/>
+			}
+		>
+			<TableHeader>
+				<TableRow>
+					<TableHead>Usuário</TableHead>
+					<TableHead>Tipo de conta</TableHead>
+					<TableHead>Status</TableHead>
+					<TableHead>Criado em</TableHead>
+					<TableHead>
+						<span className="sr-only">Ações</span>
+					</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{visibleUsers.map((user) => {
+					const status = effectiveStatus(user);
+					return (
+						<TableRow key={user.id}>
+							<TableCell>
+								<div className="min-w-0">
+									<p className="truncate text-sm font-black text-white">
+										{user.username}
+									</p>
+									<p className="mt-1 truncate text-xs text-white/45">
+										{user.email}
+									</p>
+								</div>
+							</TableCell>
+							<TableCell>
+								<Badge>{roleLabels[user.role] ?? user.role}</Badge>
+							</TableCell>
+							<TableCell>
+								<Badge variant={status.variant}>{status.label}</Badge>
+							</TableCell>
+							<TableCell className="text-xs text-white/45">
+								{formatDateTime(user.createdAt)}
+							</TableCell>
+							<TableCell>
+								<UserActions
+									user={user}
+									currentAdminId={currentAdminId}
+									onRoleChange={(role) => updateRole(user.id, role)}
+								/>
+							</TableCell>
+						</TableRow>
+					);
+				})}
+			</TableBody>
+		</DashboardTableSection>
+	);
+};
 
 export const AdminCreateUserDialog = () => {
 	const [open, setOpen] = useState(false);

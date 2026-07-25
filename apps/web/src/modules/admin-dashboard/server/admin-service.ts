@@ -102,6 +102,21 @@ export const getAdminOrders = async (
 	);
 };
 
+export const getAdminOrder = async (
+	orderId: string,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<AdminOrderOutput> => {
+	const path = `/admin/orders/${encodeURIComponent(orderId)}`;
+	return await withAdminReadErrorContext(
+		'Admin order request',
+		path,
+		async () => {
+			const response = await apiRequest<unknown>(path, { auth: true });
+			return adminOrderSchema.parse(response);
+		},
+	);
+};
+
 export const getAdminScheduledJobs = async (
 	apiRequest: AuthenticatedApiRequest,
 ): Promise<AdminScheduledJobsOutput> => {

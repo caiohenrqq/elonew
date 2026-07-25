@@ -14,7 +14,11 @@ export class ApiRequestError extends Error {
 	}
 }
 
-const formatApiError = (_status: number, payload: ApiErrorPayload | null) => {
+export const TOO_MANY_REQUESTS_MESSAGE =
+	'Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.';
+
+const formatApiError = (status: number, payload: ApiErrorPayload | null) => {
+	if (status === 429) return TOO_MANY_REQUESTS_MESSAGE;
 	if (!payload?.message) return `Não foi possível concluir a solicitação.`;
 	if (Array.isArray(payload.message)) return payload.message.join('\n');
 	return payload.message;
@@ -41,6 +45,7 @@ export const apiErrorResponse = (error: unknown) => {
 };
 
 const getPublicHttpErrorMessage = (status: number) => {
+	if (status === 429) return TOO_MANY_REQUESTS_MESSAGE;
 	if (status === 401 || status === 403) {
 		return 'Entre novamente para continuar.';
 	}
