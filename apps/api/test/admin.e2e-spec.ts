@@ -56,6 +56,7 @@ describe('Admin dashboard (e2e)', () => {
 					totalAmount: 99,
 					createdAt: new Date('2026-04-10T10:00:00.000Z'),
 					latestGovernanceAction: null,
+					boosterPayment: null,
 				},
 			];
 		}
@@ -86,7 +87,7 @@ describe('Admin dashboard (e2e)', () => {
 		}
 
 		async findOrderById(): Promise<Order | null> {
-			throw new Error('Unexpected governance repository call.');
+			return null;
 		}
 
 		async saveOrder(): Promise<void> {
@@ -170,6 +171,7 @@ describe('Admin dashboard (e2e)', () => {
 		['POST', '/admin/users/user-1/unblock'],
 		['GET', '/admin/orders'],
 		['POST', '/admin/orders/order-1/force-cancel'],
+		['POST', '/admin/orders/order-1/release-booster-payment'],
 		['GET', '/admin/support/tickets'],
 	])('rejects non-admin access for %s %s', async (method, path) => {
 		const token = signToken({ sub: 'client-1', role: Role.CLIENT });
@@ -179,6 +181,31 @@ describe('Admin dashboard (e2e)', () => {
 		if (method === 'POST') request.send({ reason: 'Audit reason' });
 
 		await request.expect(403).execute();
+	});
+
+	it('maps a missing order to 404 when releasing a booster payment', async () => {
+		const token = signToken({ sub: 'admin-1', role: Role.ADMIN });
+
+		await requestHttp(app)
+			.post('/admin/orders/order-1/release-booster-payment')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ reason: 'Cliente confirmou o boost' })
+			.expect(404)
+			.expect<{ message: string }>(({ body }) => {
+				expect(body.message).toBe('Admin target order not found.');
+			})
+			.execute();
+	});
+
+	it('rejects a booster payment release without a reason', async () => {
+		const token = signToken({ sub: 'admin-1', role: Role.ADMIN });
+
+		await requestHttp(app)
+			.post('/admin/orders/order-1/release-booster-payment')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ reason: ' ' })
+			.expect(400)
+			.execute();
 	});
 
 	it('rejects invalid governance reason payloads', async () => {

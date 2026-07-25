@@ -7,6 +7,7 @@ import { BlockAdminUserUseCase } from '@modules/admin/application/use-cases/bloc
 import { CreateAdminUserUseCase } from '@modules/admin/application/use-cases/create-admin-user/create-admin-user.use-case';
 import { ForceCancelAdminOrderUseCase } from '@modules/admin/application/use-cases/force-cancel-admin-order/force-cancel-admin-order.use-case';
 import { GetAdminDashboardUseCase } from '@modules/admin/application/use-cases/get-admin-dashboard/get-admin-dashboard.use-case';
+import { ReleaseAdminOrderBoosterPaymentUseCase } from '@modules/admin/application/use-cases/release-admin-order-booster-payment/release-admin-order-booster-payment.use-case';
 import { ResendAdminUserPasswordSetupUseCase } from '@modules/admin/application/use-cases/resend-admin-user-password-setup/resend-admin-user-password-setup.use-case';
 import { UnblockAdminUserUseCase } from '@modules/admin/application/use-cases/unblock-admin-user/unblock-admin-user.use-case';
 import { UpdateAdminUserUseCase } from '@modules/admin/application/use-cases/update-admin-user/update-admin-user.use-case';
@@ -16,10 +17,18 @@ import { AdminController } from '@modules/admin/presentation/admin.controller';
 import { AuthModule } from '@modules/auth/auth.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { UsersModule } from '@modules/users/users.module';
+import { WalletModule } from '@modules/wallet/wallet.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, AuthModule, OrdersModule, UsersModule, EmailModule],
+	imports: [
+		PrismaModule,
+		AuthModule,
+		OrdersModule,
+		UsersModule,
+		EmailModule,
+		WalletModule,
+	],
 	controllers: [AdminController],
 	providers: [
 		PrismaAdminDashboardReader,
@@ -40,6 +49,7 @@ import { Module } from '@nestjs/common';
 		UnblockAdminUserUseCase,
 		UpdateAdminUserUseCase,
 		ForceCancelAdminOrderUseCase,
+		ReleaseAdminOrderBoosterPaymentUseCase,
 	],
 })
 export class AdminModule {}

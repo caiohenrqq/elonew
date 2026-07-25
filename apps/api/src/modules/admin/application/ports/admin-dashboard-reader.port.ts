@@ -34,6 +34,12 @@ export type AdminOrderSnapshot = {
 		reason: string;
 		createdAt: Date;
 	} | null;
+	boosterPayment: {
+		amount: number;
+		availableAt: Date;
+		releasedAt: Date | null;
+		releasedBy: 'schedule' | 'admin' | null;
+	} | null;
 };
 
 export type AdminSupportTicketSnapshot = {

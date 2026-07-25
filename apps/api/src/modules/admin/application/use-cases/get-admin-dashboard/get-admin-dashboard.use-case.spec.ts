@@ -38,6 +38,7 @@ class AdminDashboardReaderStub implements AdminDashboardReaderPort {
 			totalAmount: 300,
 			createdAt: new Date('2026-05-01T00:00:00.000Z'),
 			latestGovernanceAction: null,
+			boosterPayment: null,
 		},
 	];
 	tickets: AdminSupportTicketSnapshot[] = [

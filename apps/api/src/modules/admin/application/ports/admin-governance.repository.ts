@@ -12,6 +12,7 @@ export type AdminGovernanceActionType =
 	| 'USER_RENAME'
 	| 'USER_ROLE_CHANGE'
 	| 'ORDER_FORCE_CANCEL'
+	| 'ORDER_BOOSTER_PAYMENT_RELEASE'
 	| 'PAYMENT_LATE_APPROVAL';
 
 export type AdminGovernanceActionInput = {
