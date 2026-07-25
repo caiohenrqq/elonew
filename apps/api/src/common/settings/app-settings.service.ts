@@ -203,6 +203,12 @@ export class AppSettingsService {
 		});
 	}
 
+	get scheduledTasksQueueName() {
+		return this.config.getOrThrow('SCHEDULED_TASKS_QUEUE_NAME', {
+			infer: true,
+		});
+	}
+
 	get isProduction() {
 		return this.nodeEnv === 'production';
 	}
