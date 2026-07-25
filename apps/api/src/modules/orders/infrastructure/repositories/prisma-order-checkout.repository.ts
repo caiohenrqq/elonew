@@ -29,6 +29,7 @@ type QuoteRecord = {
 	couponId: string | null;
 	pricingVersionId: string;
 	serviceType: string;
+	summonerName: string | null;
 	currentLeague: string;
 	currentDivision: string;
 	currentLp: number;
@@ -57,6 +58,7 @@ type OrderRecord = {
 	pricingVersionId: string | null;
 	status: string;
 	serviceType: string | null;
+	summonerName: string | null;
 	currentLeague: string | null;
 	currentDivision: string | null;
 	currentLp: number | null;
@@ -117,6 +119,7 @@ type OrderDelegate = {
 			pricingVersionId: string | null;
 			status: string;
 			serviceType: ServiceType;
+			summonerName: string | null;
 			currentLeague: string;
 			currentDivision: string;
 			currentLp: number;
@@ -209,6 +212,7 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 					pricingVersionId: quote.pricingVersionId,
 					status: OrderStatus.AWAITING_PAYMENT,
 					serviceType: this.mapServiceTypeToPersistence(quote.serviceType),
+					summonerName: quote.summonerName,
 					currentLeague: quote.currentLeague,
 					currentDivision: quote.currentDivision,
 					currentLp: quote.currentLp,
@@ -345,6 +349,7 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
 			requestDetails: {
 				serviceType: this.mapServiceTypeFromPersistence(record.serviceType),
+				summonerName: record.summonerName ?? '',
 				currentLeague: record.currentLeague ?? '',
 				currentDivision: record.currentDivision ?? '',
 				currentLp: record.currentLp ?? 0,

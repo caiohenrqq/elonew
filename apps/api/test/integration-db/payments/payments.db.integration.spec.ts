@@ -62,6 +62,7 @@ describe('Payments module integration (db)', () => {
 		const quote = await ordersController.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -199,6 +200,7 @@ describe('Payments module integration (db)', () => {
 		const quote = await ordersController.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,

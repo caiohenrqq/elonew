@@ -16,6 +16,7 @@ const withTransaction = <T extends object>(prisma: T) =>
 
 const requestDetails = {
 	serviceType: 'elo_boost',
+	summonerName: 'Invocador',
 	currentLeague: 'gold',
 	currentDivision: 'II',
 	currentLp: 50,
@@ -286,5 +287,20 @@ describe('PrismaOrderRepository', () => {
 		await expect(repository.findById('order-1')).rejects.toThrow(
 			'Invalid order status persisted: invalid_status',
 		);
+	});
+	it('keeps orders without stored credentials out of the booster queue', async () => {
+		const findMany = jest.fn().mockResolvedValue([]);
+		const prisma = { order: { findMany, upsert: jest.fn() } };
+		const repository = new PrismaOrderRepository(prisma as never, cipher());
+
+		await repository.findAvailableForBooster('booster-1', 10);
+
+		// A paid order the client has not sent access for must not be offered to
+		// boosters: accepting it moves the order to in_progress, which only
+		// transitions to completed, leaving it permanently stuck.
+		expect(findMany.mock.calls[0][0].where).toMatchObject({
+			status: OrderStatus.PENDING_BOOSTER,
+			credentials: { isNot: null },
+		});
 	});
 });

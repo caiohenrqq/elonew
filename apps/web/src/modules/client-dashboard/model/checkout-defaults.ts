@@ -6,6 +6,7 @@ export const createInitialCheckoutInput = (
 	now = new Date(),
 ): StartCheckoutInput => ({
 	serviceType: 'elo_boost',
+	summonerName: '',
 	extras: [],
 	currentLeague: 'silver',
 	currentDivision: 'IV',

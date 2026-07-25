@@ -53,6 +53,7 @@ describe('Payments (e2e)', () => {
 	function makeQuotePayload() {
 		return {
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			currentLp: 50,
@@ -824,6 +825,7 @@ describe('Payments (e2e)', () => {
 		const quote = await ordersController.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,

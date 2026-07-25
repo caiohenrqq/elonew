@@ -15,6 +15,7 @@ type GetOrderOutput = {
 	id: string;
 	status: OrderStatus;
 	hasCredentials: boolean;
+	summonerName: string | null;
 	subtotal: number | null;
 	totalAmount: number | null;
 	discountAmount: number;
@@ -45,6 +46,7 @@ export class GetOrderUseCase {
 			id: order.id,
 			status: order.status,
 			hasCredentials: order.hasCredentials,
+			summonerName: details?.summonerName ?? null,
 			subtotal: order.subtotal,
 			totalAmount: order.totalAmount,
 			discountAmount: order.discountAmount,

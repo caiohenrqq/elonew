@@ -38,6 +38,6 @@ export class SaveOrderCredentialsUseCase {
 			summonerName: input.summonerName,
 			password: input.password,
 		});
-		await this.orderRepository.save(order);
+		await this.orderRepository.saveCredentials(order);
 	}
 }

@@ -162,6 +162,10 @@ export class InMemoryOrderRepository
 		return Promise.resolve();
 	}
 
+	saveCredentials(order: Order): Promise<void> {
+		return this.save(order);
+	}
+
 	async saveBoosterRejection(order: Order): Promise<void> {
 		await this.save(order);
 	}

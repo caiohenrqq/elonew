@@ -26,6 +26,10 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		this.orders.set(order.id, order);
 	}
 
+	saveCredentials(order: Order): Promise<void> {
+		return this.save(order);
+	}
+
 	insert(order: Order): void {
 		this.orders.set(order.id, order);
 	}
@@ -52,6 +56,7 @@ describe('GetOrderUseCase', () => {
 			id: 'order-1',
 			status: 'awaiting_payment',
 			hasCredentials: false,
+			summonerName: null,
 			subtotal: 25.2,
 			totalAmount: 25.2,
 			discountAmount: 0,

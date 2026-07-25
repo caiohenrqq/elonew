@@ -30,6 +30,10 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		this.orders.set(order.id, order);
 	}
 
+	saveCredentials(order: Order): Promise<void> {
+		return this.save(order);
+	}
+
 	async saveBoosterRejection(order: Order, boosterId: string): Promise<void> {
 		this.rejections.push({ orderId: order.id, boosterId });
 		await this.save(order);

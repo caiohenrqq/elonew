@@ -29,11 +29,13 @@ export type CleanupExpiredOrderQuotesSchemaInput = z.infer<
 	typeof cleanupExpiredOrderQuotesSchema
 >;
 
+// The API is the trust boundary: these bounds must hold for direct callers,
+// not only for the web form.
 export const saveOrderCredentialsSchema = z.object({
-	login: z.string().trim().min(1),
-	summonerName: z.string().trim().min(1),
-	password: z.string().min(1),
-	confirmPassword: z.string().min(1),
+	login: z.string().trim().min(1).max(64),
+	summonerName: z.string().trim().min(1).max(64),
+	password: z.string().min(8).max(128),
+	confirmPassword: z.string().min(8).max(128),
 });
 
 export type SaveOrderCredentialsSchemaInput = z.infer<

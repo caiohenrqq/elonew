@@ -4,11 +4,14 @@ import {
 	checkoutResultSchema,
 	clientDashboardOrdersSchema,
 	type GetOrderOutput,
+	getOrderSchema,
 	type OrderQuoteOutput,
 	type OrderQuotePreviewOutput,
 	orderQuoteSchema,
+	previewCheckoutSchema,
 	type ResumePaymentCheckoutOutput,
 	resumePaymentCheckoutSchema,
+	type SaveOrderCredentialsInput,
 	type StartCheckoutInput,
 	startCheckoutSchema,
 } from './order-contracts';
@@ -46,7 +49,7 @@ export const previewOrderQuote = async (
 	apiRequest: AuthenticatedApiRequest,
 ) => {
 	const { paymentMethod: _paymentMethod, ...body } =
-		startCheckoutSchema.parse(input);
+		previewCheckoutSchema.parse(input);
 
 	return await apiRequest<OrderQuotePreviewOutput>('/orders/quote/preview', {
 		auth: true,
@@ -58,10 +61,27 @@ export const previewOrderQuote = async (
 export const getOrder = async (
 	orderId: string,
 	apiRequest: AuthenticatedApiRequest,
-) => {
-	return await apiRequest<GetOrderOutput>(
+): Promise<GetOrderOutput> => {
+	const response = await apiRequest<unknown>(
 		`/orders/${encodeURIComponent(orderId)}`,
 		{ auth: true },
+	);
+
+	return getOrderSchema.parse(response);
+};
+
+export const saveOrderCredentials = async (
+	orderId: string,
+	input: SaveOrderCredentialsInput,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<void> => {
+	await apiRequest<{ success: true }>(
+		`/orders/${encodeURIComponent(orderId)}/credentials`,
+		{
+			auth: true,
+			method: 'POST',
+			body: JSON.stringify(input),
+		},
 	);
 };
 

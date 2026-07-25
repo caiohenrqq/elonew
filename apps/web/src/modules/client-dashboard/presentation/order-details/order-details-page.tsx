@@ -5,12 +5,20 @@ import type { ChatMessage } from '@/shared/chat/chat.types';
 import { getOrderRatings } from '@/shared/ratings/rating-actions';
 import { RatingCard } from '@/shared/ratings/rating-card';
 import type { RatingOutput } from '@/shared/ratings/rating-contracts';
-import { getOrder, getOrderChatMessages } from '../../actions/order-actions';
+import {
+	getOrder,
+	getOrderChatMessages,
+	saveOrderCredentialsAction,
+} from '../../actions/order-actions';
 import type { ClientOrder } from '../../model/orders';
 import { AwaitingPaymentBanner } from './awaiting-payment-banner';
 import { OrderActivityCard } from './order-activity-card';
 import { OrderBoosterCard } from './order-booster-card';
 import { OrderChatPanel } from './order-chat-panel';
+import {
+	OrderCredentialsCard,
+	OrderCredentialsSavedNotice,
+} from './order-credentials-card';
 import { OrderDetailsHeader } from './order-details-header';
 import { orderDetailsLayout } from './order-details-layout';
 import { OrderDetailsLiveRefresh } from './order-details-live-refresh';
@@ -48,6 +56,10 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 		ratings = await getOrderRatings(order.id);
 	}
 
+	const needsCredentials =
+		!order.hasCredentials &&
+		(order.status === 'pending_booster' || order.status === 'in_progress');
+
 	const chatPanel = (
 		<OrderChatPanel
 			orderId={order.id}
@@ -72,6 +84,15 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 			<OrderDetailsLiveRefresh />
 			<OrderDetailsHeader order={order} />
 			{order.status === 'awaiting_payment' ? <AwaitingPaymentBanner /> : null}
+			{needsCredentials ? (
+				<OrderCredentialsCard
+					action={saveOrderCredentialsAction.bind(null, order.id)}
+					summonerName={order.summonerName ?? ''}
+				/>
+			) : null}
+			{order.hasCredentials && order.status !== 'completed' ? (
+				<OrderCredentialsSavedNotice />
+			) : null}
 
 			<div className={orderDetailsLayout.grid}>
 				{chatPanel}

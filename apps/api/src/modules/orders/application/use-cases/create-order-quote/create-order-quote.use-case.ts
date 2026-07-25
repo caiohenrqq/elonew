@@ -16,6 +16,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 type CreateOrderQuoteInput = OrderQuoteRequestDetails & {
 	clientId: string;
+	summonerName: string;
 	couponCode?: string;
 	now: Date;
 };
@@ -65,6 +66,7 @@ export class CreateOrderQuoteUseCase {
 		const quote = await this.orderQuoteRepository.create({
 			clientId: input.clientId,
 			couponId: couponAdjustedPricing.couponId,
+			summonerName: input.summonerName,
 			requestDetails,
 			pricing: couponAdjustedPricing.pricing,
 			expiresAt: new Date(

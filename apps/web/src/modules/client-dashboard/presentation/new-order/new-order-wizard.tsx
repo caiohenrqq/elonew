@@ -8,7 +8,6 @@ import { gsap, useGSAP } from '@/shared/ui/animation/gsap';
 import { createInitialCheckoutInput } from '../../model/checkout-defaults';
 import { getRankOption } from '../../model/rank-options';
 import type { StartCheckoutInput } from '../../server/order-contracts';
-import type { AccountInput } from './account-step';
 import { CheckoutSummary } from './checkout-summary';
 import { StepIndicator } from './step-indicator';
 import { useCheckoutSubmit } from './use-checkout-submit';
@@ -30,19 +29,12 @@ const AccountStep = dynamic(loadAccountStep);
 const ReviewStep = dynamic(loadReviewStep);
 
 const INITIAL_STEP = 1;
-const INITIAL_ACCOUNT_INPUT: AccountInput = {
-	login: '',
-	summonerName: '',
-	password: '',
-	passwordConfirmation: '',
-};
 
 export const NewOrderWizard = () => {
 	const [step, setStep] = useState(INITIAL_STEP);
 	const [orderInput, setOrderInput] = useState<StartCheckoutInput>(
 		createInitialCheckoutInput,
 	);
-	const [accountInput, setAccountInput] = useState(INITIAL_ACCOUNT_INPUT);
 	const [favoriteBoosterName, setFavoriteBoosterName] = useState('');
 	const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 	const selectedRank = getRankOption(orderInput.desiredLeague);
@@ -130,16 +122,6 @@ export const NewOrderWizard = () => {
 		[orderInput.extras],
 	);
 
-	const updateAccountInput = useCallback(
-		(key: keyof AccountInput, value: string) => {
-			setAccountInput((previousInput) => ({
-				...previousInput,
-				[key]: value,
-			}));
-		},
-		[],
-	);
-
 	const handleCouponCodeChange = useCallback(
 		(couponCode: string) => {
 			updateOrderInput('couponCode', couponCode || undefined);
@@ -195,9 +177,11 @@ export const NewOrderWizard = () => {
 						{step === 3 ? (
 							<WizardStepTransition stepKey="step3">
 								<AccountStep
-									accountInput={accountInput}
+									summonerName={orderInput.summonerName}
 									onBack={() => setStep(2)}
-									onChange={updateAccountInput}
+									onChange={(summonerName) =>
+										updateOrderInput('summonerName', summonerName)
+									}
 									onNext={() => setStep(4)}
 									onNextIntent={preloadReviewStep}
 								/>
@@ -207,7 +191,6 @@ export const NewOrderWizard = () => {
 						{step === 4 ? (
 							<WizardStepTransition stepKey="step4">
 								<ReviewStep
-									accountInput={accountInput}
 									favoriteBoosterName={favoriteBoosterName}
 									orderInput={orderInput}
 									hasAcceptedTerms={hasAcceptedTerms}

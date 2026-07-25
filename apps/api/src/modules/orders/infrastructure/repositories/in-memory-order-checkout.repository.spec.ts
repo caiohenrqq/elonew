@@ -53,6 +53,10 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		this.orders.set(order.id, order);
 	}
 
+	saveCredentials(order: Order): Promise<void> {
+		return this.save(order);
+	}
+
 	async existsForClient(clientId: string): Promise<boolean> {
 		return Array.from(this.orders.values()).some(
 			(order) => order.clientId === clientId,
@@ -152,6 +156,7 @@ class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 
 		return {
 			couponId: quote.couponId,
+			summonerName: 'Invocador',
 			requestDetails: quote.requestDetails,
 			pricing: quote.pricing,
 		};
@@ -315,7 +320,10 @@ describe('InMemoryOrderCheckoutRepository', () => {
 			clientId: 'client-1',
 			couponId: null,
 			pricingVersionId: 'pricing-version-1',
-			requestDetails: makeQuote().requestDetails,
+			requestDetails: {
+				...makeQuote().requestDetails,
+				summonerName: 'Invocador',
+			},
 			pricing: makeQuote().pricing,
 		});
 		existingOrder.confirmPayment();

@@ -29,6 +29,7 @@ const makeOrder = () =>
 		clientId: 'client-1',
 		requestDetails: {
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'iron',
 			currentDivision: 'IV',
 			currentLp: 0,

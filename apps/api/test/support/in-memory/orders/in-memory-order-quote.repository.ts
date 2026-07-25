@@ -11,6 +11,7 @@ type StoredQuote = {
 	id: string;
 	clientId: string;
 	couponId: string | null;
+	summonerName: string;
 	requestDetails: OrderQuoteSnapshot['requestDetails'];
 	pricing: OrderQuoteSnapshot['pricing'];
 	expiresAt: Date;
@@ -26,6 +27,7 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 	create(input: {
 		clientId: string;
 		couponId: string | null;
+		summonerName: string;
 		requestDetails: OrderQuoteSnapshot['requestDetails'];
 		pricing: OrderQuoteSnapshot['pricing'];
 		expiresAt: Date;
@@ -34,6 +36,7 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 			id: `quote-${this.nextId++}`,
 			clientId: input.clientId,
 			couponId: input.couponId,
+			summonerName: input.summonerName,
 			requestDetails: input.requestDetails,
 			pricing: input.pricing,
 			expiresAt: input.expiresAt,
@@ -62,6 +65,7 @@ export class InMemoryOrderQuoteRepository implements OrderQuoteRepositoryPort {
 
 		return Promise.resolve({
 			couponId: quote.couponId,
+			summonerName: quote.summonerName,
 			requestDetails: quote.requestDetails,
 			pricing: quote.pricing,
 		});

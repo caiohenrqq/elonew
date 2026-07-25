@@ -30,6 +30,7 @@ type OrderRecord = {
 	pricingVersionId: string | null;
 	status: string;
 	serviceType: string | null;
+	summonerName: string | null;
 	currentLeague: string | null;
 	currentDivision: string | null;
 	currentLp: number | null;
@@ -72,6 +73,7 @@ type OrderDelegate = {
 			| { clientId: string }
 			| {
 					status: string;
+					credentials?: { isNot: null };
 					OR?: Array<{ boosterId: string | null }>;
 					boosterId?: string;
 					boosterRejections?: { none: { boosterId: string } };
@@ -96,6 +98,7 @@ type OrderDelegate = {
 			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
+			summonerName: string | null;
 			currentLeague: string | null;
 			currentDivision: string | null;
 			currentLp: number | null;
@@ -137,6 +140,7 @@ type OrderDelegate = {
 			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
+			summonerName: string | null;
 			currentLeague: string | null;
 			currentDivision: string | null;
 			currentLp: number | null;
@@ -173,6 +177,7 @@ type OrderDelegate = {
 			pricingVersionId: string | null;
 			status: string;
 			serviceType: string | null;
+			summonerName: string | null;
 			currentLeague: string | null;
 			currentDivision: string | null;
 			currentLp: number | null;
@@ -211,6 +216,18 @@ type OrderDelegate = {
 				| undefined;
 		};
 	}): Promise<OrderRecord>;
+	update(args: {
+		where: { id: string; status: { in: string[] } };
+		data: {
+			summonerName: string | null;
+			credentials: {
+				upsert: {
+					create: { login: string; summonerName: string; password: string };
+					update: { login: string; summonerName: string; password: string };
+				};
+			};
+		};
+	}): Promise<unknown>;
 };
 
 type OrderCredentialsDelegate = {
@@ -344,6 +361,7 @@ export class PrismaOrderRepository
 		const records = await this.getDelegate().findMany({
 			where: {
 				status: OrderStatus.PENDING_BOOSTER,
+				credentials: { isNot: null },
 				OR: [{ boosterId: null }, { boosterId }],
 				boosterRejections: { none: { boosterId } },
 			},
@@ -418,6 +436,29 @@ export class PrismaOrderRepository
 				update: {},
 			});
 			await this.saveWithClient(order, client);
+		});
+	}
+
+	// A full-row upsert would write back the status, booster assignment and
+	// extras read before the form was submitted, reverting a booster who
+	// accepted the order in the meantime. Only the credential fields are
+	// written here, and only while the order still allows storing them.
+	async saveCredentials(order: Order): Promise<void> {
+		const credentials = this.mapCredentialsUpdate(order);
+		if (!credentials)
+			throw new Error('Cannot save an order without pending credentials.');
+
+		await this.getDelegate().update({
+			where: {
+				id: order.id,
+				status: {
+					in: [OrderStatus.PENDING_BOOSTER, OrderStatus.IN_PROGRESS],
+				},
+			},
+			data: {
+				summonerName: order.requestDetails?.summonerName || null,
+				credentials,
+			},
 		});
 	}
 
@@ -658,6 +699,7 @@ export class PrismaOrderRepository
 
 	private mapRequestDetails(requestDetails: OrderRequestDetails | null): {
 		serviceType: string | null;
+		summonerName: string | null;
 		currentLeague: string | null;
 		currentDivision: string | null;
 		currentLp: number | null;
@@ -672,6 +714,7 @@ export class PrismaOrderRepository
 			serviceType: requestDetails
 				? this.mapServiceTypeToPersistence(requestDetails.serviceType)
 				: null,
+			summonerName: requestDetails?.summonerName || null,
 			currentLeague: requestDetails?.currentLeague ?? null,
 			currentDivision: requestDetails?.currentDivision ?? null,
 			currentLp: requestDetails?.currentLp ?? null,
@@ -703,6 +746,7 @@ export class PrismaOrderRepository
 
 		return {
 			serviceType: this.mapServiceTypeFromPersistence(record.serviceType),
+			summonerName: record.summonerName ?? '',
 			currentLeague: record.currentLeague,
 			currentDivision: record.currentDivision,
 			currentLp: record.currentLp,

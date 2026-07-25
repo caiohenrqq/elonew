@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { api } from '@/shared/api-client-management/api-client';
 import { ApiRequestError } from '@/shared/api-client-management/http';
@@ -21,13 +22,17 @@ import {
 	getOrder as getOrderFromApi,
 	previewOrderQuote,
 	resumePaymentCheckout,
+	saveOrderCredentials,
 	startCheckout,
 } from '../server/checkout-service';
 import {
 	type ClientDashboardOrdersOutput,
 	type GetOrderOutput,
 	type OrderQuotePreviewOutput,
+	type PreviewCheckoutInput,
+	previewCheckoutSchema,
 	type StartCheckoutInput,
+	saveOrderCredentialsSchema,
 	startCheckoutSchema,
 } from '../server/order-contracts';
 import type { SupportTicketOutput } from '../server/ticket-contracts';
@@ -49,6 +54,11 @@ export type ResumePaymentCheckoutActionState = {
 	error?: string;
 };
 
+export type SaveOrderCredentialsActionState = {
+	error?: string;
+	success?: string;
+};
+
 export type CreateSupportTicketActionState = {
 	error?: string;
 	success?: string;
@@ -65,9 +75,9 @@ export type QuotePreviewActionState =
 	  };
 
 export const previewOrderQuoteAction = async (
-	input: StartCheckoutInput,
+	input: PreviewCheckoutInput,
 ): Promise<QuotePreviewActionState> => {
-	const parsed = startCheckoutSchema.safeParse(input);
+	const parsed = previewCheckoutSchema.safeParse(input);
 	if (!parsed.success) {
 		return { error: parsed.error.issues[0]?.message ?? 'Dados inválidos.' };
 	}
@@ -113,6 +123,56 @@ export const getOrder = async (orderId: string): Promise<GetOrderOutput> => {
 		);
 	} catch (error) {
 		return redirectOnAuthError(error);
+	}
+};
+
+const credentialsErrorMap: Record<string, string> = {
+	'Order credentials can only be stored after payment confirmation.':
+		'Os dados da conta só podem ser enviados após a confirmação do pagamento.',
+	'Order credentials password confirmation does not match.':
+		'As senhas não coincidem.',
+};
+
+export const saveOrderCredentialsAction = async (
+	orderId: string,
+	_state: SaveOrderCredentialsActionState,
+	formData: FormData,
+): Promise<SaveOrderCredentialsActionState> => {
+	const parsed = saveOrderCredentialsSchema.safeParse({
+		login: formData.get('login'),
+		summonerName: formData.get('summonerName'),
+		password: formData.get('password'),
+		confirmPassword: formData.get('confirmPassword'),
+	});
+	if (!parsed.success) {
+		return {
+			error: parsed.error.issues[0]?.message ?? 'Revise os dados da conta.',
+		};
+	}
+
+	try {
+		const session = await getAuthSession();
+		if (!session) return { error: 'Sessão expirada. Entre novamente.' };
+
+		await assertSameOriginRequest();
+		await saveOrderCredentials(orderId, parsed.data, api.request);
+		revalidatePath(`/client/orders/${orderId}`);
+
+		return { success: 'Dados da conta enviados com segurança.' };
+	} catch (error) {
+		if (error instanceof ApiRequestError) {
+			if (error.status === 401 || error.status === 403)
+				return { error: 'Entre novamente para continuar.' };
+			if (error.status === 400)
+				return {
+					error:
+						credentialsErrorMap[error.message] ??
+						'Revise os dados da conta e tente novamente.',
+				};
+			if (error.status === 404) return { error: 'Pedido não encontrado.' };
+		}
+
+		return { error: 'Não foi possível enviar os dados da conta agora.' };
 	}
 };
 

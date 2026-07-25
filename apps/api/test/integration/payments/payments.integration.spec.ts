@@ -55,6 +55,7 @@ describe('Payments module integration', () => {
 		const quote = await ordersController.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,

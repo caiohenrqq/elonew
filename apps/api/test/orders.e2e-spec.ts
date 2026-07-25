@@ -86,6 +86,7 @@ describe('Orders (e2e)', () => {
 	function makeQuotePayload() {
 		return {
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			currentLp: 50,
@@ -237,6 +238,7 @@ describe('Orders (e2e)', () => {
 				id: createdOrder.id,
 				status: 'awaiting_payment',
 				hasCredentials: false,
+				summonerName: 'Invocador',
 				subtotal: 2520,
 				totalAmount: 2520,
 				discountAmount: 0,
@@ -403,6 +405,7 @@ describe('Orders (e2e)', () => {
 				id: createdOrder.id,
 				status: 'in_progress',
 				hasCredentials: false,
+				summonerName: 'Invocador',
 				subtotal: 2520,
 				totalAmount: 2520,
 				discountAmount: 0,
@@ -680,6 +683,31 @@ describe('Orders (e2e)', () => {
 			})
 			.expect(400)
 			.execute();
+	});
+
+	it('rejects a quote without a summoner name', async () => {
+		const token = signToken({ sub: 'client-no-summoner', role: 'CLIENT' });
+		const { summonerName: _summonerName, ...payload } = makeQuotePayload();
+
+		await requestHttp(app)
+			.post('/orders/quote')
+			.set('Authorization', `Bearer ${token}`)
+			.send(payload)
+			.expect(400);
+	});
+
+	it('previews a quote without requiring a summoner name', async () => {
+		const token = signToken({
+			sub: 'client-preview-no-summoner',
+			role: 'CLIENT',
+		});
+		const { summonerName: _summonerName, ...payload } = makeQuotePayload();
+
+		await requestHttp(app)
+			.post('/orders/quote/preview')
+			.set('Authorization', `Bearer ${token}`)
+			.send(payload)
+			.expect(201);
 	});
 
 	it('previews quote pricing without persisting a quote', async () => {
@@ -964,8 +992,8 @@ describe('Orders (e2e)', () => {
 			.send({
 				login: 'login',
 				summonerName: 'summoner',
-				password: 'secret',
-				confirmPassword: 'secret',
+				password: 'secret-forte',
+				confirmPassword: 'secret-forte',
 			})
 			.expect(404, {
 				message: 'Order not found.',

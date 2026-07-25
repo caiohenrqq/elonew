@@ -66,6 +66,7 @@ describe('Orders module integration', () => {
 	function makeQuotePayload() {
 		return {
 			serviceType: 'elo_boost' as const,
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			currentLp: 50,
@@ -165,6 +166,7 @@ describe('Orders module integration', () => {
 			totalAmount: 2520,
 			discountAmount: 0,
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			desiredLeague: 'platinum',
@@ -372,6 +374,9 @@ describe('Orders module integration', () => {
 			totalAmount: 2520,
 			discountAmount: 0,
 			serviceType: 'elo_boost',
+			// Mirrored from the credentials the client confirmed, and retained
+			// after the credentials row was destroyed on completion.
+			summonerName: 'summoner',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			desiredLeague: 'platinum',

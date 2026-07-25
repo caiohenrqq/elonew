@@ -80,6 +80,7 @@ describe('Orders module integration (db)', () => {
 		const quote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -195,6 +196,7 @@ describe('Orders module integration (db)', () => {
 			totalAmount: 2520,
 			discountAmount: 0,
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			desiredLeague: 'platinum',
@@ -206,6 +208,7 @@ describe('Orders module integration (db)', () => {
 		const oldUnusedQuote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -225,6 +228,7 @@ describe('Orders module integration (db)', () => {
 		const recentExpiredQuote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -274,6 +278,7 @@ describe('Orders module integration (db)', () => {
 		const firstQuote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -289,6 +294,7 @@ describe('Orders module integration (db)', () => {
 		const secondQuote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -351,6 +357,7 @@ describe('Orders module integration (db)', () => {
 		const quote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -408,6 +415,7 @@ describe('Orders module integration (db)', () => {
 			controller.quote(
 				{
 					serviceType: 'elo_boost',
+					summonerName: 'Invocador',
 					currentLeague: 'gold',
 					currentDivision: 'II',
 					currentLp: 50,
@@ -427,6 +435,7 @@ describe('Orders module integration (db)', () => {
 		const quote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -491,6 +500,7 @@ describe('Orders module integration (db)', () => {
 		const firstQuote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -507,6 +517,7 @@ describe('Orders module integration (db)', () => {
 		const secondQuote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -557,6 +568,7 @@ describe('Orders module integration (db)', () => {
 		const firstQuote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -573,6 +585,7 @@ describe('Orders module integration (db)', () => {
 		const secondQuote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -639,6 +652,7 @@ describe('Orders module integration (db)', () => {
 		const quote = await controller.quote(
 			{
 				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
 				currentLeague: 'gold',
 				currentDivision: 'II',
 				currentLp: 50,
@@ -750,6 +764,7 @@ describe('Orders module integration (db)', () => {
 			totalAmount: 2520,
 			discountAmount: 0,
 			serviceType: 'elo_boost',
+			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			desiredLeague: 'platinum',
@@ -792,6 +807,7 @@ describe('Orders module integration (db)', () => {
 						await controller.quote(
 							{
 								serviceType: 'elo_boost',
+								summonerName: 'Invocador',
 								currentLeague: 'gold',
 								currentDivision: 'II',
 								currentLp: 50,
@@ -847,6 +863,51 @@ describe('Orders module integration (db)', () => {
 		});
 	});
 
+	it('offers the booster queue only orders whose credentials were sent', async () => {
+		const withoutCredentials = await createQuotedOrder();
+		await markOrderAsPaidUseCase.execute({ orderId: withoutCredentials.id });
+
+		const withCredentials = await createQuotedOrder();
+		await markOrderAsPaidUseCase.execute({ orderId: withCredentials.id });
+		await controller.saveCredentials(
+			withCredentials.id,
+			{
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			},
+			clientUser,
+		);
+
+		const queue = await controller.listBoosterQueue({ limit: 50 }, boosterUser);
+		const queuedIds = queue.availableOrders.map((order) => order.id);
+
+		expect(queuedIds).toContain(withCredentials.id);
+		expect(queuedIds).not.toContain(withoutCredentials.id);
+	});
+
+	it('mirrors the confirmed summoner name onto the retained order column', async () => {
+		const createdOrder = await createQuotedOrder();
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await controller.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login-db',
+				summonerName: 'Nome Corrigido',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			},
+			clientUser,
+		);
+
+		// The credentials row is destroyed on completion, so the corrected name
+		// has to survive on the order itself.
+		await expect(
+			prisma.order.findUnique({ where: { id: createdOrder.id } }),
+		).resolves.toMatchObject({ summonerName: 'Nome Corrigido' });
+	});
+
 	it('deletes credentials after order completion', async () => {
 		const createdOrder = await createQuotedOrder();
 		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
@@ -875,6 +936,9 @@ describe('Orders module integration (db)', () => {
 			totalAmount: 2520,
 			discountAmount: 0,
 			serviceType: 'elo_boost',
+			// Mirrored from the credentials the client confirmed, and retained
+			// after the credentials row itself was destroyed.
+			summonerName: 'summoner-db',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			desiredLeague: 'platinum',

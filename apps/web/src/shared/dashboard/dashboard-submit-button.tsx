@@ -13,6 +13,7 @@ import { cn } from '@/shared/ui/utils/cn';
 type DashboardSubmitButtonProps = {
 	children: ReactNode;
 	className?: string;
+	disabled?: boolean;
 	pendingLabel?: string;
 	size?: ButtonSize;
 	variant?: ButtonVariant;
@@ -21,6 +22,7 @@ type DashboardSubmitButtonProps = {
 export const DashboardSubmitButton = ({
 	children,
 	className,
+	disabled = false,
 	pendingLabel = 'Processando',
 	size = 'sm',
 	variant = 'primary',
@@ -30,7 +32,7 @@ export const DashboardSubmitButton = ({
 	return (
 		<button
 			type="submit"
-			disabled={pending}
+			disabled={pending || disabled}
 			aria-busy={pending}
 			className={getButtonClassName({
 				variant,
