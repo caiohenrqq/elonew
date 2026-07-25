@@ -57,7 +57,7 @@ export class Order {
 		private readonly currentPricingVersionId: string | null,
 		private currentStatus: OrderStatus,
 		private pendingCredentialsValue: OrderCredentials | null,
-		private readonly currentRequestDetails: OrderRequestDetails | null,
+		private currentRequestDetails: OrderRequestDetails | null,
 		private readonly currentSubtotal: number | null,
 		private readonly currentTotalAmount: number | null,
 		private readonly currentDiscountAmount: number,
@@ -253,6 +253,14 @@ export class Order {
 			throw new OrderCredentialsStorageNotAllowedError();
 
 		this.pendingCredentialsValue = credentials;
+
+		// The credentials row is destroyed when the order ends, so the summoner
+		// name the client confirmed here is mirrored onto the retained column.
+		if (this.currentRequestDetails)
+			this.currentRequestDetails = {
+				...this.currentRequestDetails,
+				summonerName: credentials.summonerName,
+			};
 	}
 
 	clearCredentials(): void {
