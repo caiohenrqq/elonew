@@ -4,6 +4,7 @@ import {
 	checkoutResultSchema,
 	clientDashboardOrdersSchema,
 	type GetOrderOutput,
+	getOrderSchema,
 	type OrderQuoteOutput,
 	type OrderQuotePreviewOutput,
 	orderQuoteSchema,
@@ -60,11 +61,13 @@ export const previewOrderQuote = async (
 export const getOrder = async (
 	orderId: string,
 	apiRequest: AuthenticatedApiRequest,
-) => {
-	return await apiRequest<GetOrderOutput>(
+): Promise<GetOrderOutput> => {
+	const response = await apiRequest<unknown>(
 		`/orders/${encodeURIComponent(orderId)}`,
 		{ auth: true },
 	);
+
+	return getOrderSchema.parse(response);
 };
 
 export const saveOrderCredentials = async (

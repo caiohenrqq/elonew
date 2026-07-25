@@ -88,10 +88,24 @@ export type CreatePaymentOutput = {
 
 export const saveOrderCredentialsSchema = z
 	.object({
-		login: z.string().trim().min(8).max(64),
-		summonerName: z.string().trim().min(1).max(64),
-		password: z.string().min(8).max(128),
-		confirmPassword: z.string().min(8).max(128),
+		login: z
+			.string()
+			.trim()
+			.min(1, 'Informe o login da conta.')
+			.max(64, 'O login deve ter no máximo 64 caracteres.'),
+		summonerName: z
+			.string()
+			.trim()
+			.min(1, 'Informe o nome de invocador.')
+			.max(64, 'O nome de invocador deve ter no máximo 64 caracteres.'),
+		password: z
+			.string()
+			.min(8, 'A senha deve ter entre 8 e 128 caracteres.')
+			.max(128, 'A senha deve ter entre 8 e 128 caracteres.'),
+		confirmPassword: z
+			.string()
+			.min(8, 'A senha deve ter entre 8 e 128 caracteres.')
+			.max(128, 'A senha deve ter entre 8 e 128 caracteres.'),
 	})
 	.refine((input) => input.password === input.confirmPassword, {
 		message: 'As senhas não coincidem.',
@@ -102,20 +116,22 @@ export type SaveOrderCredentialsInput = z.infer<
 	typeof saveOrderCredentialsSchema
 >;
 
-export type GetOrderOutput = {
-	id: string;
-	status: string;
-	hasCredentials: boolean;
-	summonerName: string | null;
-	subtotal: number | null;
-	totalAmount: number | null;
-	discountAmount: number;
-	serviceType: string | null;
-	currentLeague: string | null;
-	currentDivision: string | null;
-	desiredLeague: string | null;
-	desiredDivision: string | null;
-};
+export const getOrderSchema = z.object({
+	id: z.string(),
+	status: z.string(),
+	hasCredentials: z.boolean(),
+	summonerName: z.string().nullable(),
+	subtotal: z.number().nullable(),
+	totalAmount: z.number().nullable(),
+	discountAmount: z.number(),
+	serviceType: z.string().nullable(),
+	currentLeague: z.string().nullable(),
+	currentDivision: z.string().nullable(),
+	desiredLeague: z.string().nullable(),
+	desiredDivision: z.string().nullable(),
+});
+
+export type GetOrderOutput = z.infer<typeof getOrderSchema>;
 
 export const clientDashboardOrderSchema = z.object({
 	id: z.string(),

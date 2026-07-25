@@ -35,8 +35,8 @@ export const OrderCredentialsCard = ({
 					aria-hidden="true"
 				/>
 				<p className="text-xs font-bold tracking-wider text-emerald-300">
-					{state.success} O booster recebe o acesso apenas quando assume o
-					pedido.
+					{state.success} Os dados ficam criptografados e são apagados quando o
+					pedido termina.
 				</p>
 			</div>
 		);
@@ -65,14 +65,13 @@ export const OrderCredentialsCard = ({
 							id="credentials-login"
 							name="login"
 							autoComplete="off"
-							minLength={8}
 							maxLength={64}
 							aria-describedby="credentials-login-help"
 							className="h-12 text-base md:text-sm"
 							required
 						/>
 						<p id="credentials-login-help" className="text-sm text-white/55">
-							Use entre 8 e 64 caracteres.
+							O login usado para entrar na conta.
 						</p>
 					</div>
 					<div className="space-y-3">
@@ -127,6 +126,7 @@ export const OrderCredentialsCard = ({
 					<DashboardSubmitButton
 						className="h-10 w-full sm:w-auto"
 						pendingLabel="Enviando"
+						disabled={!passwordsMatch}
 					>
 						<ShieldCheck className="h-3 w-3" />
 						Enviar acesso
