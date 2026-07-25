@@ -23,11 +23,13 @@ const createContext = (request: Partial<RequestStub>): ExecutionContext => {
 		headers: {},
 		...request,
 	};
+	const handler = function testHandler() {};
+	const controller = class TestController {};
 
 	return {
 		getType: () => 'http',
-		getHandler: () => function testHandler() {},
-		getClass: () => class TestController {},
+		getHandler: () => handler,
+		getClass: () => controller,
 		switchToHttp: () => ({
 			getRequest: () => fullRequest,
 			getResponse: () => ({ header: jest.fn() }),
