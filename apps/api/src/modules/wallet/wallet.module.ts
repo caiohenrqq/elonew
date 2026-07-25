@@ -1,10 +1,13 @@
+import { LoggingModule } from '@app/common/logging/logging.module';
 import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { ORDER_COMPLETION_EARNINGS_PORT_KEY } from '@modules/orders/application/ports/order-completion-earnings.port';
+import { WalletLifecycleLogger } from '@modules/wallet/application/logging/wallet-lifecycle.logger';
 import { WALLET_FUNDS_RELEASE_JOB_SCHEDULER_PORT_KEY } from '@modules/wallet/application/ports/wallet-funds-release-job-scheduler.port';
 import { WALLET_REPOSITORY_KEY } from '@modules/wallet/application/ports/wallet-repository.port';
 import { WALLET_TRANSACTION_READER_KEY } from '@modules/wallet/application/ports/wallet-transaction-reader.port';
 import { CreditCompletedOrderEarningsUseCase } from '@modules/wallet/application/use-cases/credit-completed-order-earnings/credit-completed-order-earnings.use-case';
+import { ForceReleaseOrderCompletionFundsUseCase } from '@modules/wallet/application/use-cases/force-release-order-completion-funds/force-release-order-completion-funds.use-case';
 import { GetWalletUseCase } from '@modules/wallet/application/use-cases/get-wallet/get-wallet.use-case';
 import { ListWalletTransactionsUseCase } from '@modules/wallet/application/use-cases/list-wallet-transactions/list-wallet-transactions.use-case';
 import { ReleaseMaturedWalletFundsUseCase } from '@modules/wallet/application/use-cases/release-matured-wallet-funds/release-matured-wallet-funds.use-case';
@@ -16,7 +19,7 @@ import { WalletsController } from '@modules/wallet/presentation/wallets.controll
 import { Module } from '@nestjs/common';
 
 @Module({
-	imports: [PrismaModule, AuthModule],
+	imports: [PrismaModule, LoggingModule, AuthModule],
 	controllers: [WalletsController],
 	providers: [
 		PrismaWalletRepository,
@@ -38,10 +41,12 @@ import { Module } from '@nestjs/common';
 			provide: ORDER_COMPLETION_EARNINGS_PORT_KEY,
 			useExisting: OrderCompletionEarningsFromWalletAdapter,
 		},
+		WalletLifecycleLogger,
 		GetWalletUseCase,
 		ListWalletTransactionsUseCase,
 		CreditCompletedOrderEarningsUseCase,
 		ReleaseMaturedWalletFundsUseCase,
+		ForceReleaseOrderCompletionFundsUseCase,
 		RequestWithdrawalUseCase,
 	],
 	exports: [
@@ -50,6 +55,7 @@ import { Module } from '@nestjs/common';
 		ListWalletTransactionsUseCase,
 		CreditCompletedOrderEarningsUseCase,
 		ReleaseMaturedWalletFundsUseCase,
+		ForceReleaseOrderCompletionFundsUseCase,
 		RequestWithdrawalUseCase,
 	],
 })

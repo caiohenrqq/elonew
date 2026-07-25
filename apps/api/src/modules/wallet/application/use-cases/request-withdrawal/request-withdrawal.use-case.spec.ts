@@ -35,8 +35,12 @@ describe('RequestWithdrawalUseCase', () => {
 			orderId: 'order-1',
 			amount: 7000,
 			availableAt: new Date('2026-03-10T12:00:00.000Z'),
+			createdAt: new Date('2026-03-07T12:00:00.000Z'),
 		});
-		wallet.releaseMaturedFunds(new Date('2026-03-12T12:00:00.000Z'));
+		wallet.releaseOrderCompletionFunds({
+			orderId: 'order-1',
+			now: new Date('2026-03-12T12:00:00.000Z'),
+		});
 		repository.insert(wallet);
 
 		const useCase = new RequestWithdrawalUseCase(repository);
