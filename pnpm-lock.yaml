@@ -274,6 +274,9 @@ importers:
       ioredis:
         specifier: ^5.10.0
         version: 5.10.0
+      pino:
+        specifier: ^10.3.1
+        version: 10.3.1
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -299,6 +302,9 @@ importers:
 
   packages/config:
     dependencies:
+      cron-parser:
+        specifier: ^4.9.0
+        version: 4.9.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6

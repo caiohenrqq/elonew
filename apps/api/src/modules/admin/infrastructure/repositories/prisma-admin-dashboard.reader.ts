@@ -35,6 +35,12 @@ type AdminOrderRecord = {
 		reason: string;
 		createdAt: Date;
 	}>;
+	walletTransactions: Array<{
+		amount: number;
+		availableAt: Date;
+		releasedAt: Date | null;
+		releasedBy: 'SCHEDULE' | 'ADMIN' | null;
+	}>;
 };
 
 type AdminTicketRecord = {
@@ -87,6 +93,17 @@ type AdminDashboardPrismaClient = {
 				createdAt: true;
 				adminGovernanceActions: {
 					select: { actionType: true; reason: true; createdAt: true };
+					orderBy: { createdAt: 'desc' };
+					take: 1;
+				};
+				walletTransactions: {
+					where: { type: 'CREDIT'; reason: 'order_completion' };
+					select: {
+						amount: true;
+						availableAt: true;
+						releasedAt: true;
+						releasedBy: true;
+					};
 					orderBy: { createdAt: 'desc' };
 					take: 1;
 				};
@@ -212,6 +229,17 @@ export class PrismaAdminDashboardReader {
 					orderBy: { createdAt: 'desc' },
 					take: 1,
 				},
+				walletTransactions: {
+					where: { type: 'CREDIT', reason: 'order_completion' },
+					select: {
+						amount: true,
+						availableAt: true,
+						releasedAt: true,
+						releasedBy: true,
+					},
+					orderBy: { createdAt: 'desc' },
+					take: 1,
+				},
 			},
 			orderBy: { createdAt: 'desc' },
 			take: input.limit,
@@ -230,6 +258,19 @@ export class PrismaAdminDashboardReader {
 						type: record.adminGovernanceActions[0].actionType,
 						reason: record.adminGovernanceActions[0].reason,
 						createdAt: record.adminGovernanceActions[0].createdAt,
+					}
+				: null,
+			boosterPayment: record.walletTransactions[0]
+				? {
+						amount: record.walletTransactions[0].amount,
+						availableAt: record.walletTransactions[0].availableAt,
+						releasedAt: record.walletTransactions[0].releasedAt,
+						releasedBy:
+							record.walletTransactions[0].releasedBy === 'ADMIN'
+								? 'admin'
+								: record.walletTransactions[0].releasedBy === 'SCHEDULE'
+									? 'schedule'
+									: null,
 					}
 				: null,
 		}));

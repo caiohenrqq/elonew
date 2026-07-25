@@ -8,6 +8,7 @@ import {
 	Wallet,
 	type WalletTransaction,
 	type WalletTransactionReason,
+	type WalletTransactionReleaseSource,
 	type WalletTransactionType,
 } from '@modules/wallet/domain/wallet.entity';
 import { Injectable } from '@nestjs/common';
@@ -24,6 +25,7 @@ type WalletRecord = {
 		reason: string;
 		availableAt: Date;
 		releasedAt: Date | null;
+		releasedBy: 'SCHEDULE' | 'ADMIN' | null;
 		createdAt: Date;
 	}>;
 };
@@ -65,6 +67,7 @@ type WalletTransactionDelegate = {
 			reason: string;
 			availableAt: Date;
 			releasedAt: Date | null;
+			releasedBy: 'SCHEDULE' | 'ADMIN' | null;
 			createdAt: Date;
 		}>;
 	}): Promise<{ count: number }>;
@@ -78,6 +81,7 @@ type WalletTransactionDelegate = {
 type WalletPrismaClient = {
 	wallet: WalletDelegate;
 	walletTransaction: WalletTransactionDelegate;
+	$transaction(operations: Promise<unknown>[]): Promise<unknown[]>;
 };
 
 @Injectable()
@@ -140,32 +144,47 @@ export class PrismaWalletRepository
 			},
 		});
 
-		await this.getWalletTransactionDelegate().deleteMany({
+		const client = this.getClient();
+		const deleteExisting = client.walletTransaction.deleteMany({
 			where: { walletId: persistedWallet.id },
 		});
 
-		if (wallet.transactions.length === 0) return;
+		if (wallet.transactions.length === 0) {
+			await deleteExisting;
+			return;
+		}
 
-		await this.getWalletTransactionDelegate().createMany({
-			data: wallet.transactions.map((transaction) => ({
-				walletId: persistedWallet.id,
-				orderId: transaction.orderId,
-				amount: transaction.amount,
-				type: this.mapTransactionTypeToRecord(transaction.type),
-				reason: transaction.reason,
-				availableAt: transaction.availableAt,
-				releasedAt: transaction.releasedAt,
-				createdAt: transaction.createdAt,
-			})),
-		});
+		// The ledger is rewritten wholesale, so the delete and the insert must
+		// commit together: a failure between them would erase the wallet history
+		// and leave the balances above pointing at nothing.
+		await client.$transaction([
+			deleteExisting,
+			client.walletTransaction.createMany({
+				data: wallet.transactions.map((transaction) => ({
+					walletId: persistedWallet.id,
+					orderId: transaction.orderId,
+					amount: transaction.amount,
+					type: this.mapTransactionTypeToRecord(transaction.type),
+					reason: transaction.reason,
+					availableAt: transaction.availableAt,
+					releasedAt: transaction.releasedAt,
+					releasedBy: this.mapReleaseSourceToRecord(transaction.releasedBy),
+					createdAt: transaction.createdAt,
+				})),
+			}),
+		]);
+	}
+
+	private getClient(): WalletPrismaClient {
+		return this.prisma as unknown as WalletPrismaClient;
 	}
 
 	private getWalletDelegate(): WalletDelegate {
-		return (this.prisma as unknown as WalletPrismaClient).wallet;
+		return this.getClient().wallet;
 	}
 
 	private getWalletTransactionDelegate(): WalletTransactionDelegate {
-		return (this.prisma as unknown as WalletPrismaClient).walletTransaction;
+		return this.getClient().walletTransaction;
 	}
 
 	private mapRecordToDomain(record: WalletRecord): Wallet {
@@ -189,8 +208,25 @@ export class PrismaWalletRepository
 			reason: transaction.reason as WalletTransactionReason,
 			availableAt: transaction.availableAt,
 			releasedAt: transaction.releasedAt,
+			releasedBy: this.mapReleaseSourceToDomain(transaction.releasedBy),
 			createdAt: transaction.createdAt,
 		};
+	}
+
+	private mapReleaseSourceToDomain(
+		releasedBy: WalletRecord['transactions'][number]['releasedBy'],
+	): WalletTransactionReleaseSource | null {
+		if (!releasedBy) return null;
+
+		return releasedBy === 'ADMIN' ? 'admin' : 'schedule';
+	}
+
+	private mapReleaseSourceToRecord(
+		releasedBy: WalletTransactionReleaseSource | null,
+	): WalletRecord['transactions'][number]['releasedBy'] {
+		if (!releasedBy) return null;
+
+		return releasedBy === 'admin' ? 'ADMIN' : 'SCHEDULE';
 	}
 
 	private mapTransactionTypeToDomain(

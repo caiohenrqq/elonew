@@ -36,6 +36,7 @@ import {
 	type PreviewOrderQuoteSchemaInput,
 	previewOrderQuoteSchema,
 } from '@packages/shared/orders/create-order-quote.schema';
+import { ORDER_QUOTES_CLEANUP_EXPIRED_INTERNAL_ROUTE } from '@packages/shared/scheduled-tasks/scheduled-tasks.contract';
 import {
 	type AcceptOrderSchemaInput,
 	acceptOrderSchema,
@@ -143,7 +144,7 @@ export class OrdersController {
 		});
 	}
 
-	@Post('internal/quotes/cleanup-expired')
+	@Post(ORDER_QUOTES_CLEANUP_EXPIRED_INTERNAL_ROUTE.replace('/orders/', ''))
 	@InternalApi()
 	@HttpCode(200)
 	async cleanupExpiredQuotes(

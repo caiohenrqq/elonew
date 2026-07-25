@@ -35,7 +35,33 @@ export class AppSettingsService {
 		return this.config.getOrThrow('WORKER_CONCURRENCY', { infer: true });
 	}
 
-	get isTest() {
-		return this.nodeEnv === 'test';
+	get queuesEnabled() {
+		return this.config.getOrThrow('WORKER_QUEUES_ENABLED', { infer: true });
+	}
+
+	get scheduledTasksQueueName() {
+		return this.config.getOrThrow('SCHEDULED_TASKS_QUEUE_NAME', {
+			infer: true,
+		});
+	}
+
+	get staleCheckoutReconcileCron() {
+		return this.config.getOrThrow('STALE_CHECKOUT_RECONCILE_CRON', {
+			infer: true,
+		});
+	}
+
+	get staleCheckoutReconcileLimit() {
+		return this.config.getOrThrow('STALE_CHECKOUT_RECONCILE_LIMIT', {
+			infer: true,
+		});
+	}
+
+	get orderQuoteCleanupCron() {
+		return this.config.getOrThrow('ORDER_QUOTE_CLEANUP_CRON', { infer: true });
+	}
+
+	get orderQuoteCleanupLimit() {
+		return this.config.getOrThrow('ORDER_QUOTE_CLEANUP_LIMIT', { infer: true });
 	}
 }

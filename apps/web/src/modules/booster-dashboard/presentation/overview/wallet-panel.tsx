@@ -3,7 +3,10 @@ import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
 import { formatCurrency } from '@/shared/format/currency';
 import { formatDate } from '@/shared/format/date';
 import { Card } from '@/shared/ui/components/card';
-import { formatTransactionReason } from '../../model/booster-orders';
+import {
+	formatTransactionReason,
+	formatTransactionRelease,
+} from '../../model/booster-orders';
 import type {
 	BoosterWalletOutput,
 	BoosterWalletTransactionsOutput,
@@ -95,6 +98,9 @@ export const WalletPanel = ({ wallet, transactions }: WalletPanelProps) => {
 											</p>
 											<p className="text-[10px] text-white/35">
 												{formatDate(transaction.createdAt)}
+												{isCredit
+													? ` / ${formatTransactionRelease(transaction)}`
+													: ''}
 											</p>
 										</div>
 										<p className="text-xs font-black text-white">

@@ -3,6 +3,8 @@ import { BlockAdminUserUseCase } from '@modules/admin/application/use-cases/bloc
 import { CreateAdminUserUseCase } from '@modules/admin/application/use-cases/create-admin-user/create-admin-user.use-case';
 import { ForceCancelAdminOrderUseCase } from '@modules/admin/application/use-cases/force-cancel-admin-order/force-cancel-admin-order.use-case';
 import { GetAdminDashboardUseCase } from '@modules/admin/application/use-cases/get-admin-dashboard/get-admin-dashboard.use-case';
+import { GetAdminScheduledJobsUseCase } from '@modules/admin/application/use-cases/get-admin-scheduled-jobs/get-admin-scheduled-jobs.use-case';
+import { ReleaseAdminOrderBoosterPaymentUseCase } from '@modules/admin/application/use-cases/release-admin-order-booster-payment/release-admin-order-booster-payment.use-case';
 import { ResendAdminUserPasswordSetupUseCase } from '@modules/admin/application/use-cases/resend-admin-user-password-setup/resend-admin-user-password-setup.use-case';
 import { UnblockAdminUserUseCase } from '@modules/admin/application/use-cases/unblock-admin-user/unblock-admin-user.use-case';
 import { UpdateAdminUserUseCase } from '@modules/admin/application/use-cases/update-admin-user/update-admin-user.use-case';
@@ -44,6 +46,8 @@ export class AdminController {
 		private readonly unblockUser: UnblockAdminUserUseCase,
 		private readonly updateUser: UpdateAdminUserUseCase,
 		private readonly forceCancelOrder: ForceCancelAdminOrderUseCase,
+		private readonly releaseOrderBoosterPayment: ReleaseAdminOrderBoosterPaymentUseCase,
+		private readonly scheduledJobs: GetAdminScheduledJobsUseCase,
 	) {}
 
 	@Patch('users/:userId')
@@ -163,6 +167,30 @@ export class AdminController {
 		@CurrentUser() currentUser: AuthenticatedUser,
 	) {
 		await this.forceCancelOrder.execute({
+			adminUserId: currentUser.id,
+			orderId,
+			reason: body.reason,
+			now: new Date(),
+		});
+
+		return { ok: true };
+	}
+
+	@Get('scheduled-jobs')
+	async listScheduledJobs(@CurrentUser() _currentUser: AuthenticatedUser) {
+		return await this.scheduledJobs.execute();
+	}
+
+	@Post('orders/:orderId/release-booster-payment')
+	@HttpCode(200)
+	async releaseBoosterPayment(
+		@Param('orderId', new ZodValidationPipe(adminIdParamSchema))
+		orderId: AdminIdParamSchemaInput,
+		@Body(new ZodValidationPipe(adminReasonSchema))
+		body: AdminReasonSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	) {
+		await this.releaseOrderBoosterPayment.execute({
 			adminUserId: currentUser.id,
 			orderId,
 			reason: body.reason,

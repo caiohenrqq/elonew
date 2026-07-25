@@ -7,11 +7,17 @@ export type WalletFundsReleaseConsumerInstance = {
 	close(): Promise<void>;
 };
 
+export type WalletFundsReleaseJobExecution = {
+	data: WalletFundsReleaseJob;
+	jobId: string;
+	attempt: number;
+};
+
 type CreateBullmqWalletFundsReleaseWorkerInput = {
 	queueName: string;
 	redisUrl: string;
 	concurrency: number;
-	processJob(job: WalletFundsReleaseJob): Promise<void>;
+	processJob(job: WalletFundsReleaseJobExecution): Promise<void>;
 };
 
 @Injectable()
@@ -22,7 +28,11 @@ export class BullmqWalletFundsReleaseWorkerFactory {
 		return new Worker<WalletFundsReleaseJob>(
 			input.queueName,
 			async (job) => {
-				await input.processJob(job.data);
+				await input.processJob({
+					data: job.data,
+					jobId: job.id ?? 'unknown',
+					attempt: job.attemptsMade + 1,
+				});
 			},
 			{
 				connection: createBullmqRedisConnection(input.redisUrl),

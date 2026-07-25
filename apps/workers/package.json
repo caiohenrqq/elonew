@@ -6,8 +6,8 @@
 		"build:deps": "pnpm -w build:packages",
 		"dev": "pnpm build:deps && tsx watch src/main.ts",
 		"start": "pnpm build:deps && tsx src/main.ts",
-		"test": "pnpm build:deps && tsx --test src/**/*.spec.ts",
-		"test:ci": "tsx --test src/**/*.spec.ts",
+		"test": "pnpm build:deps && WORKER_QUEUES_ENABLED=false tsx --test src/**/*.spec.ts",
+		"test:ci": "WORKER_QUEUES_ENABLED=false tsx --test src/**/*.spec.ts",
 		"biome:check": "biome check .",
 		"biome:fix": "biome check --write ."
 	},
@@ -24,6 +24,7 @@
 		"@packages/shared": "workspace:*",
 		"bullmq": "^5.71.0",
 		"ioredis": "^5.10.0",
+		"pino": "^10.3.1",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1"
 	}

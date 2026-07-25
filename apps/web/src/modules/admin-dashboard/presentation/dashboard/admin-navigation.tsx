@@ -2,6 +2,7 @@
 
 import {
 	BarChart3,
+	Clock,
 	FileText,
 	Ticket,
 	TicketPercent,
@@ -23,6 +24,7 @@ const navigationItems: NavigationItem[] = [
 	{ href: '/admin/orders', label: 'Pedidos', icon: FileText },
 	{ href: '/admin/coupons', label: 'Cupons', icon: TicketPercent },
 	{ href: '/admin/support', label: 'Suporte', icon: Ticket },
+	{ href: '/admin/scheduled-jobs', label: 'Agendamentos', icon: Clock },
 ];
 
 const isActivePath = (pathname: string, href: string) => {

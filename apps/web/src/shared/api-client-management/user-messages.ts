@@ -21,6 +21,16 @@ const apiErrorMap: Record<string, string> = {
 		'Você não pode bloquear a sua própria conta.',
 	'Registration is unavailable.':
 		'O cadastro está temporariamente indisponível.',
+	'Admin target order is not completed.':
+		'O pagamento só pode ser liberado em pedidos concluídos.',
+	'Admin target order has no booster assigned.':
+		'Este pedido não tem booster atribuído.',
+	'Admin governance reason is required.': 'Informe o motivo da ação.',
+	'Wallet not found.': 'O booster ainda não tem carteira.',
+	'Wallet has no completion credit for this order.':
+		'Não existe crédito de conclusão para este pedido.',
+	'Wallet completion credit for this order was already released.':
+		'O pagamento deste pedido já foi liberado.',
 };
 
 const authMessages = {

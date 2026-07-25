@@ -54,6 +54,51 @@ export const adminOrderSchema = z.object({
 			createdAt: z.string(),
 		})
 		.nullable(),
+	boosterPayment: z
+		.object({
+			amount: z.number(),
+			availableAt: z.string(),
+			releasedAt: z.string().nullable(),
+			releasedBy: z.enum(['schedule', 'admin']).nullable(),
+		})
+		.nullable()
+		.default(null),
+});
+
+export const adminScheduledJobsSchema = z.object({
+	queues: z.array(
+		z.object({
+			queueName: z.string(),
+			counts: z.object({
+				delayed: z.number(),
+				waiting: z.number(),
+				active: z.number(),
+				failed: z.number(),
+				completed: z.number(),
+			}),
+			schedulers: z.array(
+				z.object({
+					name: z.string(),
+					cron: z.string().nullable(),
+					nextRunAt: z.string().nullable(),
+				}),
+			),
+			pending: z.array(
+				z.object({
+					id: z.string(),
+					name: z.string(),
+					dueAt: z.string().nullable(),
+				}),
+			),
+		}),
+	),
+	inProcess: z.array(
+		z.object({
+			name: z.string(),
+			interval: z.string(),
+			location: z.string(),
+		}),
+	),
 });
 
 export const adminSupportTicketSchema = z.object({
@@ -83,4 +128,5 @@ export type AdminChangeUserRoleInput = z.infer<
 export type AdminUserOutput = z.infer<typeof adminUserSchema>;
 export type AdminOrderOutput = z.infer<typeof adminOrderSchema>;
 export type AdminSupportTicketOutput = z.infer<typeof adminSupportTicketSchema>;
+export type AdminScheduledJobsOutput = z.infer<typeof adminScheduledJobsSchema>;
 export type AdminDashboardOutput = z.infer<typeof adminDashboardSchema>;

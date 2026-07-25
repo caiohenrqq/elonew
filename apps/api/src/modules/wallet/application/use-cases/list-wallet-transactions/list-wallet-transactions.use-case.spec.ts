@@ -38,8 +38,12 @@ describe('ListWalletTransactionsUseCase', () => {
 			orderId: 'order-1',
 			amount: 70,
 			availableAt: new Date('2026-05-01T10:00:00.000Z'),
+			createdAt: new Date('2026-04-28T10:00:00.000Z'),
 		});
-		wallet.releaseMaturedFunds(new Date('2026-05-02T10:00:00.000Z'));
+		wallet.releaseOrderCompletionFunds({
+			orderId: 'order-1',
+			now: new Date('2026-05-02T10:00:00.000Z'),
+		});
 		wallet.withdraw({
 			amount: 40,
 			requestedAt: new Date('2026-05-03T10:00:00.000Z'),
@@ -75,6 +79,9 @@ describe('ListWalletTransactionsUseCase', () => {
 				amount: 10,
 				availableAt: new Date(
 					`2026-05-01T10:${String(index % 60).padStart(2, '0')}:00.000Z`,
+				),
+				createdAt: new Date(
+					`2026-04-28T10:${String(index % 60).padStart(2, '0')}:00.000Z`,
 				),
 			});
 		}

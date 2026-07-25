@@ -10,7 +10,7 @@ import type { OutboxEventRecord } from './outbox-event';
 import { OutboxHandlerRegistry } from './outbox-event-handler';
 import { OUTBOX_STORE, type OutboxStore } from './outbox-store';
 
-const POLL_INTERVAL_MS = 1000;
+export const OUTBOX_POLL_INTERVAL_MS = 1000;
 const BATCH_SIZE = 50;
 const MAX_ATTEMPTS = 10;
 const RETRY_BACKOFF_MS = 5000;
@@ -35,7 +35,7 @@ export class OutboxDispatcherService
 
 		this.timer = setInterval(() => {
 			void this.processPendingBatch();
-		}, POLL_INTERVAL_MS);
+		}, OUTBOX_POLL_INTERVAL_MS);
 		this.timer.unref();
 		this.logger.log('Outbox dispatcher initialized.');
 	}

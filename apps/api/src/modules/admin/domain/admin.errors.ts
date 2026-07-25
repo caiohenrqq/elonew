@@ -1,5 +1,6 @@
 import {
 	BadRequestDomainError,
+	ConflictDomainError,
 	NotFoundDomainError,
 } from '@app/common/errors/domain.error';
 
@@ -12,6 +13,18 @@ export class AdminUserNotFoundError extends NotFoundDomainError {
 export class AdminOrderNotFoundError extends NotFoundDomainError {
 	constructor() {
 		super('Admin target order not found.');
+	}
+}
+
+export class AdminOrderNotCompletedError extends ConflictDomainError {
+	constructor() {
+		super('Admin target order is not completed.');
+	}
+}
+
+export class AdminOrderBoosterMissingError extends ConflictDomainError {
+	constructor() {
+		super('Admin target order has no booster assigned.');
 	}
 }
 

@@ -69,6 +69,8 @@ describe('CreditCompletedOrderEarningsUseCase', () => {
 					reason: 'order_completion',
 					availableAt: new Date('2026-03-12T12:00:00.000Z'),
 					releasedAt: null,
+					releasedBy: null,
+					createdAt: completedAt,
 				},
 			],
 		});
@@ -91,6 +93,7 @@ describe('CreditCompletedOrderEarningsUseCase', () => {
 			orderId: 'order-1',
 			amount: 70,
 			availableAt: new Date('2026-03-12T12:00:00.000Z'),
+			createdAt: new Date('2026-03-09T12:00:00.000Z'),
 		});
 		await repository.save(existingWallet);
 

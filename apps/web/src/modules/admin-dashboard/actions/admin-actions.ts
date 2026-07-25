@@ -16,6 +16,7 @@ import type {
 	AdminGovernanceInput,
 	AdminMetricsOutput,
 	AdminOrderOutput,
+	AdminScheduledJobsOutput,
 	AdminSupportTicketOutput,
 	AdminUserOutput,
 } from '../server/admin-contracts';
@@ -34,8 +35,10 @@ import {
 	getAdminMetrics as getAdminMetricsFromApi,
 	getAdminOrderChatMessages as getAdminOrderChatMessagesFromApi,
 	getAdminOrders as getAdminOrdersFromApi,
+	getAdminScheduledJobs as getAdminScheduledJobsFromApi,
 	getAdminSupportTickets as getAdminSupportTicketsFromApi,
 	getAdminUsers as getAdminUsersFromApi,
+	releaseAdminOrderBoosterPayment,
 	renameAdminUser,
 	resendAdminUserPasswordSetup,
 	unblockAdminUser,
@@ -131,6 +134,16 @@ export const getAdminOrderChatMessages = async (
 		return redirectOnAuthError(error);
 	}
 };
+
+export const getAdminScheduledJobs =
+	async (): Promise<AdminScheduledJobsOutput> => {
+		await getAdminSessionOrRedirect();
+		try {
+			return await getAdminScheduledJobsFromApi(renderReadApiRequest);
+		} catch (error) {
+			return redirectOnAuthError(error);
+		}
+	};
 
 export const getAdminSupportTickets = async (): Promise<
 	AdminSupportTicketOutput[]
@@ -245,6 +258,25 @@ export const unblockAdminUserAction = async (
 		await unblockAdminUser(parseGovernanceForm(formData), api.request);
 		revalidatePath('/admin');
 		revalidatePath('/admin/users');
+		return { success: true };
+	} catch (error) {
+		return { error: getAuthErrorMessage(error) };
+	}
+};
+
+export const releaseAdminOrderBoosterPaymentAction = async (
+	_state: AdminGovernanceActionState,
+	formData: FormData,
+): Promise<AdminGovernanceActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+		await releaseAdminOrderBoosterPayment(
+			parseGovernanceForm(formData),
+			api.request,
+		);
+		revalidatePath('/admin');
+		revalidatePath('/admin/orders');
 		return { success: true };
 	} catch (error) {
 		return { error: getAuthErrorMessage(error) };

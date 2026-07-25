@@ -55,6 +55,10 @@
 			"types": "./dist/payments/create-payment.schema.d.ts",
 			"default": "./dist/payments/create-payment.schema.js"
 		},
+		"./scheduled-tasks/scheduled-tasks.contract": {
+			"types": "./dist/scheduled-tasks/scheduled-tasks.contract.d.ts",
+			"default": "./dist/scheduled-tasks/scheduled-tasks.contract.js"
+		},
 		"./testing/dev-users": {
 			"types": "./dist/testing/dev-users.d.ts",
 			"default": "./dist/testing/dev-users.js"
