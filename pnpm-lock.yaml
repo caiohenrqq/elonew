@@ -302,6 +302,9 @@ importers:
 
   packages/config:
     dependencies:
+      cron-parser:
+        specifier: ^4.9.0
+        version: 4.9.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6

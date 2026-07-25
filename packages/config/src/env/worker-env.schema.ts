@@ -1,3 +1,4 @@
+import { parseExpression } from 'cron-parser';
 import { z } from 'zod';
 import {
 	DEFAULT_ORDER_QUOTE_CLEANUP_CRON,
@@ -13,14 +14,21 @@ import {
 	DEFAULT_WORKER_CONCURRENCY,
 } from './wallet-funds-release.config';
 
-// Five whitespace-separated cron fields. Keeps a typo from silently disabling a
-// recurring job: BullMQ would accept the string and simply never fire it.
+// Validated with the same parser BullMQ uses to compute the next run, so an
+// expression that passes here cannot be one the scheduler silently never fires.
 const cronSchema = z
 	.string()
 	.trim()
-	.regex(
-		/^(\S+\s+){4}\S+$/,
-		'Cron expression must have five space-separated fields.',
+	.refine(
+		(pattern) => {
+			try {
+				parseExpression(pattern);
+				return true;
+			} catch {
+				return false;
+			}
+		},
+		{ message: 'Must be a valid cron expression.' },
 	);
 
 const DEFAULT_INTERNAL_API_KEY = 'dev-internal-api-key';

@@ -48,6 +48,7 @@
 		"build": "tsc -p tsconfig.build.json"
 	},
 	"dependencies": {
+		"cron-parser": "^4.9.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
