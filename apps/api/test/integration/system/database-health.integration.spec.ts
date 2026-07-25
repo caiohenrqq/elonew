@@ -1,16 +1,21 @@
 import { DatabaseHealthController } from '@modules/system/presentation/health/database/database-health.controller';
 import { SystemModule } from '@modules/system/system.module';
-import { Test } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 
 describe('System module integration (database health)', () => {
 	let controller: DatabaseHealthController;
+	let moduleRef: TestingModule;
 
 	beforeEach(async () => {
-		const moduleRef = await Test.createTestingModule({
+		moduleRef = await Test.createTestingModule({
 			imports: [SystemModule],
 		}).compile();
 
 		controller = moduleRef.get(DatabaseHealthController);
+	});
+
+	afterEach(async () => {
+		await moduleRef.close();
 	});
 
 	it('returns ok status', async () => {

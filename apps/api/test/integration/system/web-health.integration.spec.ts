@@ -1,16 +1,21 @@
 import { WebHealthController } from '@modules/system/presentation/health/web/web-health.controller';
 import { SystemModule } from '@modules/system/system.module';
-import { Test } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 
 describe('System module integration (web health)', () => {
 	let controller: WebHealthController;
+	let moduleRef: TestingModule;
 
 	beforeEach(async () => {
-		const moduleRef = await Test.createTestingModule({
+		moduleRef = await Test.createTestingModule({
 			imports: [SystemModule],
 		}).compile();
 
 		controller = moduleRef.get(WebHealthController);
+	});
+
+	afterEach(async () => {
+		await moduleRef.close();
 	});
 
 	it('returns ok status', async () => {
