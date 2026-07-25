@@ -8,6 +8,8 @@ export type WalletTransactionType = 'credit' | 'debit';
 
 export type WalletTransactionReason = 'order_completion' | 'withdrawal_request';
 
+export type WalletTransactionReleaseSource = 'schedule' | 'admin';
+
 export type WalletTransaction = {
 	orderId: string | null;
 	amount: number;
@@ -15,13 +17,20 @@ export type WalletTransaction = {
 	reason: WalletTransactionReason;
 	availableAt: Date;
 	releasedAt: Date | null;
+	releasedBy: WalletTransactionReleaseSource | null;
 	createdAt: Date;
+};
+
+export type WalletReleaseResult = {
+	releasedAmount: number;
+	releasedCount: number;
 };
 
 type CreditLockedInput = {
 	orderId: string;
 	amount: number;
 	availableAt: Date;
+	createdAt: Date;
 };
 
 type WithdrawInput = {
@@ -68,7 +77,8 @@ export class Wallet {
 			reason: 'order_completion',
 			availableAt: input.availableAt,
 			releasedAt: null,
-			createdAt: input.availableAt,
+			releasedBy: null,
+			createdAt: input.createdAt,
 		});
 	}
 
@@ -83,37 +93,59 @@ export class Wallet {
 		);
 	}
 
-	releaseMaturedFunds(now: Date): void {
-		for (const transaction of this.transactions) {
-			if (transaction.type !== 'credit') continue;
-			if (transaction.releasedAt) continue;
-			if (transaction.availableAt > now) continue;
-
-			transaction.releasedAt = now;
-			this.balanceLocked = Money.fromCents(this.balanceLocked).subtract(
-				Money.fromCents(transaction.amount),
-			).cents;
-			this.balanceWithdrawable = Money.fromCents(this.balanceWithdrawable).add(
-				Money.fromCents(transaction.amount),
-			).cents;
-		}
+	releaseOrderCompletionFunds(input: {
+		orderId: string;
+		now: Date;
+	}): WalletReleaseResult {
+		return this.releaseCredits({ ...input, source: 'schedule' });
 	}
 
-	releaseOrderCompletionFunds(input: { orderId: string; now: Date }): void {
+	// The admin override answers for the maturity window itself, so it releases
+	// credits the schedule would still be holding.
+	forceReleaseOrderCompletionFunds(input: {
+		orderId: string;
+		now: Date;
+	}): WalletReleaseResult {
+		return this.releaseCredits({
+			...input,
+			source: 'admin',
+			ignoreMaturity: true,
+		});
+	}
+
+	private releaseCredits(input: {
+		orderId: string;
+		now: Date;
+		source: WalletTransactionReleaseSource;
+		ignoreMaturity?: boolean;
+	}): WalletReleaseResult {
+		const result: WalletReleaseResult = {
+			releasedAmount: 0,
+			releasedCount: 0,
+		};
+
 		for (const transaction of this.transactions) {
 			if (transaction.type !== 'credit') continue;
 			if (transaction.orderId !== input.orderId) continue;
 			if (transaction.releasedAt) continue;
-			if (transaction.availableAt > input.now) continue;
+			if (!input.ignoreMaturity && transaction.availableAt > input.now)
+				continue;
 
 			transaction.releasedAt = input.now;
+			transaction.releasedBy = input.source;
 			this.balanceLocked = Money.fromCents(this.balanceLocked).subtract(
 				Money.fromCents(transaction.amount),
 			).cents;
 			this.balanceWithdrawable = Money.fromCents(this.balanceWithdrawable).add(
 				Money.fromCents(transaction.amount),
 			).cents;
+			result.releasedAmount = Money.fromCents(result.releasedAmount).add(
+				Money.fromCents(transaction.amount),
+			).cents;
+			result.releasedCount += 1;
 		}
+
+		return result;
 	}
 
 	withdraw(input: WithdrawInput): void {
@@ -132,6 +164,7 @@ export class Wallet {
 			reason: 'withdrawal_request',
 			availableAt: input.requestedAt,
 			releasedAt: input.requestedAt,
+			releasedBy: null,
 			createdAt: input.requestedAt,
 		});
 	}

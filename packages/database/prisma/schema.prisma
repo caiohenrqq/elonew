@@ -46,6 +46,11 @@ enum WalletTransactionType {
   DEBIT
 }
 
+enum WalletTransactionReleaseSource {
+  SCHEDULE
+  ADMIN
+}
+
 enum CouponDiscountType {
   PERCENTAGE
   FIXED
@@ -315,6 +320,7 @@ model WalletTransaction {
   reason      String
   availableAt DateTime
   releasedAt  DateTime?
+  releasedBy  WalletTransactionReleaseSource?
   createdAt   DateTime              @default(now())
 
   @@index([walletId, createdAt])

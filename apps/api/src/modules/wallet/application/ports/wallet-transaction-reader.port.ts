@@ -1,5 +1,6 @@
 import type {
 	WalletTransactionReason,
+	WalletTransactionReleaseSource,
 	WalletTransactionType,
 } from '@modules/wallet/domain/wallet.entity';
 
@@ -15,6 +16,7 @@ export type WalletTransactionSnapshot = {
 	reason: WalletTransactionReason;
 	availableAt: Date;
 	releasedAt: Date | null;
+	releasedBy: WalletTransactionReleaseSource | null;
 	createdAt: Date;
 };
 
