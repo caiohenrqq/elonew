@@ -22,7 +22,7 @@ Web platform for operating League of Legends boosting services with a marketplac
 
 ### 3. Service request data and validation
 - FR-012: Service creation requires authenticated user session.
-- FR-013: Required order fields: `Serviço`, `Liga atual`, `Divisão atual`, `PDL inicial`, `Liga desejada`, `Divisão desejada`, `Servidor`, `Fila desejada`, `PDLs ganhos por vitória`, `Prazo de entrega`.
+- FR-013: Required client order fields: `Serviço`, `Liga atual`, `Divisão atual`, `PDL inicial`, `Liga desejada`, `Divisão desejada`, `Servidor`, `Fila desejada`, `PDLs ganhos por vitória`.
 - FR-014: Required account access fields for execution: `Login`, `Invocador`, `Senha`, `Confirmar Senha`.
 - FR-015: `Senha` and `Confirmar Senha` must match.
 - FR-016: Subtotal is calculated and shown before payment.
@@ -103,6 +103,8 @@ Zero-cost extras:
   in the admin audit history and revoke the target user's sessions.
 - FR-078: Account blocks and role changes affect authorization immediately; an
   admin cannot change their own account type.
+- FR-079: The booster defines the delivery deadline when accepting an order.
+  The deadline currently has no maximum duration.
 
 ### 12. Chargebacks
 - FR-068: Chargeback-associated users are blocked.
@@ -143,11 +145,11 @@ Zero-cost extras:
 - Registration data (`username`, `email`, `password`, email verification token).
 - Booster invitation/account creation payload by admin.
 - Authenticated session token.
-- Service request payload (service type, rank fields, server, queue, LP gain, deadline, selected booster).
+- Service request payload (service type, rank fields, server, queue, LP gain, selected booster).
 - Account access payload (`login`, `invocador`, `senha`, `confirmar senha`).
 - Extras and coupon payload.
 - Mercado Pago payment events.
-- Order transition events.
+- Order transition events, including the booster-defined deadline on acceptance.
 - Chat and ticket messages.
 - Rating submissions.
 - Reputation rule configuration by admin.

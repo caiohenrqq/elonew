@@ -38,7 +38,8 @@ const orderQuoteBaseSchema = z
 		server: z.string().trim().min(1),
 		desiredQueue: z.string().trim().min(1),
 		lpGain: z.number().int(),
-		deadline: z.string().datetime(),
+		// Accepted for backwards-compatible clients but ignored; boosters own it.
+		deadline: z.string().datetime().optional(),
 	})
 	.superRefine((input, context) => {
 		if (!isMasterLeague(input.currentLeague) && input.currentLp > 99) {

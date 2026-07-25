@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { notFound } from 'next/navigation';
 import {
 	getBoosterOrder,
@@ -63,6 +64,7 @@ jest.mock('lucide-react', () => ({
 	CheckCircle2: () => <svg data-testid="check-icon" />,
 	Send: () => <svg data-testid="send-icon" />,
 	Star: () => <svg data-testid="star-icon" />,
+	X: () => <svg data-testid="close-icon" />,
 }));
 
 describe('BoosterOrderDetailsPage', () => {
@@ -80,6 +82,15 @@ describe('BoosterOrderDetailsPage', () => {
 		expect(screen.getByText('Pode começar pelo mid.')).toBeInTheDocument();
 		expect(
 			screen.getByRole('button', { name: /Finalizar pedido/i }),
+		).toBeInTheDocument();
+		await userEvent.click(
+			screen.getByRole('button', { name: /Finalizar pedido/i }),
+		);
+		expect(
+			screen.getByRole('heading', { name: /Finalizar pedido/i }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: /Confirmar finalização/i }),
 		).toBeInTheDocument();
 		expect(getBoosterOrder).toHaveBeenCalledWith('order-active-1');
 		expect(getBoosterOrderChatMessages).toHaveBeenCalledWith('order-active-1');

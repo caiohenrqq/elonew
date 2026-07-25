@@ -37,6 +37,10 @@ export const boosterWorkSchema = z.object({
 	}),
 });
 
+export const acceptBoosterOrderSchema = z.object({
+	deadline: z.string().datetime({ offset: true }),
+});
+
 export const boosterWalletSchema = z.object({
 	boosterId: z.string(),
 	balanceLocked: z.number().nonnegative(),

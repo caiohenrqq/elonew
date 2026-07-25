@@ -1,13 +1,12 @@
 'use client';
 
 import { Bell, Check, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import type {
 	ListNotificationsResponse,
 	NotificationOutput,
 } from '@/shared/notifications/notification-contracts';
-import { getButtonClassName } from '@/shared/ui/components/button';
 import { cn } from '@/shared/ui/utils/cn';
 import {
 	markAllDashboardNotificationsReadAction,
@@ -24,6 +23,7 @@ export const NotificationPopover = ({
 	initialNotifications,
 	viewerRole,
 }: NotificationPopoverProps) => {
+	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
 	const [pendingNotificationId, setPendingNotificationId] = useState<
 		string | null
@@ -48,7 +48,7 @@ export const NotificationPopover = ({
 				? '1 nova'
 				: `${visibleUnreadCount} novas`;
 
-	const markOneRead = (notificationId: string) => {
+	const markOneRead = async (notificationId: string) => {
 		const targetNotification = notifications.items.find(
 			(notification) => notification.id === notificationId,
 		);
@@ -56,31 +56,35 @@ export const NotificationPopover = ({
 
 		setLiveError(null);
 		setPendingNotificationId(notificationId);
-		startTransition(async () => {
-			const result = await markDashboardNotificationReadAction(
-				notificationId,
-				targetNotification.activityAt,
-			);
-			setPendingNotificationId(null);
-			if (result.error) {
-				setLiveError(result.error);
-				if (result.conflict) await refetchNotifications();
-				return;
-			}
+		const result = await markDashboardNotificationReadAction(
+			notificationId,
+			targetNotification.activityAt,
+		);
+		setPendingNotificationId(null);
+		if (result.error) {
+			setLiveError(result.error);
+			if (result.conflict) await refetchNotifications();
+			return;
+		}
 
-			setNotifications((current) => ({
-				...current,
-				unreadCount: Math.max(
-					current.unreadCount - (targetNotification.readAt ? 0 : 1),
-					0,
-				),
-				items: current.items.map((notification) =>
-					notification.id === notificationId && result.notification
-						? result.notification
-						: notification,
-				),
-			}));
-		});
+		setNotifications((current) => ({
+			...current,
+			unreadCount: Math.max(
+				current.unreadCount - (targetNotification.readAt ? 0 : 1),
+				0,
+			),
+			items: current.items.map((notification) =>
+				notification.id === notificationId && result.notification
+					? result.notification
+					: notification,
+			),
+		}));
+	};
+
+	const openNotification = async (notification: NotificationOutput) => {
+		if (!notification.readAt) await markOneRead(notification.id);
+		setIsOpen(false);
+		router.push(getNotificationHref(notification, viewerRole));
 	};
 
 	const markAllRead = () => {
@@ -168,9 +172,8 @@ export const NotificationPopover = ({
 								<NotificationItem
 									key={notification.id}
 									notification={notification}
-									viewerRole={viewerRole}
 									isPending={pendingNotificationId === notification.id}
-									onMarkRead={markOneRead}
+									onOpen={openNotification}
 								/>
 							))
 						) : (
@@ -192,55 +195,41 @@ export const NotificationPopover = ({
 
 type NotificationItemProps = {
 	notification: NotificationOutput;
-	viewerRole: NotificationPopoverProps['viewerRole'];
 	isPending: boolean;
-	onMarkRead: (notificationId: string) => void;
+	onOpen: (notification: NotificationOutput) => void;
 };
 
 const NotificationItem = ({
 	notification,
-	viewerRole,
 	isPending,
-	onMarkRead,
+	onOpen,
 }: NotificationItemProps) => {
-	const href = getNotificationHref(notification, viewerRole);
 	const isUnread = !notification.readAt;
 
 	return (
-		<div
+		<button
+			type="button"
+			onClick={() => onOpen(notification)}
+			disabled={isPending}
 			className={cn(
-				'grid grid-cols-[1fr_auto] gap-3 border-white/5 border-b p-4',
+				'grid w-full cursor-pointer grid-cols-[1fr_auto] gap-3 border-white/5 border-b p-4 text-left disabled:cursor-wait',
 				isUnread ? 'bg-hextech-cyan/5' : 'bg-transparent',
 			)}
 		>
-			<Link href={href} className="min-w-0">
+			<div className="min-w-0">
 				<p className="truncate text-[10px] font-black uppercase tracking-widest text-white">
 					Nova mensagem no pedido
 				</p>
 				<p className="mt-1 line-clamp-2 text-xs text-white/50">
 					{notification.payload.metadata.senderUsername} enviou uma mensagem.
 				</p>
-			</Link>
-			{isUnread ? (
-				<button
-					type="button"
-					aria-label="Marcar notificação como lida"
-					onClick={() => onMarkRead(notification.id)}
-					disabled={isPending}
-					className={getButtonClassName({
-						variant: 'ghost',
-						size: 'icon',
-						className: 'h-7 w-7',
-					})}
-				>
-					{isPending ? (
-						<Loader2 className="h-3 w-3 animate-spin" />
-					) : (
-						<Check className="h-3 w-3" />
-					)}
-				</button>
+			</div>
+			{isPending ? (
+				<Loader2 className="h-3 w-3 animate-spin self-center" />
+			) : isUnread ? (
+				<Check className="h-3 w-3 self-center text-hextech-cyan" />
 			) : null}
-		</div>
+		</button>
 	);
 };
 

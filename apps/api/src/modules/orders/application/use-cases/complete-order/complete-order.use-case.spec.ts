@@ -79,7 +79,7 @@ describe('CompleteOrderUseCase', () => {
 			summonerName: 'summoner',
 			password: 'secret',
 		});
-		order.acceptByBooster();
+		order.acceptByBooster(new Date('2026-05-01T00:00:00.000Z'));
 		repository.insert(order);
 
 		const useCase = new CompleteOrderUseCase(
@@ -130,7 +130,7 @@ describe('CompleteOrderUseCase', () => {
 		const earningsPort = new InMemoryOrderCompletionEarningsPort();
 		const order = Order.create('order-3', { boosterId: 'booster-1' });
 		order.confirmPayment();
-		order.acceptByBooster();
+		order.acceptByBooster(new Date('2026-05-01T00:00:00.000Z'));
 		repository.insert(order);
 		const useCase = new CompleteOrderUseCase(repository, earningsPort);
 
@@ -149,7 +149,7 @@ describe('CompleteOrderUseCase', () => {
 		const earningsPort = new InMemoryOrderCompletionEarningsPort();
 		const order = Order.create('order-4', { boosterId: 'booster-1' });
 		order.confirmPayment();
-		order.acceptByBooster();
+		order.acceptByBooster(new Date('2026-05-01T00:00:00.000Z'));
 		repository.insert(order);
 
 		const useCase = new CompleteOrderUseCase(repository, earningsPort);
@@ -168,7 +168,7 @@ describe('CompleteOrderUseCase', () => {
 		const earningsPort = new InMemoryOrderCompletionEarningsPort();
 		const order = Order.create('order-5', { boosterId: 'booster-1' });
 		order.confirmPayment();
-		order.acceptByBooster();
+		order.acceptByBooster(new Date('2026-05-01T00:00:00.000Z'));
 		repository.insert(order);
 
 		const useCase = new CompleteOrderUseCase(repository, earningsPort);

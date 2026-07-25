@@ -395,6 +395,13 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${boosterToken}`)
+			.expect(400)
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.send({ deadline: '2026-05-01T00:00:00.000Z' })
 			.expect(200, { success: true })
 			.execute();
 
@@ -429,6 +436,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${boosterToken}`)
+			.send({ deadline: '2026-05-01T00:00:00.000Z' })
 			.expect(200, { success: true })
 			.execute();
 
@@ -506,6 +514,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${boosterToken}`)
+			.send({ deadline: '2026-05-01T00:00:00.000Z' })
 			.expect(200, { success: true })
 			.execute();
 		await app.listen(0, '127.0.0.1');
@@ -904,6 +913,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${boosterToken}`)
+			.send({ deadline: '2026-05-01T00:00:00.000Z' })
 			.expect(400, {
 				message: 'Invalid order transition: awaiting_payment -> in_progress.',
 				error: 'Bad Request',
@@ -1018,6 +1028,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${otherBoosterToken}`)
+			.send({ deadline: '2026-05-01T00:00:00.000Z' })
 			.expect(404, {
 				message: 'Order not found.',
 				error: 'Not Found',

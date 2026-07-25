@@ -1,9 +1,7 @@
 import type { StartCheckoutInput } from '../server/order-contracts';
 
-const checkoutDeadlineOffsetMs = 7 * 24 * 60 * 60 * 1000;
-
 export const createInitialCheckoutInput = (
-	now = new Date(),
+	_now = new Date(),
 ): StartCheckoutInput => ({
 	serviceType: 'elo_boost',
 	summonerName: '',
@@ -16,6 +14,5 @@ export const createInitialCheckoutInput = (
 	server: 'BR',
 	desiredQueue: 'solo_duo',
 	lpGain: 20,
-	deadline: new Date(now.getTime() + checkoutDeadlineOffsetMs).toISOString(),
 	paymentMethod: 'pix',
 });

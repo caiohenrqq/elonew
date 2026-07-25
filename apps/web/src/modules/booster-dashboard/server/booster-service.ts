@@ -1,5 +1,6 @@
 import { ApiRequestError } from '@/shared/api-client-management/http';
 import {
+	acceptBoosterOrderSchema,
 	type BoosterQueueOutput,
 	type BoosterWalletOutput,
 	type BoosterWalletTransactionsOutput,
@@ -82,11 +83,14 @@ export const getBoosterWalletTransactions = async (
 
 export const acceptBoosterOrder = async (
 	orderId: string,
+	input: unknown,
 	apiRequest: AuthenticatedApiRequest,
 ): Promise<void> => {
+	const body = acceptBoosterOrderSchema.parse(input);
 	await apiRequest(`/orders/${encodeURIComponent(orderId)}/accept`, {
 		auth: true,
 		method: 'POST',
+		body: JSON.stringify(body),
 	});
 };
 

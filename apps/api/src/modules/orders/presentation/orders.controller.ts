@@ -37,6 +37,8 @@ import {
 	previewOrderQuoteSchema,
 } from '@packages/shared/orders/create-order-quote.schema';
 import {
+	type AcceptOrderSchemaInput,
+	acceptOrderSchema,
 	type CleanupExpiredOrderQuotesSchemaInput,
 	cleanupExpiredOrderQuotesSchema,
 	type ListBoosterOrdersQuerySchemaInput,
@@ -98,7 +100,6 @@ export class OrdersController {
 			server: body.server,
 			desiredQueue: body.desiredQueue,
 			lpGain: body.lpGain,
-			deadline: new Date(body.deadline),
 		});
 	}
 
@@ -124,7 +125,6 @@ export class OrdersController {
 			server: body.server,
 			desiredQueue: body.desiredQueue,
 			lpGain: body.lpGain,
-			deadline: new Date(body.deadline),
 		});
 	}
 
@@ -222,11 +222,14 @@ export class OrdersController {
 	async accept(
 		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
 		orderId: OrderIdParamSchemaInput,
+		@Body(new ZodValidationPipe(acceptOrderSchema))
+		body: AcceptOrderSchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<{ success: true }> {
 		await this.acceptOrderUseCase.execute({
 			orderId,
 			boosterId: currentUser.id,
+			deadline: new Date(body.deadline),
 		});
 		return { success: true };
 	}

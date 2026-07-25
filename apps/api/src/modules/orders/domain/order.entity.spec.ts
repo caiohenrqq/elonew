@@ -33,7 +33,7 @@ describe('Order domain rules', () => {
 		const order = Order.create('order-1');
 
 		order.confirmPayment();
-		order.acceptByBooster();
+		order.acceptByBooster(new Date('2026-05-01T00:00:00.000Z'));
 
 		expect(() => order.cancel()).toThrow(OrderCancellationNotAllowedError);
 	});
@@ -41,7 +41,33 @@ describe('Order domain rules', () => {
 	it('blocks invalid transition when booster accepts before payment confirmation', () => {
 		const order = Order.create('order-1');
 
-		expect(() => order.acceptByBooster()).toThrow(OrderInvalidTransitionError);
+		expect(() =>
+			order.acceptByBooster(new Date('2026-05-01T00:00:00.000Z')),
+		).toThrow(OrderInvalidTransitionError);
+	});
+
+	it('stores the deadline defined by the booster on acceptance', () => {
+		const order = Order.create('order-deadline', {
+			requestDetails: {
+				serviceType: 'elo_boost',
+				summonerName: 'Invocador',
+				currentLeague: 'silver',
+				currentDivision: 'IV',
+				currentLp: 0,
+				desiredLeague: 'diamond',
+				desiredDivision: 'IV',
+				server: 'BR',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: null,
+			},
+		});
+		const deadline = new Date('2026-08-10T23:59:59.999Z');
+
+		order.confirmPayment();
+		order.acceptByBooster(deadline);
+
+		expect(order.requestDetails?.deadline).toEqual(deadline);
 	});
 
 	it('keeps order in pending booster when booster rejects', () => {
@@ -68,7 +94,7 @@ describe('Order domain rules', () => {
 			summonerName: 'summoner',
 			password: 'secret',
 		});
-		order.acceptByBooster();
+		order.acceptByBooster(new Date('2026-05-01T00:00:00.000Z'));
 		order.complete();
 
 		expect(order.hasCredentials).toBe(false);
@@ -106,7 +132,7 @@ describe('Order domain rules', () => {
 		const order = Order.create('order-5');
 
 		order.confirmPayment();
-		order.acceptByBooster();
+		order.acceptByBooster(new Date('2026-05-01T00:00:00.000Z'));
 		expect(() =>
 			order.setCredentials({
 				login: 'login',

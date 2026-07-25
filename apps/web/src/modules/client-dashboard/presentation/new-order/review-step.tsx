@@ -1,6 +1,5 @@
 import {
 	ArrowRight,
-	CalendarClock,
 	ChevronRight,
 	Gamepad2,
 	Gauge,
@@ -15,7 +14,6 @@ import {
 	Zap,
 } from 'lucide-react';
 import Image from 'next/image';
-import { formatDateTime } from '@/shared/format/date';
 import { Badge } from '@/shared/ui/components/badge';
 import { Button } from '@/shared/ui/components/button';
 import {
@@ -210,13 +208,6 @@ export const ReviewStep = ({
 							icon={TrendingUp}
 							label="Ganho por vitória"
 							value={`${orderInput.lpGain} PDL`}
-						/>
-						<DetailItem
-							className={favoriteBoosterName ? undefined : 'sm:col-span-2'}
-							icon={CalendarClock}
-							label="Prazo"
-							value={formatDateTime(orderInput.deadline)}
-							preserveCase
 						/>
 						{favoriteBoosterName ? (
 							<DetailItem

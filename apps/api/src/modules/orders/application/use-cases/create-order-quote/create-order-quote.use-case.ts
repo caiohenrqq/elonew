@@ -53,7 +53,6 @@ export class CreateOrderQuoteUseCase {
 			server: input.server,
 			desiredQueue: input.desiredQueue,
 			lpGain: input.lpGain,
-			deadline: input.deadline,
 		};
 		const pricing = await this.orderPricingService.calculate(requestDetails);
 		const couponAdjustedPricing = await this.orderCouponService.apply({

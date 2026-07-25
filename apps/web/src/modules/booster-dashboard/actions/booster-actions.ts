@@ -172,11 +172,20 @@ export const sendBoosterOrderChatMessageAction = async (
 
 export const acceptBoosterOrderAction = async (
 	orderId: string,
+	formData: FormData,
 ): Promise<void> => {
+	const deadline = formData.get('deadline');
+	if (typeof deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(deadline))
+		throw new Error('Prazo inválido.');
+
 	await assertSameOriginRequest();
 	await getBoosterSessionOrRedirect();
-	await acceptBoosterOrder(orderId, api.request);
-	revalidatePath('/booster');
+	await acceptBoosterOrder(
+		orderId,
+		{ deadline: `${deadline}T23:59:59.999Z` },
+		api.request,
+	);
+	redirect(`/booster/orders/${encodeURIComponent(orderId)}`);
 };
 
 export const rejectBoosterOrderAction = async (

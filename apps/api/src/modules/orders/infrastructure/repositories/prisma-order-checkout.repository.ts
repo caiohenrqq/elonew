@@ -128,7 +128,7 @@ type OrderDelegate = {
 			server: string;
 			desiredQueue: string;
 			lpGain: number;
-			deadline: Date;
+			deadline: Date | null;
 			subtotal: number;
 			totalAmount: number;
 			discountAmount: number;
@@ -221,7 +221,7 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 					server: quote.server,
 					desiredQueue: quote.desiredQueue,
 					lpGain: quote.lpGain,
-					deadline: quote.deadline,
+					deadline: null,
 					subtotal: quote.subtotal,
 					totalAmount: quote.totalAmount,
 					discountAmount: quote.discountAmount,
@@ -358,7 +358,7 @@ export class PrismaOrderCheckoutRepository implements OrderCheckoutPort {
 				server: record.server ?? '',
 				desiredQueue: record.desiredQueue ?? '',
 				lpGain: record.lpGain ?? 0,
-				deadline: record.deadline ?? new Date(0),
+				deadline: record.deadline,
 			},
 			subtotal: record.subtotal,
 			totalAmount: record.totalAmount,

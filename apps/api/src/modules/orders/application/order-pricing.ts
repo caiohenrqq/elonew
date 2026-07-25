@@ -15,7 +15,7 @@ export type OrderQuoteRequestDetails = {
 	server: string;
 	desiredQueue: string;
 	lpGain: number;
-	deadline: Date;
+	deadline?: Date;
 };
 
 export type OrderPricingSnapshot = {

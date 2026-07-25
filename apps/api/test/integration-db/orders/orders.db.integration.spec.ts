@@ -468,7 +468,11 @@ describe('Orders module integration (db)', () => {
 			},
 			clientUser,
 		);
-		await controller.accept(createdOrder.id, boosterUser);
+		await controller.accept(
+			createdOrder.id,
+			{ deadline: '2026-05-01T00:00:00.000Z' },
+			boosterUser,
+		);
 		await controller.complete(createdOrder.id, boosterUser);
 
 		const persistedOrder = await prisma.order.findUnique({
@@ -751,7 +755,11 @@ describe('Orders module integration (db)', () => {
 			markOrderAsPaidUseCase.execute({ orderId: createdOrder.id }),
 		).resolves.toBeUndefined();
 		await expect(
-			controller.accept(createdOrder.id, boosterUser),
+			controller.accept(
+				createdOrder.id,
+				{ deadline: '2026-05-01T00:00:00.000Z' },
+				boosterUser,
+			),
 		).resolves.toEqual({
 			success: true,
 		});
@@ -785,7 +793,11 @@ describe('Orders module integration (db)', () => {
 		const createdOrder = await createQuotedOrder();
 
 		await expect(
-			controller.accept(createdOrder.id, boosterUser),
+			controller.accept(
+				createdOrder.id,
+				{ deadline: '2026-05-01T00:00:00.000Z' },
+				boosterUser,
+			),
 		).rejects.toBeInstanceOf(OrderInvalidTransitionError);
 	});
 
@@ -921,7 +933,11 @@ describe('Orders module integration (db)', () => {
 			},
 			clientUser,
 		);
-		await controller.accept(createdOrder.id, boosterUser);
+		await controller.accept(
+			createdOrder.id,
+			{ deadline: '2026-05-01T00:00:00.000Z' },
+			boosterUser,
+		);
 		await controller.complete(createdOrder.id, boosterUser);
 
 		const credentials = await prisma.orderCredentials.findUnique({

@@ -4,6 +4,12 @@ export const orderIdParamSchema = z.string().trim().min(1);
 
 export type OrderIdParamSchemaInput = z.infer<typeof orderIdParamSchema>;
 
+export const acceptOrderSchema = z.object({
+	deadline: z.string().datetime({ offset: true }),
+});
+
+export type AcceptOrderSchemaInput = z.infer<typeof acceptOrderSchema>;
+
 export const listClientOrdersQuerySchema = z.object({
 	limit: z.coerce.number().int().min(1).max(50).default(10),
 });

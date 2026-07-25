@@ -45,7 +45,7 @@ export type OrderRequestDetails = {
 	server: string;
 	desiredQueue: string;
 	lpGain: number;
-	deadline: Date;
+	deadline?: Date | null;
 };
 
 export class Order {
@@ -219,8 +219,10 @@ export class Order {
 			);
 	}
 
-	acceptByBooster(): void {
+	acceptByBooster(deadline: Date): void {
 		this.transitionTo(OrderStatus.IN_PROGRESS);
+		if (this.currentRequestDetails)
+			this.currentRequestDetails = { ...this.currentRequestDetails, deadline };
 	}
 
 	assignBooster(boosterId: string): void {
