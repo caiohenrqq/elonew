@@ -1,3 +1,9 @@
+export const awaitingClientAccountCopy = {
+	chatStatus: 'Aguardando acesso',
+	headerDescription:
+		'Envie os dados de acesso da conta para que um booster possa assumir o pedido.',
+} as const;
+
 const orderStageCopy: Record<
 	string,
 	{

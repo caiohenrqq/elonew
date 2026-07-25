@@ -61,8 +61,8 @@ export const buildOrderPaidEmail = (
 		subject: `Pagamento confirmado na ${BRAND_NAME}`,
 		title: 'Pagamento confirmado',
 		message:
-			'Recebemos o pagamento do seu pedido. Agora é só aguardar: um booster vai assumir o serviço em breve.',
-		ctaLabel: 'Acompanhar pedido',
+			'Recebemos o pagamento do seu pedido. Agora abra o pedido e envie os dados de acesso da conta: o serviço só entra na fila dos boosters depois disso.',
+		ctaLabel: 'Enviar acesso da conta',
 	});
 
 export const buildOrderBoosterAssignedEmail = (

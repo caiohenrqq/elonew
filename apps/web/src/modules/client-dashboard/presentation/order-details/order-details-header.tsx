@@ -2,7 +2,10 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import type { ClientOrder } from '../../model/orders';
-import { getOrderStageCopy } from './order-stage-copy';
+import {
+	awaitingClientAccountCopy,
+	getOrderStageCopy,
+} from './order-stage-copy';
 import { ResumePaymentButton } from './resume-payment-button';
 
 type OrderDetailsHeaderProps = {
@@ -11,7 +14,12 @@ type OrderDetailsHeaderProps = {
 
 export const OrderDetailsHeader = ({ order }: OrderDetailsHeaderProps) => {
 	const canResumePayment = order.status === 'awaiting_payment';
-	const copy = getOrderStageCopy(order.status);
+	// The queue copy would contradict the credentials form rendered below it:
+	// the order is not queued until the client sends the account access.
+	const copy =
+		order.status === 'pending_booster' && !order.hasCredentials
+			? awaitingClientAccountCopy
+			: getOrderStageCopy(order.status);
 
 	return (
 		<>
