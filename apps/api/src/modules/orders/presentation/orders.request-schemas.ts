@@ -4,9 +4,18 @@ export const orderIdParamSchema = z.string().trim().min(1);
 
 export type OrderIdParamSchemaInput = z.infer<typeof orderIdParamSchema>;
 
-export const acceptOrderSchema = z.object({
-	deadline: z.string().datetime({ offset: true }),
-});
+export const acceptOrderSchema = z
+	.object({
+		deadline: z.string().datetime({ offset: true }),
+	})
+	.refine(
+		({ deadline }) => {
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			return new Date(deadline) >= today;
+		},
+		{ message: 'Deadline cannot be before today.', path: ['deadline'] },
+	);
 
 export type AcceptOrderSchemaInput = z.infer<typeof acceptOrderSchema>;
 

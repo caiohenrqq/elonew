@@ -1,9 +1,8 @@
 import {
-	ORDER_REPOSITORY_KEY,
-	type OrderRepositoryPort,
-} from '@modules/orders/application/ports/order-repository.port';
+	CLIENT_ORDER_READER_KEY,
+	type ClientOrderReaderPort,
+} from '@modules/orders/application/ports/client-order-reader.port';
 import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
-import type { OrderStatus } from '@modules/orders/domain/order-status';
 import { Inject, Injectable } from '@nestjs/common';
 
 type GetOrderInput = {
@@ -11,50 +10,19 @@ type GetOrderInput = {
 	clientId: string;
 };
 
-type GetOrderOutput = {
-	id: string;
-	status: OrderStatus;
-	hasCredentials: boolean;
-	summonerName: string | null;
-	subtotal: number | null;
-	totalAmount: number | null;
-	discountAmount: number;
-	serviceType: string | null;
-	currentLeague: string | null;
-	currentDivision: string | null;
-	desiredLeague: string | null;
-	desiredDivision: string | null;
-};
-
 @Injectable()
 export class GetOrderUseCase {
 	constructor(
-		@Inject(ORDER_REPOSITORY_KEY)
-		private readonly orderRepository: OrderRepositoryPort,
+		@Inject(CLIENT_ORDER_READER_KEY)
+		private readonly orderReader: ClientOrderReaderPort,
 	) {}
 
-	async execute(input: GetOrderInput): Promise<GetOrderOutput> {
-		const order = await this.orderRepository.findByIdForClient(
+	async execute(input: GetOrderInput) {
+		const order = await this.orderReader.findDetailsForClient(
 			input.orderId,
 			input.clientId,
 		);
 		if (!order) throw new OrderNotFoundError();
-
-		const details = order.requestDetails;
-
-		return {
-			id: order.id,
-			status: order.status,
-			hasCredentials: order.hasCredentials,
-			summonerName: details?.summonerName ?? null,
-			subtotal: order.subtotal,
-			totalAmount: order.totalAmount,
-			discountAmount: order.discountAmount,
-			serviceType: details?.serviceType ?? null,
-			currentLeague: details?.currentLeague ?? null,
-			currentDivision: details?.currentDivision ?? null,
-			desiredLeague: details?.desiredLeague ?? null,
-			desiredDivision: details?.desiredDivision ?? null,
-		};
+		return order;
 	}
 }

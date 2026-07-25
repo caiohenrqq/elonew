@@ -4,6 +4,7 @@ import type {
 	BoosterOrderReaderPort,
 } from '@modules/orders/application/ports/booster-order-reader.port';
 import type {
+	ClientOrderDetailsSnapshot,
 	ClientOrderDashboardSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
@@ -55,6 +56,19 @@ type OrderRecord = {
 	} | null;
 };
 
+type DashboardOrderRecord = Omit<OrderRecord, 'credentials'> & {
+	createdAt: Date;
+	credentials?: { summonerName: string } | null;
+};
+
+type ClientOrderDetailsRecord = Omit<OrderRecord, 'credentials'> & {
+	credentials: { id: string } | null;
+	booster: {
+		username: string;
+		profile: { avatarUrl: string | null; reputation: number } | null;
+	} | null;
+};
+
 type OrderDelegate = {
 	findUnique(args: {
 		where: { id: string };
@@ -64,6 +78,19 @@ type OrderDelegate = {
 		where: { id: string; clientId: string };
 		include: { credentials: true; extras: true };
 	}): Promise<OrderRecord | null>;
+	findFirst(args: {
+		where: { id: string; clientId: string };
+		include: {
+			credentials: { select: { id: true } };
+			extras: true;
+			booster: {
+				select: {
+					username: true;
+					profile: { select: { avatarUrl: true; reputation: true } };
+				};
+			};
+		};
+	}): Promise<ClientOrderDetailsRecord | null>;
 	findFirst(args: {
 		where: { clientId: string };
 		select: { id: true };
@@ -78,10 +105,15 @@ type OrderDelegate = {
 					boosterId?: string;
 					boosterRejections?: { none: { boosterId: string } };
 			  };
-		include: { extras: true };
+		include:
+			| { extras: true }
+			| {
+					extras: true;
+					credentials: { select: { summonerName: true } };
+			  };
 		orderBy: { createdAt: 'desc' };
-		take: number;
-	}): Promise<Array<Omit<OrderRecord, 'credentials'> & { createdAt: Date }>>;
+		take?: number;
+	}): Promise<DashboardOrderRecord[]>;
 	count(args: {
 		where: { clientId: string; status?: { in: string[] } };
 	}): Promise<number>;
@@ -324,6 +356,49 @@ export class PrismaOrderRepository
 		return records.map((record) => this.mapDashboardSnapshotFromRecord(record));
 	}
 
+	async findDetailsForClient(
+		orderId: string,
+		clientId: string,
+	): Promise<ClientOrderDetailsSnapshot | null> {
+		const record = await this.getDelegate().findFirst({
+			where: { id: orderId, clientId },
+			include: {
+				credentials: { select: { id: true } },
+				extras: true,
+				booster: {
+					select: {
+						username: true,
+						profile: { select: { avatarUrl: true, reputation: true } },
+					},
+				},
+			},
+		});
+		if (!record) return null;
+
+		const { credentials, booster, ...dashboardRecord } = record;
+		const {
+			clientId: _clientId,
+			createdAt: _createdAt,
+			...details
+		} = this.mapDashboardSnapshotFromRecord({
+			...dashboardRecord,
+			createdAt: new Date(0),
+		});
+		return {
+			...details,
+			hasCredentials: credentials !== null,
+			summonerName: record.summonerName,
+			extras: record.extras.map((extra) => this.mapExtraFromRecord(extra)),
+			booster: booster
+				? {
+						username: booster.username,
+						avatarUrl: booster.profile?.avatarUrl ?? null,
+						reputation: booster.profile?.reputation ?? 0,
+					}
+				: null,
+		};
+	}
+
 	async countActiveForClient(clientId: string): Promise<number> {
 		return await this.getDelegate().count({
 			where: {
@@ -356,7 +431,6 @@ export class PrismaOrderRepository
 
 	async findAvailableForBooster(
 		boosterId: string,
-		limit: number,
 	): Promise<BoosterOrderDashboardSnapshot[]> {
 		const records = await this.getDelegate().findMany({
 			where: {
@@ -365,9 +439,11 @@ export class PrismaOrderRepository
 				OR: [{ boosterId: null }, { boosterId }],
 				boosterRejections: { none: { boosterId } },
 			},
-			include: { extras: true },
+			include: {
+				extras: true,
+				credentials: { select: { summonerName: true } },
+			},
 			orderBy: { createdAt: 'desc' },
-			take: limit,
 		});
 
 		return records.map((record) =>
@@ -384,7 +460,10 @@ export class PrismaOrderRepository
 				status: OrderStatus.IN_PROGRESS,
 				boosterId,
 			},
-			include: { extras: true },
+			include: {
+				extras: true,
+				credentials: { select: { summonerName: true } },
+			},
 			orderBy: { createdAt: 'desc' },
 			take: limit,
 		});
@@ -403,7 +482,10 @@ export class PrismaOrderRepository
 				status: OrderStatus.COMPLETED,
 				boosterId,
 			},
-			include: { extras: true },
+			include: {
+				extras: true,
+				credentials: { select: { summonerName: true } },
+			},
 			orderBy: { createdAt: 'desc' },
 			take: limit,
 		});
@@ -533,7 +615,7 @@ export class PrismaOrderRepository
 	}
 
 	private mapDashboardSnapshotFromRecord(
-		record: Omit<OrderRecord, 'credentials'> & { createdAt: Date },
+		record: DashboardOrderRecord,
 	): ClientOrderDashboardSnapshot {
 		return {
 			id: record.id,
@@ -559,7 +641,7 @@ export class PrismaOrderRepository
 	}
 
 	private mapBoosterDashboardSnapshotFromRecord(
-		record: Omit<OrderRecord, 'credentials'> & { createdAt: Date },
+		record: DashboardOrderRecord,
 	): BoosterOrderDashboardSnapshot {
 		const totalAmount = record.totalAmount;
 
@@ -570,6 +652,15 @@ export class PrismaOrderRepository
 			serviceType: record.serviceType
 				? this.mapServiceTypeFromPersistence(record.serviceType)
 				: null,
+			summonerName:
+				record.summonerName ??
+				(record.credentials
+					? this.orderCredentialsCipher.decryptField(
+							record.id,
+							'summonerName',
+							record.credentials.summonerName,
+						)
+					: null),
 			currentLeague: record.currentLeague,
 			currentDivision: record.currentDivision,
 			currentLp: record.currentLp,
@@ -582,6 +673,7 @@ export class PrismaOrderRepository
 			totalAmount,
 			boosterAmount:
 				totalAmount === null ? 0 : Number((totalAmount * 0.7).toFixed(2)),
+			extras: record.extras.map((extra) => this.mapExtraFromRecord(extra)),
 			createdAt: record.createdAt,
 		};
 	}

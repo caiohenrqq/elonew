@@ -55,12 +55,30 @@ describe('Admin dashboard (e2e)', () => {
 					boosterId: null,
 					status: OrderStatus.PENDING_BOOSTER,
 					serviceType: 'elo_boost',
+					summonerName: 'Invocador',
+					currentLeague: 'gold',
+					currentDivision: 'II',
+					currentLp: 40,
+					desiredLeague: 'platinum',
+					desiredDivision: 'IV',
+					server: 'BR',
+					desiredQueue: 'solo_duo',
+					lpGain: 20,
+					subtotal: 99,
 					totalAmount: 99,
+					discountAmount: 0,
+					extras: [],
+					client: { username: 'Client One' },
+					booster: null,
 					createdAt: new Date('2026-04-10T10:00:00.000Z'),
 					latestGovernanceAction: null,
 					boosterPayment: null,
 				},
 			];
+		}
+
+		async getOrder(orderId: string) {
+			return (await this.listOrders()).find((order) => order.id === orderId) ?? null;
 		}
 
 		async listSupportTickets() {

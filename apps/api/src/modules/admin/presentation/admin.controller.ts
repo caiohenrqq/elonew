@@ -8,6 +8,7 @@ import { ReleaseAdminOrderBoosterPaymentUseCase } from '@modules/admin/applicati
 import { ResendAdminUserPasswordSetupUseCase } from '@modules/admin/application/use-cases/resend-admin-user-password-setup/resend-admin-user-password-setup.use-case';
 import { UnblockAdminUserUseCase } from '@modules/admin/application/use-cases/unblock-admin-user/unblock-admin-user.use-case';
 import { UpdateAdminUserUseCase } from '@modules/admin/application/use-cases/update-admin-user/update-admin-user.use-case';
+import { AdminOrderNotFoundError } from '@modules/admin/domain/admin.errors';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
 import { Roles } from '@modules/auth/presentation/decorators/roles.decorator';
@@ -155,6 +156,17 @@ export class AdminController {
 		@CurrentUser() _currentUser: AuthenticatedUser,
 	) {
 		return await this.dashboard.listOrders({ limit: query.limit });
+	}
+
+	@Get('orders/:orderId')
+	async getOrder(
+		@Param('orderId', new ZodValidationPipe(adminIdParamSchema))
+		orderId: AdminIdParamSchemaInput,
+		@CurrentUser() _currentUser: AuthenticatedUser,
+	) {
+		const order = await this.dashboard.getOrder(orderId);
+		if (!order) throw new AdminOrderNotFoundError();
+		return order;
 	}
 
 	@Post('orders/:orderId/force-cancel')

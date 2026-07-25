@@ -181,13 +181,10 @@ export class OrdersController {
 	@Get('booster/queue')
 	@Roles(Role.BOOSTER)
 	async listBoosterQueue(
-		@Query(new ZodValidationPipe(listBoosterOrdersQuerySchema))
-		query: ListBoosterOrdersQuerySchemaInput,
 		@CurrentUser() currentUser: AuthenticatedUser,
 	): Promise<Awaited<ReturnType<ListBoosterQueueUseCase['execute']>>> {
 		return await this.listBoosterQueueUseCase.execute({
 			boosterId: currentUser.id,
-			limit: query.limit,
 		});
 	}
 

@@ -35,7 +35,21 @@ class AdminDashboardReaderStub implements AdminDashboardReaderPort {
 			boosterId: null,
 			status: OrderStatus.PENDING_BOOSTER,
 			serviceType: 'ELO_BOOST',
+			summonerName: 'Invocador',
+			currentLeague: 'gold',
+			currentDivision: 'II',
+			currentLp: 40,
+			desiredLeague: 'platinum',
+			desiredDivision: 'IV',
+			server: 'BR',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			subtotal: 300,
 			totalAmount: 300,
+			discountAmount: 0,
+			extras: [],
+			client: { username: 'Client' },
+			booster: null,
 			createdAt: new Date('2026-05-01T00:00:00.000Z'),
 			latestGovernanceAction: null,
 			boosterPayment: null,
@@ -64,6 +78,12 @@ class AdminDashboardReaderStub implements AdminDashboardReaderPort {
 
 	listOrders(): Promise<AdminOrderSnapshot[]> {
 		return Promise.resolve(this.orders);
+	}
+
+	getOrder(orderId: string): Promise<AdminOrderSnapshot | null> {
+		return Promise.resolve(
+			this.orders.find((order) => order.id === orderId) ?? null,
+		);
 	}
 
 	listSupportTickets(): Promise<AdminSupportTicketSnapshot[]> {

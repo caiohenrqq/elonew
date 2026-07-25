@@ -1,4 +1,5 @@
 import type { OrderStatus } from '@modules/orders/domain/order-status';
+import type { OrderPricedExtra } from '@packages/shared/orders/order-extra';
 import type { OrderServiceType } from '@packages/shared/orders/service-type';
 
 export const BOOSTER_ORDER_READER_KEY = Symbol('BOOSTER_ORDER_READER_KEY');
@@ -8,6 +9,7 @@ export type BoosterOrderDashboardSnapshot = {
 	boosterId: string | null;
 	status: OrderStatus;
 	serviceType: OrderServiceType | null;
+	summonerName: string | null;
 	currentLeague: string | null;
 	currentDivision: string | null;
 	currentLp: number | null;
@@ -19,13 +21,13 @@ export type BoosterOrderDashboardSnapshot = {
 	deadline: Date | null;
 	totalAmount: number | null;
 	boosterAmount: number;
+	extras: OrderPricedExtra[];
 	createdAt: Date;
 };
 
 export interface BoosterOrderReaderPort {
 	findAvailableForBooster(
 		boosterId: string,
-		limit: number,
 	): Promise<BoosterOrderDashboardSnapshot[]>;
 	findActiveForBooster(
 		boosterId: string,

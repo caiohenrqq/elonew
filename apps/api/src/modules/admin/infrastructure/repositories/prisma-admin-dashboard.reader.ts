@@ -28,7 +28,21 @@ type AdminOrderRecord = {
 	boosterId: string | null;
 	status: string;
 	serviceType: string | null;
+	summonerName: string | null;
+	currentLeague: string | null;
+	currentDivision: string | null;
+	currentLp: number | null;
+	desiredLeague: string | null;
+	desiredDivision: string | null;
+	server: string | null;
+	desiredQueue: string | null;
+	lpGain: number | null;
+	subtotal: number | null;
 	totalAmount: number | null;
+	discountAmount: number;
+	extras: Array<{ type: string; price: number }>;
+	client: { username: string } | null;
+	booster: { username: string } | null;
 	createdAt: Date;
 	adminGovernanceActions: Array<{
 		actionType: string;
@@ -89,7 +103,21 @@ type AdminDashboardPrismaClient = {
 				boosterId: true;
 				status: true;
 				serviceType: true;
+				summonerName: true;
+				currentLeague: true;
+				currentDivision: true;
+				currentLp: true;
+				desiredLeague: true;
+				desiredDivision: true;
+				server: true;
+				desiredQueue: true;
+				lpGain: true;
+				subtotal: true;
 				totalAmount: true;
+				discountAmount: true;
+				extras: { select: { type: true; price: true } };
+				client: { select: { username: true } };
+				booster: { select: { username: true } };
 				createdAt: true;
 				adminGovernanceActions: {
 					select: { actionType: true; reason: true; createdAt: true };
@@ -111,6 +139,48 @@ type AdminDashboardPrismaClient = {
 			orderBy: { createdAt: 'desc' };
 			take: number;
 		}): Promise<AdminOrderRecord[]>;
+		findUnique(args: {
+			where: { id: string };
+			select: {
+				id: true;
+				clientId: true;
+				boosterId: true;
+				status: true;
+				serviceType: true;
+				summonerName: true;
+				currentLeague: true;
+				currentDivision: true;
+				currentLp: true;
+				desiredLeague: true;
+				desiredDivision: true;
+				server: true;
+				desiredQueue: true;
+				lpGain: true;
+				subtotal: true;
+				totalAmount: true;
+				discountAmount: true;
+				extras: { select: { type: true; price: true } };
+				client: { select: { username: true } };
+				booster: { select: { username: true } };
+				createdAt: true;
+				adminGovernanceActions: {
+					select: { actionType: true; reason: true; createdAt: true };
+					orderBy: { createdAt: 'desc' };
+					take: 1;
+				};
+				walletTransactions: {
+					where: { type: 'CREDIT'; reason: 'order_completion' };
+					select: {
+						amount: true;
+						availableAt: true;
+						releasedAt: true;
+						releasedBy: true;
+					};
+					orderBy: { createdAt: 'desc' };
+					take: 1;
+				};
+			};
+		}): Promise<AdminOrderRecord | null>;
 	};
 	payment: {
 		aggregate(args: {
@@ -216,42 +286,44 @@ export class PrismaAdminDashboardReader {
 
 	async listOrders(input: { limit: number }): Promise<AdminOrderSnapshot[]> {
 		const records = await this.getClient().order.findMany({
-			select: {
-				id: true,
-				clientId: true,
-				boosterId: true,
-				status: true,
-				serviceType: true,
-				totalAmount: true,
-				createdAt: true,
-				adminGovernanceActions: {
-					select: { actionType: true, reason: true, createdAt: true },
-					orderBy: { createdAt: 'desc' },
-					take: 1,
-				},
-				walletTransactions: {
-					where: { type: 'CREDIT', reason: 'order_completion' },
-					select: {
-						amount: true,
-						availableAt: true,
-						releasedAt: true,
-						releasedBy: true,
-					},
-					orderBy: { createdAt: 'desc' },
-					take: 1,
-				},
-			},
+			select: this.orderSelect(),
 			orderBy: { createdAt: 'desc' },
 			take: input.limit,
 		});
 
-		return records.map((record) => ({
+		return records.map((record) => this.mapOrder(record));
+	}
+
+	async getOrder(orderId: string): Promise<AdminOrderSnapshot | null> {
+		const record = await this.getClient().order.findUnique({
+			where: { id: orderId },
+			select: this.orderSelect(),
+		});
+		return record ? this.mapOrder(record) : null;
+	}
+
+	private mapOrder(record: AdminOrderRecord): AdminOrderSnapshot {
+		return {
 			id: record.id,
 			clientId: record.clientId,
 			boosterId: record.boosterId,
 			status: ensurePersistedEnum(OrderStatus, record.status, 'order status'),
 			serviceType: record.serviceType,
+			summonerName: record.summonerName,
+			currentLeague: record.currentLeague,
+			currentDivision: record.currentDivision,
+			currentLp: record.currentLp,
+			desiredLeague: record.desiredLeague,
+			desiredDivision: record.desiredDivision,
+			server: record.server,
+			desiredQueue: record.desiredQueue,
+			lpGain: record.lpGain,
+			subtotal: record.subtotal,
 			totalAmount: record.totalAmount,
+			discountAmount: record.discountAmount,
+			extras: record.extras,
+			client: record.client,
+			booster: record.booster,
 			createdAt: record.createdAt,
 			latestGovernanceAction: record.adminGovernanceActions[0]
 				? {
@@ -273,7 +345,49 @@ export class PrismaAdminDashboardReader {
 									: null,
 					}
 				: null,
-		}));
+		};
+	}
+
+	private orderSelect() {
+		return {
+			id: true,
+			clientId: true,
+			boosterId: true,
+			status: true,
+			serviceType: true,
+			summonerName: true,
+			currentLeague: true,
+			currentDivision: true,
+			currentLp: true,
+			desiredLeague: true,
+			desiredDivision: true,
+			server: true,
+			desiredQueue: true,
+			lpGain: true,
+			subtotal: true,
+			totalAmount: true,
+			discountAmount: true,
+			extras: { select: { type: true, price: true } },
+			client: { select: { username: true } },
+			booster: { select: { username: true } },
+			createdAt: true,
+			adminGovernanceActions: {
+				select: { actionType: true, reason: true, createdAt: true },
+				orderBy: { createdAt: 'desc' },
+				take: 1,
+			},
+			walletTransactions: {
+				where: { type: 'CREDIT', reason: 'order_completion' },
+				select: {
+					amount: true,
+					availableAt: true,
+					releasedAt: true,
+					releasedBy: true,
+				},
+				orderBy: { createdAt: 'desc' },
+				take: 1,
+			},
+		} as const;
 	}
 
 	async listSupportTickets(input: {
