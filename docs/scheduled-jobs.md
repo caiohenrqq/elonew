@@ -14,6 +14,9 @@ the declared inventory. One entry per recurring job:
 | `reconcile_stale_checkouts` | `*/10 * * * *` | `POST /payments/internal/reconcile-stale-checkouts` |
 | `cleanup_expired_order_quotes` | `*/15 * * * *` | `POST /orders/internal/quotes/cleanup-expired` |
 
+`WORKER_QUEUES_ENABLED=false` starts the worker process without connecting to
+Redis or consuming any queue, which is what test runs use.
+
 Cron expressions and batch sizes come from `workers.env`
 (`STALE_CHECKOUT_RECONCILE_CRON`, `ORDER_QUOTE_CLEANUP_CRON`, and the matching
 `_LIMIT` values), so an interval can change with a workers restart instead of a
@@ -49,13 +52,23 @@ once, and a retry re-runs it.
 
 ## Seeing what is scheduled
 
-- Admin dashboard: **Admin → Trabalhos agendados** lists every scheduler with its
-  cron and next run, plus queue depth and failures.
-- From a shell:
+- Admin dashboard: **Admin → Agendamentos** lists every scheduler with its cron
+  and next run, plus queue depth and failures. This is the authoritative view; it
+  reads the same `getJobSchedulers()` API the worker uses.
+- From a shell — one key per scheduler definition, plus the queued next
+  occurrences:
 
 ```bash
-docker exec elonew-prod-redis-1 redis-cli zrange bull:scheduled-tasks:repeat 0 -1 withscores
+docker exec elonew-prod-redis-1 redis-cli --scan --pattern 'bull:scheduled-tasks:repeat:*'
+docker exec elonew-prod-redis-1 redis-cli zrange bull:scheduled-tasks:delayed 0 -1
 ```
+
+Never delete these keys by hand. BullMQ keeps the scheduler definitions and the
+index it lists them from in separate keys; removing one leaves a schedule that
+still fires but cannot be listed, re-armed, or removed through the API. Drop the
+whole `bull:scheduled-tasks:*` set and restart the worker instead, which re-arms
+from code. The worker reports both halves of that state as
+`operation: "arm_schedule"` / `"verify_schedule"` errors.
 
 - In Loki: `{service="workers"} | json | event="scheduled_task.lifecycle"`. Every
   attempt emits one event with `task_name`, `cron`, `job_id`, `attempt`,
