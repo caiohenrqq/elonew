@@ -53,6 +53,10 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		this.orders.set(order.id, order);
 	}
 
+	saveCredentials(order: Order): Promise<void> {
+		return this.save(order);
+	}
+
 	async existsForClient(clientId: string): Promise<boolean> {
 		return Array.from(this.orders.values()).some(
 			(order) => order.clientId === clientId,

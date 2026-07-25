@@ -36,6 +36,10 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 		this.orders.set(order.id, persistedOrderCopy(order));
 	}
 
+	saveCredentials(order: Order): Promise<void> {
+		return this.save(order);
+	}
+
 	insert(order: Order): void {
 		this.orders.set(order.id, persistedOrderCopy(order));
 	}

@@ -10,5 +10,6 @@ export interface OrderRepositoryPort {
 	existsPaidOrderForClient?(clientId: string): Promise<boolean>;
 	existsActiveOrPaidOrderForClient?(clientId: string): Promise<boolean>;
 	save(order: Order): Promise<void>;
+	saveCredentials(order: Order): Promise<void>;
 	saveBoosterRejection?(order: Order, boosterId: string): Promise<void>;
 }

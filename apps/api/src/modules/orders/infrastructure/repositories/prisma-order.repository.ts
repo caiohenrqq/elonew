@@ -216,6 +216,18 @@ type OrderDelegate = {
 				| undefined;
 		};
 	}): Promise<OrderRecord>;
+	update(args: {
+		where: { id: string; status: { in: string[] } };
+		data: {
+			summonerName: string | null;
+			credentials: {
+				upsert: {
+					create: { login: string; summonerName: string; password: string };
+					update: { login: string; summonerName: string; password: string };
+				};
+			};
+		};
+	}): Promise<unknown>;
 };
 
 type OrderCredentialsDelegate = {
@@ -424,6 +436,29 @@ export class PrismaOrderRepository
 				update: {},
 			});
 			await this.saveWithClient(order, client);
+		});
+	}
+
+	// A full-row upsert would write back the status, booster assignment and
+	// extras read before the form was submitted, reverting a booster who
+	// accepted the order in the meantime. Only the credential fields are
+	// written here, and only while the order still allows storing them.
+	async saveCredentials(order: Order): Promise<void> {
+		const credentials = this.mapCredentialsUpdate(order);
+		if (!credentials)
+			throw new Error('Cannot save an order without pending credentials.');
+
+		await this.getDelegate().update({
+			where: {
+				id: order.id,
+				status: {
+					in: [OrderStatus.PENDING_BOOSTER, OrderStatus.IN_PROGRESS],
+				},
+			},
+			data: {
+				summonerName: order.requestDetails?.summonerName || null,
+				credentials,
+			},
 		});
 	}
 
@@ -679,7 +714,7 @@ export class PrismaOrderRepository
 			serviceType: requestDetails
 				? this.mapServiceTypeToPersistence(requestDetails.serviceType)
 				: null,
-			summonerName: requestDetails?.summonerName ?? null,
+			summonerName: requestDetails?.summonerName || null,
 			currentLeague: requestDetails?.currentLeague ?? null,
 			currentDivision: requestDetails?.currentDivision ?? null,
 			currentLp: requestDetails?.currentLp ?? null,
