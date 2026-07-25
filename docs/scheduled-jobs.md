@@ -78,19 +78,29 @@ docker exec elonew-prod-redis-1 redis-cli zrange bull:scheduled-tasks:repeat 0 -
 
 Before this change, production ran the reconciliation from a **host crontab** on
 the VPS every 10 minutes, and the repo also declared an unused
-`stale-checkout-reconciler` compose service. Both are gone from the repo. The
-host crontab must be removed **in the same release**, or reconciliation runs
-twice:
+`stale-checkout-reconciler` compose service. Both are gone.
+
+The host crontab was removed on `elonew-vps` on 2026-07-25, before the release
+that ships this code, so the two mechanisms can never overlap:
+
+```bash
+crontab -l | grep -v reconcile-stale-checkouts | crontab -
+```
+
+The previous crontab is saved at `~/crontab.backup.20260725-120502` and
+`~/bin/reconcile-stale-checkouts` is intentionally still on the box, so the old
+behaviour can be restored in one command if the release is delayed:
 
 ```bash
 ssh elonew-vps
-crontab -l                                              # confirm what is there
-crontab -l | grep -v reconcile-stale-checkouts | crontab -
-crontab -l                                              # confirm it is gone
-rm -f ~/bin/reconcile-stale-checkouts ~/reconcile-stale-checkouts.log
+(crontab -l 2>/dev/null; echo '*/10 * * * * /home/admin/bin/reconcile-stale-checkouts >> /home/admin/reconcile-stale-checkouts.log 2>&1') | crontab -
 ```
 
-Then verify the workers container armed the schedules:
+**Until the release ships, production has no stale-checkout reconciliation.**
+Mercado Pago webhooks still drive the normal path; reconciliation is the safety
+net for missed webhooks. Delete the script and log once the release is verified.
+
+After the release, verify the workers container armed the schedules:
 
 ```bash
 docker logs elonew-prod-workers-1 --tail 50 | grep scheduled_task.consumer
