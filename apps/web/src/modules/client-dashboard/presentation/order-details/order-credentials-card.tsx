@@ -18,10 +18,7 @@ type OrderCredentialsCardProps = {
 };
 
 export const OrderCredentialsSavedNotice = () => (
-	<div
-		role="status"
-		className="flex items-center gap-3 rounded-sm border border-emerald-400/25 bg-emerald-400/5 px-4 py-3"
-	>
+	<output className="flex items-center gap-3 rounded-sm border border-emerald-400/25 bg-emerald-400/5 px-4 py-3">
 		<ShieldCheck
 			className="h-4 w-4 shrink-0 text-emerald-300"
 			aria-hidden="true"
@@ -30,7 +27,7 @@ export const OrderCredentialsSavedNotice = () => (
 			Dados da conta enviados com segurança. Eles ficam criptografados e são
 			apagados quando o pedido termina.
 		</p>
-	</div>
+	</output>
 );
 
 export const OrderCredentialsCard = ({
