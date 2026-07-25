@@ -5,7 +5,10 @@ export class WalletFundsReleaseInvalidJobError extends Error {
 }
 
 export class WalletFundsReleaseExecutionFailedError extends Error {
-	constructor(message = 'Wallet funds release execution failed.') {
+	constructor(
+		message = 'Wallet funds release execution failed.',
+		readonly apiStatus: number | null = null,
+	) {
 		super(message);
 	}
 }

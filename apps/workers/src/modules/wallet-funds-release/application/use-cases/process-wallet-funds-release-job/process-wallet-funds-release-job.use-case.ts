@@ -1,5 +1,6 @@
 import {
 	WALLET_FUNDS_RELEASE_EXECUTOR_PORT_KEY,
+	type WalletFundsReleaseExecutionResult,
 	type WalletFundsReleaseExecutorPort,
 } from '@modules/wallet-funds-release/application/ports/wallet-funds-release-executor.port';
 import type { ProcessWalletFundsReleaseJobInput } from '@modules/wallet-funds-release/application/process-wallet-funds-release-job.input';
@@ -12,7 +13,9 @@ export class ProcessWalletFundsReleaseJobUseCase {
 		private readonly walletFundsReleaseExecutor: WalletFundsReleaseExecutorPort,
 	) {}
 
-	async execute(job: ProcessWalletFundsReleaseJobInput): Promise<void> {
-		await this.walletFundsReleaseExecutor.execute(job);
+	async execute(
+		job: ProcessWalletFundsReleaseJobInput,
+	): Promise<WalletFundsReleaseExecutionResult> {
+		return await this.walletFundsReleaseExecutor.execute(job);
 	}
 }

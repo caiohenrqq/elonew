@@ -24,6 +24,7 @@
 		"@packages/shared": "workspace:*",
 		"bullmq": "^5.71.0",
 		"ioredis": "^5.10.0",
+		"pino": "^10.3.1",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1"
 	}
