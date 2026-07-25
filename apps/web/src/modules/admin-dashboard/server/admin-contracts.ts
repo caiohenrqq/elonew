@@ -54,6 +54,15 @@ export const adminOrderSchema = z.object({
 			createdAt: z.string(),
 		})
 		.nullable(),
+	boosterPayment: z
+		.object({
+			amount: z.number(),
+			availableAt: z.string(),
+			releasedAt: z.string().nullable(),
+			releasedBy: z.enum(['schedule', 'admin']).nullable(),
+		})
+		.nullable()
+		.default(null),
 });
 
 export const adminSupportTicketSchema = z.object({

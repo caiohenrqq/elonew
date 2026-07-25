@@ -36,6 +36,7 @@ import {
 	getAdminOrders as getAdminOrdersFromApi,
 	getAdminSupportTickets as getAdminSupportTicketsFromApi,
 	getAdminUsers as getAdminUsersFromApi,
+	releaseAdminOrderBoosterPayment,
 	renameAdminUser,
 	resendAdminUserPasswordSetup,
 	unblockAdminUser,
@@ -245,6 +246,25 @@ export const unblockAdminUserAction = async (
 		await unblockAdminUser(parseGovernanceForm(formData), api.request);
 		revalidatePath('/admin');
 		revalidatePath('/admin/users');
+		return { success: true };
+	} catch (error) {
+		return { error: getAuthErrorMessage(error) };
+	}
+};
+
+export const releaseAdminOrderBoosterPaymentAction = async (
+	_state: AdminGovernanceActionState,
+	formData: FormData,
+): Promise<AdminGovernanceActionState> => {
+	try {
+		await assertSameOriginRequest();
+		await getAdminSessionOrRedirect();
+		await releaseAdminOrderBoosterPayment(
+			parseGovernanceForm(formData),
+			api.request,
+		);
+		revalidatePath('/admin');
+		revalidatePath('/admin/orders');
 		return { success: true };
 	} catch (error) {
 		return { error: getAuthErrorMessage(error) };

@@ -233,3 +233,18 @@ export const forceCancelAdminOrder = async (
 		},
 	);
 };
+
+export const releaseAdminOrderBoosterPayment = async (
+	input: unknown,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<void> => {
+	const body = adminGovernanceInputSchema.parse(input);
+	await apiRequest(
+		`/admin/orders/${encodeURIComponent(body.targetId)}/release-booster-payment`,
+		{
+			auth: true,
+			method: 'POST',
+			body: JSON.stringify({ reason: body.reason }),
+		},
+	);
+};

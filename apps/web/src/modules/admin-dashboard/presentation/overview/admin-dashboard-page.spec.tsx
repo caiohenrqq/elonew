@@ -107,6 +107,7 @@ describe('admin dashboard pages', () => {
 							reason: 'Pagamento duplicado',
 							createdAt: '2026-05-02T00:00:00.000Z',
 						},
+						boosterPayment: null,
 					},
 				]}
 			/>,
@@ -163,6 +164,7 @@ describe('admin dashboard pages', () => {
 						reason: 'Pagamento duplicado',
 						createdAt: '2026-05-02T00:00:00.000Z',
 					},
+					boosterPayment: null,
 				}}
 			/>,
 		);
@@ -199,6 +201,7 @@ describe('admin dashboard pages', () => {
 						reason: 'Pagamento duplicado',
 						createdAt: '2026-05-02T00:00:00.000Z',
 					},
+					boosterPayment: null,
 				}}
 			/>,
 		);

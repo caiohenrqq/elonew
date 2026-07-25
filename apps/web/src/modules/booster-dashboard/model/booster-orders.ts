@@ -22,3 +22,13 @@ export const formatTransactionReason = (
 	if (reason === 'order_completion') return 'Conclusão de pedido';
 	return 'Solicitação de saque';
 };
+
+export const formatTransactionRelease = (
+	transaction: Pick<
+		BoosterWalletTransactionOutput,
+		'releasedAt' | 'releasedBy'
+	>,
+) => {
+	if (!transaction.releasedAt) return 'Bloqueado';
+	return transaction.releasedBy === 'admin' ? 'Liberado por admin' : 'Liberado';
+};

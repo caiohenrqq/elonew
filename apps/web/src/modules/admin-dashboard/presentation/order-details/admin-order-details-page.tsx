@@ -22,6 +22,7 @@ import {
 	getAdminOrderChatMessages,
 	getAdminOrders,
 	getAdminUserId,
+	releaseAdminOrderBoosterPaymentAction,
 } from '../../actions/admin-actions';
 import type { AdminOrderOutput } from '../../server/admin-contracts';
 import { AdminGovernanceForm } from '../overview/admin-governance-form';
@@ -42,6 +43,14 @@ export const AdminOrderDetailsView = ({
 	order,
 }: AdminOrderDetailsViewProps) => {
 	const isForceCancelDisabled = order.status === 'cancelled';
+	const { boosterPayment } = order;
+	const releaseDisabledReason = !boosterPayment
+		? 'Nenhum crédito de conclusão registrado para este pedido.'
+		: boosterPayment.releasedAt
+			? `Pagamento já liberado em ${formatDateTime(boosterPayment.releasedAt)}.`
+			: order.status !== 'completed'
+				? 'O pagamento só pode ser liberado em pedidos concluídos.'
+				: undefined;
 
 	return (
 		<div className="space-y-8">
@@ -143,6 +152,41 @@ export const AdminOrderDetailsView = ({
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-4">
+							<div className="space-y-2 border-b border-white/5 pb-4">
+								<p className="text-[10px] font-black uppercase tracking-widest text-white/40">
+									Pagamento do booster
+								</p>
+								{boosterPayment ? (
+									<>
+										<p className="text-sm font-black text-white">
+											{formatCurrency(boosterPayment.amount)}
+										</p>
+										<p className="text-xs text-white/45">
+											{boosterPayment.releasedAt
+												? `Liberado em ${formatDateTime(boosterPayment.releasedAt)}${
+														boosterPayment.releasedBy === 'admin'
+															? ' por ação administrativa'
+															: ''
+													}`
+												: `Bloqueado até ${formatDateTime(boosterPayment.availableAt)}`}
+										</p>
+									</>
+								) : (
+									<p className="text-xs text-white/35">
+										Nenhum crédito de conclusão registrado.
+									</p>
+								)}
+							</div>
+
+							<AdminGovernanceForm
+								action={releaseAdminOrderBoosterPaymentAction}
+								targetId={order.id}
+								label="Liberar pagamento do booster"
+								placeholder="Motivo obrigatório da liberação antecipada"
+								disabled={Boolean(releaseDisabledReason)}
+								disabledReason={releaseDisabledReason}
+							/>
+
 							<AdminGovernanceForm
 								action={forceCancelAdminOrderAction}
 								targetId={order.id}

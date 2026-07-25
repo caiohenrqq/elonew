@@ -55,6 +55,7 @@ export const boosterWalletTransactionSchema = z.object({
 	reason: z.enum(['order_completion', 'withdrawal_request']),
 	availableAt: z.string(),
 	releasedAt: z.string().nullable(),
+	releasedBy: z.enum(['schedule', 'admin']).nullable().default(null),
 	createdAt: z.string(),
 });
 
