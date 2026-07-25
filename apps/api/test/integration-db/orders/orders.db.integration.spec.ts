@@ -910,7 +910,7 @@ describe('Orders module integration (db)', () => {
 			clientUser,
 		);
 
-		const queue = await controller.listBoosterQueue({ limit: 50 }, boosterUser);
+		const queue = await controller.listBoosterQueue(boosterUser);
 		const queuedIds = queue.availableOrders.map((order) => order.id);
 
 		expect(queuedIds).toContain(withCredentials.id);
