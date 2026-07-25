@@ -74,7 +74,11 @@ describe('AcceptOrderUseCase', () => {
 			eventPublisher,
 			chatThreadWriter,
 		);
-		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
+		await useCase.execute({
+			orderId: 'order-1',
+			boosterId: 'booster-1',
+			deadline: new Date('2026-05-01T00:00:00.000Z'),
+		});
 
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.status).toBe('in_progress');
@@ -100,7 +104,11 @@ describe('AcceptOrderUseCase', () => {
 		const useCase = new AcceptOrderUseCase(repository, undefined, undefined, {
 			sendBoosterAssignedEmail,
 		} as unknown as OrderLifecycleEmailService);
-		await useCase.execute({ orderId: 'order-1', boosterId: 'booster-1' });
+		await useCase.execute({
+			orderId: 'order-1',
+			boosterId: 'booster-1',
+			deadline: new Date('2026-05-01T00:00:00.000Z'),
+		});
 
 		expect(sendBoosterAssignedEmail).toHaveBeenCalledTimes(1);
 		expect(sendBoosterAssignedEmail).toHaveBeenCalledWith(order);
@@ -111,7 +119,11 @@ describe('AcceptOrderUseCase', () => {
 		const useCase = new AcceptOrderUseCase(repository);
 
 		await expect(
-			useCase.execute({ orderId: 'missing-order', boosterId: 'booster-1' }),
+			useCase.execute({
+				orderId: 'missing-order',
+				boosterId: 'booster-1',
+				deadline: new Date('2026-05-01T00:00:00.000Z'),
+			}),
 		).rejects.toThrow(OrderNotFoundError);
 	});
 
@@ -123,7 +135,11 @@ describe('AcceptOrderUseCase', () => {
 		const useCase = new AcceptOrderUseCase(repository);
 
 		await expect(
-			useCase.execute({ orderId: 'order-2', boosterId: 'booster-1' }),
+			useCase.execute({
+				orderId: 'order-2',
+				boosterId: 'booster-1',
+				deadline: new Date('2026-05-01T00:00:00.000Z'),
+			}),
 		).rejects.toThrow(OrderInvalidTransitionError);
 	});
 
@@ -136,7 +152,11 @@ describe('AcceptOrderUseCase', () => {
 		const useCase = new AcceptOrderUseCase(repository);
 
 		await expect(
-			useCase.execute({ orderId: 'order-3', boosterId: 'booster-2' }),
+			useCase.execute({
+				orderId: 'order-3',
+				boosterId: 'booster-2',
+				deadline: new Date('2026-05-01T00:00:00.000Z'),
+			}),
 		).rejects.toThrow(OrderNotFoundError);
 	});
 });

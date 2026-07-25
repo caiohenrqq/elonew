@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { markDashboardNotificationReadAction } from '../actions/notification-actions';
 import { NotificationPopover } from './notification-popover';
+
+const push = jest.fn();
+jest.mock('next/navigation', () => ({
+	useRouter: () => ({ push }),
+}));
 
 jest.mock('socket.io-client', () => ({
 	io: jest.fn(() => ({
@@ -59,7 +65,7 @@ const unreadNotifications = {
 };
 
 describe('NotificationPopover', () => {
-	it('renders unread notifications with the client order link', async () => {
+	it('marks an unread notification before opening the client order', async () => {
 		render(
 			<NotificationPopover
 				initialNotifications={unreadNotifications}
@@ -75,10 +81,15 @@ describe('NotificationPopover', () => {
 		expect(
 			screen.getByText(/Booster enviou uma mensagem/i),
 		).toBeInTheDocument();
-		expect(screen.getByRole('link')).toHaveAttribute(
-			'href',
-			'/client/orders/order-1',
+		await userEvent.click(
+			screen.getByRole('button', { name: /nova mensagem no pedido/i }),
 		);
+
+		expect(markDashboardNotificationReadAction).toHaveBeenCalledWith(
+			'notification-1',
+			'2026-05-18T11:00:00.000Z',
+		);
+		expect(push).toHaveBeenCalledWith('/client/orders/order-1');
 	});
 
 	it('renders the empty state for admins', async () => {

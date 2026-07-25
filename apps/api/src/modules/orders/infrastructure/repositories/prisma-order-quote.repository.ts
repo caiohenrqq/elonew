@@ -68,7 +68,8 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 				server: input.requestDetails.server,
 				desiredQueue: input.requestDetails.desiredQueue,
 				lpGain: input.requestDetails.lpGain,
-				deadline: input.requestDetails.deadline,
+				// Legacy quote field; the order deadline is defined on acceptance.
+				deadline: input.requestDetails.deadline ?? input.expiresAt,
 				subtotal: input.pricing.subtotal,
 				totalAmount: input.pricing.totalAmount,
 				discountAmount: input.pricing.discountAmount,
@@ -192,7 +193,6 @@ export class PrismaOrderQuoteRepository implements OrderQuoteRepositoryPort {
 				server: record.server,
 				desiredQueue: record.desiredQueue,
 				lpGain: record.lpGain,
-				deadline: record.deadline,
 			},
 			pricing: {
 				pricingVersionId: record.pricingVersionId,

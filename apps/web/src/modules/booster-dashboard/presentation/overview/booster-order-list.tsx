@@ -1,5 +1,4 @@
 import {
-	CheckCircle2,
 	ExternalLink,
 	PackageCheck,
 	PackageOpen,
@@ -23,12 +22,12 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/shared/ui/components/table';
-import {
-	acceptBoosterOrderAction,
-	completeBoosterOrderAction,
-	rejectBoosterOrderAction,
-} from '../../actions/booster-actions';
+import { rejectBoosterOrderAction } from '../../actions/booster-actions';
 import type { BoosterOrder } from '../../model/booster-orders';
+import {
+	AcceptBoosterOrderButton,
+	CompleteBoosterOrderButton,
+} from '../booster-order-action-buttons';
 
 type BoosterOrderListProps = {
 	orders: BoosterOrder[];
@@ -69,12 +68,7 @@ const BoosterOrderActions = ({
 	if (mode === 'available') {
 		return (
 			<>
-				<form action={acceptBoosterOrderAction.bind(null, order.id)}>
-					<DashboardSubmitButton size="sm" pendingLabel="Aceitando">
-						<CheckCircle2 className="h-3 w-3" />
-						Aceitar
-					</DashboardSubmitButton>
-				</form>
+				<AcceptBoosterOrderButton orderId={order.id} />
 				<form action={rejectBoosterOrderAction.bind(null, order.id)}>
 					<DashboardSubmitButton
 						variant="outline"
@@ -103,16 +97,7 @@ const BoosterOrderActions = ({
 					<ExternalLink className="h-3 w-3" />
 					Abrir pedido
 				</Link>
-				<form action={completeBoosterOrderAction.bind(null, order.id)}>
-					<DashboardSubmitButton
-						variant="outline"
-						size="sm"
-						pendingLabel="Finalizando"
-					>
-						<CheckCircle2 className="h-3 w-3" />
-						Finalizar
-					</DashboardSubmitButton>
-				</form>
+				<CompleteBoosterOrderButton orderId={order.id} />
 			</>
 		);
 	}
@@ -255,7 +240,7 @@ export const BoosterOrderList = ({
 			<TableHeader>
 				<TableRow>
 					<TableHead>Serviço</TableHead>
-					<TableHead className="min-w-44">Rota</TableHead>
+					<TableHead className="min-w-44">Detalhes</TableHead>
 					<TableHead>Status</TableHead>
 					<TableHead>Prazo</TableHead>
 					<TableHead>Repasse</TableHead>

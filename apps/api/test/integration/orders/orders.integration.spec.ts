@@ -179,10 +179,7 @@ describe('Orders module integration', () => {
 			clientId: clientUser.id,
 			boosterId: null,
 		});
-		expect(persistedOrder?.requestDetails?.deadline).toEqual(
-			new Date('2026-03-31T00:00:00.000Z'),
-		);
-		expect(persistedOrder?.requestDetails?.deadline).toBeInstanceOf(Date);
+		expect(persistedOrder?.requestDetails?.deadline).toBeUndefined();
 	});
 
 	it('persists selected extras and their pricing impact from quote to order', async () => {
@@ -257,7 +254,11 @@ describe('Orders module integration', () => {
 			),
 		).resolves.toEqual({ success: true });
 		await expect(
-			controller.accept(createdOrder.id, boosterUser),
+			controller.accept(
+				createdOrder.id,
+				{ deadline: '2026-05-01T00:00:00.000Z' },
+				boosterUser,
+			),
 		).resolves.toEqual({
 			success: true,
 		});
@@ -356,7 +357,11 @@ describe('Orders module integration', () => {
 			success: true,
 		});
 		await expect(
-			controller.accept(createdOrder.id, boosterUser),
+			controller.accept(
+				createdOrder.id,
+				{ deadline: '2026-05-01T00:00:00.000Z' },
+				boosterUser,
+			),
 		).resolves.toEqual({
 			success: true,
 		});
@@ -408,7 +413,11 @@ describe('Orders module integration', () => {
 		const createdOrder = await createQuotedOrder();
 
 		await expect(
-			controller.accept(createdOrder.id, boosterUser),
+			controller.accept(
+				createdOrder.id,
+				{ deadline: '2026-05-01T00:00:00.000Z' },
+				boosterUser,
+			),
 		).rejects.toBeInstanceOf(OrderInvalidTransitionError);
 		await expect(
 			controller.saveCredentials(

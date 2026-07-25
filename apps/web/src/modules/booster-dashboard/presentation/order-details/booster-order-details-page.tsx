@@ -1,7 +1,5 @@
-import { CheckCircle2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import type { ChatMessage } from '@/shared/chat/chat.types';
-import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-button';
 import { formatCurrency } from '@/shared/format/currency';
 import { formatDate } from '@/shared/format/date';
 import { formatOrderRoute } from '@/shared/format/orders';
@@ -10,13 +8,13 @@ import { RatingCard } from '@/shared/ratings/rating-card';
 import type { RatingOutput } from '@/shared/ratings/rating-contracts';
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import {
-	completeBoosterOrderAction,
 	getBoosterOrder,
 	getBoosterOrderChatMessages,
 	getBoosterUserId,
 } from '../../actions/booster-actions';
 import { toBoosterWork } from '../../model/booster-orders';
 import type { BoosterOrderOutput } from '../../server/booster-contracts';
+import { CompleteBoosterOrderButton } from '../booster-order-action-buttons';
 import { BoosterChatPanel } from '../overview/booster-chat-panel';
 
 type BoosterOrderDetailsPageProps = {
@@ -69,17 +67,10 @@ export const BoosterOrderDetailsPage = async ({
 					<p className="mt-2 font-mono text-xs text-white/35">{order.id}</p>
 				</div>
 				{isReadOnly ? null : (
-					<form action={completeBoosterOrderAction.bind(null, order.id)}>
-						<DashboardSubmitButton
-							variant="outline"
-							size="md"
-							pendingLabel="Finalizando"
-							className="gap-2"
-						>
-							<CheckCircle2 className="h-4 w-4" />
-							Finalizar pedido
-						</DashboardSubmitButton>
-					</form>
+					<CompleteBoosterOrderButton
+						orderId={order.id}
+						label="Finalizar pedido"
+					/>
 				)}
 			</section>
 

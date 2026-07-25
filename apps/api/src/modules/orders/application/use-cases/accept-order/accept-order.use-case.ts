@@ -18,6 +18,7 @@ import { Inject, Injectable, Optional } from '@nestjs/common';
 type AcceptOrderInput = {
 	orderId: string;
 	boosterId: string;
+	deadline: Date;
 };
 
 @Injectable()
@@ -43,7 +44,7 @@ export class AcceptOrderUseCase {
 			throw new OrderNotFoundError();
 
 		if (!order.boosterId) order.assignBooster(input.boosterId);
-		order.acceptByBooster();
+		order.acceptByBooster(input.deadline);
 		await this.orderRepository.save(order);
 		await this.chatThreadWriter?.createOrderChat(order.id);
 		await this.orderEventPublisher?.publish(

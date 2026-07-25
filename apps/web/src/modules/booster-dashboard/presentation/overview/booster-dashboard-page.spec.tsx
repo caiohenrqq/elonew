@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { PropsWithChildren } from 'react';
 import {
 	getBoosterOrderChatMessages,
@@ -96,6 +97,7 @@ jest.mock('lucide-react', () => ({
 	Shield: () => <svg data-testid="shield-icon" />,
 	XCircle: () => <svg data-testid="reject-icon" />,
 	WalletCards: () => <svg data-testid="wallet-icon" />,
+	X: () => <svg data-testid="close-icon" />,
 	ArrowDownLeft: () => <svg data-testid="credit-icon" />,
 	ArrowUpRight: () => <svg data-testid="debit-icon" />,
 }));
@@ -118,6 +120,14 @@ describe('BoosterDashboardPage', () => {
 		expect(getBoosterQueue).toHaveBeenCalledTimes(1);
 		expect(getBoosterWork).not.toHaveBeenCalled();
 		expect(getBoosterWalletTransactions).not.toHaveBeenCalled();
+
+		await userEvent.click(
+			screen.getAllByRole('button', { name: /^Aceitar$/i })[0],
+		);
+		expect(screen.getByLabelText(/^Prazo$/i)).toHaveAttribute('type', 'date');
+		expect(
+			screen.getByRole('button', { name: /Confirmar aceite/i }),
+		).toBeInTheDocument();
 	});
 
 	it('renders active and completed orders on the work tab only', async () => {

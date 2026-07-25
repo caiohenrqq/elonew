@@ -739,8 +739,7 @@ export class PrismaOrderRepository
 			!record.desiredDivision ||
 			!record.server ||
 			!record.desiredQueue ||
-			record.lpGain === null ||
-			!record.deadline
+			record.lpGain === null
 		)
 			return null;
 
