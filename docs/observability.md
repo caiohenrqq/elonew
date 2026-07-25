@@ -229,6 +229,91 @@ Payment lifecycle logs must not include:
 - order credentials
 - raw Mercado Pago payloads
 
+## Wallet Lifecycle Event
+
+Booster wallet operations must use the `wallet.lifecycle` event family.
+
+Allowed operations:
+
+```text
+credit_order_completion
+release_order_completion
+admin_force_release
+```
+
+Wallet lifecycle events must include every available applicable field:
+
+```text
+event
+operation
+outcome
+duration_ms
+booster_id
+order_id
+admin_user_id
+wallet_amount
+released_amount
+released_transaction_count
+balance_locked_before
+balance_locked_after
+balance_withdrawable_before
+balance_withdrawable_after
+available_at
+lock_period_hours
+release_source
+skipped_reason
+side_effects
+error_type
+error_message
+```
+
+Rules specific to this family:
+
+- Locked funds only become withdrawable through a release. A release that moved
+  no money must be `outcome: "skipped"` with a `skipped_reason`, never a silent
+  success: `credit_already_exists`, `wallet_not_found`, `credit_not_found`,
+  `already_released`, `not_matured`.
+- `released_amount` and the four balance fields are mandatory on a successful
+  release. Support and reconciliation depend on them.
+- `release_source` records who unlocked the money: `schedule` for the matured
+  job, `admin` for a manual override. It must match the `releasedBy` column
+  persisted on the wallet transaction.
+- The admin override never logs the governance reason. The reason is private
+  audit data and lives in `admin_governance_actions`; the event carries
+  `admin_user_id` only.
+
+## Wallet Funds Release Job Event
+
+The worker that drives the scheduled release must use the
+`wallet_funds_release.lifecycle` event family with operation `process_job`.
+
+```text
+event
+operation
+outcome
+duration_ms
+job_id
+queue_name
+attempt
+booster_id
+order_id
+available_at
+api_status
+api_request_id
+error_type
+error_message
+```
+
+Rules specific to this family:
+
+- One event per attempt, emitted in `finally`, so an invalid payload and an
+  exhausted retry are both queryable. A dropped job leaves money locked with
+  nobody watching.
+- `job_id` is the BullMQ dedupe key (`<booster_id>__<order_id>`), and `attempt`
+  is 1-based.
+- `api_request_id` is the `x-request-id` the worker sent and the API echoed, so a
+  worker line joins the matching API lifecycle event.
+
 ## Review Checklist
 
 Before merging code that adds or changes a production workflow, verify:
