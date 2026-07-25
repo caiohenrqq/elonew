@@ -1,4 +1,8 @@
 import { ApiMutationThrottlerGuard } from '@app/common/http/api-mutation-throttler.guard';
+import {
+	ROUTE_THROTTLE_METADATA_KEY,
+	type RouteThrottleMetadata,
+} from '@app/common/http/route-throttle.decorator';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import type { ExecutionContext } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -29,6 +33,21 @@ const createContext = (request: Partial<RequestStub>): ExecutionContext => {
 			getResponse: () => ({ header: jest.fn() }),
 		}),
 	} as unknown as ExecutionContext;
+};
+
+const createRouteThrottledContext = (): ExecutionContext => {
+	const context = createContext({});
+	const handler = context.getHandler();
+	Reflect.defineMetadata(
+		ROUTE_THROTTLE_METADATA_KEY,
+		{
+			name: 'auth-login',
+			limit: 'authLoginThrottleLimit',
+			ttlSeconds: 'authLoginThrottleTtlSeconds',
+		} satisfies RouteThrottleMetadata,
+		handler,
+	);
+	return context;
 };
 
 describe('ApiMutationThrottlerGuard', () => {
@@ -78,6 +97,15 @@ describe('ApiMutationThrottlerGuard', () => {
 					}),
 				),
 			).resolves.toBe(true);
+	});
+
+	it('skips routes that have a specific throttle bucket', async () => {
+		const guard = await createGuard(1);
+
+		for (let i = 0; i < 5; i++)
+			await expect(guard.canActivate(createRouteThrottledContext())).resolves.toBe(
+				true,
+			);
 	});
 
 	it('throttles mutating requests beyond the configured limit', async () => {
