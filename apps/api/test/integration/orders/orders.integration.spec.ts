@@ -374,7 +374,9 @@ describe('Orders module integration', () => {
 			totalAmount: 2520,
 			discountAmount: 0,
 			serviceType: 'elo_boost',
-			summonerName: 'Invocador',
+			// Mirrored from the credentials the client confirmed, and retained
+			// after the credentials row was destroyed on completion.
+			summonerName: 'summoner',
 			currentLeague: 'gold',
 			currentDivision: 'II',
 			desiredLeague: 'platinum',
