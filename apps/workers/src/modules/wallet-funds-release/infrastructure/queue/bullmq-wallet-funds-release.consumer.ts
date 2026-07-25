@@ -39,7 +39,7 @@ export class BullmqWalletFundsReleaseConsumerAdapter
 	) {}
 
 	onApplicationBootstrap(): void {
-		if (this.appSettings.isTest) return;
+		if (!this.appSettings.queuesEnabled) return;
 
 		this.worker = this.workerFactory.create({
 			queueName: this.appSettings.walletFundsReleaseQueueName,

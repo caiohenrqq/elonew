@@ -59,6 +59,11 @@ export const workerEnvSchema = z
 			.int()
 			.positive()
 			.default(DEFAULT_WORKER_CONCURRENCY),
+		// Whether this process connects to Redis and consumes queues. Off in test
+		// runs and any environment that must not touch the shared queues; inferring
+		// it from NODE_ENV hid the switch and broke once bootstrap started awaiting
+		// a real Redis round-trip.
+		WORKER_QUEUES_ENABLED: z.stringbool().default(true),
 		SCHEDULED_TASKS_QUEUE_NAME: z
 			.string()
 			.trim()

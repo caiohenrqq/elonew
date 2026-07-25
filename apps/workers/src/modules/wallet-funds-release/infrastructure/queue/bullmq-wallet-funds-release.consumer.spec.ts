@@ -11,7 +11,7 @@ import type { WalletFundsReleaseJobExecution } from './bullmq-wallet-funds-relea
 type ProcessJob = (job: WalletFundsReleaseJobExecution) => Promise<void>;
 
 type ConsumerScenario = {
-	isTest?: boolean;
+	queuesEnabled?: boolean;
 	execute?: (job: {
 		orderId: string;
 		boosterId: string;
@@ -31,7 +31,7 @@ const createScenario = (scenario: ConsumerScenario = {}) => {
 
 	const adapter = new BullmqWalletFundsReleaseConsumerAdapter(
 		{
-			isTest: scenario.isTest ?? false,
+			queuesEnabled: scenario.queuesEnabled ?? true,
 			walletFundsReleaseQueueName: 'wallet-funds-release',
 			redisUrl: 'redis://localhost:6379',
 			workerConcurrency: 5,
@@ -128,8 +128,8 @@ test('BullmqWalletFundsReleaseConsumerAdapter emits one lifecycle event carrying
 	});
 });
 
-test('BullmqWalletFundsReleaseConsumerAdapter skips worker bootstrap in test mode', async () => {
-	const scenario = createScenario({ isTest: true });
+test('BullmqWalletFundsReleaseConsumerAdapter skips worker bootstrap when queue consumption is disabled', async () => {
+	const scenario = createScenario({ queuesEnabled: false });
 
 	scenario.adapter.onApplicationBootstrap();
 	await scenario.adapter.onApplicationShutdown();

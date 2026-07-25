@@ -35,6 +35,10 @@ export class AppSettingsService {
 		return this.config.getOrThrow('WORKER_CONCURRENCY', { infer: true });
 	}
 
+	get queuesEnabled() {
+		return this.config.getOrThrow('WORKER_QUEUES_ENABLED', { infer: true });
+	}
+
 	get scheduledTasksQueueName() {
 		return this.config.getOrThrow('SCHEDULED_TASKS_QUEUE_NAME', {
 			infer: true,
@@ -59,9 +63,5 @@ export class AppSettingsService {
 
 	get orderQuoteCleanupLimit() {
 		return this.config.getOrThrow('ORDER_QUOTE_CLEANUP_LIMIT', { infer: true });
-	}
-
-	get isTest() {
-		return this.nodeEnv === 'test';
 	}
 }

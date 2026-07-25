@@ -38,7 +38,7 @@ export class BullmqScheduledTasksConsumerAdapter
 	) {}
 
 	async onApplicationBootstrap(): Promise<void> {
-		if (this.appSettings.isTest) return;
+		if (!this.appSettings.queuesEnabled) return;
 
 		this.queue = this.queueFactory.create({
 			queueName: this.appSettings.scheduledTasksQueueName,

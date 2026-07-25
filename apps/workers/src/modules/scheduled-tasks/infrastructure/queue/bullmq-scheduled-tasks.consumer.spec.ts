@@ -13,7 +13,7 @@ import type {
 } from './bullmq-scheduled-tasks.queue-factory';
 
 const settings = {
-	isTest: false,
+	queuesEnabled: true,
 	redisUrl: 'redis://localhost:6379',
 	workerConcurrency: 5,
 	scheduledTasksQueueName: 'scheduled-tasks',
@@ -31,7 +31,7 @@ const createScenario = (
 		execute?: (
 			taskName: string,
 		) => Promise<{ apiStatus: number; apiRequestId: string }>;
-		isTest?: boolean;
+		queuesEnabled?: boolean;
 	} = {},
 ) => {
 	const upserted: Array<{ name: string; cron: string }> = [];
@@ -59,7 +59,7 @@ const createScenario = (
 	};
 
 	const adapter = new BullmqScheduledTasksConsumerAdapter(
-		{ ...settings, isTest: options.isTest ?? false } as never,
+		{ ...settings, queuesEnabled: options.queuesEnabled ?? true } as never,
 		runScheduledTask as never,
 		{
 			create: () => {
@@ -169,8 +169,8 @@ test('bootstrapping twice does not duplicate schedules', async () => {
 	assert.deepEqual(scenario.removed, []);
 });
 
-test('skips all scheduling in test mode', async () => {
-	const scenario = createScenario({ isTest: true });
+test('skips all scheduling when queue consumption is disabled', async () => {
+	const scenario = createScenario({ queuesEnabled: false });
 
 	await scenario.adapter.onApplicationBootstrap();
 
@@ -233,3 +233,4 @@ test('records the API status when a task fails so a retry is queryable', async (
 		'ScheduledTaskExecutionFailedError',
 	);
 });
+
