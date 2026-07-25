@@ -15,7 +15,10 @@ import { AwaitingPaymentBanner } from './awaiting-payment-banner';
 import { OrderActivityCard } from './order-activity-card';
 import { OrderBoosterCard } from './order-booster-card';
 import { OrderChatPanel } from './order-chat-panel';
-import { OrderCredentialsCard } from './order-credentials-card';
+import {
+	OrderCredentialsCard,
+	OrderCredentialsSavedNotice,
+} from './order-credentials-card';
 import { OrderDetailsHeader } from './order-details-header';
 import { orderDetailsLayout } from './order-details-layout';
 import { OrderDetailsLiveRefresh } from './order-details-live-refresh';
@@ -86,6 +89,9 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 					action={saveOrderCredentialsAction.bind(null, order.id)}
 					summonerName={order.summonerName ?? ''}
 				/>
+			) : null}
+			{order.hasCredentials && order.status !== 'completed' ? (
+				<OrderCredentialsSavedNotice />
 			) : null}
 
 			<div className={orderDetailsLayout.grid}>

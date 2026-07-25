@@ -17,6 +17,22 @@ type OrderCredentialsCardProps = {
 	summonerName: string;
 };
 
+export const OrderCredentialsSavedNotice = () => (
+	<div
+		role="status"
+		className="flex items-center gap-3 rounded-sm border border-emerald-400/25 bg-emerald-400/5 px-4 py-3"
+	>
+		<ShieldCheck
+			className="h-4 w-4 shrink-0 text-emerald-300"
+			aria-hidden="true"
+		/>
+		<p className="text-xs font-bold tracking-wider text-emerald-300">
+			Dados da conta enviados com segurança. Eles ficam criptografados e são
+			apagados quando o pedido termina.
+		</p>
+	</div>
+);
+
 export const OrderCredentialsCard = ({
 	action,
 	summonerName,
@@ -27,20 +43,7 @@ export const OrderCredentialsCard = ({
 	const [hasTouchedConfirmation, setHasTouchedConfirmation] = useState(false);
 	const passwordsMatch = password === confirmPassword;
 
-	if (state.success) {
-		return (
-			<div className="flex items-center gap-3 rounded-sm border border-emerald-400/25 bg-emerald-400/5 px-4 py-3">
-				<ShieldCheck
-					className="h-4 w-4 shrink-0 text-emerald-300"
-					aria-hidden="true"
-				/>
-				<p className="text-xs font-bold tracking-wider text-emerald-300">
-					{state.success} Os dados ficam criptografados e são apagados quando o
-					pedido termina.
-				</p>
-			</div>
-		);
-	}
+	if (state.success) return <OrderCredentialsSavedNotice />;
 
 	return (
 		<section className="rounded-sm border border-hextech-gold/25 bg-hextech-gold/5 p-5 sm:p-6">
@@ -114,6 +117,7 @@ export const OrderCredentialsCard = ({
 
 				<div className="flex flex-col gap-3 border-t border-white/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
 					<p
+						role={state.error ? 'alert' : undefined}
 						className={cn(
 							'min-h-4 text-xs font-medium',
 							state.error ? 'text-red-300' : 'text-white/45',

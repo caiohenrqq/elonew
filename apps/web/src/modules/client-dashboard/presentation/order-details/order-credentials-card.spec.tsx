@@ -46,6 +46,30 @@ describe('OrderCredentialsCard', () => {
 		expect(getSubmit()).toBeEnabled();
 	});
 
+	it('confirms the submission and announces failures', async () => {
+		const action = jest
+			.fn<
+				Promise<SaveOrderCredentialsActionState>,
+				[SaveOrderCredentialsActionState, FormData]
+			>()
+			.mockResolvedValueOnce({ error: 'Revise os dados da conta.' })
+			.mockResolvedValueOnce({ success: 'ok' });
+		renderCard(action);
+
+		fireEvent.change(getPassword(), { target: { value: 'senha-forte-1' } });
+		fireEvent.change(getConfirmation(), { target: { value: 'senha-forte-1' } });
+
+		fireEvent.submit(getSubmit().closest('form') as HTMLFormElement);
+		expect(await screen.findByRole('alert')).toHaveTextContent(
+			'Revise os dados da conta.',
+		);
+
+		fireEvent.submit(getSubmit().closest('form') as HTMLFormElement);
+		expect(await screen.findByRole('status')).toHaveTextContent(
+			/enviados com segurança/,
+		);
+	});
+
 	it('masks both password fields by default', () => {
 		renderCard();
 
