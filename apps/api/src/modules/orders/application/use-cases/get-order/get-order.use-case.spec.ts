@@ -1,39 +1,7 @@
-import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { GetOrderUseCase } from '@modules/orders/application/use-cases/get-order/get-order.use-case';
 import { Order } from '@modules/orders/domain/order.entity';
 import { OrderNotFoundError } from '@modules/orders/domain/order.errors';
-
-class InMemoryOrderRepository implements OrderRepositoryPort {
-	private readonly orders = new Map<string, Order>();
-
-	async create(order: Order): Promise<Order> {
-		this.orders.set(order.id, order);
-		return order;
-	}
-
-	async findById(id: string): Promise<Order | null> {
-		return this.orders.get(id) ?? null;
-	}
-
-	async findByIdForClient(id: string, clientId: string): Promise<Order | null> {
-		const order = this.orders.get(id) ?? null;
-		if (!order || order.clientId !== clientId) return null;
-
-		return order;
-	}
-
-	async save(order: Order): Promise<void> {
-		this.orders.set(order.id, order);
-	}
-
-	saveCredentials(order: Order): Promise<void> {
-		return this.save(order);
-	}
-
-	insert(order: Order): void {
-		this.orders.set(order.id, order);
-	}
-}
+import { InMemoryOrderRepository } from '../../../../../../test/support/in-memory/orders/in-memory-order.repository';
 
 describe('GetOrderUseCase', () => {
 	it('returns the owned order summary when the order exists', async () => {
@@ -46,7 +14,7 @@ describe('GetOrderUseCase', () => {
 			totalAmount: 25.2,
 			discountAmount: 0,
 		});
-		repository.insert(order);
+		await repository.create(order);
 
 		const useCase = new GetOrderUseCase(repository);
 
@@ -63,8 +31,15 @@ describe('GetOrderUseCase', () => {
 			serviceType: null,
 			currentLeague: null,
 			currentDivision: null,
+			currentLp: null,
 			desiredLeague: null,
 			desiredDivision: null,
+			server: null,
+			desiredQueue: null,
+			lpGain: null,
+			deadline: null,
+			extras: [],
+			booster: null,
 		});
 	});
 
@@ -78,7 +53,7 @@ describe('GetOrderUseCase', () => {
 			totalAmount: 25.2,
 			discountAmount: 0,
 		});
-		repository.insert(order);
+		await repository.create(order);
 		const useCase = new GetOrderUseCase(repository);
 
 		await expect(

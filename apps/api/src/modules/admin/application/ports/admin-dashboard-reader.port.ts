@@ -27,7 +27,21 @@ export type AdminOrderSnapshot = {
 	boosterId: string | null;
 	status: OrderStatus;
 	serviceType: string | null;
+	summonerName: string | null;
+	currentLeague: string | null;
+	currentDivision: string | null;
+	currentLp: number | null;
+	desiredLeague: string | null;
+	desiredDivision: string | null;
+	server: string | null;
+	desiredQueue: string | null;
+	lpGain: number | null;
+	subtotal: number | null;
 	totalAmount: number | null;
+	discountAmount: number;
+	extras: Array<{ type: string; price: number }>;
+	client: { username: string } | null;
+	booster: { username: string } | null;
 	createdAt: Date;
 	latestGovernanceAction: {
 		type: string;
@@ -60,6 +74,7 @@ export interface AdminDashboardReaderPort {
 		limit: number;
 	}): Promise<AdminUserSnapshot[]>;
 	listOrders(input: { limit: number }): Promise<AdminOrderSnapshot[]>;
+	getOrder(orderId: string): Promise<AdminOrderSnapshot | null>;
 	listSupportTickets(input: {
 		limit: number;
 	}): Promise<AdminSupportTicketSnapshot[]>;

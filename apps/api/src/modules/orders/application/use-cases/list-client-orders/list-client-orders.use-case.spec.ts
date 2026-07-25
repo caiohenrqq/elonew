@@ -12,6 +12,10 @@ class InMemoryClientOrderReader implements ClientOrderReaderPort {
 		private readonly totalInvested: number,
 	) {}
 
+	async findDetailsForClient() {
+		return null;
+	}
+
 	async findRecentForClient(
 		clientId: string,
 		limit: number,

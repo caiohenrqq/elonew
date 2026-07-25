@@ -293,7 +293,7 @@ describe('PrismaOrderRepository', () => {
 		const prisma = { order: { findMany, upsert: jest.fn() } };
 		const repository = new PrismaOrderRepository(prisma as never, cipher());
 
-		await repository.findAvailableForBooster('booster-1', 10);
+		await repository.findAvailableForBooster('booster-1');
 
 		// A paid order the client has not sent access for must not be offered to
 		// boosters: accepting it moves the order to in_progress, which only
@@ -301,6 +301,9 @@ describe('PrismaOrderRepository', () => {
 		expect(findMany.mock.calls[0][0].where).toMatchObject({
 			status: OrderStatus.PENDING_BOOSTER,
 			credentials: { isNot: null },
+			OR: [{ boosterId: null }, { boosterId: 'booster-1' }],
+			boosterRejections: { none: { boosterId: 'booster-1' } },
 		});
+		expect(findMany.mock.calls[0][0]).not.toHaveProperty('take');
 	});
 });

@@ -57,6 +57,7 @@ class UsersStub implements UserRepositoryPort {
 
 class GovernanceStub implements AdminGovernanceRepositoryPort {
 	actions: AdminGovernanceActionInput[] = [];
+	updatedUser: User | null = null;
 	findUserById() {
 		return Promise.resolve(null);
 	}
@@ -73,7 +74,8 @@ class GovernanceStub implements AdminGovernanceRepositoryPort {
 		this.actions.push(action);
 		return Promise.resolve();
 	}
-	updateUserAndRecordAction(_user: User, action: AdminGovernanceActionInput) {
+	updateUserAndRecordAction(user: User, action: AdminGovernanceActionInput) {
+		this.updatedUser = user;
 		this.actions.push(action);
 		return Promise.resolve();
 	}
@@ -110,6 +112,28 @@ describe('UpdateAdminUserUseCase', () => {
 				now: new Date(),
 			}),
 		).rejects.toBeInstanceOf(AdminUsernameAlreadyInUseError);
+	});
+
+	it('changes only the role while preserving authentication and account state', async () => {
+		const target = makeUser('target', 'booster');
+		const governance = new GovernanceStub();
+
+		await new UpdateAdminUserUseCase(
+			new UsersStub([target]),
+			governance,
+		).execute({
+			adminUserId: 'admin',
+			targetUserId: target.id,
+			role: Role.BOOSTER,
+			now: new Date(),
+		});
+
+		expect(governance.updatedUser).toMatchObject({
+			role: Role.BOOSTER,
+			passwordHash: 'hash',
+			isActive: true,
+			isBlocked: false,
+		});
 	});
 
 	it('prevents admins from changing their own role', async () => {

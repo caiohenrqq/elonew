@@ -101,6 +101,8 @@ export const getAuthErrorMessage = (
 };
 
 export const getCheckoutErrorMessage = (error: unknown) => {
+	if (error instanceof ApiRequestError && error.status === 429)
+		return error.message;
 	if (error instanceof ApiRequestError && error.status === 400) {
 		return couponErrorMap[error.message] ?? checkoutMessages.invalidInput;
 	}

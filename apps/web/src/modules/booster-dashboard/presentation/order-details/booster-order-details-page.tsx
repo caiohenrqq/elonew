@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getExtraLabel } from '@/modules/client-dashboard/model/new-order-options';
 import type { ChatMessage } from '@/shared/chat/chat.types';
 import { formatCurrency } from '@/shared/format/currency';
 import { formatDate } from '@/shared/format/date';
@@ -92,6 +93,18 @@ export const BoosterOrderDetailsPage = async ({
 						<div className="mt-2">
 							<OrderStatusBadge status={order.status} />
 						</div>
+					</div>
+					<div className="rounded-sm border border-white/10 bg-white/[0.03] p-5 sm:col-span-3 xl:col-span-1">
+						<p className="text-[9px] font-black uppercase tracking-widest text-white/35">
+							Extras
+						</p>
+						<p className="mt-2 text-xs leading-relaxed text-white/65">
+							{order.extras?.length
+								? order.extras
+										.map((extra) => getExtraLabel(extra.type))
+										.join(', ')
+								: 'Nenhum extra'}
+						</p>
 					</div>
 					<div className="rounded-sm border border-white/10 bg-white/[0.03] p-5">
 						<p className="text-[9px] font-black uppercase tracking-widest text-white/35">

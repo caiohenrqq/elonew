@@ -128,8 +128,15 @@ describe('Orders (e2e db)', () => {
 				serviceType: 'elo_boost',
 				currentLeague: 'gold',
 				currentDivision: 'II',
+				currentLp: 50,
 				desiredLeague: 'platinum',
 				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: null,
+				extras: [],
+				booster: null,
 			})
 			.execute();
 	});

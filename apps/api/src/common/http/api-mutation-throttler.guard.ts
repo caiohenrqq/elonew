@@ -2,6 +2,10 @@ import {
 	ConfigurableThrottlerGuard,
 	type RouteThrottleConfig,
 } from '@app/common/http/configurable-throttler.guard';
+import {
+	ROUTE_THROTTLE_METADATA_KEY,
+	type RouteThrottleMetadata,
+} from '@app/common/http/route-throttle.decorator';
 import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { type ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -31,6 +35,13 @@ export class ApiMutationThrottlerGuard extends ConfigurableThrottlerGuard {
 		context: ExecutionContext,
 	): RouteThrottleConfig | null {
 		if (context.getType() !== 'http') return null;
+		if (
+			this.reflector.getAllAndOverride<RouteThrottleMetadata>(
+				ROUTE_THROTTLE_METADATA_KEY,
+				[context.getHandler(), context.getClass()],
+			)
+		)
+			return null;
 
 		const request = context.switchToHttp().getRequest<{
 			method: string;

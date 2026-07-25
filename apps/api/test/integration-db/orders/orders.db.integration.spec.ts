@@ -199,8 +199,15 @@ describe('Orders module integration (db)', () => {
 			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
+			currentLp: 50,
 			desiredLeague: 'platinum',
 			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: null,
+			extras: [],
+			booster: null,
 		});
 	});
 
@@ -775,8 +782,19 @@ describe('Orders module integration (db)', () => {
 			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
+			currentLp: 50,
 			desiredLeague: 'platinum',
 			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: new Date('2026-05-01T00:00:00.000Z'),
+			extras: [],
+			booster: {
+				username: expect.stringMatching(/^booster-/),
+				avatarUrl: null,
+				reputation: 0,
+			},
 		});
 	});
 
@@ -892,7 +910,7 @@ describe('Orders module integration (db)', () => {
 			clientUser,
 		);
 
-		const queue = await controller.listBoosterQueue({ limit: 50 }, boosterUser);
+		const queue = await controller.listBoosterQueue(boosterUser);
 		const queuedIds = queue.availableOrders.map((order) => order.id);
 
 		expect(queuedIds).toContain(withCredentials.id);
@@ -957,8 +975,19 @@ describe('Orders module integration (db)', () => {
 			summonerName: 'summoner-db',
 			currentLeague: 'gold',
 			currentDivision: 'II',
+			currentLp: 50,
 			desiredLeague: 'platinum',
 			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: new Date('2026-05-01T00:00:00.000Z'),
+			extras: [],
+			booster: {
+				username: expect.stringMatching(/^booster-/),
+				avatarUrl: null,
+				reputation: 0,
+			},
 		});
 	});
 

@@ -1,6 +1,7 @@
 import { ArrowLeft, FileText, ShieldCheck, Users } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { getExtraLabel } from '@/modules/client-dashboard/model/new-order-options';
 import type { ChatMessage } from '@/shared/chat/chat.types';
 import { ChatPanel } from '@/shared/chat/chat-panel';
 import { DefinitionItem } from '@/shared/dashboard/definition-item';
@@ -10,6 +11,7 @@ import {
 	formatGovernanceAction,
 	formatServiceType,
 } from '@/shared/format/orders';
+import { OrderRankRoute } from '@/shared/orders/order-rank-route';
 import {
 	Card,
 	CardContent,
@@ -19,8 +21,8 @@ import {
 import { OrderStatusBadge } from '@/shared/ui/components/status-badge';
 import {
 	forceCancelAdminOrderAction,
+	getAdminOrder,
 	getAdminOrderChatMessages,
-	getAdminOrders,
 	getAdminUserId,
 	releaseAdminOrderBoosterPaymentAction,
 } from '../../actions/admin-actions';
@@ -122,6 +124,57 @@ export const AdminOrderDetailsView = ({
 								label="Criado em"
 								value={formatDateTime(order.createdAt)}
 							/>
+							<div className="sm:col-span-2 lg:col-span-4">
+								<p className="mb-2 text-[10px] text-white/40 uppercase tracking-widest">
+									Rota
+								</p>
+								<OrderRankRoute
+									currentLeague={order.currentLeague ?? null}
+									currentDivision={order.currentDivision ?? null}
+									desiredLeague={order.desiredLeague ?? null}
+									desiredDivision={order.desiredDivision ?? null}
+									size="md"
+								/>
+							</div>
+							<DefinitionItem
+								label="Invocador"
+								value={order.summonerName ?? 'Não informado'}
+							/>
+							<DefinitionItem
+								label="Servidor"
+								value={order.server ?? 'Não informado'}
+							/>
+							<DefinitionItem
+								label="Fila"
+								value={order.desiredQueue ?? 'Não informada'}
+							/>
+							<DefinitionItem
+								label="PDL"
+								value={`${order.currentLp ?? '—'} · ganho ${order.lpGain ?? '—'}`}
+							/>
+							<DefinitionItem
+								label="Subtotal"
+								value={formatCurrency(order.subtotal ?? null)}
+							/>
+							<DefinitionItem
+								label="Desconto"
+								value={formatCurrency(order.discountAmount ?? 0)}
+							/>
+							<div className="sm:col-span-2">
+								<p className="text-[10px] text-white/40 uppercase tracking-widest">
+									Extras
+								</p>
+								<p className="mt-1 text-xs leading-relaxed text-white/65">
+									{order.extras?.length
+										? order.extras
+												.map(
+													(extra) =>
+														`${getExtraLabel(extra.type)} (${formatCurrency(extra.price)})`,
+												)
+												.join(', ')
+										: 'Nenhum extra'}
+								</p>
+							</div>
 						</CardContent>
 					</Card>
 
@@ -135,11 +188,15 @@ export const AdminOrderDetailsView = ({
 						<CardContent className="grid gap-6 md:grid-cols-2">
 							<DefinitionItem
 								label="Cliente"
-								value={order.clientId ?? 'Não informado'}
+								value={
+									order.client?.username ?? order.clientId ?? 'Não informado'
+								}
 							/>
 							<DefinitionItem
 								label="Booster"
-								value={order.boosterId ?? 'Não informado'}
+								value={
+									order.booster?.username ?? order.boosterId ?? 'Não informado'
+								}
 							/>
 						</CardContent>
 					</Card>
@@ -234,12 +291,11 @@ export const AdminOrderDetailsView = ({
 export const AdminOrderDetailsPage = async ({
 	orderId,
 }: AdminOrderDetailsPageProps) => {
-	const [orders, chat, currentUserId] = await Promise.all([
-		getAdminOrders(),
+	const [order, chat, currentUserId] = await Promise.all([
+		getAdminOrder(orderId),
 		getAdminOrderChatMessages(orderId),
 		getAdminUserId(),
 	]);
-	const order = orders.find((item) => item.id === orderId);
 	if (!order) notFound();
 
 	return (

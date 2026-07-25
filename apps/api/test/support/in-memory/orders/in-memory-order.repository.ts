@@ -1,5 +1,6 @@
 import type {
 	ClientOrderDashboardSnapshot,
+	ClientOrderDetailsSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
@@ -118,6 +119,27 @@ export class InMemoryOrderRepository
 				.slice(0, limit)
 				.map((order) => this.mapDashboardSnapshot(order)),
 		);
+	}
+
+	findDetailsForClient(
+		orderId: string,
+		clientId: string,
+	): Promise<ClientOrderDetailsSnapshot | null> {
+		const order = this.orders.get(orderId);
+		if (!order || order.clientId !== clientId) return Promise.resolve(null);
+
+		const {
+			clientId: _clientId,
+			createdAt: _createdAt,
+			...details
+		} = this.mapDashboardSnapshot(order);
+		return Promise.resolve({
+			...details,
+			hasCredentials: order.hasCredentials,
+			summonerName: order.requestDetails?.summonerName ?? null,
+			extras: order.extras,
+			booster: null,
+		});
 	}
 
 	countActiveForClient(clientId: string): Promise<number> {

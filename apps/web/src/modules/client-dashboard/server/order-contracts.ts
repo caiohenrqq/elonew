@@ -127,8 +127,22 @@ export const getOrderSchema = z.object({
 	serviceType: z.string().nullable(),
 	currentLeague: z.string().nullable(),
 	currentDivision: z.string().nullable(),
+	currentLp: z.number().nullable().optional(),
 	desiredLeague: z.string().nullable(),
 	desiredDivision: z.string().nullable(),
+	server: z.string().nullable().optional(),
+	desiredQueue: z.string().nullable().optional(),
+	lpGain: z.number().nullable().optional(),
+	deadline: z.string().nullable().optional(),
+	extras: z.array(z.object({ type: z.string(), price: z.number() })).optional(),
+	booster: z
+		.object({
+			username: z.string(),
+			avatarUrl: z.string().nullable(),
+			reputation: z.number(),
+		})
+		.nullable()
+		.optional(),
 });
 
 export type GetOrderOutput = z.infer<typeof getOrderSchema>;

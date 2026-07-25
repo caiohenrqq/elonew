@@ -88,10 +88,11 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 				<OrderCredentialsCard
 					action={saveOrderCredentialsAction.bind(null, order.id)}
 					summonerName={order.summonerName ?? ''}
+					orderId={order.id}
 				/>
 			) : null}
 			{order.hasCredentials && order.status !== 'completed' ? (
-				<OrderCredentialsSavedNotice />
+				<OrderCredentialsSavedNotice orderId={order.id} />
 			) : null}
 
 			<div className={orderDetailsLayout.grid}>
@@ -99,7 +100,7 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 
 				<div className={orderDetailsLayout.rail}>
 					<OrderServiceCard order={order} />
-					<OrderBoosterCard />
+					<OrderBoosterCard booster={order.booster} />
 					<OrderActivityCard />
 					<OrderSupportCard orderId={order.id} />
 					{ratingCard}

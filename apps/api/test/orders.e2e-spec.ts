@@ -44,6 +44,7 @@ describe('Orders (e2e)', () => {
 	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
 	const testInternalApiKey =
 		process.env.INTERNAL_API_KEY ?? 'test-internal-api-key';
+	const validAcceptanceDeadline = '2099-05-01T00:00:00.000Z';
 
 	class CouponLookupStub {
 		public coupons = new Map<string, StoredCoupon>();
@@ -245,8 +246,15 @@ describe('Orders (e2e)', () => {
 				serviceType: 'elo_boost',
 				currentLeague: 'gold',
 				currentDivision: 'II',
+				currentLp: 50,
 				desiredLeague: 'platinum',
 				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: null,
+				extras: [],
+				booster: null,
 			})
 			.execute();
 	});
@@ -401,7 +409,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${boosterToken}`)
-			.send({ deadline: '2026-05-01T00:00:00.000Z' })
+			.send({ deadline: validAcceptanceDeadline })
 			.expect(200, { success: true })
 			.execute();
 
@@ -419,8 +427,15 @@ describe('Orders (e2e)', () => {
 				serviceType: 'elo_boost',
 				currentLeague: 'gold',
 				currentDivision: 'II',
+				currentLp: 50,
 				desiredLeague: 'platinum',
 				desiredDivision: 'IV',
+				server: 'br',
+				desiredQueue: 'solo_duo',
+				lpGain: 20,
+				deadline: validAcceptanceDeadline,
+				extras: [],
+				booster: null,
 			})
 			.execute();
 	});
@@ -436,7 +451,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${boosterToken}`)
-			.send({ deadline: '2026-05-01T00:00:00.000Z' })
+			.send({ deadline: validAcceptanceDeadline })
 			.expect(200, { success: true })
 			.execute();
 
@@ -514,7 +529,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${boosterToken}`)
-			.send({ deadline: '2026-05-01T00:00:00.000Z' })
+			.send({ deadline: validAcceptanceDeadline })
 			.expect(200, { success: true })
 			.execute();
 		await app.listen(0, '127.0.0.1');
@@ -913,7 +928,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${boosterToken}`)
-			.send({ deadline: '2026-05-01T00:00:00.000Z' })
+			.send({ deadline: validAcceptanceDeadline })
 			.expect(400, {
 				message: 'Invalid order transition: awaiting_payment -> in_progress.',
 				error: 'Bad Request',
@@ -1028,7 +1043,7 @@ describe('Orders (e2e)', () => {
 		await requestHttp(app)
 			.post(`/orders/${createdOrder.id}/accept`)
 			.set('Authorization', `Bearer ${otherBoosterToken}`)
-			.send({ deadline: '2026-05-01T00:00:00.000Z' })
+			.send({ deadline: validAcceptanceDeadline })
 			.expect(404, {
 				message: 'Order not found.',
 				error: 'Not Found',

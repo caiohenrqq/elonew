@@ -1,7 +1,7 @@
 'use client';
 
-import { ShieldCheck } from 'lucide-react';
-import { useActionState, useState } from 'react';
+import { ShieldCheck, X } from 'lucide-react';
+import { useActionState, useEffect, useState } from 'react';
 import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-button';
 import { Input } from '@/shared/ui/components/input';
 import { Label } from '@/shared/ui/components/label';
@@ -15,24 +15,52 @@ type OrderCredentialsCardProps = {
 		formData: FormData,
 	) => Promise<SaveOrderCredentialsActionState>;
 	summonerName: string;
+	orderId?: string;
 };
 
-export const OrderCredentialsSavedNotice = () => (
-	<output className="flex items-center gap-3 rounded-sm border border-emerald-400/25 bg-emerald-400/5 px-4 py-3">
-		<ShieldCheck
-			className="h-4 w-4 shrink-0 text-emerald-300"
-			aria-hidden="true"
-		/>
-		<p className="text-xs font-bold tracking-wider text-emerald-300">
-			Dados da conta enviados com segurança. Eles ficam criptografados e são
-			apagados quando o pedido termina.
-		</p>
-	</output>
-);
+export const OrderCredentialsSavedNotice = ({
+	orderId,
+}: {
+	orderId: string;
+}) => {
+	const storageKey = `order-credentials-notice-dismissed:${orderId}`;
+	const [dismissed, setDismissed] = useState(true);
+
+	useEffect(() => {
+		setDismissed(localStorage.getItem(storageKey) === '1');
+	}, [storageKey]);
+
+	if (dismissed) return null;
+
+	return (
+		<output className="flex items-center gap-3 rounded-sm border border-emerald-400/25 bg-emerald-400/5 px-4 py-3">
+			<ShieldCheck
+				className="h-4 w-4 shrink-0 text-emerald-300"
+				aria-hidden="true"
+			/>
+			<p className="flex-1 text-xs font-bold tracking-wider text-emerald-300">
+				Dados da conta enviados com segurança. Eles ficam criptografados e são
+				apagados quando o pedido termina.
+			</p>
+			<button
+				type="button"
+				aria-label="Fechar aviso de credenciais"
+				onClick={() => {
+					localStorage.setItem(storageKey, '1');
+					setDismissed(true);
+				}}
+				className="text-emerald-300/70 hover:text-emerald-200"
+			>
+				<X className="h-4 w-4" />
+			</button>
+		</output>
+	);
+};
 
 export const OrderCredentialsCard = ({
 	action,
 	summonerName,
+	orderId = 'saved',
 }: OrderCredentialsCardProps) => {
 	const [state, formAction] = useActionState(action, {});
 	const [password, setPassword] = useState('');
@@ -40,7 +68,7 @@ export const OrderCredentialsCard = ({
 	const [hasTouchedConfirmation, setHasTouchedConfirmation] = useState(false);
 	const passwordsMatch = password === confirmPassword;
 
-	if (state.success) return <OrderCredentialsSavedNotice />;
+	if (state.success) return <OrderCredentialsSavedNotice orderId={orderId} />;
 
 	return (
 		<section className="rounded-sm border border-hextech-gold/25 bg-hextech-gold/5 p-5 sm:p-6">

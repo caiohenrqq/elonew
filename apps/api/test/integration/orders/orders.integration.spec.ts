@@ -2,6 +2,7 @@ import type { AuthenticatedUser } from '@modules/auth/application/authenticated-
 import { CHAT_REPOSITORY_KEY } from '@modules/chat/application/ports/chat-repository.port';
 import { CHAT_THREAD_WRITER_KEY } from '@modules/chat/application/ports/chat-thread-writer.port';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
+import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_COMPLETION_EARNINGS_PORT_KEY } from '@modules/orders/application/ports/order-completion-earnings.port';
 import {
@@ -114,6 +115,8 @@ describe('Orders module integration', () => {
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
 			.useValue(orderRepository)
+			.overrideProvider(CLIENT_ORDER_READER_KEY)
+			.useValue(orderRepository)
 			.overrideProvider(CHAT_REPOSITORY_KEY)
 			.useValue(chatRepository)
 			.overrideProvider(CHAT_THREAD_WRITER_KEY)
@@ -169,8 +172,15 @@ describe('Orders module integration', () => {
 			summonerName: 'Invocador',
 			currentLeague: 'gold',
 			currentDivision: 'II',
+			currentLp: 50,
 			desiredLeague: 'platinum',
 			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: null,
+			extras: [],
+			booster: null,
 		});
 
 		const persistedOrder = await orderRepository.findById(createdOrder.id);
@@ -384,8 +394,15 @@ describe('Orders module integration', () => {
 			summonerName: 'summoner',
 			currentLeague: 'gold',
 			currentDivision: 'II',
+			currentLp: 50,
 			desiredLeague: 'platinum',
 			desiredDivision: 'IV',
+			server: 'br',
+			desiredQueue: 'solo_duo',
+			lpGain: 20,
+			deadline: new Date('2026-05-01T00:00:00.000Z'),
+			extras: [],
+			booster: null,
 		});
 	});
 

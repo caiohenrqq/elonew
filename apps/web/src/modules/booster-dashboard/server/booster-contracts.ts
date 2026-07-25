@@ -5,6 +5,7 @@ export const boosterOrderSchema = z.object({
 	boosterId: z.string().nullable(),
 	status: z.string(),
 	serviceType: z.string().nullable(),
+	summonerName: z.string().nullable().optional(),
 	currentLeague: z.string().nullable(),
 	currentDivision: z.string().nullable(),
 	currentLp: z.number().nullable(),
@@ -16,6 +17,7 @@ export const boosterOrderSchema = z.object({
 	deadline: z.string().nullable(),
 	totalAmount: z.number().nullable(),
 	boosterAmount: z.number(),
+	extras: z.array(z.object({ type: z.string(), price: z.number() })).optional(),
 	createdAt: z.string(),
 });
 

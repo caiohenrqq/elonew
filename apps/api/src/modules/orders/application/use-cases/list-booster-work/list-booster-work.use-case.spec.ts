@@ -46,6 +46,7 @@ const makeSnapshot = (
 	boosterId: input.boosterId ?? null,
 	status: input.status ?? OrderStatus.PENDING_BOOSTER,
 	serviceType: input.serviceType ?? 'elo_boost',
+	summonerName: input.summonerName ?? 'Invocador',
 	currentLeague: input.currentLeague ?? 'gold',
 	currentDivision: input.currentDivision ?? 'II',
 	currentLp: input.currentLp ?? 40,
@@ -57,6 +58,7 @@ const makeSnapshot = (
 	deadline: input.deadline ?? new Date('2026-05-01T00:00:00.000Z'),
 	totalAmount: input.totalAmount ?? 100,
 	boosterAmount: input.boosterAmount ?? 70,
+	extras: input.extras ?? [],
 	createdAt: input.createdAt ?? new Date('2026-04-01T00:00:00.000Z'),
 });
 

@@ -161,6 +161,7 @@ export const saveOrderCredentialsAction = async (
 		return { success: 'Dados da conta enviados com segurança.' };
 	} catch (error) {
 		if (error instanceof ApiRequestError) {
+			if (error.status === 429) return { error: error.message };
 			if (error.status === 401 || error.status === 403)
 				return { error: 'Entre novamente para continuar.' };
 			if (error.status === 400)

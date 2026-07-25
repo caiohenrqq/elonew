@@ -30,6 +30,10 @@ export class GetAdminDashboardUseCase {
 		return await this.reader.listOrders(input);
 	}
 
+	async getOrder(orderId: string): Promise<AdminOrderSnapshot | null> {
+		return await this.reader.getOrder(orderId);
+	}
+
 	async listSupportTickets(input: {
 		limit: number;
 	}): Promise<AdminSupportTicketSnapshot[]> {

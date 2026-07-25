@@ -10,13 +10,12 @@ class BoosterOrderReaderStub implements BoosterOrderReaderPort {
 
 	async findAvailableForBooster(
 		_boosterId: string,
-		limit: number,
 	): Promise<BoosterOrderDashboardSnapshot[]> {
 		this.calls.push('available');
 		return [
 			makeSnapshot({ id: 'queue-1', boosterAmount: 70 }),
 			makeSnapshot({ id: 'queue-2', boosterAmount: 84 }),
-		].slice(0, limit);
+		];
 	}
 
 	async findActiveForBooster(): Promise<BoosterOrderDashboardSnapshot[]> {
@@ -39,6 +38,7 @@ const makeSnapshot = (
 	boosterId: input.boosterId ?? null,
 	status: input.status ?? OrderStatus.PENDING_BOOSTER,
 	serviceType: input.serviceType ?? 'elo_boost',
+	summonerName: input.summonerName ?? 'Invocador',
 	currentLeague: input.currentLeague ?? 'gold',
 	currentDivision: input.currentDivision ?? 'II',
 	currentLp: input.currentLp ?? 40,
@@ -50,6 +50,7 @@ const makeSnapshot = (
 	deadline: input.deadline ?? new Date('2026-05-01T00:00:00.000Z'),
 	totalAmount: input.totalAmount ?? 100,
 	boosterAmount: input.boosterAmount ?? 70,
+	extras: input.extras ?? [],
 	createdAt: input.createdAt ?? new Date('2026-04-01T00:00:00.000Z'),
 });
 
@@ -58,9 +59,7 @@ describe('ListBoosterQueueUseCase', () => {
 		const reader = new BoosterOrderReaderStub();
 		const useCase = new ListBoosterQueueUseCase(reader);
 
-		await expect(
-			useCase.execute({ boosterId: 'booster-1', limit: 20 }),
-		).resolves.toEqual({
+		await expect(useCase.execute({ boosterId: 'booster-1' })).resolves.toEqual({
 			availableOrders: [
 				expect.objectContaining({ id: 'queue-1' }),
 				expect.objectContaining({ id: 'queue-2' }),
@@ -70,15 +69,6 @@ describe('ListBoosterQueueUseCase', () => {
 				estimatedAvailableEarnings: 154,
 			},
 		});
-		expect(reader.calls).toEqual(['available']);
-	});
-
-	it('caps the queue list at the maximum limit', async () => {
-		const reader = new BoosterOrderReaderStub();
-		const useCase = new ListBoosterQueueUseCase(reader);
-
-		await useCase.execute({ boosterId: 'booster-1', limit: 500 });
-
 		expect(reader.calls).toEqual(['available']);
 	});
 });

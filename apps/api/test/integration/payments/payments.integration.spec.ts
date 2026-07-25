@@ -1,4 +1,5 @@
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
+import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import {
 	ORDER_PRICING_VERSION_REPOSITORY_KEY,
@@ -82,6 +83,7 @@ describe('Payments module integration', () => {
 		previousSkipMercadoPagoCheckoutInDevMode =
 			process.env.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE;
 		process.env.SKIP_MERCADO_PAGO_CHECKOUT_IN_DEV_MODE = 'false';
+		const orderRepository = new InMemoryOrderRepository();
 
 		mercadoPagoSdkMock = {
 			createPayment: jest.fn(async ({ paymentId }) => ({
@@ -113,7 +115,9 @@ describe('Payments module integration', () => {
 			imports: [PaymentsModule],
 		})
 			.overrideProvider(ORDER_REPOSITORY_KEY)
-			.useClass(InMemoryOrderRepository)
+			.useValue(orderRepository)
+			.overrideProvider(CLIENT_ORDER_READER_KEY)
+			.useValue(orderRepository)
 			.overrideProvider(ORDER_CHECKOUT_PORT_KEY)
 			.useClass(InMemoryOrderCheckoutRepository)
 			.overrideProvider(ORDER_QUOTE_REPOSITORY_KEY)
