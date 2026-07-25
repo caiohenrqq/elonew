@@ -21,6 +21,7 @@
 		"@packages/shared": "workspace:*",
 		"@radix-ui/react-select": "^2.2.6",
 		"@vercel/analytics": "^2.0.1",
+		"@vercel/speed-insights": "^2.0.0",
 		"clsx": "^2.1.1",
 		"gsap": "^3.14.2",
 		"lenis": "^1.3.21",
