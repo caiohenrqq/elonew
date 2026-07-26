@@ -737,7 +737,8 @@ describe('Orders (e2e)', () => {
 			.post('/orders/quote')
 			.set('Authorization', `Bearer ${token}`)
 			.send(payload)
-			.expect(400);
+			.expect(400)
+			.execute();
 	});
 
 	it('previews a quote without requiring a summoner name', async () => {
@@ -751,7 +752,8 @@ describe('Orders (e2e)', () => {
 			.post('/orders/quote/preview')
 			.set('Authorization', `Bearer ${token}`)
 			.send(payload)
-			.expect(201);
+			.expect(201)
+			.execute();
 	});
 
 	it('previews quote pricing without persisting a quote', async () => {
