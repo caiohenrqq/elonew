@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ClientDashboardOrder } from '../../model/orders';
 import { SupportTicketPanel } from './support-ticket-panel';
 
@@ -25,7 +26,8 @@ const buildOrder = (
 });
 
 describe('SupportTicketPanel', () => {
-	it('renders the ticket form fields and an option per order', () => {
+	it('renders the ticket form fields and an option per order', async () => {
+		const user = userEvent.setup();
 		render(
 			<SupportTicketPanel
 				action={jest.fn().mockResolvedValue({})}
@@ -40,6 +42,9 @@ describe('SupportTicketPanel', () => {
 				'Vincule um pedido quando o assunto for sobre um serviço específico.',
 			),
 		).toBeInTheDocument();
+		await user.click(
+			screen.getByRole('combobox', { name: /pedido relacionado/i }),
+		);
 		expect(screen.getAllByRole('option')).toHaveLength(2);
 		expect(screen.getByText('01 disponíveis')).toBeInTheDocument();
 	});
@@ -55,7 +60,28 @@ describe('SupportTicketPanel', () => {
 
 		expect(
 			screen.getByRole('combobox', { name: /pedido relacionado/i }),
-		).toHaveValue('order-1234abcd');
+		).toHaveTextContent('order-12 - Elo Boost');
+	});
+
+	it('clears the submitted order id when the general ticket is picked', async () => {
+		const user = userEvent.setup();
+		render(
+			<SupportTicketPanel
+				action={jest.fn().mockResolvedValue({})}
+				initialOrderId="order-1234abcd"
+				orders={[buildOrder()]}
+			/>,
+		);
+
+		const orderIdField = document.querySelector('input[name="orderId"]');
+		expect(orderIdField).toHaveValue('order-1234abcd');
+
+		await user.click(
+			screen.getByRole('combobox', { name: /pedido relacionado/i }),
+		);
+		await user.click(screen.getByRole('option', { name: 'Ticket geral' }));
+
+		expect(orderIdField).toHaveValue('');
 	});
 
 	it('shows the empty-orders helper when there are no orders', () => {
