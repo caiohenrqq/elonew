@@ -3,7 +3,6 @@ import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { Injectable } from '@nestjs/common';
 import { decodeOrderCredentialsEncryptionKey } from '@packages/config/env/order-credentials-encryption-key';
 
-const LEGACY_VALUE_VERSION = 'v1';
 const ENCRYPTED_VALUE_VERSION = 'v2';
 const INITIALIZATION_VECTOR_LENGTH = 12;
 
@@ -57,21 +56,18 @@ export class OrderCredentialsCipherService {
 		field: OrderCredentialField,
 		value: string,
 	): string {
-		if (value.startsWith(`${ENCRYPTED_VALUE_VERSION}:`))
-			return this.decryptSealed(
-				value,
-				this.additionalAuthenticatedData(orderId, field),
-			);
-		if (value.startsWith(`${LEGACY_VALUE_VERSION}:`))
-			return this.decryptSealed(value, null);
+		if (!value.startsWith(`${ENCRYPTED_VALUE_VERSION}:`))
+			throw new Error('Invalid encrypted order credentials payload.');
 
-		// ponytail: legacy plaintext passthrough; drop once pre-encryption rows age out
-		return value;
+		return this.decryptSealed(
+			value,
+			this.additionalAuthenticatedData(orderId, field),
+		);
 	}
 
 	private decryptSealed(
 		value: string,
-		additionalAuthenticatedData: Buffer | null,
+		additionalAuthenticatedData: Buffer,
 	): string {
 		const [, initializationVector, authenticationTag, ciphertext, ...rest] =
 			value.split(':');
@@ -88,8 +84,7 @@ export class OrderCredentialsCipherService {
 			this.key,
 			Buffer.from(initializationVector, 'base64url'),
 		);
-		if (additionalAuthenticatedData)
-			decipher.setAAD(additionalAuthenticatedData);
+		decipher.setAAD(additionalAuthenticatedData);
 		decipher.setAuthTag(Buffer.from(authenticationTag, 'base64url'));
 
 		return Buffer.concat([

@@ -30,14 +30,10 @@ id must exist before sealing, since the AAD binds to it — this also blocks the
 AAD). Decryption accepts any segment layout the encryptor can produce and rejects
 malformed payloads.
 
-Reads still accept `v1:` values (pre-AAD) and raw plaintext (pre-encryption legacy);
-both fallbacks can be dropped once old rows age out — credentials only live from
-payment confirmation to order termination, so churn handles migration. Until then be
-precise about what the fallbacks cost: v1 rows carry no AAD, so cross-row/cross-field
-swaps of v1 ciphertext still decrypt undetected, and the plaintext passthrough
-returns any garbled non-`v1:`/`v2:` value as-is instead of erroring (it also means a
-DB-write attacker can plant plaintext that "decrypts" — the stated threat model only
-covers read access). Same env key as before; no schema change.
+Reads originally also accepted `v1:` values (pre-AAD) and raw plaintext
+(pre-encryption legacy). Both fallbacks were removed on 2026-07-26 once production
+held no such rows (see "Legacy fallbacks removed" below). Same env key as before; no
+schema change.
 
 ### Plaintext no longer round-trips
 
@@ -56,8 +52,8 @@ save re-encrypted them. Now:
 - `save()` runs the credentials delete and the order upsert in one transaction, so a
   transient upsert failure can no longer strand an active order with its credentials
   already deleted.
-- Nothing in the API currently decrypts stored credentials; `decryptField` exists for
-  the future booster read path.
+- The only paths that decrypt are the booster reveal endpoint and the booster
+  dashboard's `summonerName` fallback (used when the mirrored order column is empty).
 
 ### Lifecycle
 
@@ -66,27 +62,56 @@ Credentials are stored only after payment confirmation, deleted on payment failu
 cascade-deleted with the order. Every terminal order state now clears credentials;
 order state is the expiry mechanism and no separate TTL was added.
 
+## Booster read path (2026-07-26, #104)
+
+`GET /orders/:orderId/credentials/reveal` returns the decrypted credentials to the
+booster assigned to an `in_progress` order, and nothing else does:
+
+- Authorization is part of the query (`id` + `boosterId` + status), so a foreign
+  order and a missing one both answer 404 — the endpoint confirms nothing about
+  orders that are not the caller's. A matching order whose client has not submitted
+  credentials answers 404 with a distinct message.
+- Decryption stays in `PrismaOrderRepository.findCredentialsForBooster`; the entity
+  still rehydrates with only `hasStoredCredentials`. Credentials never appear in
+  list or detail responses.
+- Every reveal writes an `order_credential_reveals` row (order, booster, timestamp —
+  no values) and emits a typed `order.credentials_reveal` log event that has no field
+  able to carry a credential value. The audit write is awaited *before* the plaintext
+  is returned, so a reveal that cannot be recorded does not happen; the row cascades
+  only with the order, outliving the credentials row destroyed at termination.
+- The route carries its own throttle (`ORDERS_CREDENTIALS_REVEAL_THROTTLE_LIMIT`,
+  default 10/min) because the global throttler only covers mutations.
+
+## Legacy fallbacks removed (2026-07-26, #104)
+
+`decryptField` now accepts only well-formed `v2:` payloads and throws on anything
+else, including `v1:` and raw plaintext. Verified beforehand that production held 1
+credentials row and 0 non-`v2:` values, and that the deployed image (v0.12.0, after
+the hardening shipped) can no longer write legacy values. A non-`v2:` value now means
+tampering or corruption, and the dashboard `summonerName` fallback throws rather than
+rendering it — deliberately loud instead of silently degrading.
+
 ## Known limitations (accepted)
 
 - Deleting the row does not scrub historical database backups; the env key decrypts
   any backup containing ciphertext. Mitigations: short backup retention, restricted
   backup access, key rotation (v2 format is versioned; a v3 can change keys).
-- Plaintext/v1 read fallbacks remain until pre-hardening rows are gone (see
-  `ponytail:` marker in the cipher service).
-
-## Future work (when the booster read path is built)
-
-- Dedicated endpoint that decrypts on explicit request only, booster-authorized,
-  with an audit event per reveal (who, when, which order) and no credential values
-  in logs/traces/responses beyond the reveal payload itself.
-- Consider a reveal counter for anomaly detection at that point, not before.
+- No reveal counter or anomaly detection yet; the audit table makes it queryable when
+  wanted.
+- Booster dashboard UI for the reveal is not built; the endpoint has no caller in
+  `apps/web` yet.
 - Disable request-body logging for the save/reveal routes if request logging is ever
   added.
 
 ## Verification
 
 - Unit: cipher round-trip, cross-order/cross-field AAD rejection, tamper rejection,
-  v1 and plaintext fallbacks; repository seals-once/leaves-stored-untouched/deletes;
-  entity credential state transitions. (`apps/api`, orders module specs)
+  v1/plaintext rejection; reveal use case (authorization, audit-before-return,
+  no credential values in the log event); repository
+  seals-once/leaves-stored-untouched/deletes; entity credential state transitions.
+  (`apps/api`, orders module specs)
+- E2E: reveal for the assigned booster, 404 for another booster, 403 for a client,
+  401 anonymous, 429 past the route limit, and no credentials in the detail response.
 - DB integration: `orders.db.integration` asserts stored values are `v2:` sealed,
-  never plaintext, deleted on completion, rejected before payment confirmation.
+  never plaintext, deleted on completion, rejected before payment confirmation, plus
+  the reveal round-trip and its audit row surviving completion.
