@@ -110,6 +110,7 @@ model User {
   ordersAsClient   Order[]   @relation("ClientOrders")
   ordersAsBooster  Order[]   @relation("BoosterOrders")
   boosterOrderRejections OrderBoosterRejection[] @relation("BoosterRejectedOrders")
+  credentialReveals OrderCredentialReveal[] @relation("BoosterCredentialReveals")
   orderQuotes      OrderQuote[]
   wallet           Wallet?
   chatMessages     ChatMessage[]
@@ -174,6 +175,7 @@ model Order {
   ratings          Rating[]
   walletTransactions WalletTransaction[]
   boosterRejections OrderBoosterRejection[]
+  credentialReveals OrderCredentialReveal[]
   adminGovernanceActions AdminGovernanceAction[]
 
   completedAt      DateTime?
@@ -247,6 +249,22 @@ model OrderCredentials {
   updatedAt    DateTime @updatedAt
 
   @@map("order_credentials")
+}
+
+// Audit trail for booster credential reveals. No relation to OrderCredentials:
+// the record of who read credentials outlives the credentials row itself, which
+// is destroyed when the order terminates.
+model OrderCredentialReveal {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  boosterId String
+  booster   User     @relation("BoosterCredentialReveals", fields: [boosterId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([boosterId, createdAt])
+  @@map("order_credential_reveals")
 }
 
 model OrderExtra {

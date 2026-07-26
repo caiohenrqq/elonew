@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto';
+import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { CHAT_REPOSITORY_KEY } from '@modules/chat/application/ports/chat-repository.port';
 import { CHAT_THREAD_WRITER_KEY } from '@modules/chat/application/ports/chat-thread-writer.port';
 import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
@@ -7,6 +8,11 @@ import type { StoredCoupon } from '@modules/orders/application/ports/coupon-look
 import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_CLIENT_READER_KEY } from '@modules/orders/application/ports/order-client-reader.port';
+import {
+	ORDER_CREDENTIAL_REVEAL_RECORDER_KEY,
+	type OrderCredentialRevealInput,
+} from '@modules/orders/application/ports/order-credential-reveal-recorder.port';
+import { ORDER_CREDENTIALS_READER_KEY } from '@modules/orders/application/ports/order-credentials-reader.port';
 import {
 	ORDER_PRICING_VERSION_REPOSITORY_KEY,
 	type OrderPricingVersionRepositoryPort,
@@ -42,6 +48,10 @@ describe('Orders (e2e)', () => {
 	let chatRepository: InMemoryChatRepository;
 	let pricingVersions: OrderPricingVersionRepositoryPort;
 	let markOrderAsPaidUseCase: MarkOrderAsPaidUseCase;
+	let revealRecorder: {
+		recorded: OrderCredentialRevealInput[];
+		record(reveal: OrderCredentialRevealInput): Promise<void>;
+	};
 	const testInternalApiKey =
 		process.env.INTERNAL_API_KEY ?? 'test-internal-api-key';
 	const validAcceptanceDeadline = '2099-05-01T00:00:00.000Z';
@@ -183,6 +193,12 @@ describe('Orders (e2e)', () => {
 	beforeEach(async () => {
 		couponLookup = new CouponLookupStub();
 		orderRepository = new InMemoryOrderRepository();
+		revealRecorder = {
+			recorded: [],
+			async record(reveal: OrderCredentialRevealInput): Promise<void> {
+				this.recorded.push(reveal);
+			},
+		};
 		clientReader = new ClientReaderStub(orderRepository);
 		chatRepository = new InMemoryChatRepository(orderRepository);
 		const moduleRef = await Test.createTestingModule({
@@ -194,6 +210,10 @@ describe('Orders (e2e)', () => {
 			.useValue(orderRepository)
 			.overrideProvider(CLIENT_ORDER_READER_KEY)
 			.useValue(orderRepository)
+			.overrideProvider(ORDER_CREDENTIALS_READER_KEY)
+			.useValue(orderRepository)
+			.overrideProvider(ORDER_CREDENTIAL_REVEAL_RECORDER_KEY)
+			.useValue(revealRecorder)
 			.overrideProvider(ORDER_CLIENT_READER_KEY)
 			.useValue(clientReader)
 			.overrideProvider(COUPON_EVENT_RECORDER_KEY)
@@ -717,7 +737,8 @@ describe('Orders (e2e)', () => {
 			.post('/orders/quote')
 			.set('Authorization', `Bearer ${token}`)
 			.send(payload)
-			.expect(400);
+			.expect(400)
+			.execute();
 	});
 
 	it('previews a quote without requiring a summoner name', async () => {
@@ -731,7 +752,8 @@ describe('Orders (e2e)', () => {
 			.post('/orders/quote/preview')
 			.set('Authorization', `Bearer ${token}`)
 			.send(payload)
-			.expect(201);
+			.expect(201)
+			.execute();
 	});
 
 	it('previews quote pricing without persisting a quote', async () => {
@@ -1002,6 +1024,238 @@ describe('Orders (e2e)', () => {
 			.post(`/orders/${createdOrder.id}/cancel`)
 			.set('Authorization', `Bearer ${boosterToken}`)
 			.expect(403)
+			.execute();
+	});
+
+	async function createInProgressOrderWithCredentials(
+		clientToken: string,
+		boosterToken: string,
+		credentials: {
+			login: string;
+			summonerName: string;
+			password: string;
+		},
+	): Promise<{ id: string }> {
+		const createdOrder = await createQuotedOrder(clientToken);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/credentials`)
+			.set('Authorization', `Bearer ${clientToken}`)
+			.send({ ...credentials, confirmPassword: credentials.password })
+			.expect(200)
+			.execute();
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.send({ deadline: validAcceptanceDeadline })
+			.expect(200)
+			.execute();
+
+		return createdOrder;
+	}
+
+	it('reveals credentials to the assigned booster and audits the reveal', async () => {
+		const clientToken = signToken({ sub: 'client-reveal-1', role: 'CLIENT' });
+		const boosterToken = signToken({
+			sub: 'booster-reveal-1',
+			role: 'BOOSTER',
+		});
+		const credentials = {
+			login: 'client@example.com',
+			summonerName: 'Invocador#BR1',
+			password: 'senha-super-secreta',
+		};
+		const createdOrder = await createInProgressOrderWithCredentials(
+			clientToken,
+			boosterToken,
+			credentials,
+		);
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}/credentials/reveal`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.expect(200, credentials)
+			.execute();
+
+		expect(revealRecorder.recorded).toEqual([
+			{ orderId: createdOrder.id, boosterId: 'booster-reveal-1' },
+		]);
+	});
+
+	it('never exposes credentials through the order detail response', async () => {
+		const clientToken = signToken({ sub: 'client-reveal-2', role: 'CLIENT' });
+		const boosterToken = signToken({
+			sub: 'booster-reveal-2',
+			role: 'BOOSTER',
+		});
+		const credentials = {
+			login: 'leak@example.com',
+			summonerName: 'Invocador#BR2',
+			password: 'senha-que-nao-vaza',
+		};
+		const createdOrder = await createInProgressOrderWithCredentials(
+			clientToken,
+			boosterToken,
+			credentials,
+		);
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}`)
+			.set('Authorization', `Bearer ${clientToken}`)
+			.expect(200)
+			.expect<Record<string, unknown>>(({ body }) => {
+				const serialized = JSON.stringify(body);
+				expect(serialized).not.toContain(credentials.login);
+				expect(serialized).not.toContain(credentials.password);
+			})
+			.execute();
+	});
+
+	it('returns 404 when another booster tries to reveal credentials', async () => {
+		const clientToken = signToken({ sub: 'client-reveal-3', role: 'CLIENT' });
+		const boosterToken = signToken({
+			sub: 'booster-reveal-3',
+			role: 'BOOSTER',
+		});
+		const otherBoosterToken = signToken({
+			sub: 'booster-reveal-4',
+			role: 'BOOSTER',
+		});
+		const createdOrder = await createInProgressOrderWithCredentials(
+			clientToken,
+			boosterToken,
+			{
+				login: 'client@example.com',
+				summonerName: 'Invocador#BR3',
+				password: 'senha-super-secreta',
+			},
+		);
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}/credentials/reveal`)
+			.set('Authorization', `Bearer ${otherBoosterToken}`)
+			.expect(404, {
+				message: 'Order not found.',
+				error: 'Not Found',
+				statusCode: 404,
+			})
+			.execute();
+
+		expect(revealRecorder.recorded).toEqual([]);
+	});
+
+	it('rejects credential reveals from clients and anonymous callers', async () => {
+		const clientToken = signToken({ sub: 'client-reveal-5', role: 'CLIENT' });
+		const boosterToken = signToken({
+			sub: 'booster-reveal-5',
+			role: 'BOOSTER',
+		});
+		const createdOrder = await createInProgressOrderWithCredentials(
+			clientToken,
+			boosterToken,
+			{
+				login: 'client@example.com',
+				summonerName: 'Invocador#BR5',
+				password: 'senha-super-secreta',
+			},
+		);
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}/credentials/reveal`)
+			.set('Authorization', `Bearer ${clientToken}`)
+			.expect(403)
+			.execute();
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}/credentials/reveal`)
+			.expect(401)
+			.execute();
+
+		expect(revealRecorder.recorded).toEqual([]);
+	});
+
+	// A throttled booster must not throttle the others: the web app calls the API
+	// from its own server, so an address-keyed bucket would be shared by everyone.
+	it('throttles credential reveals per booster', async () => {
+		const clientToken = signToken({ sub: 'client-reveal-8', role: 'CLIENT' });
+		const boosterToken = signToken({
+			sub: 'booster-reveal-8',
+			role: 'BOOSTER',
+		});
+		const otherClientToken = signToken({
+			sub: 'client-reveal-9',
+			role: 'CLIENT',
+		});
+		const otherBoosterToken = signToken({
+			sub: 'booster-reveal-9',
+			role: 'BOOSTER',
+		});
+		const credentials = {
+			login: 'client@example.com',
+			summonerName: 'Invocador#BR8',
+			password: 'senha-super-secreta',
+		};
+		const createdOrder = await createInProgressOrderWithCredentials(
+			clientToken,
+			boosterToken,
+			credentials,
+		);
+		const otherOrder = await createInProgressOrderWithCredentials(
+			otherClientToken,
+			otherBoosterToken,
+			credentials,
+		);
+		const revealLimit =
+			app.get(AppSettingsService).ordersCredentialsRevealThrottleLimit;
+
+		for (let attempt = 0; attempt < revealLimit; attempt++)
+			await requestHttp(app)
+				.get(`/orders/${createdOrder.id}/credentials/reveal`)
+				.set('Authorization', `Bearer ${boosterToken}`)
+				.expect(200)
+				.execute();
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}/credentials/reveal`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.expect(429)
+			.execute();
+
+		await requestHttp(app)
+			.get(`/orders/${otherOrder.id}/credentials/reveal`)
+			.set('Authorization', `Bearer ${otherBoosterToken}`)
+			.expect(200)
+			.execute();
+
+		expect(revealRecorder.recorded).toHaveLength(revealLimit + 1);
+	});
+
+	it('returns 404 when the client has not submitted credentials yet', async () => {
+		const clientToken = signToken({ sub: 'client-reveal-6', role: 'CLIENT' });
+		const boosterToken = signToken({
+			sub: 'booster-reveal-6',
+			role: 'BOOSTER',
+		});
+		const createdOrder = await createQuotedOrder(clientToken);
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+
+		await requestHttp(app)
+			.post(`/orders/${createdOrder.id}/accept`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.send({ deadline: validAcceptanceDeadline })
+			.expect(200)
+			.execute();
+
+		await requestHttp(app)
+			.get(`/orders/${createdOrder.id}/credentials/reveal`)
+			.set('Authorization', `Bearer ${boosterToken}`)
+			.expect(404, {
+				message: 'Order credentials have not been submitted yet.',
+				error: 'Not Found',
+				statusCode: 404,
+			})
 			.execute();
 	});
 

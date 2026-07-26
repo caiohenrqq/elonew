@@ -36,9 +36,13 @@ import { LoggerModule } from 'nestjs-pino';
 						],
 						remove: true,
 					},
-					transport: settings.isProduction
-						? undefined
-						: { target: 'pino-pretty', options: { singleLine: true } },
+					// pino-pretty runs in a thread-stream worker, which outlives the
+					// Nest app and keeps a test process alive after the run finishes.
+					// Tests read the raw JSON instead.
+					transport:
+						settings.isProduction || settings.isTest
+							? undefined
+							: { target: 'pino-pretty', options: { singleLine: true } },
 				},
 			}),
 		}),

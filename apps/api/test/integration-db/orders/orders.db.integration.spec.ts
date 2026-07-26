@@ -893,6 +893,141 @@ describe('Orders module integration (db)', () => {
 		});
 	});
 
+	it('reveals sealed credentials to the assigned booster and audits it', async () => {
+		const credentials = {
+			login: 'login-reveal',
+			summonerName: 'Invocador Reveal',
+			password: 'secret-reveal',
+		};
+		const createdOrder = await createQuotedOrder();
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await controller.saveCredentials(
+			createdOrder.id,
+			{ ...credentials, confirmPassword: credentials.password },
+			clientUser,
+		);
+		await controller.accept(
+			createdOrder.id,
+			{ deadline: '2026-05-01T00:00:00.000Z' },
+			boosterUser,
+		);
+
+		await expect(
+			controller.revealCredentials(createdOrder.id, boosterUser),
+		).resolves.toEqual(credentials);
+
+		await expect(
+			prisma.orderCredentialReveal.findMany({
+				where: { orderId: createdOrder.id },
+			}),
+		).resolves.toEqual([
+			expect.objectContaining({
+				orderId: createdOrder.id,
+				boosterId: boosterUser.id,
+			}),
+		]);
+	});
+
+	// The authorization lives in the reveal query itself, so it has to be proven
+	// against the database rather than against an in-memory double.
+	it('refuses to reveal credentials to a booster the order is not assigned to', async () => {
+		const createdOrder = await createQuotedOrder();
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await controller.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			},
+			clientUser,
+		);
+		await controller.accept(
+			createdOrder.id,
+			{ deadline: '2026-05-01T00:00:00.000Z' },
+			boosterUser,
+		);
+		const otherBooster = await prisma.user.create({
+			data: {
+				username: `other-booster-${Date.now()}`,
+				email: `other-booster-${Date.now()}@example.com`,
+				password: 'secret',
+				role: 'BOOSTER',
+			},
+		});
+
+		await expect(
+			controller.revealCredentials(createdOrder.id, {
+				id: otherBooster.id,
+				role: Role.BOOSTER,
+			}),
+		).rejects.toBeInstanceOf(OrderNotFoundError);
+		await expect(
+			prisma.orderCredentialReveal.count({
+				where: { orderId: createdOrder.id },
+			}),
+		).resolves.toBe(0);
+	});
+
+	it('stops revealing credentials once the order is completed', async () => {
+		const createdOrder = await createQuotedOrder();
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await controller.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			},
+			clientUser,
+		);
+		await controller.accept(
+			createdOrder.id,
+			{ deadline: '2026-05-01T00:00:00.000Z' },
+			boosterUser,
+		);
+		await controller.complete(createdOrder.id, boosterUser);
+
+		await expect(
+			controller.revealCredentials(createdOrder.id, boosterUser),
+		).rejects.toBeInstanceOf(OrderNotFoundError);
+	});
+
+	it('keeps the reveal audit trail after the credentials are deleted', async () => {
+		const createdOrder = await createQuotedOrder();
+		await markOrderAsPaidUseCase.execute({ orderId: createdOrder.id });
+		await controller.saveCredentials(
+			createdOrder.id,
+			{
+				login: 'login-db',
+				summonerName: 'summoner-db',
+				password: 'secret-db',
+				confirmPassword: 'secret-db',
+			},
+			clientUser,
+		);
+		await controller.accept(
+			createdOrder.id,
+			{ deadline: '2026-05-01T00:00:00.000Z' },
+			boosterUser,
+		);
+		await controller.revealCredentials(createdOrder.id, boosterUser);
+		await controller.complete(createdOrder.id, boosterUser);
+
+		await expect(
+			prisma.orderCredentials.findUnique({
+				where: { orderId: createdOrder.id },
+			}),
+		).resolves.toBeNull();
+		await expect(
+			prisma.orderCredentialReveal.count({
+				where: { orderId: createdOrder.id },
+			}),
+		).resolves.toBe(1);
+	});
+
 	it('offers the booster queue only orders whose credentials were sent', async () => {
 		const withoutCredentials = await createQuotedOrder();
 		await markOrderAsPaidUseCase.execute({ orderId: withoutCredentials.id });

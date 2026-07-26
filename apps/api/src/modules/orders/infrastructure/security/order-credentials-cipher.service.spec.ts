@@ -93,7 +93,9 @@ describe('OrderCredentialsCipherService', () => {
 		).toThrow();
 	});
 
-	it('decrypts legacy v1 values without additional authenticated data', () => {
+	// v1 carried no AAD, so accepting it would keep letting ciphertext be moved
+	// between rows and fields undetected.
+	it('rejects legacy v1 values', () => {
 		const service = new OrderCredentialsCipherService(appSettings as never);
 		const key = decodeOrderCredentialsEncryptionKey(
 			appSettings.orderCredentialsEncryptionKey,
@@ -111,38 +113,18 @@ describe('OrderCredentialsCipherService', () => {
 			ciphertext.toString('base64url'),
 		].join(':');
 
-		expect(service.decryptField('order-1', 'password', legacyValue)).toBe(
-			'legacy-secret',
-		);
+		expect(() =>
+			service.decryptField('order-1', 'password', legacyValue),
+		).toThrow('Invalid encrypted order credentials payload.');
 	});
 
-	it('round-trips legacy v1 values sealed from empty plaintext', () => {
-		const service = new OrderCredentialsCipherService(appSettings as never);
-		const key = decodeOrderCredentialsEncryptionKey(
-			appSettings.orderCredentialsEncryptionKey,
-		);
-		const iv = Buffer.alloc(12, 2);
-		const cipher = createCipheriv('aes-256-gcm', key, iv);
-		const ciphertext = Buffer.concat([
-			cipher.update('', 'utf8'),
-			cipher.final(),
-		]);
-		const legacyValue = [
-			'v1',
-			iv.toString('base64url'),
-			cipher.getAuthTag().toString('base64url'),
-			ciphertext.toString('base64url'),
-		].join(':');
-
-		expect(service.decryptField('order-1', 'password', legacyValue)).toBe('');
-	});
-
-	it('supports legacy plaintext reads during rollout', () => {
+	it('rejects unsealed values instead of passing them through', () => {
 		const service = new OrderCredentialsCipherService(appSettings as never);
 
-		expect(service.decryptField('order-1', 'login', 'legacy-plaintext')).toBe(
-			'legacy-plaintext',
-		);
+		for (const unsealed of ['legacy-plaintext', '', 'v3:a:b:c'])
+			expect(() => service.decryptField('order-1', 'login', unsealed)).toThrow(
+				'Invalid encrypted order credentials payload.',
+			);
 	});
 
 	it('rejects malformed encryption keys', () => {

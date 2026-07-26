@@ -8,6 +8,10 @@ import type {
 	ClientOrderDetailsSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
+import type {
+	OrderCredentialsReaderPort,
+	RevealableOrderCredentials,
+} from '@modules/orders/application/ports/order-credentials-reader.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import {
 	Order,
@@ -95,6 +99,10 @@ type OrderDelegate = {
 		where: { clientId: string };
 		select: { id: true };
 	}): Promise<{ id: string } | null>;
+	findFirst(args: {
+		where: { id: string; boosterId: string; status: string };
+		include: { credentials: true };
+	}): Promise<Pick<OrderRecord, 'id' | 'credentials'> | null>;
 	findMany(args: {
 		where:
 			| { clientId: string }
@@ -285,7 +293,11 @@ type OrderRejectionPrismaClient = OrderPrismaClient & {
 
 @Injectable()
 export class PrismaOrderRepository
-	implements OrderRepositoryPort, ClientOrderReaderPort, BoosterOrderReaderPort
+	implements
+		OrderRepositoryPort,
+		OrderCredentialsReaderPort,
+		ClientOrderReaderPort,
+		BoosterOrderReaderPort
 {
 	constructor(
 		private readonly prisma: PrismaService,
@@ -331,6 +343,40 @@ export class PrismaOrderRepository
 		if (!record) return null;
 
 		return this.mapOrderFromRecord(record);
+	}
+
+	// Scoped to the assigned booster on an in-progress order in the query itself,
+	// so an unauthorized caller cannot tell a foreign order from a missing one.
+	async findCredentialsForBooster(
+		orderId: string,
+		boosterId: string,
+	): Promise<RevealableOrderCredentials | null> {
+		const record = await this.getDelegate().findFirst({
+			where: { id: orderId, boosterId, status: OrderStatus.IN_PROGRESS },
+			include: { credentials: true },
+		});
+		if (!record) return null;
+		if (!record.credentials) return { credentials: null };
+
+		return {
+			credentials: {
+				login: this.orderCredentialsCipher.decryptField(
+					record.id,
+					'login',
+					record.credentials.login,
+				),
+				summonerName: this.orderCredentialsCipher.decryptField(
+					record.id,
+					'summonerName',
+					record.credentials.summonerName,
+				),
+				password: this.orderCredentialsCipher.decryptField(
+					record.id,
+					'password',
+					record.credentials.password,
+				),
+			},
+		};
 	}
 
 	async existsForClient(clientId: string): Promise<boolean> {
@@ -654,13 +700,7 @@ export class PrismaOrderRepository
 				: null,
 			summonerName:
 				record.summonerName ??
-				(record.credentials
-					? this.orderCredentialsCipher.decryptField(
-							record.id,
-							'summonerName',
-							record.credentials.summonerName,
-						)
-					: null),
+				this.decryptMirroredSummonerName(record.id, record.credentials),
 			currentLeague: record.currentLeague,
 			currentDivision: record.currentDivision,
 			currentLp: record.currentLp,
@@ -676,6 +716,26 @@ export class PrismaOrderRepository
 			extras: record.extras.map((extra) => this.mapExtraFromRecord(extra)),
 			createdAt: record.createdAt,
 		};
+	}
+
+	// Display-only fallback for orders predating the mirrored column. A value that
+	// no longer decrypts is a single missing name here, so it must not fail the
+	// whole listing: every booster shares this query. The reveal path still throws.
+	private decryptMirroredSummonerName(
+		orderId: string,
+		credentials: { summonerName: string } | null | undefined,
+	): string | null {
+		if (!credentials) return null;
+
+		try {
+			return this.orderCredentialsCipher.decryptField(
+				orderId,
+				'summonerName',
+				credentials.summonerName,
+			);
+		} catch {
+			return null;
+		}
 	}
 
 	private mapExtrasCreate(extras?: OrderPricedExtra[]):

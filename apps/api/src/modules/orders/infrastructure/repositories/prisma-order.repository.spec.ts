@@ -288,6 +288,91 @@ describe('PrismaOrderRepository', () => {
 			'Invalid order status persisted: invalid_status',
 		);
 	});
+	it('keeps the booster queue listing alive when a stored summoner name no longer decrypts', async () => {
+		const findMany = jest.fn().mockResolvedValue([
+			{
+				...orderRecord({ summonerName: 'not-sealed-anymore' }),
+				summonerName: null,
+				createdAt: new Date('2026-04-01T00:00:00.000Z'),
+			},
+		]);
+		const prisma = { order: { findMany, upsert: jest.fn() } };
+		const repository = new PrismaOrderRepository(prisma as never, cipher());
+
+		const available = await repository.findAvailableForBooster('booster-1');
+
+		expect(available).toHaveLength(1);
+		expect(available[0].summonerName).toBeNull();
+	});
+
+	it('scopes a credentials reveal to the assigned booster of an in-progress order', async () => {
+		const orderCredentialsCipher = cipher();
+		const findFirst = jest.fn().mockResolvedValue({
+			id: 'order-1',
+			credentials: {
+				login: orderCredentialsCipher.encryptField('order-1', 'login', 'login'),
+				summonerName: orderCredentialsCipher.encryptField(
+					'order-1',
+					'summonerName',
+					'summoner',
+				),
+				password: orderCredentialsCipher.encryptField(
+					'order-1',
+					'password',
+					'secret',
+				),
+			},
+		});
+		const prisma = { order: { findFirst, upsert: jest.fn() } };
+		const repository = new PrismaOrderRepository(
+			prisma as never,
+			orderCredentialsCipher,
+		);
+
+		await expect(
+			repository.findCredentialsForBooster('order-1', 'booster-1'),
+		).resolves.toEqual({
+			credentials: {
+				login: 'login',
+				summonerName: 'summoner',
+				password: 'secret',
+			},
+		});
+
+		// Authorization lives in this query, so it is asserted here rather than
+		// through a double that re-implements the same rules.
+		expect(findFirst).toHaveBeenCalledWith({
+			where: {
+				id: 'order-1',
+				boosterId: 'booster-1',
+				status: OrderStatus.IN_PROGRESS,
+			},
+			include: { credentials: true },
+		});
+	});
+
+	it('reports a revealable order that has no stored credentials', async () => {
+		const findFirst = jest
+			.fn()
+			.mockResolvedValue({ id: 'order-1', credentials: null });
+		const prisma = { order: { findFirst, upsert: jest.fn() } };
+		const repository = new PrismaOrderRepository(prisma as never, cipher());
+
+		await expect(
+			repository.findCredentialsForBooster('order-1', 'booster-1'),
+		).resolves.toEqual({ credentials: null });
+	});
+
+	it('returns null when the order is not revealable by the booster', async () => {
+		const findFirst = jest.fn().mockResolvedValue(null);
+		const prisma = { order: { findFirst, upsert: jest.fn() } };
+		const repository = new PrismaOrderRepository(prisma as never, cipher());
+
+		await expect(
+			repository.findCredentialsForBooster('order-1', 'other-booster'),
+		).resolves.toBeNull();
+	});
+
 	it('keeps orders without stored credentials out of the booster queue', async () => {
 		const findMany = jest.fn().mockResolvedValue([]);
 		const prisma = { order: { findMany, upsert: jest.fn() } };

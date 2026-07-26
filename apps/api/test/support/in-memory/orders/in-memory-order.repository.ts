@@ -3,8 +3,15 @@ import type {
 	ClientOrderDetailsSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
+import type {
+	OrderCredentialsReaderPort,
+	RevealableOrderCredentials,
+} from '@modules/orders/application/ports/order-credentials-reader.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
-import { Order } from '@modules/orders/domain/order.entity';
+import {
+	Order,
+	type OrderCredentials,
+} from '@modules/orders/domain/order.entity';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 
 export const persistedOrderCopy = (order: Order): Order =>
@@ -25,9 +32,13 @@ export const persistedOrderCopy = (order: Order): Order =>
 	});
 
 export class InMemoryOrderRepository
-	implements OrderRepositoryPort, ClientOrderReaderPort
+	implements
+		OrderRepositoryPort,
+		OrderCredentialsReaderPort,
+		ClientOrderReaderPort
 {
 	private readonly orders = new Map<string, Order>();
+	private readonly credentialsByOrderId = new Map<string, OrderCredentials>();
 	private readonly createdAtByOrderId = new Map<string, Date>();
 	private nextId = 1;
 	private nextCreatedAtOffset = 0;
@@ -48,6 +59,7 @@ export class InMemoryOrderRepository
 			extras: order.extras,
 			completedAt: order.completedAt,
 		});
+		this.trackCredentials(createdOrder.id, order);
 		this.orders.set(createdOrder.id, createdOrder);
 		this.createdAtByOrderId.set(
 			createdOrder.id,
@@ -173,7 +185,25 @@ export class InMemoryOrderRepository
 		);
 	}
 
+	findCredentialsForBooster(
+		orderId: string,
+		boosterId: string,
+	): Promise<RevealableOrderCredentials | null> {
+		const order = this.orders.get(orderId);
+		if (
+			!order ||
+			order.boosterId !== boosterId ||
+			order.status !== OrderStatus.IN_PROGRESS
+		)
+			return Promise.resolve(null);
+
+		return Promise.resolve({
+			credentials: this.credentialsByOrderId.get(orderId) ?? null,
+		});
+	}
+
 	save(order: Order): Promise<void> {
+		this.trackCredentials(order.id, order);
 		this.orders.set(order.id, persistedOrderCopy(order));
 		if (!this.createdAtByOrderId.has(order.id)) {
 			this.createdAtByOrderId.set(
@@ -190,6 +220,12 @@ export class InMemoryOrderRepository
 
 	async saveBoosterRejection(order: Order): Promise<void> {
 		await this.save(order);
+	}
+
+	private trackCredentials(orderId: string, order: Order): void {
+		if (order.pendingCredentials)
+			this.credentialsByOrderId.set(orderId, order.pendingCredentials);
+		if (!order.hasCredentials) this.credentialsByOrderId.delete(orderId);
 	}
 
 	private mapDashboardSnapshot(order: Order): ClientOrderDashboardSnapshot {

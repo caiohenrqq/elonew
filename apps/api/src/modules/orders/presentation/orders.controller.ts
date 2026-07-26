@@ -1,3 +1,5 @@
+import { RouteThrottle } from '@app/common/http/route-throttle.decorator';
+import { RouteThrottlerGuard } from '@app/common/http/route-throttler.guard';
 import { ZodValidationPipe } from '@app/common/http/zod-validation.pipe';
 import type { AuthenticatedUser } from '@modules/auth/application/authenticated-user';
 import { CurrentUser } from '@modules/auth/presentation/decorators/current-user.decorator';
@@ -15,6 +17,7 @@ import { ListBoosterWorkUseCase } from '@modules/orders/application/use-cases/li
 import { ListClientOrdersUseCase } from '@modules/orders/application/use-cases/list-client-orders/list-client-orders.use-case';
 import { PreviewOrderQuoteUseCase } from '@modules/orders/application/use-cases/preview-order-quote/preview-order-quote.use-case';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
+import { RevealOrderCredentialsUseCase } from '@modules/orders/application/use-cases/reveal-order-credentials/reveal-order-credentials.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import {
 	Body,
@@ -24,6 +27,7 @@ import {
 	Param,
 	Post,
 	Query,
+	UseGuards,
 } from '@nestjs/common';
 import { Role } from '@packages/auth/roles/role';
 import {
@@ -78,6 +82,7 @@ export class OrdersController {
 		private readonly cancelOrderUseCase: CancelOrderUseCase,
 		private readonly completeOrderUseCase: CompleteOrderUseCase,
 		private readonly saveOrderCredentialsUseCase: SaveOrderCredentialsUseCase,
+		private readonly revealOrderCredentialsUseCase: RevealOrderCredentialsUseCase,
 		private readonly cleanupExpiredOrderQuotesUseCase: CleanupExpiredOrderQuotesUseCase,
 	) {}
 
@@ -275,6 +280,27 @@ export class OrdersController {
 			boosterId: currentUser.id,
 		});
 		return { success: true };
+	}
+
+	// The global mutation throttler ignores reads, and a reveal is the highest
+	// value target in the API, so this route carries its own stricter limit.
+	@Get(':orderId/credentials/reveal')
+	@Roles(Role.BOOSTER)
+	@UseGuards(RouteThrottlerGuard)
+	@RouteThrottle({
+		name: 'orders-credentials-reveal',
+		limit: 'ordersCredentialsRevealThrottleLimit',
+		ttlSeconds: 'ordersCredentialsRevealThrottleTtlSeconds',
+	})
+	async revealCredentials(
+		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
+		orderId: OrderIdParamSchemaInput,
+		@CurrentUser() currentUser: AuthenticatedUser,
+	): Promise<Awaited<ReturnType<RevealOrderCredentialsUseCase['execute']>>> {
+		return await this.revealOrderCredentialsUseCase.execute({
+			orderId,
+			boosterId: currentUser.id,
+		});
 	}
 
 	@Post(':orderId/credentials')

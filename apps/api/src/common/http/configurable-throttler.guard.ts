@@ -51,17 +51,25 @@ export abstract class ConfigurableThrottlerGuard extends ThrottlerGuard {
 		context: ExecutionContext,
 	): RouteThrottleConfig | null;
 
-	// Behind the Cloudflare tunnel every request reaches the container from the
-	// tunnel's address, so req.ip would put all clients in one throttle bucket.
-	// CF-Connecting-IP is set by Cloudflare and cannot be spoofed from outside
-	// because the tunnel is the only public ingress.
+	// Authenticated requests are tracked per user, not per address: the web app
+	// calls the API from its own server and forwards no client address, so every
+	// signed-in caller would otherwise share a single bucket and one of them could
+	// throttle everyone else out.
+	//
+	// Unauthenticated routes (login, sign-up) fall back to the address. Behind the
+	// Cloudflare tunnel req.ip is the tunnel's, so CF-Connecting-IP is preferred;
+	// it cannot be spoofed from outside because the tunnel is the only public
+	// ingress.
 	protected getTracker(req: Record<string, unknown>): Promise<string> {
+		const user = req.user as { id?: string } | undefined;
+		if (user?.id) return Promise.resolve(`user:${user.id}`);
+
 		const headers = req.headers as
 			| Record<string, string | string[] | undefined>
 			| undefined;
 		const header = headers?.['cf-connecting-ip'];
 		const clientIp = Array.isArray(header) ? header.at(0) : header;
 
-		return Promise.resolve(clientIp ?? (req.ip as string));
+		return Promise.resolve(`ip:${clientIp ?? (req.ip as string)}`);
 	}
 }

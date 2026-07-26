@@ -151,6 +151,16 @@ export const envSchema = z
 			.int()
 			.positive()
 			.default(60),
+		ORDERS_CREDENTIALS_REVEAL_THROTTLE_LIMIT: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(10),
+		ORDERS_CREDENTIALS_REVEAL_THROTTLE_TTL_SECONDS: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(60),
 		WALLET_LOCK_PERIOD_HOURS: z.coerce.number().int().positive().default(72),
 		WALLET_FUNDS_RELEASE_QUEUE_NAME: z
 			.string()
