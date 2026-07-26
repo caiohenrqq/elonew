@@ -62,6 +62,10 @@ function registerHttpSecurity(app: ApiHttpApp): void {
 		reply.header('X-Content-Type-Options', 'nosniff');
 		reply.header('X-Frame-Options', 'DENY');
 		reply.header('Referrer-Policy', 'no-referrer');
+		// The API serves no cacheable representation, and one of its responses is
+		// the order credentials reveal: without a directive a GET 200 is
+		// heuristically cacheable by any intermediary that sees it.
+		reply.header('Cache-Control', 'no-store');
 
 		done(null, payload);
 	});
