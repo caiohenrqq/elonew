@@ -1,9 +1,16 @@
 'use client';
 
 import { Clock3, FileText, Send } from 'lucide-react';
-import { useActionState } from 'react';
+import { useActionState, useId, useState } from 'react';
 import { DashboardSubmitButton } from '@/shared/dashboard/dashboard-submit-button';
 import { formatOrderRoute, formatServiceType } from '@/shared/format/orders';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/shared/ui/components/select';
 import { fieldSurface } from '@/shared/ui/styles/classes';
 import { cn } from '@/shared/ui/utils/cn';
 import type { CreateSupportTicketActionState } from '../../actions/order-actions';
@@ -18,42 +25,58 @@ type SupportTicketPanelProps = {
 	orders: ClientDashboardOrder[];
 };
 
+const GENERAL_TICKET = '__general__';
+
 export const SupportTicketPanel = ({
 	action,
 	initialOrderId,
 	orders,
 }: SupportTicketPanelProps) => {
 	const [state, formAction] = useActionState(action, {});
-	const selectedOrderId = orders.some((order) => order.id === initialOrderId)
-		? initialOrderId
-		: '';
+	const orderFieldId = useId();
+	const [orderId, setOrderId] = useState(
+		() => orders.find((order) => order.id === initialOrderId)?.id ?? '',
+	);
 
 	return (
 		<section className="dashboard-animate grid w-full overflow-hidden rounded-sm border border-white/10 bg-[#0b0b0d] lg:grid-cols-[minmax(0,1fr)_340px]">
 			<div className="p-5 sm:p-7">
 				<form action={formAction} className="grid gap-5">
-					<label className="grid gap-2">
-						<span className="text-[10px] font-black uppercase tracking-widest text-white/45">
-							Pedido relacionado
-						</span>
-						<select
-							name="orderId"
-							className={cn(fieldSurface, 'h-12 bg-white/[0.03] text-sm')}
-							defaultValue={selectedOrderId}
+					<div className="grid gap-2">
+						<label
+							htmlFor={orderFieldId}
+							className="text-[10px] font-black uppercase tracking-widest text-white/45"
 						>
-							<option value="">Ticket geral</option>
-							{orders.map((order) => (
-								<option key={order.id} value={order.id}>
-									{formatOrderOption(order)}
-								</option>
-							))}
-						</select>
+							Pedido relacionado
+						</label>
+						<input type="hidden" name="orderId" value={orderId} />
+						<Select
+							value={orderId || GENERAL_TICKET}
+							onValueChange={(value) =>
+								setOrderId(value === GENERAL_TICKET ? '' : value)
+							}
+						>
+							<SelectTrigger
+								id={orderFieldId}
+								className="h-12 bg-white/[0.03] text-sm"
+							>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value={GENERAL_TICKET}>Ticket geral</SelectItem>
+								{orders.map((order) => (
+									<SelectItem key={order.id} value={order.id}>
+										{formatOrderOption(order)}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 						<p className="text-[10px] leading-relaxed text-white/35">
 							{orders.length > 0
 								? 'Vincule um pedido quando o assunto for sobre um serviço específico.'
 								: 'Você ainda não tem pedidos para vincular.'}
 						</p>
-					</label>
+					</div>
 
 					<div className="grid items-start gap-5 lg:grid-cols-[0.8fr_1.2fr]">
 						<label className="grid gap-2">

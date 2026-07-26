@@ -1,8 +1,15 @@
 'use client';
 
 import { UserPlus } from 'lucide-react';
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useId, useRef, useState } from 'react';
 import { getButtonClassName } from '@/shared/ui/components/button';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/shared/ui/components/select';
 import { fieldSurface } from '@/shared/ui/styles/classes';
 import { cn } from '@/shared/ui/utils/cn';
 import {
@@ -11,6 +18,8 @@ import {
 } from '../../actions/admin-actions';
 
 import { roleOptions } from '../users/admin-user-metadata';
+
+const DEFAULT_ROLE = 'CLIENT';
 
 export const AdminCreateUserForm = ({
 	onSuccess,
@@ -22,10 +31,13 @@ export const AdminCreateUserForm = ({
 		FormData
 	>(createAdminUserAction, {});
 	const formRef = useRef<HTMLFormElement>(null);
+	const roleId = useId();
+	const [role, setRole] = useState(DEFAULT_ROLE);
 
 	useEffect(() => {
 		if (state.success) {
 			formRef.current?.reset();
+			setRole(DEFAULT_ROLE);
 			onSuccess?.();
 		}
 	}, [state.success, onSuccess]);
@@ -59,22 +71,26 @@ export const AdminCreateUserForm = ({
 					required
 				/>
 			</label>
-			<label className="grid gap-2">
-				<span className="text-[10px] font-black uppercase tracking-widest text-white/35">
-					Perfil
-				</span>
-				<select
-					name="role"
-					className={cn(fieldSurface, 'bg-black/20')}
-					defaultValue="CLIENT"
+			<div className="grid gap-2">
+				<label
+					htmlFor={roleId}
+					className="text-[10px] font-black uppercase tracking-widest text-white/35"
 				>
-					{roleOptions.map((option) => (
-						<option key={option.value} value={option.value}>
-							{option.label}
-						</option>
-					))}
-				</select>
-			</label>
+					Perfil
+				</label>
+				<Select name="role" value={role} onValueChange={setRole}>
+					<SelectTrigger id={roleId} className="bg-black/20">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent className="z-[110]">
+						{roleOptions.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{option.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
 			<div className="grid content-end gap-2 md:col-span-2">
 				<button
 					type="submit"
