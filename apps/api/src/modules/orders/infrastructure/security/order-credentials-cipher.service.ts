@@ -56,22 +56,15 @@ export class OrderCredentialsCipherService {
 		field: OrderCredentialField,
 		value: string,
 	): string {
-		if (!value.startsWith(`${ENCRYPTED_VALUE_VERSION}:`))
-			throw new Error('Invalid encrypted order credentials payload.');
-
-		return this.decryptSealed(
-			value,
-			this.additionalAuthenticatedData(orderId, field),
-		);
-	}
-
-	private decryptSealed(
-		value: string,
-		additionalAuthenticatedData: Buffer,
-	): string {
-		const [, initializationVector, authenticationTag, ciphertext, ...rest] =
-			value.split(':');
+		const [
+			version,
+			initializationVector,
+			authenticationTag,
+			ciphertext,
+			...rest
+		] = value.split(':');
 		if (
+			version !== ENCRYPTED_VALUE_VERSION ||
 			!initializationVector ||
 			!authenticationTag ||
 			ciphertext === undefined ||
@@ -84,7 +77,7 @@ export class OrderCredentialsCipherService {
 			this.key,
 			Buffer.from(initializationVector, 'base64url'),
 		);
-		decipher.setAAD(additionalAuthenticatedData);
+		decipher.setAAD(this.additionalAuthenticatedData(orderId, field));
 		decipher.setAuthTag(Buffer.from(authenticationTag, 'base64url'));
 
 		return Buffer.concat([

@@ -141,22 +141,22 @@ export const envSchema = z
 			.int()
 			.positive()
 			.default(60),
-		ORDERS_CREDENTIALS_REVEAL_THROTTLE_LIMIT: z.coerce
-			.number()
-			.int()
-			.positive()
-			.default(10),
-		ORDERS_CREDENTIALS_REVEAL_THROTTLE_TTL_SECONDS: z.coerce
-			.number()
-			.int()
-			.positive()
-			.default(60),
 		USERS_CONFIRM_EMAIL_THROTTLE_LIMIT: z.coerce
 			.number()
 			.int()
 			.positive()
 			.default(5),
 		USERS_CONFIRM_EMAIL_THROTTLE_TTL_SECONDS: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(60),
+		ORDERS_CREDENTIALS_REVEAL_THROTTLE_LIMIT: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(10),
+		ORDERS_CREDENTIALS_REVEAL_THROTTLE_TTL_SECONDS: z.coerce
 			.number()
 			.int()
 			.positive()

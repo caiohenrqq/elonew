@@ -3,7 +3,10 @@ import type {
 	ClientOrderDetailsSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
-import type { OrderCredentialsReaderPort } from '@modules/orders/application/ports/order-credentials-reader.port';
+import type {
+	OrderCredentialsReaderPort,
+	RevealableOrderCredentials,
+} from '@modules/orders/application/ports/order-credentials-reader.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import {
 	Order,
@@ -56,6 +59,7 @@ export class InMemoryOrderRepository
 			extras: order.extras,
 			completedAt: order.completedAt,
 		});
+		this.trackCredentials(createdOrder.id, order);
 		this.orders.set(createdOrder.id, createdOrder);
 		this.createdAtByOrderId.set(
 			createdOrder.id,
@@ -184,7 +188,7 @@ export class InMemoryOrderRepository
 	findCredentialsForBooster(
 		orderId: string,
 		boosterId: string,
-	): Promise<{ credentials: OrderCredentials | null } | null> {
+	): Promise<RevealableOrderCredentials | null> {
 		const order = this.orders.get(orderId);
 		if (
 			!order ||
@@ -199,9 +203,7 @@ export class InMemoryOrderRepository
 	}
 
 	save(order: Order): Promise<void> {
-		if (order.pendingCredentials)
-			this.credentialsByOrderId.set(order.id, order.pendingCredentials);
-		if (!order.hasCredentials) this.credentialsByOrderId.delete(order.id);
+		this.trackCredentials(order.id, order);
 		this.orders.set(order.id, persistedOrderCopy(order));
 		if (!this.createdAtByOrderId.has(order.id)) {
 			this.createdAtByOrderId.set(
@@ -218,6 +220,12 @@ export class InMemoryOrderRepository
 
 	async saveBoosterRejection(order: Order): Promise<void> {
 		await this.save(order);
+	}
+
+	private trackCredentials(orderId: string, order: Order): void {
+		if (order.pendingCredentials)
+			this.credentialsByOrderId.set(orderId, order.pendingCredentials);
+		if (!order.hasCredentials) this.credentialsByOrderId.delete(orderId);
 	}
 
 	private mapDashboardSnapshot(order: Order): ClientOrderDashboardSnapshot {

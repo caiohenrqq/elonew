@@ -179,6 +179,18 @@ export class AppSettingsService {
 		});
 	}
 
+	get usersConfirmEmailThrottleLimit() {
+		return this.config.getOrThrow('USERS_CONFIRM_EMAIL_THROTTLE_LIMIT', {
+			infer: true,
+		});
+	}
+
+	get usersConfirmEmailThrottleTtlSeconds() {
+		return this.config.getOrThrow('USERS_CONFIRM_EMAIL_THROTTLE_TTL_SECONDS', {
+			infer: true,
+		});
+	}
+
 	get ordersCredentialsRevealThrottleLimit() {
 		return this.config.getOrThrow('ORDERS_CREDENTIALS_REVEAL_THROTTLE_LIMIT', {
 			infer: true,
@@ -190,18 +202,6 @@ export class AppSettingsService {
 			'ORDERS_CREDENTIALS_REVEAL_THROTTLE_TTL_SECONDS',
 			{ infer: true },
 		);
-	}
-
-	get usersConfirmEmailThrottleLimit() {
-		return this.config.getOrThrow('USERS_CONFIRM_EMAIL_THROTTLE_LIMIT', {
-			infer: true,
-		});
-	}
-
-	get usersConfirmEmailThrottleTtlSeconds() {
-		return this.config.getOrThrow('USERS_CONFIRM_EMAIL_THROTTLE_TTL_SECONDS', {
-			infer: true,
-		});
 	}
 
 	get walletLockPeriodInHours() {

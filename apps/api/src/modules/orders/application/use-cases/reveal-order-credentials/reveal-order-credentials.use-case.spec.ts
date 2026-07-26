@@ -102,15 +102,17 @@ describe('RevealOrderCredentialsUseCase', () => {
 
 	it('hides orders that are not revealable by this booster', async () => {
 		const { logger, emitted } = buildLogger();
+		const recorder = new StubRevealRecorder();
 		const useCase = new RevealOrderCredentialsUseCase(
 			new StubCredentialsReader(null),
-			new StubRevealRecorder(),
+			recorder,
 			logger,
 		);
 
 		await expect(
 			useCase.execute({ orderId: 'order-1', boosterId: 'other-booster' }),
 		).rejects.toThrow(OrderNotFoundError);
+		expect(recorder.recorded).toEqual([]);
 		expect(emitted).toEqual([
 			expect.objectContaining({
 				outcome: 'denied',

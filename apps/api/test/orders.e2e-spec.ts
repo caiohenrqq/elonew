@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto';
+import { AppSettingsService } from '@app/common/settings/app-settings.service';
 import { CHAT_REPOSITORY_KEY } from '@modules/chat/application/ports/chat-repository.port';
 import { CHAT_THREAD_WRITER_KEY } from '@modules/chat/application/ports/chat-thread-writer.port';
 import { CLIENT_ORDER_READER_KEY } from '@modules/orders/application/ports/client-order-reader.port';
@@ -1173,22 +1174,39 @@ describe('Orders (e2e)', () => {
 		expect(revealRecorder.recorded).toEqual([]);
 	});
 
-	it('throttles credential reveals per route', async () => {
+	// A throttled booster must not throttle the others: the web app calls the API
+	// from its own server, so an address-keyed bucket would be shared by everyone.
+	it('throttles credential reveals per booster', async () => {
 		const clientToken = signToken({ sub: 'client-reveal-8', role: 'CLIENT' });
 		const boosterToken = signToken({
 			sub: 'booster-reveal-8',
 			role: 'BOOSTER',
 		});
+		const otherClientToken = signToken({
+			sub: 'client-reveal-9',
+			role: 'CLIENT',
+		});
+		const otherBoosterToken = signToken({
+			sub: 'booster-reveal-9',
+			role: 'BOOSTER',
+		});
+		const credentials = {
+			login: 'client@example.com',
+			summonerName: 'Invocador#BR8',
+			password: 'senha-super-secreta',
+		};
 		const createdOrder = await createInProgressOrderWithCredentials(
 			clientToken,
 			boosterToken,
-			{
-				login: 'client@example.com',
-				summonerName: 'Invocador#BR8',
-				password: 'senha-super-secreta',
-			},
+			credentials,
 		);
-		const revealLimit = 10;
+		const otherOrder = await createInProgressOrderWithCredentials(
+			otherClientToken,
+			otherBoosterToken,
+			credentials,
+		);
+		const revealLimit =
+			app.get(AppSettingsService).ordersCredentialsRevealThrottleLimit;
 
 		for (let attempt = 0; attempt < revealLimit; attempt++)
 			await requestHttp(app)
@@ -1203,7 +1221,13 @@ describe('Orders (e2e)', () => {
 			.expect(429)
 			.execute();
 
-		expect(revealRecorder.recorded).toHaveLength(revealLimit);
+		await requestHttp(app)
+			.get(`/orders/${otherOrder.id}/credentials/reveal`)
+			.set('Authorization', `Bearer ${otherBoosterToken}`)
+			.expect(200)
+			.execute();
+
+		expect(revealRecorder.recorded).toHaveLength(revealLimit + 1);
 	});
 
 	it('returns 404 when the client has not submitted credentials yet', async () => {
