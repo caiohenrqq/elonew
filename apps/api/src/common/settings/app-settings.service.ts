@@ -179,6 +179,19 @@ export class AppSettingsService {
 		});
 	}
 
+	get ordersCredentialsRevealThrottleLimit() {
+		return this.config.getOrThrow('ORDERS_CREDENTIALS_REVEAL_THROTTLE_LIMIT', {
+			infer: true,
+		});
+	}
+
+	get ordersCredentialsRevealThrottleTtlSeconds() {
+		return this.config.getOrThrow(
+			'ORDERS_CREDENTIALS_REVEAL_THROTTLE_TTL_SECONDS',
+			{ infer: true },
+		);
+	}
+
 	get usersConfirmEmailThrottleLimit() {
 		return this.config.getOrThrow('USERS_CONFIRM_EMAIL_THROTTLE_LIMIT', {
 			infer: true,

@@ -8,9 +8,11 @@ import type {
 	ClientOrderDetailsSnapshot,
 	ClientOrderReaderPort,
 } from '@modules/orders/application/ports/client-order-reader.port';
+import type { OrderCredentialsReaderPort } from '@modules/orders/application/ports/order-credentials-reader.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import {
 	Order,
+	type OrderCredentials,
 	type OrderRequestDetails,
 } from '@modules/orders/domain/order.entity';
 import { OrderStatus } from '@modules/orders/domain/order-status';
@@ -95,6 +97,10 @@ type OrderDelegate = {
 		where: { clientId: string };
 		select: { id: true };
 	}): Promise<{ id: string } | null>;
+	findFirst(args: {
+		where: { id: string; boosterId: string; status: string };
+		include: { credentials: true };
+	}): Promise<Pick<OrderRecord, 'id' | 'credentials'> | null>;
 	findMany(args: {
 		where:
 			| { clientId: string }
@@ -285,7 +291,11 @@ type OrderRejectionPrismaClient = OrderPrismaClient & {
 
 @Injectable()
 export class PrismaOrderRepository
-	implements OrderRepositoryPort, ClientOrderReaderPort, BoosterOrderReaderPort
+	implements
+		OrderRepositoryPort,
+		OrderCredentialsReaderPort,
+		ClientOrderReaderPort,
+		BoosterOrderReaderPort
 {
 	constructor(
 		private readonly prisma: PrismaService,
@@ -331,6 +341,41 @@ export class PrismaOrderRepository
 		if (!record) return null;
 
 		return this.mapOrderFromRecord(record);
+	}
+
+	// The only path that decrypts stored credentials. Scoped to the assigned
+	// booster on an in-progress order in the query itself, so an unauthorized
+	// caller cannot tell a foreign order from a missing one.
+	async findCredentialsForBooster(
+		orderId: string,
+		boosterId: string,
+	): Promise<{ credentials: OrderCredentials | null } | null> {
+		const record = await this.getDelegate().findFirst({
+			where: { id: orderId, boosterId, status: OrderStatus.IN_PROGRESS },
+			include: { credentials: true },
+		});
+		if (!record) return null;
+		if (!record.credentials) return { credentials: null };
+
+		return {
+			credentials: {
+				login: this.orderCredentialsCipher.decryptField(
+					record.id,
+					'login',
+					record.credentials.login,
+				),
+				summonerName: this.orderCredentialsCipher.decryptField(
+					record.id,
+					'summonerName',
+					record.credentials.summonerName,
+				),
+				password: this.orderCredentialsCipher.decryptField(
+					record.id,
+					'password',
+					record.credentials.password,
+				),
+			},
+		};
 	}
 
 	async existsForClient(clientId: string): Promise<boolean> {

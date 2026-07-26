@@ -33,6 +33,12 @@ export class OrderCredentialsStorageNotAllowedError extends BadRequestDomainErro
 	}
 }
 
+export class OrderCredentialsNotFoundError extends NotFoundDomainError {
+	constructor() {
+		super('Order credentials have not been submitted yet.');
+	}
+}
+
 export class OrderCredentialsPasswordMismatchError extends BadRequestDomainError {
 	constructor() {
 		super('Order credentials password confirmation does not match.');

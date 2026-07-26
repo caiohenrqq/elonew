@@ -4,6 +4,7 @@ import { PrismaModule } from '@app/common/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { ChatModule } from '@modules/chat/chat.module';
 import { CouponLifecycleLogger } from '@modules/orders/application/logging/coupon-lifecycle.logger';
+import { OrderCredentialsAccessLogger } from '@modules/orders/application/logging/order-credentials-access.logger';
 import { OrderQuoteCleanupLifecycleLogger } from '@modules/orders/application/logging/order-quote-cleanup-lifecycle.logger';
 import { BOOSTER_ORDER_READER_KEY } from '@modules/orders/application/ports/booster-order-reader.port';
 import { BOOSTER_USER_READER_KEY } from '@modules/orders/application/ports/booster-user-reader.port';
@@ -13,6 +14,8 @@ import { COUPON_EVENT_RECORDER_KEY } from '@modules/orders/application/ports/cou
 import { COUPON_LOOKUP_PORT_KEY } from '@modules/orders/application/ports/coupon-lookup.port';
 import { ORDER_CHECKOUT_PORT_KEY } from '@modules/orders/application/ports/order-checkout.port';
 import { ORDER_CLIENT_READER_KEY } from '@modules/orders/application/ports/order-client-reader.port';
+import { ORDER_CREDENTIAL_REVEAL_RECORDER_KEY } from '@modules/orders/application/ports/order-credential-reveal-recorder.port';
+import { ORDER_CREDENTIALS_READER_KEY } from '@modules/orders/application/ports/order-credentials-reader.port';
 import { ORDER_EVENT_PUBLISHER_KEY } from '@modules/orders/application/ports/order-event-publisher.port';
 import { ORDER_PRICING_VERSION_REPOSITORY_KEY } from '@modules/orders/application/ports/order-pricing-version-repository.port';
 import { ORDER_QUOTE_REPOSITORY_KEY } from '@modules/orders/application/ports/order-quote-repository.port';
@@ -46,6 +49,7 @@ import { ListOrderPricingVersionsUseCase } from '@modules/orders/application/use
 import { MarkOrderAsPaidUseCase } from '@modules/orders/application/use-cases/mark-order-as-paid/mark-order-as-paid.use-case';
 import { PreviewOrderQuoteUseCase } from '@modules/orders/application/use-cases/preview-order-quote/preview-order-quote.use-case';
 import { RejectOrderUseCase } from '@modules/orders/application/use-cases/reject-order/reject-order.use-case';
+import { RevealOrderCredentialsUseCase } from '@modules/orders/application/use-cases/reveal-order-credentials/reveal-order-credentials.use-case';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import { UpdateOrderPricingVersionUseCase } from '@modules/orders/application/use-cases/update-order-pricing-version/update-order-pricing-version.use-case';
 import { InMemoryOrderEventBus } from '@modules/orders/infrastructure/events/in-memory-order-event-bus';
@@ -57,6 +61,7 @@ import { PrismaCouponLookupRepository } from '@modules/orders/infrastructure/rep
 import { PrismaOrderRepository } from '@modules/orders/infrastructure/repositories/prisma-order.repository';
 import { PrismaOrderCheckoutRepository } from '@modules/orders/infrastructure/repositories/prisma-order-checkout.repository';
 import { PrismaOrderClientReader } from '@modules/orders/infrastructure/repositories/prisma-order-client-reader.repository';
+import { PrismaOrderCredentialRevealRecorder } from '@modules/orders/infrastructure/repositories/prisma-order-credential-reveal-recorder.repository';
 import { PrismaOrderPricingVersionRepository } from '@modules/orders/infrastructure/repositories/prisma-order-pricing-version.repository';
 import { PrismaOrderQuoteRepository } from '@modules/orders/infrastructure/repositories/prisma-order-quote.repository';
 import { OrderCredentialsCipherService } from '@modules/orders/infrastructure/security/order-credentials-cipher.service';
@@ -92,8 +97,10 @@ import { Module } from '@nestjs/common';
 		PrismaOrderPricingVersionRepository,
 		PrismaOrderRepository,
 		PrismaOrderQuoteRepository,
+		PrismaOrderCredentialRevealRecorder,
 		OrderQuoteCleanupLifecycleLogger,
 		CouponLifecycleLogger,
+		OrderCredentialsAccessLogger,
 		InMemoryOrderEventBus,
 		OrderCredentialsCipherService,
 		{
@@ -139,6 +146,14 @@ import { Module } from '@nestjs/common';
 			useExisting: PrismaOrderRepository,
 		},
 		{
+			provide: ORDER_CREDENTIALS_READER_KEY,
+			useExisting: PrismaOrderRepository,
+		},
+		{
+			provide: ORDER_CREDENTIAL_REVEAL_RECORDER_KEY,
+			useExisting: PrismaOrderCredentialRevealRecorder,
+		},
+		{
 			provide: ORDER_CHECKOUT_PORT_KEY,
 			useExisting: PrismaOrderCheckoutRepository,
 		},
@@ -180,6 +195,7 @@ import { Module } from '@nestjs/common';
 		ClearOrderCredentialsUseCase,
 		CompleteOrderUseCase,
 		SaveOrderCredentialsUseCase,
+		RevealOrderCredentialsUseCase,
 	],
 	exports: [
 		ORDER_REPOSITORY_KEY,
