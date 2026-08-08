@@ -16,17 +16,29 @@ const publicWebEnvSchema = z
 			.optional(),
 	})
 	.superRefine((env, context) => {
-		if (env.NODE_ENV !== 'production' || env.NEXT_PUBLIC_API_URL) return;
+		if (env.NODE_ENV !== 'production') return;
+		if (!env.NEXT_PUBLIC_API_URL) {
+			context.addIssue({
+				code: 'custom',
+				path: ['NEXT_PUBLIC_API_URL'],
+				message: 'NEXT_PUBLIC_API_URL is required in production.',
+			});
+			return;
+		}
+		if (new URL(env.NEXT_PUBLIC_API_URL).hostname !== 'localhost') return;
 
 		context.addIssue({
 			code: 'custom',
 			path: ['NEXT_PUBLIC_API_URL'],
-			message: 'NEXT_PUBLIC_API_URL is required in production.',
+			message: 'NEXT_PUBLIC_API_URL must not use localhost in production.',
 		});
 	});
 
 const validatePublicWebEnv = () => {
-	const result = publicWebEnvSchema.safeParse(process.env);
+	const result = publicWebEnvSchema.safeParse({
+		NODE_ENV: process.env.NODE_ENV,
+		NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+	});
 	if (result.success) return result.data;
 
 	const errors = result.error.issues
