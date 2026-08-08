@@ -8,6 +8,18 @@ describe('public web env', () => {
 
 	afterEach(() => {
 		process.env = { ...originalEnv };
+		jest.resetModules();
+	});
+
+	it('fails the production build configuration when the public API URL is missing', () => {
+		setNodeEnv('production');
+		delete process.env.NEXT_PUBLIC_API_URL;
+
+		expect(() =>
+			jest.isolateModules(() => {
+				require('../../../next.config');
+			}),
+		).toThrow('NEXT_PUBLIC_API_URL is required in production.');
 	});
 
 	it('keeps the local public API default outside production', () => {
@@ -22,6 +34,15 @@ describe('public web env', () => {
 		process.env.NEXT_PUBLIC_API_URL = ' https://api.elonew.com/ ';
 
 		expect(getPublicApiBaseUrl()).toBe('https://api.elonew.com');
+	});
+
+	it('rejects a localhost public API URL in production', () => {
+		setNodeEnv('production');
+		process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000';
+
+		expect(() => getPublicApiBaseUrl()).toThrow(
+			'NEXT_PUBLIC_API_URL must not use localhost in production.',
+		);
 	});
 
 	it('fails fast when production public API URL is missing', () => {

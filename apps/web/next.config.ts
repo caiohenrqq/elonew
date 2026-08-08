@@ -1,5 +1,8 @@
 import { resolve } from 'node:path';
 import type { NextConfig } from 'next';
+import { getPublicApiBaseUrl } from './src/shared/env/public-env';
+
+getPublicApiBaseUrl();
 
 const nextConfig: NextConfig = {
 	experimental: {
