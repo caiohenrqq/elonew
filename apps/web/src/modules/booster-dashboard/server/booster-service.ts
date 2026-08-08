@@ -140,7 +140,7 @@ export const requestBoosterWithdrawal = async (
 		method: 'POST',
 		body: JSON.stringify({
 			amount: body.amount,
-			requestedAt: new Date().toISOString(),
+			payoutPixKey: body.payoutPixKey,
 		}),
 	});
 };

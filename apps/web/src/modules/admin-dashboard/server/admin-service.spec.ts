@@ -62,6 +62,18 @@ describe('admin service', () => {
 					},
 				] as T;
 			}
+			if (path === '/admin/withdrawals?limit=25') {
+				return [
+					{
+						id: 'withdrawal-1',
+						boosterId: 'booster-1',
+						boosterUsername: 'Booster One',
+						amount: 2500,
+						payoutPixKey: 'booster@example.com',
+						createdAt: '2026-04-10T10:06:00.000Z',
+					},
+				] as T;
+			}
 			throw new Error(`Unexpected path: ${path}`);
 		});
 
@@ -77,6 +89,7 @@ describe('admin service', () => {
 			users: [expect.objectContaining({ id: 'user-1' })],
 			orders: [expect.objectContaining({ id: 'order-1' })],
 			tickets: [expect.objectContaining({ id: 'ticket-1' })],
+			withdrawals: [expect.objectContaining({ id: 'withdrawal-1' })],
 		});
 	});
 

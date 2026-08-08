@@ -186,11 +186,16 @@ export const requestBoosterWithdrawalAction = async (
 	const amount = Number.isFinite(amountInReais)
 		? Money.fromDecimal(amountInReais).cents
 		: Number.NaN;
+	const payoutPixKey = formData.get('payoutPixKey');
 
 	try {
 		await assertSameOriginRequest();
 		const session = await getBoosterSessionOrRedirect();
-		await requestBoosterWithdrawal(session.userId, { amount }, api.request);
+		await requestBoosterWithdrawal(
+			session.userId,
+			{ amount, payoutPixKey },
+			api.request,
+		);
 		revalidatePath('/booster');
 		return { success: true };
 	} catch (error) {

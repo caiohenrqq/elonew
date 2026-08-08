@@ -73,6 +73,7 @@ export const boosterWalletTransactionsSchema = z.object({
 
 export const withdrawalRequestSchema = z.object({
 	amount: z.number().positive(),
+	payoutPixKey: z.string().trim().min(1).max(255),
 });
 
 export type BoosterQueueOutput = z.infer<typeof boosterQueueSchema>;

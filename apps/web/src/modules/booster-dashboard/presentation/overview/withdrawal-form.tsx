@@ -36,6 +36,19 @@ export const WithdrawalForm = ({ maxAmount }: WithdrawalFormProps) => {
 					disabled={maxAmount <= 0 || isPending}
 				/>
 			</div>
+			<div className="space-y-2">
+				<Label htmlFor="withdrawal-pix-key">Chave PIX para recebimento</Label>
+				<Input
+					id="withdrawal-pix-key"
+					name="payoutPixKey"
+					type="text"
+					maxLength={255}
+					autoComplete="off"
+					required
+					placeholder="CPF, e-mail, telefone ou chave aleatória"
+					disabled={maxAmount <= 0 || isPending}
+				/>
+			</div>
 			<Button
 				type="submit"
 				variant="secondary"
