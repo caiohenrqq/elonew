@@ -47,6 +47,7 @@ describe('OrderChatPanel live updates', () => {
 		refresh.mockClear();
 		socket.emitted.length = 0;
 		socket.listeners.clear();
+		socket.connected = true;
 	});
 
 	it('shows a message broadcast by the order chat socket without a refresh', () => {
@@ -99,6 +100,40 @@ describe('OrderChatPanel live updates', () => {
 			'chat:send',
 			{ orderId: 'order-1', content: 'Olá booster' },
 		]);
+	});
+
+	it('re-enables sending when the socket disconnects before confirmation', async () => {
+		render(
+			<OrderChatPanel
+				currentUserId="client-1"
+				initialMessages={[]}
+				orderId="order-1"
+				orderStatus="in_progress"
+			/>,
+		);
+
+		await userEvent.type(
+			screen.getByRole('textbox', { name: 'Mensagem do chat' }),
+			'Mensagem interrompida',
+		);
+		await userEvent.click(
+			screen.getByRole('button', { name: 'Enviar mensagem' }),
+		);
+		expect(
+			screen.getByRole('button', { name: 'Enviar mensagem' }),
+		).toBeDisabled();
+
+		act(() => {
+			socket.connected = false;
+			socket.trigger('disconnect');
+		});
+
+		expect(
+			screen.getByRole('textbox', { name: 'Mensagem do chat' }),
+		).toBeEnabled();
+		expect(
+			screen.getByText('A conexão caiu antes da confirmação da mensagem.'),
+		).toBeInTheDocument();
 	});
 
 	it('refreshes missed history after reconnecting', () => {

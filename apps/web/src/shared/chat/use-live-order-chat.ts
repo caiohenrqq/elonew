@@ -26,6 +26,7 @@ export const useLiveOrderChat = ({
 	const [messages, setMessages] = useState(initialMessages);
 	const [liveError, setLiveError] = useState<string | null>(null);
 	const [isSending, setIsSending] = useState(false);
+	const isSendingRef = useRef(false);
 	const socketRef = useRef<Socket | null>(null);
 	const hasConnected = useRef(false);
 	const router = useRouter();
@@ -64,22 +65,32 @@ export const useLiveOrderChat = ({
 			const parsed = chatMessageSchema.safeParse(payload);
 			if (!parsed.success || parsed.data.orderId !== orderId) return;
 			appendMessage(parsed.data);
+			isSendingRef.current = false;
 			setIsSending(false);
 		};
 		const handleError = () => {
+			isSendingRef.current = false;
 			setIsSending(false);
 			setLiveError('Não foi possível atualizar o chat em tempo real.');
+		};
+		const handleDisconnect = () => {
+			if (!isSendingRef.current) return;
+			isSendingRef.current = false;
+			setIsSending(false);
+			setLiveError('A conexão caiu antes da confirmação da mensagem.');
 		};
 
 		socket.on('connect', join);
 		socket.on('chat:message.created', receive);
 		socket.on('chat:error', handleError);
+		socket.on('disconnect', handleDisconnect);
 
 		return () => {
 			socketRef.current = null;
 			socket.off('connect', join);
 			socket.off('chat:message.created', receive);
 			socket.off('chat:error', handleError);
+			socket.off('disconnect', handleDisconnect);
 			socket.close();
 		};
 	}, [appendMessage, enabled, orderId, router]);
@@ -93,6 +104,7 @@ export const useLiveOrderChat = ({
 			}
 
 			setLiveError(null);
+			isSendingRef.current = true;
 			setIsSending(true);
 			socketRef.current.emit('chat:send', { orderId, ...parsed.data });
 		},
