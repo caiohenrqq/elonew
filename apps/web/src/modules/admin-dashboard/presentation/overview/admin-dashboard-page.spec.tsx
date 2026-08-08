@@ -9,6 +9,11 @@ import {
 	AdminUsersPage,
 } from './admin-dashboard-page';
 
+jest.mock('@/shared/ratings/rating-actions', () => ({
+	getOrderRatings: jest.fn(),
+	submitRatingAction: jest.fn(),
+}));
+
 jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
 	DashboardEntrance: ({ children }: PropsWithChildren) => <div>{children}</div>,
 }));
@@ -137,6 +142,7 @@ describe('admin dashboard pages', () => {
 		render(
 			<AdminOrderDetailsView
 				currentUserId="admin-1"
+				ratings={[]}
 				messages={[
 					{
 						id: 'message-1',
@@ -187,6 +193,7 @@ describe('admin dashboard pages', () => {
 		render(
 			<AdminOrderDetailsView
 				currentUserId="admin-1"
+				ratings={[]}
 				messages={[]}
 				order={{
 					id: 'order-1',

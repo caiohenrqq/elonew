@@ -15,10 +15,12 @@ import {
 	RatingOrderNotFoundError,
 } from '@modules/ratings/domain/rating.errors';
 import { Inject, Injectable } from '@nestjs/common';
+import { Role } from '@packages/auth/roles/role';
 
 type GetOrderRatingsInput = {
 	orderId: string;
 	requesterId: string;
+	requesterRole: Role;
 };
 
 @Injectable()
@@ -34,6 +36,7 @@ export class GetOrderRatingsUseCase {
 		const order = await this.orders.findById(input.orderId);
 		if (!order) throw new RatingOrderNotFoundError();
 		if (
+			input.requesterRole !== Role.ADMIN &&
 			input.requesterId !== order.clientId &&
 			input.requesterId !== order.boosterId
 		)

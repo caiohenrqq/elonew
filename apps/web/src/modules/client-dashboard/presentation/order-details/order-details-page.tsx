@@ -99,11 +99,11 @@ export const OrderDetailsPage = async ({ orderId }: OrderDetailsPageProps) => {
 				{chatPanel}
 
 				<div className={orderDetailsLayout.rail}>
+					{ratingCard}
 					<OrderServiceCard order={order} />
 					<OrderBoosterCard booster={order.booster} />
 					<OrderActivityCard />
 					<OrderSupportCard orderId={order.id} />
-					{ratingCard}
 				</div>
 			</div>
 		</div>

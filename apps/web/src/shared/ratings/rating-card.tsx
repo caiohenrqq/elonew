@@ -23,7 +23,7 @@ type RatingCardProps = {
 	className?: string;
 };
 
-const Stars = ({ score }: { score: number }) => (
+export const RatingStars = ({ score }: { score: number }) => (
 	<div className="flex gap-1.5" role="img" aria-label={`${score} de 5`}>
 		{[1, 2, 3, 4, 5].map((value) => (
 			<Star
@@ -64,7 +64,7 @@ export const RatingCard = ({
 						<p className="text-[10px] uppercase tracking-widest text-white/40">
 							Você avaliou este pedido
 						</p>
-						<Stars score={submitted.score} />
+						<RatingStars score={submitted.score} />
 						{submitted.comment ? (
 							<p className="text-sm leading-relaxed text-white/70">
 								{submitted.comment}
