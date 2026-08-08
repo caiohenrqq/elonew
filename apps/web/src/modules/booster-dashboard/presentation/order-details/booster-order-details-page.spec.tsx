@@ -119,6 +119,28 @@ describe('BoosterOrderDetailsPage', () => {
 		expect(screen.getByText('client-login')).toBeInTheDocument();
 		expect(screen.getByText('Summoner BR')).toBeInTheDocument();
 		expect(screen.getByText('secret-password')).toBeInTheDocument();
+
+		await userEvent.click(
+			screen.getByRole('button', { name: /Ocultar credenciais/i }),
+		);
+		expect(screen.queryByText('client-login')).not.toBeInTheDocument();
+	});
+
+	it.each([
+		'Credenciais indisponíveis para este pedido.',
+		'Muitas tentativas. Aguarde antes de tentar novamente.',
+	])('shows credential reveal failures without exposing fields: %s', async (error) => {
+		jest
+			.mocked(revealBoosterOrderCredentialsAction)
+			.mockResolvedValueOnce({ error });
+
+		render(await BoosterOrderDetailsPage({ orderId: 'order-active-1' }));
+		await userEvent.click(
+			screen.getByRole('button', { name: /Revelar credenciais/i }),
+		);
+
+		expect(screen.getByText(error)).toBeInTheDocument();
+		expect(screen.queryByText('client-login')).not.toBeInTheDocument();
 	});
 
 	it('renders completed orders as read-only chat', async () => {
