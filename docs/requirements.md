@@ -50,6 +50,9 @@ Web platform for operating League of Legends boosting services with a marketplac
 - FR-034: `Account Credentials` are permanently deleted after service finalization.
 - FR-080: The booster wallet shows each locked credit's release date and makes
   clear that withdrawals have no minimum but use only the available balance.
+- FR-081: A new withdrawal requires the booster's payout PIX key, and admins
+  can see the 25 most recent requests with their booster, amount, timestamp,
+  and PIX key when one was collected.
 
 ### 6. Service extras
 Priced extras:
