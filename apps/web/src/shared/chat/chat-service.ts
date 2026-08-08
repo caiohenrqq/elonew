@@ -1,10 +1,6 @@
 import {
-	type ChatMessageOutput,
-	chatMessageSchema,
 	type ListChatMessagesResponseOutput,
 	listChatMessagesResponseSchema,
-	type SendChatMessageInput,
-	sendChatMessageInputSchema,
 } from './chat-contracts';
 
 export type AuthenticatedApiRequest = <T>(
@@ -40,22 +36,4 @@ export const listAdminOrderChatMessages = async (
 	);
 
 	return listChatMessagesResponseSchema.parse(response);
-};
-
-export const sendOrderChatMessage = async (
-	orderId: string,
-	input: SendChatMessageInput,
-	apiRequest: AuthenticatedApiRequest,
-): Promise<ChatMessageOutput> => {
-	const body = sendChatMessageInputSchema.parse(input);
-	const response = await apiRequest<unknown>(
-		getOrderChatMessagesPath(orderId),
-		{
-			auth: true,
-			method: 'POST',
-			body: JSON.stringify(body),
-		},
-	);
-
-	return chatMessageSchema.parse(response);
 };
