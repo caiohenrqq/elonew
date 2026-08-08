@@ -67,6 +67,15 @@ export type AdminSupportTicketSnapshot = {
 	latestMessageAt: Date | null;
 };
 
+export type AdminWithdrawalRequestSnapshot = {
+	id: string;
+	boosterId: string;
+	boosterUsername: string;
+	amount: number;
+	payoutPixKey: string | null;
+	createdAt: Date;
+};
+
 export interface AdminDashboardReaderPort {
 	getMetrics(): Promise<AdminMetricsSnapshot>;
 	listUsers(input: {
@@ -78,4 +87,7 @@ export interface AdminDashboardReaderPort {
 	listSupportTickets(input: {
 		limit: number;
 	}): Promise<AdminSupportTicketSnapshot[]>;
+	listWithdrawalRequests(input: {
+		limit: number;
+	}): Promise<AdminWithdrawalRequestSnapshot[]>;
 }
