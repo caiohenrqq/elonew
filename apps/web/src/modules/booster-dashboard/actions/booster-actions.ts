@@ -9,15 +9,8 @@ import { getCheckoutErrorMessage } from '@/shared/api-client-management/user-mes
 import { redirectOnAuthError } from '@/shared/auth/redirect-on-auth-error';
 import type { AuthSession } from '@/shared/auth/session';
 import { getAuthSession } from '@/shared/auth/session';
-import {
-	type ChatMessageOutput,
-	type ListChatMessagesResponseOutput,
-	sendChatMessageInputSchema,
-} from '@/shared/chat/chat-contracts';
-import {
-	listOrderChatMessages,
-	sendOrderChatMessage,
-} from '@/shared/chat/chat-service';
+import { type ListChatMessagesResponseOutput } from '@/shared/chat/chat-contracts';
+import { listOrderChatMessages } from '@/shared/chat/chat-service';
 import { assertSameOriginRequest } from '@/shared/security/origin';
 import type {
 	BoosterOrderOutput,
@@ -25,6 +18,7 @@ import type {
 	BoosterWalletOutput,
 	BoosterWalletTransactionsOutput,
 	BoosterWorkOutput,
+	OrderCredentialsOutput,
 } from '../server/booster-contracts';
 import { acceptBoosterOrderSchema } from '../server/booster-contracts';
 import {
@@ -36,6 +30,7 @@ import {
 	getBoosterWork as getBoosterWorkFromApi,
 	rejectBoosterOrder,
 	requestBoosterWithdrawal,
+	revealBoosterOrderCredentials,
 } from '../server/booster-service';
 
 export type BoosterActionState = {
@@ -43,15 +38,9 @@ export type BoosterActionState = {
 	success?: boolean;
 };
 
-export type SendBoosterChatMessageActionState =
-	| {
-			message: ChatMessageOutput;
-			error?: never;
-	  }
-	| {
-			error: string;
-			message?: never;
-	  };
+export type RevealCredentialsActionState =
+	| { credentials: OrderCredentialsOutput; error?: never }
+	| { error: string; credentials?: never };
 
 const getBoosterSessionOrRedirect = async () => {
 	const session = await getAuthSession();
@@ -136,38 +125,21 @@ export const getBoosterOrderChatMessages = async (
 	}
 };
 
-export const sendBoosterOrderChatMessageAction = async (
+export const revealBoosterOrderCredentialsAction = async (
 	orderId: string,
-	content: string,
-): Promise<SendBoosterChatMessageActionState> => {
-	const parsed = sendChatMessageInputSchema.safeParse({ content });
-	if (!parsed.success) {
-		return { error: parsed.error.issues[0]?.message ?? 'Mensagem inválida.' };
-	}
-
+): Promise<RevealCredentialsActionState> => {
 	try {
 		await assertSameOriginRequest();
 		await getBoosterSessionOrRedirect();
-
 		return {
-			message: await sendOrderChatMessage(orderId, parsed.data, api.request),
+			credentials: await revealBoosterOrderCredentials(orderId, api.request),
 		};
 	} catch (error) {
-		if (
-			error instanceof ApiRequestError &&
-			(error.status === 401 || error.status === 403)
-		) {
-			return { error: 'Entre novamente para continuar.' };
-		}
-
-		if (error instanceof ApiRequestError && error.status === 409) {
-			return {
-				error:
-					'Este chat não está disponível para envio de mensagens neste status.',
-			};
-		}
-
-		return { error: 'Não foi possível enviar a mensagem.' };
+		if (error instanceof ApiRequestError && error.status === 429)
+			return { error: error.message };
+		if (error instanceof ApiRequestError && error.status === 404)
+			return { error: 'Credenciais indisponíveis para este pedido.' };
+		return { error: 'Não foi possível revelar as credenciais.' };
 	}
 };
 
@@ -214,11 +186,16 @@ export const requestBoosterWithdrawalAction = async (
 	const amount = Number.isFinite(amountInReais)
 		? Money.fromDecimal(amountInReais).cents
 		: Number.NaN;
+	const payoutPixKey = formData.get('payoutPixKey');
 
 	try {
 		await assertSameOriginRequest();
 		const session = await getBoosterSessionOrRedirect();
-		await requestBoosterWithdrawal(session.userId, { amount }, api.request);
+		await requestBoosterWithdrawal(
+			session.userId,
+			{ amount, payoutPixKey },
+			api.request,
+		);
 		revalidatePath('/booster');
 		return { success: true };
 	} catch (error) {

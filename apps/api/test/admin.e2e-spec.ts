@@ -97,6 +97,19 @@ describe('Admin dashboard (e2e)', () => {
 				},
 			];
 		}
+
+		async listWithdrawalRequests() {
+			return [
+				{
+					id: 'withdrawal-1',
+					boosterId: 'booster-1',
+					boosterUsername: 'Booster One',
+					amount: 2500,
+					payoutPixKey: 'booster@example.com',
+					createdAt: new Date('2026-04-10T10:00:00.000Z'),
+				},
+			];
+		}
 	}
 
 	class AdminGovernanceRepositoryStub implements AdminGovernanceRepositoryPort {
@@ -209,6 +222,20 @@ describe('Admin dashboard (e2e)', () => {
 				expect(body).toEqual([expect.objectContaining({ id: 'ticket-1' })]);
 			})
 			.execute();
+
+		await requestHttp(app)
+			.get('/admin/withdrawals')
+			.set('Authorization', `Bearer ${token}`)
+			.expect(200)
+			.expect<Array<{ id: string; payoutPixKey: string }>>(({ body }) => {
+				expect(body).toEqual([
+					expect.objectContaining({
+						id: 'withdrawal-1',
+						payoutPixKey: 'booster@example.com',
+					}),
+				]);
+			})
+			.execute();
 	});
 
 	it.each([
@@ -221,6 +248,7 @@ describe('Admin dashboard (e2e)', () => {
 		['POST', '/admin/orders/order-1/release-booster-payment'],
 		['GET', '/admin/scheduled-jobs'],
 		['GET', '/admin/support/tickets'],
+		['GET', '/admin/withdrawals'],
 	])('rejects non-admin access for %s %s', async (method, path) => {
 		const token = signToken({ sub: 'client-1', role: Role.CLIENT });
 		const request = requestHttp(app)

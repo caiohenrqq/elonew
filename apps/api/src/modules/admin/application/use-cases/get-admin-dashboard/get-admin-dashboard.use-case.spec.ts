@@ -67,6 +67,16 @@ class AdminDashboardReaderStub implements AdminDashboardReaderPort {
 			latestMessageAt: new Date('2026-05-02T00:00:00.000Z'),
 		},
 	];
+	withdrawals = [
+		{
+			id: 'withdrawal-1',
+			boosterId: 'booster-1',
+			boosterUsername: 'Booster One',
+			amount: 2500,
+			payoutPixKey: 'booster@example.com',
+			createdAt: new Date('2026-05-03T00:00:00.000Z'),
+		},
+	];
 
 	getMetrics(): Promise<AdminMetricsSnapshot> {
 		return Promise.resolve(this.metrics);
@@ -88,6 +98,10 @@ class AdminDashboardReaderStub implements AdminDashboardReaderPort {
 
 	listSupportTickets(): Promise<AdminSupportTicketSnapshot[]> {
 		return Promise.resolve(this.tickets);
+	}
+
+	listWithdrawalRequests() {
+		return Promise.resolve(this.withdrawals);
 	}
 }
 
@@ -135,6 +149,21 @@ describe('GetAdminDashboardUseCase', () => {
 			expect.objectContaining({
 				id: 'ticket-1',
 				messageCount: 2,
+			}),
+		]);
+	});
+
+	it('returns withdrawal requests with the payout PIX key', async () => {
+		const useCase = new GetAdminDashboardUseCase(
+			new AdminDashboardReaderStub(),
+		);
+
+		await expect(
+			useCase.listWithdrawalRequests({ limit: 10 }),
+		).resolves.toEqual([
+			expect.objectContaining({
+				id: 'withdrawal-1',
+				payoutPixKey: 'booster@example.com',
 			}),
 		]);
 	});

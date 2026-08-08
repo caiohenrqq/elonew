@@ -19,6 +19,10 @@ export const WithdrawalForm = ({ maxAmount }: WithdrawalFormProps) => {
 
 	return (
 		<form action={formAction} className="space-y-3">
+			<p className="text-[10px] leading-relaxed text-white/40">
+				Sem valor mínimo. Saques usam apenas o saldo disponível; valores
+				bloqueados são liberados na data indicada abaixo.
+			</p>
 			<div className="space-y-2">
 				<Label htmlFor="withdrawal-amount">Valor do saque</Label>
 				<Input
@@ -29,6 +33,19 @@ export const WithdrawalForm = ({ maxAmount }: WithdrawalFormProps) => {
 					max={maxAmount / 100}
 					step="0.01"
 					placeholder="0,00"
+					disabled={maxAmount <= 0 || isPending}
+				/>
+			</div>
+			<div className="space-y-2">
+				<Label htmlFor="withdrawal-pix-key">Chave PIX para recebimento</Label>
+				<Input
+					id="withdrawal-pix-key"
+					name="payoutPixKey"
+					type="text"
+					maxLength={255}
+					autoComplete="off"
+					required
+					placeholder="CPF, e-mail, telefone ou chave aleatória"
 					disabled={maxAmount <= 0 || isPending}
 				/>
 			</div>

@@ -10,8 +10,11 @@ describe('Ratings (e2e db)', () => {
 	let prisma: PrismaService;
 	let clientId: string;
 	let boosterId: string;
+	let adminId: string;
 
-	const createUser = async (role: 'CLIENT' | 'BOOSTER'): Promise<string> => {
+	const createUser = async (
+		role: 'CLIENT' | 'BOOSTER' | 'ADMIN',
+	): Promise<string> => {
 		const suffix = `${role}-${Date.now()}-${Math.random()}`;
 		const user = await prisma.user.create({
 			data: {
@@ -57,6 +60,7 @@ describe('Ratings (e2e db)', () => {
 
 		clientId = await createUser('CLIENT');
 		boosterId = await createUser('BOOSTER');
+		adminId = await createUser('ADMIN');
 	});
 
 	afterEach(async () => {
@@ -72,6 +76,7 @@ describe('Ratings (e2e db)', () => {
 		const orderId = await createCompletedOrder();
 		const clientToken = signToken({ sub: clientId, role: 'CLIENT' });
 		const boosterToken = signToken({ sub: boosterId, role: 'BOOSTER' });
+		const adminToken = signToken({ sub: adminId, role: 'ADMIN' });
 
 		await requestHttp(app)
 			.post('/ratings')
@@ -100,6 +105,15 @@ describe('Ratings (e2e db)', () => {
 		await requestHttp(app)
 			.get(`/ratings/orders/${orderId}`)
 			.set('Authorization', `Bearer ${clientToken}`)
+			.expect(200)
+			.expect<Array<{ fromUserId: string }>>(({ body }) => {
+				expect(body).toHaveLength(2);
+			})
+			.execute();
+
+		await requestHttp(app)
+			.get(`/ratings/orders/${orderId}`)
+			.set('Authorization', `Bearer ${adminToken}`)
 			.expect(200)
 			.expect<Array<{ fromUserId: string }>>(({ body }) => {
 				expect(body).toHaveLength(2);

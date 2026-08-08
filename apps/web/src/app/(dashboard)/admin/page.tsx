@@ -10,6 +10,7 @@ const Page = async () => {
 			orders={dashboard.orders}
 			tickets={dashboard.tickets}
 			users={dashboard.users}
+			withdrawals={dashboard.withdrawals}
 		/>
 	);
 };

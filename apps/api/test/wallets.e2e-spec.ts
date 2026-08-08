@@ -12,6 +12,7 @@ import { InMemoryWalletRepository } from './support/in-memory/wallet/in-memory-w
 
 describe('Wallets (e2e)', () => {
 	let app: ApiHttpApp;
+	let walletRepository: InMemoryWalletRepository;
 	const scheduler = {
 		scheduleRelease: jest.fn().mockResolvedValue(undefined),
 	};
@@ -35,6 +36,7 @@ describe('Wallets (e2e)', () => {
 			.compile();
 
 		app = await createTestHttpApp(moduleRef);
+		walletRepository = moduleRef.get(WALLET_REPOSITORY_KEY);
 	});
 
 	afterEach(async () => {
@@ -68,7 +70,7 @@ describe('Wallets (e2e)', () => {
 			.execute();
 	});
 
-	it('rejects withdrawal payloads missing requestedAt', async () => {
+	it('rejects missing payout details and assigns the request timestamp', async () => {
 		const token = signToken({ sub: 'booster-1', role: Role.BOOSTER });
 
 		await requestHttp(app)
@@ -95,6 +97,7 @@ describe('Wallets (e2e)', () => {
 			.expect(200, { success: true })
 			.execute();
 
+		const requestedAfter = Date.now();
 		await requestHttp(app)
 			.post('/wallets/booster-1/withdrawals')
 			.set('Authorization', `Bearer ${token}`)
@@ -103,6 +106,26 @@ describe('Wallets (e2e)', () => {
 			})
 			.expect(400)
 			.execute();
+
+		await requestHttp(app)
+			.post('/wallets/booster-1/withdrawals')
+			.set('Authorization', `Bearer ${token}`)
+			.send({
+				amount: 10,
+				payoutPixKey: 'booster@example.com',
+				requestedAt: '2999-01-01T00:00:00.000Z',
+			})
+			.expect(200, { success: true })
+			.execute();
+
+		const wallet = await walletRepository.findByBoosterId('booster-1');
+		const withdrawal = wallet?.transactions.find(
+			(transaction) => transaction.reason === 'withdrawal_request',
+		);
+		expect(withdrawal?.createdAt.getTime()).toBeGreaterThanOrEqual(
+			requestedAfter,
+		);
+		expect(withdrawal?.createdAt.getTime()).toBeLessThanOrEqual(Date.now());
 	});
 
 	it('rejects malformed booster ids with bad request', async () => {
@@ -119,8 +142,23 @@ describe('Wallets (e2e)', () => {
 			.set('Authorization', `Bearer ${token}`)
 			.send({
 				amount: 10,
-				requestedAt: '2026-03-10T00:00:00.000Z',
+				payoutPixKey: 'booster@example.com',
 			})
+			.expect(400)
+			.execute();
+	});
+
+	it.each([
+		'',
+		'   ',
+		'x'.repeat(256),
+	])('rejects invalid payout PIX key %p', async (payoutPixKey) => {
+		const token = signToken({ sub: 'booster-1', role: Role.BOOSTER });
+
+		await requestHttp(app)
+			.post('/wallets/booster-1/withdrawals')
+			.set('Authorization', `Bearer ${token}`)
+			.send({ amount: 10, payoutPixKey })
 			.expect(400)
 			.execute();
 	});

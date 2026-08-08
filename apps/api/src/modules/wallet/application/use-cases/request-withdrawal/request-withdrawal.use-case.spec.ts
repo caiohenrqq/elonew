@@ -47,6 +47,7 @@ describe('RequestWithdrawalUseCase', () => {
 		await useCase.execute({
 			boosterId: 'booster-1',
 			amount: 1,
+			payoutPixKey: 'booster@example.com',
 			requestedAt: new Date('2026-03-12T13:00:00.000Z'),
 		});
 
@@ -57,6 +58,7 @@ describe('RequestWithdrawalUseCase', () => {
 				transactions: expect.arrayContaining([
 					expect.objectContaining({
 						amount: 1,
+						payoutPixKey: 'booster@example.com',
 						type: 'debit',
 						reason: 'withdrawal_request',
 					}),
@@ -82,6 +84,7 @@ describe('RequestWithdrawalUseCase', () => {
 			useCase.execute({
 				boosterId: 'booster-2',
 				amount: 10,
+				payoutPixKey: 'booster@example.com',
 				requestedAt: new Date('2026-03-12T13:00:00.000Z'),
 			}),
 		).rejects.toThrow(WalletInsufficientWithdrawableBalanceError);
@@ -98,6 +101,7 @@ describe('RequestWithdrawalUseCase', () => {
 			useCase.execute({
 				boosterId: 'booster-3',
 				amount: 0,
+				payoutPixKey: 'booster@example.com',
 				requestedAt: new Date('2026-03-12T13:00:00.000Z'),
 			}),
 		).rejects.toThrow(WalletInvalidAmountError);

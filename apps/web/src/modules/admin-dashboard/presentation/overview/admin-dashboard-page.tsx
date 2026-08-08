@@ -11,6 +11,7 @@ import {
 	ShieldCheck,
 	Ticket,
 	Users,
+	WalletCards,
 } from 'lucide-react';
 import Link from 'next/link';
 import { DashboardEmptyState } from '@/shared/dashboard/dashboard-empty-state';
@@ -43,6 +44,7 @@ import type {
 	AdminOrderOutput,
 	AdminSupportTicketOutput,
 	AdminUserOutput,
+	AdminWithdrawalRequestOutput,
 } from '../../server/admin-contracts';
 import { roleLabels } from '../users/admin-user-metadata';
 import {
@@ -55,6 +57,7 @@ type AdminDashboardPageProps = {
 	orders?: AdminOrderOutput[];
 	tickets?: AdminSupportTicketOutput[];
 	users?: AdminUserOutput[];
+	withdrawals?: AdminWithdrawalRequestOutput[];
 };
 
 type AdminUsersPageProps = {
@@ -202,6 +205,7 @@ export const AdminDashboardPage = ({
 	orders = [],
 	tickets = [],
 	users = [],
+	withdrawals = [],
 }: AdminDashboardPageProps) => {
 	const orderSummary = summarizeOrders(orders);
 
@@ -247,6 +251,57 @@ export const AdminDashboardPage = ({
 					/>
 				</div>
 			</section>
+
+			<Card className="dashboard-animate flex-none overflow-hidden border-white/10">
+				<div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
+					<div className="flex items-center gap-3">
+						<WalletCards className="h-4 w-4 text-hextech-cyan" />
+						<h3 className="text-xs font-black uppercase tracking-[0.3em] text-white">
+							Solicitações de saque
+						</h3>
+					</div>
+					<Badge variant="outline">{withdrawals.length}</Badge>
+				</div>
+				<div className="divide-y divide-white/5">
+					{withdrawals.map((withdrawal) => (
+						<div
+							key={withdrawal.id}
+							className="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px_160px] md:items-center"
+						>
+							<div className="min-w-0">
+								<p className="truncate text-sm font-black text-white">
+									{withdrawal.boosterUsername}
+								</p>
+								<p className="truncate font-mono text-[10px] text-white/35">
+									{withdrawal.boosterId}
+								</p>
+							</div>
+							<div className="min-w-0">
+								<p className="text-[9px] font-black uppercase tracking-widest text-white/35">
+									Chave PIX
+								</p>
+								<p className="break-all font-mono text-xs text-white/70">
+									{withdrawal.payoutPixKey ??
+										'Não informada (solicitação antiga)'}
+								</p>
+							</div>
+							<p className="font-black text-hextech-gold">
+								{formatCurrency(withdrawal.amount)}
+							</p>
+							<p className="text-xs text-white/40 md:text-right">
+								{formatDateTime(withdrawal.createdAt)}
+							</p>
+						</div>
+					))}
+					{withdrawals.length === 0 ? (
+						<DashboardEmptyState
+							icon={WalletCards}
+							title="Nenhuma solicitação de saque"
+							description="Novas solicitações aparecerão aqui com a chave PIX informada pelo booster."
+						/>
+					) : null}
+				</div>
+			</Card>
 
 			<div className="dashboard-animate flex min-h-0 flex-1 flex-col gap-6 xl:grid xl:grid-cols-[1fr_380px]">
 				<Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-white/10">

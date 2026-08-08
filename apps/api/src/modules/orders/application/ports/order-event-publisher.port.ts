@@ -2,6 +2,7 @@ export const ORDER_EVENT_PUBLISHER_KEY = Symbol('ORDER_EVENT_PUBLISHER_KEY');
 
 export type OrderEventType =
 	| 'order.paid'
+	| 'order.credentials_saved'
 	| 'order.accepted'
 	| 'order.rejected'
 	| 'order.completed'

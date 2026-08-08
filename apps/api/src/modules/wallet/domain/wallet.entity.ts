@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
 	WalletInsufficientWithdrawableBalanceError,
 	WalletInvalidAmountError,
@@ -11,10 +12,12 @@ export type WalletTransactionReason = 'order_completion' | 'withdrawal_request';
 export type WalletTransactionReleaseSource = 'schedule' | 'admin';
 
 export type WalletTransaction = {
+	id: string;
 	orderId: string | null;
 	amount: number;
 	type: WalletTransactionType;
 	reason: WalletTransactionReason;
+	payoutPixKey: string | null;
 	availableAt: Date;
 	releasedAt: Date | null;
 	releasedBy: WalletTransactionReleaseSource | null;
@@ -35,6 +38,7 @@ type CreditLockedInput = {
 
 type WithdrawInput = {
 	amount: number;
+	payoutPixKey: string;
 	requestedAt: Date;
 };
 
@@ -71,10 +75,12 @@ export class Wallet {
 			Money.fromCents(input.amount),
 		).cents;
 		this.transactions.push({
+			id: randomUUID(),
 			orderId: input.orderId,
 			amount: input.amount,
 			type: 'credit',
 			reason: 'order_completion',
+			payoutPixKey: null,
 			availableAt: input.availableAt,
 			releasedAt: null,
 			releasedBy: null,
@@ -158,10 +164,12 @@ export class Wallet {
 			this.balanceWithdrawable,
 		).subtract(Money.fromCents(input.amount)).cents;
 		this.transactions.unshift({
+			id: randomUUID(),
 			orderId: null,
 			amount: input.amount,
 			type: 'debit',
 			reason: 'withdrawal_request',
+			payoutPixKey: input.payoutPixKey,
 			availableAt: input.requestedAt,
 			releasedAt: input.requestedAt,
 			releasedBy: null,

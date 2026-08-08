@@ -77,7 +77,7 @@ describe('Wallet module integration', () => {
 				'booster-1',
 				{
 					amount: 10,
-					requestedAt: '2026-03-12T13:00:00.000Z',
+					payoutPixKey: 'booster@example.com',
 				},
 				boosterUser,
 			),

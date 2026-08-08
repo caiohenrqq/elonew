@@ -17,6 +17,7 @@ import { toBoosterWork } from '../../model/booster-orders';
 import type { BoosterOrderOutput } from '../../server/booster-contracts';
 import { CompleteBoosterOrderButton } from '../booster-order-action-buttons';
 import { BoosterChatPanel } from '../overview/booster-chat-panel';
+import { OrderCredentialsCard } from './order-credentials-card';
 
 type BoosterOrderDetailsPageProps = {
 	orderId: string;
@@ -86,6 +87,16 @@ export const BoosterOrderDetailsPage = async ({
 				/>
 
 				<section className="grid content-start gap-4 sm:grid-cols-3 xl:grid-cols-1">
+					{order.status === 'completed' ? (
+						<RatingCard
+							orderId={order.id}
+							currentUserId={currentUserId}
+							initialRatings={ratings}
+						/>
+					) : null}
+					{order.status === 'in_progress' ? (
+						<OrderCredentialsCard orderId={order.id} />
+					) : null}
 					<div className="rounded-sm border border-white/10 bg-white/[0.03] p-5">
 						<p className="text-[9px] font-black uppercase tracking-widest text-white/35">
 							Status
@@ -122,13 +133,6 @@ export const BoosterOrderDetailsPage = async ({
 							{formatCurrency(order.boosterAmount)}
 						</p>
 					</div>
-					{order.status === 'completed' ? (
-						<RatingCard
-							orderId={order.id}
-							currentUserId={currentUserId}
-							initialRatings={ratings}
-						/>
-					) : null}
 				</section>
 			</div>
 		</div>

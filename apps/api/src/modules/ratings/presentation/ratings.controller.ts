@@ -14,7 +14,6 @@ import {
 } from './ratings.request-schemas';
 
 @Controller('ratings')
-@Roles(Role.CLIENT, Role.BOOSTER)
 export class RatingsController {
 	constructor(
 		private readonly submitRating: SubmitRatingUseCase,
@@ -22,6 +21,7 @@ export class RatingsController {
 	) {}
 
 	@Post()
+	@Roles(Role.CLIENT, Role.BOOSTER)
 	async submit(
 		@Body(new ZodValidationPipe(submitRatingSchema))
 		body: SubmitRatingSchemaInput,
@@ -36,6 +36,7 @@ export class RatingsController {
 	}
 
 	@Get('orders/:orderId')
+	@Roles(Role.CLIENT, Role.BOOSTER, Role.ADMIN)
 	async listForOrder(
 		@Param('orderId', new ZodValidationPipe(orderIdParamSchema))
 		orderId: OrderIdParamSchemaInput,
@@ -44,6 +45,7 @@ export class RatingsController {
 		return await this.getOrderRatings.execute({
 			orderId,
 			requesterId: currentUser.id,
+			requesterRole: currentUser.role,
 		});
 	}
 }

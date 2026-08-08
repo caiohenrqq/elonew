@@ -8,6 +8,7 @@ import { Inject, Injectable } from '@nestjs/common';
 type RequestWithdrawalInput = {
 	boosterId: string;
 	amount: number;
+	payoutPixKey: string;
 	requestedAt: Date;
 };
 
@@ -25,6 +26,7 @@ export class RequestWithdrawalUseCase {
 
 		wallet.withdraw({
 			amount: input.amount,
+			payoutPixKey: input.payoutPixKey,
 			requestedAt: input.requestedAt,
 		});
 

@@ -1,4 +1,5 @@
 import { ApiRequestError } from '@/shared/api-client-management/http';
+import type { OrderCredentialsOutput } from './booster-contracts';
 import {
 	acceptBoosterOrderSchema,
 	type BoosterQueueOutput,
@@ -9,6 +10,7 @@ import {
 	boosterWalletSchema,
 	boosterWalletTransactionsSchema,
 	boosterWorkSchema,
+	orderCredentialsSchema,
 	withdrawalRequestSchema,
 } from './booster-contracts';
 
@@ -114,6 +116,18 @@ export const completeBoosterOrder = async (
 	});
 };
 
+export const revealBoosterOrderCredentials = async (
+	orderId: string,
+	apiRequest: AuthenticatedApiRequest,
+): Promise<OrderCredentialsOutput> => {
+	const response = await apiRequest<unknown>(
+		`/orders/${encodeURIComponent(orderId)}/credentials/reveal`,
+		{ auth: true },
+	);
+
+	return orderCredentialsSchema.parse(response);
+};
+
 export const requestBoosterWithdrawal = async (
 	boosterId: string,
 	input: unknown,
@@ -126,7 +140,7 @@ export const requestBoosterWithdrawal = async (
 		method: 'POST',
 		body: JSON.stringify({
 			amount: body.amount,
-			requestedAt: new Date().toISOString(),
+			payoutPixKey: body.payoutPixKey,
 		}),
 	});
 };

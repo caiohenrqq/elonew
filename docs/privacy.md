@@ -5,6 +5,8 @@
 - Order chat and messages
 - Support tickets and messages
 - Notification metadata referencing user activity
+- Withdrawal payout PIX keys, which may contain a CPF, CNPJ, phone number,
+  email address, or random EVP key
 
 Order credentials follow the product credential lifecycle in
 `docs/requirements.md`.
@@ -22,6 +24,10 @@ destroyed.
 - Attachments are not supported.
 - Clients and boosters access only their own records.
 - Admin access exists for support, moderation, and governance.
+- Withdrawal PIX keys remain attached to financial ledger records, are visible
+  only to admins for payout operations, and are not returned in the booster's
+  general transaction history.
+- No automatic withdrawal PIX-key retention or erasure window is implemented.
 - Authorization is enforced by the API.
 
 ## Forbidden handling

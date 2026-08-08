@@ -8,6 +8,7 @@ import {
 	type AdminScheduledJobsOutput,
 	type AdminSupportTicketOutput,
 	type AdminUserOutput,
+	type AdminWithdrawalRequestOutput,
 	adminChangeUserRoleInputSchema,
 	adminCreateUserInputSchema,
 	adminDashboardSchema,
@@ -18,6 +19,7 @@ import {
 	adminScheduledJobsSchema,
 	adminSupportTicketSchema,
 	adminUserSchema,
+	adminWithdrawalRequestSchema,
 } from './admin-contracts';
 
 export type AuthenticatedApiRequest = <T>(
@@ -161,17 +163,38 @@ export const getAdminSupportTickets = async (
 	);
 };
 
+export const getAdminWithdrawalRequests = async (
+	apiRequest: AuthenticatedApiRequest,
+): Promise<AdminWithdrawalRequestOutput[]> => {
+	const path = '/admin/withdrawals?limit=25';
+	return await withAdminReadErrorContext(
+		'Admin withdrawals request',
+		path,
+		async () => {
+			const response = await apiRequest<unknown>(path, { auth: true });
+			return adminWithdrawalRequestSchema.array().parse(response);
+		},
+	);
+};
+
 export const getAdminDashboard = async (
 	apiRequest: AuthenticatedApiRequest,
 ): Promise<AdminDashboardOutput> => {
-	const [metrics, users, orders, tickets] = await Promise.all([
+	const [metrics, users, orders, tickets, withdrawals] = await Promise.all([
 		getAdminMetrics(apiRequest),
 		getAdminUsers(apiRequest),
 		getAdminOrders(apiRequest),
 		getAdminSupportTickets(apiRequest),
+		getAdminWithdrawalRequests(apiRequest),
 	]);
 
-	return adminDashboardSchema.parse({ metrics, users, orders, tickets });
+	return adminDashboardSchema.parse({
+		metrics,
+		users,
+		orders,
+		tickets,
+		withdrawals,
+	});
 };
 
 export const createAdminUser = async (

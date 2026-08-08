@@ -19,10 +19,12 @@ type WalletRecord = {
 	balanceLocked: number;
 	balanceWithdrawable: number;
 	transactions: Array<{
+		id: string;
 		orderId: string | null;
 		amount: number;
 		type: 'CREDIT' | 'DEBIT';
 		reason: string;
+		payoutPixKey: string | null;
 		availableAt: Date;
 		releasedAt: Date | null;
 		releasedBy: 'SCHEDULE' | 'ADMIN' | null;
@@ -60,11 +62,13 @@ type WalletTransactionDelegate = {
 	deleteMany(args: { where: { walletId: string } }): Promise<{ count: number }>;
 	createMany(args: {
 		data: Array<{
+			id: string;
 			walletId: string;
 			orderId: string | null;
 			amount: number;
 			type: 'CREDIT' | 'DEBIT';
 			reason: string;
+			payoutPixKey: string | null;
 			availableAt: Date;
 			releasedAt: Date | null;
 			releasedBy: 'SCHEDULE' | 'ADMIN' | null;
@@ -75,7 +79,7 @@ type WalletTransactionDelegate = {
 		where: { walletId: string };
 		orderBy: { createdAt: 'desc' };
 		take: number;
-	}): Promise<Array<WalletRecord['transactions'][number] & { id: string }>>;
+	}): Promise<Array<WalletRecord['transactions'][number]>>;
 };
 
 type WalletPrismaClient = {
@@ -124,10 +128,11 @@ export class PrismaWalletRepository
 			take: limit,
 		});
 
-		return records.map((transaction) => ({
-			id: transaction.id,
-			...this.mapTransactionToDomain(transaction),
-		}));
+		return records.map((transaction) => {
+			const { payoutPixKey: _payoutPixKey, ...snapshot } =
+				this.mapTransactionToDomain(transaction);
+			return snapshot;
+		});
 	}
 
 	async save(wallet: Wallet): Promise<void> {
@@ -161,11 +166,13 @@ export class PrismaWalletRepository
 			deleteExisting,
 			client.walletTransaction.createMany({
 				data: wallet.transactions.map((transaction) => ({
+					id: transaction.id,
 					walletId: persistedWallet.id,
 					orderId: transaction.orderId,
 					amount: transaction.amount,
 					type: this.mapTransactionTypeToRecord(transaction.type),
 					reason: transaction.reason,
+					payoutPixKey: transaction.payoutPixKey,
 					availableAt: transaction.availableAt,
 					releasedAt: transaction.releasedAt,
 					releasedBy: this.mapReleaseSourceToRecord(transaction.releasedBy),
@@ -202,10 +209,12 @@ export class PrismaWalletRepository
 		transaction: WalletRecord['transactions'][number],
 	): WalletTransaction {
 		return {
+			id: transaction.id,
 			orderId: transaction.orderId,
 			amount: transaction.amount,
 			type: this.mapTransactionTypeToDomain(transaction.type),
 			reason: transaction.reason as WalletTransactionReason,
+			payoutPixKey: transaction.payoutPixKey,
 			availableAt: transaction.availableAt,
 			releasedAt: transaction.releasedAt,
 			releasedBy: this.mapReleaseSourceToDomain(transaction.releasedBy),

@@ -57,6 +57,23 @@ describe('OrdersEventsController', () => {
 		});
 	});
 
+	it('streams unassigned credentials saved events to boosters', async () => {
+		const bus = new InMemoryOrderEventBus();
+		const controller = new OrdersEventsController(bus);
+		const messagePromise = firstValueFrom(
+			controller.stream(makeUser('booster-1', Role.BOOSTER)).pipe(take(1)),
+		);
+
+		await bus.publish(
+			makeEvent({ type: 'order.credentials_saved', boosterId: null }),
+		);
+
+		await expect(messagePromise).resolves.toMatchObject({
+			type: 'order.credentials_saved',
+			data: { orderId: 'order-1' },
+		});
+	});
+
 	it('does not expose client ids in streamed payloads', async () => {
 		const bus = new InMemoryOrderEventBus();
 		const controller = new OrdersEventsController(bus);

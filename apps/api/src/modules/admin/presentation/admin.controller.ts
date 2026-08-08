@@ -158,6 +158,15 @@ export class AdminController {
 		return await this.dashboard.listOrders({ limit: query.limit });
 	}
 
+	@Get('withdrawals')
+	async listWithdrawalRequests(
+		@Query(new ZodValidationPipe(adminListQuerySchema))
+		query: AdminListQuerySchemaInput,
+		@CurrentUser() _currentUser: AuthenticatedUser,
+	) {
+		return await this.dashboard.listWithdrawalRequests({ limit: query.limit });
+	}
+
 	@Get('orders/:orderId')
 	async getOrder(
 		@Param('orderId', new ZodValidationPipe(adminIdParamSchema))

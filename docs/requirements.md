@@ -48,6 +48,11 @@ Web platform for operating League of Legends boosting services with a marketplac
 - FR-032: `Account Credentials` are stored only after payment confirmation.
 - FR-033: `Account Credentials` are deleted when payment is not confirmed.
 - FR-034: `Account Credentials` are permanently deleted after service finalization.
+- FR-080: The booster wallet shows each locked credit's release date and makes
+  clear that withdrawals have no minimum but use only the available balance.
+- FR-081: A new withdrawal requires the booster's payout PIX key, and admins
+  can see the 25 most recent requests with their booster, amount, timestamp,
+  and PIX key when one was collected.
 
 ### 6. Service extras
 Priced extras:
@@ -69,6 +74,8 @@ Zero-cost extras:
 - FR-048: `Campeões Específicos`
 - FR-049: `Stream Online`
 - FR-050: Pricing modifiers are applied deterministically.
+- FR-081: Long extras lists remain readable without forcing the dashboard page
+  to scroll horizontally.
 
 ### 7. Coupons
 - FR-051: Admin can create coupons.
@@ -80,6 +87,8 @@ Zero-cost extras:
 - FR-055: Chat history is persisted.
 - FR-056: Notifications are in-platform only.
 - FR-057: Discord integration is currently out of scope.
+- FR-082: New chat messages appear for both participants without a manual page
+  refresh, and reconnecting recovers persisted messages missed while offline.
 
 ### 9. Support tickets
 - FR-058: Ticketing system for user issues.
@@ -90,6 +99,8 @@ Zero-cost extras:
 - FR-061: Clients can rate boosters.
 - FR-062: Boosters can rate clients.
 - FR-063: Admin-defined reputation/achievement rules are supported, including booster scoring and badge/medal milestones.
+- FR-083: Completed-order details place the rating action first, and admins can
+  inspect both participants' submitted ratings from every order detail page.
 
 ### 11. Admin control
 - FR-064: Admin financial dashboard.
@@ -105,6 +116,11 @@ Zero-cost extras:
   admin cannot change their own account type.
 - FR-079: The booster defines the delivery deadline when accepting an order.
   The deadline currently has no maximum duration.
+- FR-084: Saving credentials after payment immediately makes an otherwise
+  eligible order appear in the booster queue without a manual refresh.
+- FR-085: Full account credentials are never included in order listings or
+  details; only the assigned booster of an accepted, in-progress order can
+  explicitly reveal them on demand through the audited reveal path.
 
 ### 12. Chargebacks
 - FR-068: Chargeback-associated users are blocked.

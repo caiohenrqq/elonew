@@ -41,7 +41,7 @@ class EventSourceStub {
 }
 
 const TestDashboardEvents = () => {
-	useDashboardEvents({ events: ['order.paid'] });
+	useDashboardEvents();
 
 	return null;
 };
@@ -72,6 +72,16 @@ describe('useDashboardEvents', () => {
 
 		expect(refresh).toHaveBeenCalledTimes(1);
 		expect(eventSource?.url).toBe('/api/orders/events');
+	});
+
+	it('refreshes when saved credentials make an order available', () => {
+		render(<TestDashboardEvents />);
+		const eventSource = EventSourceStub.instances[0];
+
+		eventSource?.emit('order.credentials_saved');
+		jest.advanceTimersByTime(500);
+
+		expect(refresh).toHaveBeenCalledTimes(1);
 	});
 
 	it('closes the stream on unmount', () => {

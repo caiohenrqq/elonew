@@ -1,6 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { OrderChatPanel } from './order-chat-panel';
 
+jest.mock('next/navigation', () => ({
+	useRouter: () => ({ refresh: jest.fn() }),
+}));
+
 jest.mock('@/shared/chat/chat-panel', () => ({
 	ChatPanel: ({
 		isDisabled,
@@ -19,10 +23,6 @@ jest.mock('@/shared/chat/chat-panel', () => ({
 			{statusText}
 		</div>
 	),
-}));
-
-jest.mock('../../actions/order-actions', () => ({
-	sendOrderChatMessageAction: jest.fn(),
 }));
 
 const renderPanel = (orderStatus: string) =>

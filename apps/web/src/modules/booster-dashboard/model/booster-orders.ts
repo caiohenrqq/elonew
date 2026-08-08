@@ -1,3 +1,4 @@
+import { formatDate } from '@/shared/format/date';
 import type {
 	BoosterOrderOutput,
 	BoosterQueueOutput,
@@ -26,9 +27,10 @@ export const formatTransactionReason = (
 export const formatTransactionRelease = (
 	transaction: Pick<
 		BoosterWalletTransactionOutput,
-		'releasedAt' | 'releasedBy'
+		'availableAt' | 'releasedAt' | 'releasedBy'
 	>,
 ) => {
-	if (!transaction.releasedAt) return 'Bloqueado';
+	if (!transaction.releasedAt)
+		return `Disponível em ${formatDate(transaction.availableAt)}`;
 	return transaction.releasedBy === 'admin' ? 'Liberado por admin' : 'Liberado';
 };

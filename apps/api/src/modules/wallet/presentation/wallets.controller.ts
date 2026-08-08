@@ -120,7 +120,8 @@ export class WalletsController {
 		await this.requestWithdrawalUseCase.execute({
 			boosterId,
 			amount: body.amount,
-			requestedAt: new Date(body.requestedAt),
+			payoutPixKey: body.payoutPixKey,
+			requestedAt: new Date(),
 		});
 		return { success: true };
 	}

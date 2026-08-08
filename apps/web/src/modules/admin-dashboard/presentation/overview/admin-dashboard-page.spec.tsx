@@ -9,6 +9,11 @@ import {
 	AdminUsersPage,
 } from './admin-dashboard-page';
 
+jest.mock('@/shared/ratings/rating-actions', () => ({
+	getOrderRatings: jest.fn(),
+	submitRatingAction: jest.fn(),
+}));
+
 jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
 	DashboardEntrance: ({ children }: PropsWithChildren) => <div>{children}</div>,
 }));
@@ -24,7 +29,7 @@ jest.mock('../../actions/admin-actions', () => ({
 }));
 
 describe('admin dashboard pages', () => {
-	it('renders only overview metrics on the main admin page', () => {
+	it('renders overview metrics and withdrawal requests on the main admin page', () => {
 		render(
 			<AdminDashboardPage
 				metrics={{
@@ -33,6 +38,16 @@ describe('admin dashboard pages', () => {
 					activeOrders: 2,
 					activeUsers: 3,
 				}}
+				withdrawals={[
+					{
+						id: 'withdrawal-1',
+						boosterId: 'booster-1',
+						boosterUsername: 'Booster One',
+						amount: 2500,
+						payoutPixKey: 'booster@example.com',
+						createdAt: '2026-08-08T12:00:00.000Z',
+					},
+				]}
 			/>,
 		);
 
@@ -40,6 +55,9 @@ describe('admin dashboard pages', () => {
 		expect(screen.getByText('Receita')).toBeInTheDocument();
 		expect(screen.getByText('Pedidos ativos')).toBeInTheDocument();
 		expect(screen.getByText('Usuários ativos')).toBeInTheDocument();
+		expect(screen.getByText('Solicitações de saque')).toBeInTheDocument();
+		expect(screen.getByText('Booster One')).toBeInTheDocument();
+		expect(screen.getByText('booster@example.com')).toBeInTheDocument();
 		expect(screen.queryByText('dev-client')).not.toBeInTheDocument();
 		expect(screen.queryByText('Preciso de ajuda')).not.toBeInTheDocument();
 	});
@@ -137,6 +155,7 @@ describe('admin dashboard pages', () => {
 		render(
 			<AdminOrderDetailsView
 				currentUserId="admin-1"
+				ratings={[]}
 				messages={[
 					{
 						id: 'message-1',
@@ -187,6 +206,7 @@ describe('admin dashboard pages', () => {
 		render(
 			<AdminOrderDetailsView
 				currentUserId="admin-1"
+				ratings={[]}
 				messages={[]}
 				order={{
 					id: 'order-1',

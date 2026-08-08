@@ -126,11 +126,21 @@ export const adminSupportTicketSchema = z.object({
 	latestMessageAt: z.string().nullable(),
 });
 
+export const adminWithdrawalRequestSchema = z.object({
+	id: z.string(),
+	boosterId: z.string(),
+	boosterUsername: z.string(),
+	amount: z.number().int().positive(),
+	payoutPixKey: z.string().min(1).nullable(),
+	createdAt: z.string(),
+});
+
 export const adminDashboardSchema = z.object({
 	metrics: adminMetricsSchema,
 	users: z.array(adminUserSchema),
 	orders: z.array(adminOrderSchema),
 	tickets: z.array(adminSupportTicketSchema),
+	withdrawals: z.array(adminWithdrawalRequestSchema),
 });
 
 export type AdminMetricsOutput = z.infer<typeof adminMetricsSchema>;
@@ -142,5 +152,8 @@ export type AdminChangeUserRoleInput = z.infer<
 export type AdminUserOutput = z.infer<typeof adminUserSchema>;
 export type AdminOrderOutput = z.infer<typeof adminOrderSchema>;
 export type AdminSupportTicketOutput = z.infer<typeof adminSupportTicketSchema>;
+export type AdminWithdrawalRequestOutput = z.infer<
+	typeof adminWithdrawalRequestSchema
+>;
 export type AdminScheduledJobsOutput = z.infer<typeof adminScheduledJobsSchema>;
 export type AdminDashboardOutput = z.infer<typeof adminDashboardSchema>;

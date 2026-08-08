@@ -20,10 +20,10 @@ class InMemoryWalletTransactionReader implements WalletTransactionReaderPort {
 				(left, right) => right.createdAt.getTime() - left.createdAt.getTime(),
 			)
 			.slice(0, limit)
-			.map((transaction, index) => ({
-				...transaction,
-				id: `${transaction.reason}:${transaction.orderId ?? 'wallet'}:${transaction.createdAt.toISOString()}:${index}`,
-			}));
+			.map((transaction) => {
+				const { payoutPixKey: _payoutPixKey, ...snapshot } = transaction;
+				return snapshot;
+			});
 	}
 
 	insert(wallet: Wallet): void {
@@ -46,15 +46,16 @@ describe('ListWalletTransactionsUseCase', () => {
 		});
 		wallet.withdraw({
 			amount: 40,
+			payoutPixKey: 'booster@example.com',
 			requestedAt: new Date('2026-05-03T10:00:00.000Z'),
 		});
 		const reader = new InMemoryWalletTransactionReader();
 		reader.insert(wallet);
 		const useCase = new ListWalletTransactionsUseCase(reader);
 
-		await expect(
-			useCase.execute({ boosterId: 'booster-1', limit: 10 }),
-		).resolves.toEqual({
+		const result = await useCase.execute({ boosterId: 'booster-1', limit: 10 });
+
+		expect(result).toEqual({
 			transactions: [
 				expect.objectContaining({
 					type: 'debit',
@@ -69,6 +70,7 @@ describe('ListWalletTransactionsUseCase', () => {
 				}),
 			],
 		});
+		expect(result.transactions[0]).not.toHaveProperty('payoutPixKey');
 	});
 
 	it('caps the transaction limit', async () => {

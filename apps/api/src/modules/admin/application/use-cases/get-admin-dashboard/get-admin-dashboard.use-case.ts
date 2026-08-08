@@ -5,6 +5,7 @@ import {
 	type AdminOrderSnapshot,
 	type AdminSupportTicketSnapshot,
 	type AdminUserSnapshot,
+	type AdminWithdrawalRequestSnapshot,
 } from '@modules/admin/application/ports/admin-dashboard-reader.port';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -38,5 +39,11 @@ export class GetAdminDashboardUseCase {
 		limit: number;
 	}): Promise<AdminSupportTicketSnapshot[]> {
 		return await this.reader.listSupportTickets(input);
+	}
+
+	async listWithdrawalRequests(input: {
+		limit: number;
+	}): Promise<AdminWithdrawalRequestSnapshot[]> {
+		return await this.reader.listWithdrawalRequests(input);
 	}
 }

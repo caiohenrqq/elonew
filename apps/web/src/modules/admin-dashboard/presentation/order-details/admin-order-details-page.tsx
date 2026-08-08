@@ -12,6 +12,9 @@ import {
 	formatServiceType,
 } from '@/shared/format/orders';
 import { OrderRankRoute } from '@/shared/orders/order-rank-route';
+import { getOrderRatings } from '@/shared/ratings/rating-actions';
+import { RatingStars } from '@/shared/ratings/rating-card';
+import type { RatingOutput } from '@/shared/ratings/rating-contracts';
 import {
 	Card,
 	CardContent,
@@ -37,12 +40,14 @@ type AdminOrderDetailsViewProps = {
 	currentUserId: string;
 	messages: ChatMessage[];
 	order: AdminOrderOutput;
+	ratings: RatingOutput[];
 };
 
 export const AdminOrderDetailsView = ({
 	currentUserId,
 	messages,
 	order,
+	ratings,
 }: AdminOrderDetailsViewProps) => {
 	const isForceCancelDisabled = order.status === 'cancelled';
 	const { boosterPayment } = order;
@@ -97,6 +102,38 @@ export const AdminOrderDetailsView = ({
 
 			<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
 				<div className="space-y-8">
+					<Card className="border-hextech-gold/15">
+						<CardHeader>
+							<CardTitle>Avaliações</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-5">
+							{ratings.length ? (
+								ratings.map((rating) => (
+									<div key={rating.id} className="space-y-2">
+										<p className="text-[10px] font-black uppercase tracking-widest text-white/40">
+											{rating.fromUserId === order.clientId
+												? 'Cliente → Booster'
+												: 'Booster → Cliente'}
+										</p>
+										<RatingStars score={rating.score} />
+										{rating.comment ? (
+											<p className="text-sm leading-relaxed text-white/70">
+												{rating.comment}
+											</p>
+										) : null}
+										<p className="text-[10px] text-white/30">
+											{formatDateTime(rating.createdAt)}
+										</p>
+									</div>
+								))
+							) : (
+								<p className="text-xs text-white/35">
+									Nenhuma avaliação registrada.
+								</p>
+							)}
+						</CardContent>
+					</Card>
+
 					<Card className="border-white/10">
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
@@ -291,18 +328,21 @@ export const AdminOrderDetailsView = ({
 export const AdminOrderDetailsPage = async ({
 	orderId,
 }: AdminOrderDetailsPageProps) => {
-	const [order, chat, currentUserId] = await Promise.all([
-		getAdminOrder(orderId),
+	const order = await getAdminOrder(orderId);
+	if (!order) notFound();
+
+	const [chat, currentUserId, ratings] = await Promise.all([
 		getAdminOrderChatMessages(orderId),
 		getAdminUserId(),
+		getOrderRatings(orderId),
 	]);
-	if (!order) notFound();
 
 	return (
 		<AdminOrderDetailsView
 			order={order}
 			messages={chat.items}
 			currentUserId={currentUserId}
+			ratings={ratings}
 		/>
 	);
 };

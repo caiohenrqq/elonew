@@ -1,9 +1,11 @@
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import type {
+	AdminDashboardReaderPort,
 	AdminMetricsSnapshot,
 	AdminOrderSnapshot,
 	AdminSupportTicketSnapshot,
 	AdminUserSnapshot,
+	AdminWithdrawalRequestSnapshot,
 } from '@modules/admin/application/ports/admin-dashboard-reader.port';
 import { OrderStatus } from '@modules/orders/domain/order-status';
 import { PaymentStatus } from '@modules/payments/domain/payment-status';
@@ -66,6 +68,14 @@ type AdminTicketRecord = {
 	updatedAt: Date;
 	messages: Array<{ createdAt: Date }>;
 	_count: { messages: number };
+};
+
+type AdminWithdrawalRecord = {
+	id: string;
+	amount: number;
+	payoutPixKey: string | null;
+	createdAt: Date;
+	wallet: { booster: { id: string; username: string } };
 };
 
 type AdminDashboardPrismaClient = {
@@ -208,10 +218,31 @@ type AdminDashboardPrismaClient = {
 			take: number;
 		}): Promise<AdminTicketRecord[]>;
 	};
+	walletTransaction: {
+		findMany(args: {
+			where: {
+				type: 'DEBIT';
+				reason: 'withdrawal_request';
+			};
+			select: {
+				id: true;
+				amount: true;
+				payoutPixKey: true;
+				createdAt: true;
+				wallet: {
+					select: {
+						booster: { select: { id: true; username: true } };
+					};
+				};
+			};
+			orderBy: { createdAt: 'desc' };
+			take: number;
+		}): Promise<AdminWithdrawalRecord[]>;
+	};
 };
 
 @Injectable()
-export class PrismaAdminDashboardReader {
+export class PrismaAdminDashboardReader implements AdminDashboardReaderPort {
 	constructor(private readonly prisma: PrismaService) {}
 
 	async getMetrics(): Promise<AdminMetricsSnapshot> {
@@ -421,6 +452,39 @@ export class PrismaAdminDashboardReader {
 			updatedAt: record.updatedAt,
 			messageCount: record._count.messages,
 			latestMessageAt: record.messages[0]?.createdAt ?? null,
+		}));
+	}
+
+	async listWithdrawalRequests(input: {
+		limit: number;
+	}): Promise<AdminWithdrawalRequestSnapshot[]> {
+		const records = await this.getClient().walletTransaction.findMany({
+			where: {
+				type: 'DEBIT',
+				reason: 'withdrawal_request',
+			},
+			select: {
+				id: true,
+				amount: true,
+				payoutPixKey: true,
+				createdAt: true,
+				wallet: {
+					select: {
+						booster: { select: { id: true, username: true } },
+					},
+				},
+			},
+			orderBy: { createdAt: 'desc' },
+			take: input.limit,
+		});
+
+		return records.map((record) => ({
+			id: record.id,
+			boosterId: record.wallet.booster.id,
+			boosterUsername: record.wallet.booster.username,
+			amount: record.amount,
+			payoutPixKey: record.payoutPixKey,
+			createdAt: record.createdAt,
 		}));
 	}
 
