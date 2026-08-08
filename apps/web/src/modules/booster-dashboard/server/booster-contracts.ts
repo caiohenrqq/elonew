@@ -43,6 +43,12 @@ export const acceptBoosterOrderSchema = z.object({
 	deadline: z.string().datetime({ offset: true }),
 });
 
+export const orderCredentialsSchema = z.object({
+	login: z.string(),
+	summonerName: z.string(),
+	password: z.string(),
+});
+
 export const boosterWalletSchema = z.object({
 	boosterId: z.string(),
 	balanceLocked: z.number().nonnegative(),
@@ -72,6 +78,7 @@ export const withdrawalRequestSchema = z.object({
 export type BoosterQueueOutput = z.infer<typeof boosterQueueSchema>;
 export type BoosterWorkOutput = z.infer<typeof boosterWorkSchema>;
 export type BoosterOrderOutput = z.infer<typeof boosterOrderSchema>;
+export type OrderCredentialsOutput = z.infer<typeof orderCredentialsSchema>;
 export type BoosterWalletOutput = z.infer<typeof boosterWalletSchema>;
 export type BoosterWalletTransactionOutput = z.infer<
 	typeof boosterWalletTransactionSchema

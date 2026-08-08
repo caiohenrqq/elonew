@@ -137,7 +137,7 @@ const BoosterOrderSummary = ({
 			desiredLeague={order.desiredLeague}
 			desiredDivision={order.desiredDivision}
 		/>
-		<p className="text-white/55">
+		<p className="break-words text-white/55">
 			{order.summonerName ?? 'Invocador não informado'} ·{' '}
 			{order.server ?? 'Servidor não informado'} ·{' '}
 			{order.desiredQueue ?? 'Fila não informada'}
@@ -146,7 +146,7 @@ const BoosterOrderSummary = ({
 			{order.currentLp ?? '—'} PDL · ganho estimado de {order.lpGain ?? '—'} PDL
 		</p>
 		{order.extras?.length ? (
-			<p className="text-white/45">
+			<p className="break-words text-white/45">
 				Extras:{' '}
 				{order.extras.map((extra) => getExtraLabel(extra.type)).join(', ')}
 			</p>
@@ -222,7 +222,7 @@ const BoosterOrderRow = ({
 				</div>
 			</div>
 		</TableCell>
-		<TableCell className="font-bold text-white/70 whitespace-nowrap">
+		<TableCell className="font-bold text-white/70">
 			{mode === 'available' ? (
 				<BoosterOrderSummary order={order} />
 			) : (

@@ -5,10 +5,12 @@ import {
 	getBoosterOrder,
 	getBoosterOrderChatMessages,
 	getBoosterUserId,
+	revealBoosterOrderCredentialsAction,
 } from '../../actions/booster-actions';
 import { BoosterOrderDetailsPage } from './booster-order-details-page';
 
 jest.mock('next/navigation', () => ({
+	useRouter: () => ({ refresh: jest.fn() }),
 	notFound: jest.fn(() => {
 		throw new Error('NEXT_NOT_FOUND');
 	}),
@@ -57,7 +59,13 @@ jest.mock('../../actions/booster-actions', () => ({
 		nextCursor: null,
 	}),
 	getBoosterUserId: jest.fn().mockResolvedValue('booster-1'),
-	sendBoosterOrderChatMessageAction: jest.fn(),
+	revealBoosterOrderCredentialsAction: jest.fn().mockResolvedValue({
+		credentials: {
+			login: 'client-login',
+			summonerName: 'Summoner BR',
+			password: 'secret-password',
+		},
+	}),
 }));
 
 jest.mock('lucide-react', () => ({
@@ -95,6 +103,22 @@ describe('BoosterOrderDetailsPage', () => {
 		expect(getBoosterOrder).toHaveBeenCalledWith('order-active-1');
 		expect(getBoosterOrderChatMessages).toHaveBeenCalledWith('order-active-1');
 		expect(getBoosterUserId).toHaveBeenCalledTimes(1);
+	});
+
+	it('reveals accepted-order credentials only after an explicit click', async () => {
+		render(await BoosterOrderDetailsPage({ orderId: 'order-active-1' }));
+
+		expect(screen.queryByText('client-login')).not.toBeInTheDocument();
+		await userEvent.click(
+			screen.getByRole('button', { name: /Revelar credenciais/i }),
+		);
+
+		expect(revealBoosterOrderCredentialsAction).toHaveBeenCalledWith(
+			'order-active-1',
+		);
+		expect(screen.getByText('client-login')).toBeInTheDocument();
+		expect(screen.getByText('Summoner BR')).toBeInTheDocument();
+		expect(screen.getByText('secret-password')).toBeInTheDocument();
 	});
 
 	it('renders completed orders as read-only chat', async () => {
