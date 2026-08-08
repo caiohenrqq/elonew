@@ -64,7 +64,7 @@ describe('Wallet (e2e)', () => {
 			.set('Authorization', `Bearer ${token}`)
 			.send({
 				amount: 10,
-				requestedAt: '2026-03-10T00:00:00.000Z',
+				payoutPixKey: 'booster@example.com',
 			})
 			.expect(400, {
 				message: 'Wallet does not have enough withdrawable balance.',

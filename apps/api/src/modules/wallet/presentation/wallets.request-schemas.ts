@@ -36,7 +36,7 @@ export type ReleaseMaturedWalletFundsSchemaInput = z.infer<
 
 export const requestWithdrawalSchema = z.object({
 	amount: z.number().int().positive(),
-	requestedAt: z.string().datetime(),
+	payoutPixKey: z.string().trim().min(1).max(255),
 });
 
 export type RequestWithdrawalSchemaInput = z.infer<

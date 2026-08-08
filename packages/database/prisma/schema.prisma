@@ -336,12 +336,14 @@ model WalletTransaction {
   amount      Int
   type        WalletTransactionType
   reason      String
+  payoutPixKey String?               @map("payout_pix_key")
   availableAt DateTime
   releasedAt  DateTime?
   releasedBy  WalletTransactionReleaseSource?
   createdAt   DateTime              @default(now())
 
   @@index([walletId, createdAt])
+  @@index([reason, createdAt])
   @@map("wallet_transactions")
 }
 
