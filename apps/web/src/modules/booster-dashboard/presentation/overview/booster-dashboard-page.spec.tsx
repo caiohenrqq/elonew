@@ -28,6 +28,10 @@ jest.mock('../../actions/booster-actions', () => ({
 				deadline: '2026-05-01T00:00:00.000Z',
 				totalAmount: 12000,
 				boosterAmount: 8400,
+				extras: [
+					{ type: 'specific_champions', price: 100 },
+					{ type: 'specific_routes', price: 100 },
+				],
 				createdAt: '2026-04-01T00:00:00.000Z',
 			},
 		],
@@ -63,8 +67,9 @@ jest.mock('../../actions/booster-actions', () => ({
 				amount: 8400,
 				type: 'credit',
 				reason: 'order_completion',
-				availableAt: '2026-05-01T00:00:00.000Z',
-				releasedAt: '2026-05-02T00:00:00.000Z',
+				availableAt: '2026-05-04T00:00:00.000Z',
+				releasedAt: null,
+				releasedBy: null,
 				createdAt: '2026-05-01T00:00:00.000Z',
 			},
 		],
@@ -73,7 +78,6 @@ jest.mock('../../actions/booster-actions', () => ({
 	rejectBoosterOrderAction: jest.fn(),
 	completeBoosterOrderAction: jest.fn(),
 	requestBoosterWithdrawalAction: jest.fn(),
-	sendBoosterOrderChatMessageAction: jest.fn(),
 }));
 
 jest.mock('@/shared/dashboard/dashboard-entrance', () => ({
@@ -85,6 +89,7 @@ jest.mock('./booster-dashboard-live-refresh', () => ({
 }));
 
 jest.mock('lucide-react', () => ({
+	ArrowRight: () => <svg data-testid="arrow-right-icon" />,
 	BadgeDollarSign: () => <svg data-testid="money-icon" />,
 	BriefcaseBusiness: () => <svg data-testid="briefcase-icon" />,
 	CheckCircle2: () => <svg data-testid="check-icon" />,
@@ -113,13 +118,19 @@ describe('BoosterDashboardPage', () => {
 		expect(screen.getByText('Pedidos disponíveis')).toBeInTheDocument();
 		expect(screen.queryByText('Pedidos em execução')).not.toBeInTheDocument();
 		expect(screen.getAllByText('Elo Boost')).toHaveLength(2);
-		expect(screen.getAllByText('Gold II → Platinum IV')).toHaveLength(2);
+		expect(screen.getAllByAltText('Ouro')).toHaveLength(2);
+		expect(screen.getAllByAltText('Platina')).toHaveLength(2);
 		expect(screen.getAllByText(/R\$\s*84,00/).length).toBeGreaterThan(0);
 		expect(screen.getByText('Carteira')).toBeInTheDocument();
-		expect(screen.queryByText('Movimentações')).not.toBeInTheDocument();
+		expect(screen.getByText('Movimentações')).toBeInTheDocument();
+		expect(screen.getByText(/Disponível em 04\/05\/2026/)).toBeInTheDocument();
+		expect(screen.getByText(/Sem valor mínimo/i)).toBeInTheDocument();
 		expect(getBoosterQueue).toHaveBeenCalledTimes(1);
 		expect(getBoosterWork).not.toHaveBeenCalled();
-		expect(getBoosterWalletTransactions).not.toHaveBeenCalled();
+		expect(getBoosterWalletTransactions).toHaveBeenCalledTimes(1);
+		expect(screen.getAllByText(/Extras:/)[1].closest('td')).not.toHaveClass(
+			'whitespace-nowrap',
+		);
 
 		await userEvent.click(
 			screen.getAllByRole('button', { name: /^Aceitar$/i })[0],

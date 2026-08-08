@@ -5,6 +5,7 @@ import { formatCurrency } from '@/shared/format/currency';
 import {
 	getBoosterQueue,
 	getBoosterWallet,
+	getBoosterWalletTransactions,
 	getBoosterWork,
 } from '../../actions/booster-actions';
 import {
@@ -17,7 +18,10 @@ import {
 	type BoosterDashboardTab,
 	DEFAULT_BOOSTER_DASHBOARD_TAB,
 } from '../../model/booster-tabs';
-import type { BoosterWalletOutput } from '../../server/booster-contracts';
+import type {
+	BoosterWalletOutput,
+	BoosterWalletTransactionsOutput,
+} from '../../server/booster-contracts';
 import { BoosterDashboardLiveRefresh } from './booster-dashboard-live-refresh';
 import { BoosterOrderList } from './booster-order-list';
 import { WalletPanel } from './wallet-panel';
@@ -38,6 +42,7 @@ type BoosterDashboardSummaryProps =
 
 type BoosterQueueViewModel = BoosterQueue & {
 	wallet: BoosterWalletOutput;
+	transactions: BoosterWalletTransactionsOutput['transactions'];
 };
 
 const BoosterDashboardSummary = ({
@@ -112,7 +117,7 @@ const BoosterQueueView = ({ queue }: { queue: BoosterQueueViewModel }) => (
 				mode="available"
 				orders={queue.availableOrders}
 			/>
-			<WalletPanel wallet={queue.wallet} />
+			<WalletPanel wallet={queue.wallet} transactions={queue.transactions} />
 		</div>
 	</div>
 );
@@ -152,16 +157,19 @@ export const BoosterDashboardPage = async ({
 		);
 	}
 
-	const [queueOutput, wallet] = await Promise.all([
+	const [queueOutput, wallet, transactions] = await Promise.all([
 		getBoosterQueue(),
 		getBoosterWallet(),
+		getBoosterWalletTransactions(),
 	]);
 	const queue = toBoosterQueue(queueOutput);
 
 	return (
 		<DashboardEntrance>
 			<BoosterDashboardLiveRefresh />
-			<BoosterQueueView queue={{ ...queue, wallet }} />
+			<BoosterQueueView
+				queue={{ ...queue, wallet, transactions: transactions.transactions }}
+			/>
 		</DashboardEntrance>
 	);
 };
