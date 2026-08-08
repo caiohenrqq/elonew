@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 
 const ORDER_EVENT_TYPES = [
 	'order.paid',
+	'order.credentials_saved',
 	'order.accepted',
 	'order.rejected',
 	'order.completed',

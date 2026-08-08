@@ -61,7 +61,10 @@ export class OrdersEventsController {
 			return event.clientId === currentUser.id;
 		if (currentUser.role !== Role.BOOSTER) return false;
 
-		if (event.type === 'order.paid') {
+		if (
+			event.type === 'order.paid' ||
+			event.type === 'order.credentials_saved'
+		) {
 			return event.boosterId === null || event.boosterId === currentUser.id;
 		}
 

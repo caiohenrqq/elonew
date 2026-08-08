@@ -1,3 +1,7 @@
+import type {
+	OrderEvent,
+	OrderEventPublisherPort,
+} from '@modules/orders/application/ports/order-event-publisher.port';
 import type { OrderRepositoryPort } from '@modules/orders/application/ports/order-repository.port';
 import { SaveOrderCredentialsUseCase } from '@modules/orders/application/use-cases/save-order-credentials/save-order-credentials.use-case';
 import {
@@ -45,6 +49,15 @@ class InMemoryOrderRepository implements OrderRepositoryPort {
 	}
 }
 
+class OrderEventPublisherSpy implements OrderEventPublisherPort {
+	readonly events: OrderEvent[] = [];
+
+	publish(event: OrderEvent): Promise<void> {
+		this.events.push(event);
+		return Promise.resolve();
+	}
+}
+
 describe('SaveOrderCredentialsUseCase', () => {
 	it('stores credentials after payment confirmation', async () => {
 		const repository = new InMemoryOrderRepository();
@@ -70,6 +83,33 @@ describe('SaveOrderCredentialsUseCase', () => {
 		const savedOrder = await repository.findById('order-1');
 		expect(savedOrder?.hasCredentials).toBe(true);
 		expect(savedOrder?.pendingCredentials).toBeNull();
+	});
+
+	it('publishes an order credentials saved event after persistence', async () => {
+		const repository = new InMemoryOrderRepository();
+		const publisher = new OrderEventPublisherSpy();
+		const order = Order.create('order-live', { clientId: 'client-1' });
+		order.confirmPayment();
+		repository.insert(order);
+		const useCase = new SaveOrderCredentialsUseCase(repository, publisher);
+
+		await useCase.execute({
+			orderId: 'order-live',
+			clientId: 'client-1',
+			login: 'login',
+			summonerName: 'summoner',
+			password: 'secret',
+			confirmPassword: 'secret',
+		});
+
+		expect(publisher.events).toEqual([
+			expect.objectContaining({
+				type: 'order.credentials_saved',
+				orderId: 'order-live',
+				clientId: 'client-1',
+				boosterId: null,
+			}),
+		]);
 	});
 
 	it('throws when passwords do not match', async () => {
