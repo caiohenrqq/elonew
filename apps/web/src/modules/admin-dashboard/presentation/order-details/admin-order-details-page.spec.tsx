@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { getOrderRatings } from '@/shared/ratings/rating-actions';
 import {
@@ -7,7 +8,11 @@ import {
 } from '../../actions/admin-actions';
 import { AdminOrderDetailsPage } from './admin-order-details-page';
 
-jest.mock('next/navigation', () => ({ notFound: jest.fn() }));
+jest.mock('next/navigation', () => ({
+	notFound: jest.fn(() => {
+		throw new Error('NEXT_NOT_FOUND');
+	}),
+}));
 jest.mock('@/shared/ratings/rating-actions', () => ({
 	getOrderRatings: jest.fn().mockResolvedValue([
 		{
@@ -34,6 +39,10 @@ jest.mock('../../actions/admin-actions', () => ({
 }));
 
 describe('AdminOrderDetailsPage', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
 	it('loads ratings with every order detail', async () => {
 		const page = (await AdminOrderDetailsPage({
 			orderId: 'order-1',
@@ -46,5 +55,18 @@ describe('AdminOrderDetailsPage', () => {
 		expect(page.props.ratings).toEqual([
 			expect.objectContaining({ id: 'rating-1' }),
 		]);
+	});
+
+	it('stops loading related data when the order does not exist', async () => {
+		jest.mocked(getAdminOrder).mockResolvedValueOnce(null);
+
+		await expect(
+			AdminOrderDetailsPage({ orderId: 'missing-order' }),
+		).rejects.toThrow('NEXT_NOT_FOUND');
+
+		expect(notFound).toHaveBeenCalledTimes(1);
+		expect(getAdminOrderChatMessages).not.toHaveBeenCalled();
+		expect(getAdminUserId).not.toHaveBeenCalled();
+		expect(getOrderRatings).not.toHaveBeenCalled();
 	});
 });

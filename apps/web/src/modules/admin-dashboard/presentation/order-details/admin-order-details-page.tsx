@@ -328,13 +328,14 @@ export const AdminOrderDetailsView = ({
 export const AdminOrderDetailsPage = async ({
 	orderId,
 }: AdminOrderDetailsPageProps) => {
-	const [order, chat, currentUserId, ratings] = await Promise.all([
-		getAdminOrder(orderId),
+	const order = await getAdminOrder(orderId);
+	if (!order) notFound();
+
+	const [chat, currentUserId, ratings] = await Promise.all([
 		getAdminOrderChatMessages(orderId),
 		getAdminUserId(),
 		getOrderRatings(orderId),
 	]);
-	if (!order) notFound();
 
 	return (
 		<AdminOrderDetailsView
